@@ -27,6 +27,7 @@ ignore = ["ANN101", "ANN102"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["packages/*/tests", "tests"]
+addopts = "--import-mode=importlib"
 
 [tool.mypy]
 strict = true

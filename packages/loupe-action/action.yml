@@ -1,0 +1,18 @@
+name: 'Loupe'
+description: 'Run Loupe lenses on a pull request and propose threat-model updates'
+inputs:
+  pr:
+    description: 'Pull request number'
+    required: true
+  config:
+    description: 'Path to loupe config'
+    required: false
+    default: '.loupe/config.yaml'
+runs:
+  using: 'composite'
+  steps:
+    - shell: bash
+      run: |
+        set -euo pipefail
+        pip install loupe-cli loupe-threatlens
+        loupe ci --pr ${{ inputs.pr }} --config ${{ inputs.config }}
