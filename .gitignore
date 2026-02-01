@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/
+
+# uv
+.venv/
+uv.lock
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Loupe runtime (consumers may opt to commit these; not in this repo)
+# (none — the loupe development repo doesn't contain a `.loupe/` of its own)
+
+# OS
+.DS_Store
