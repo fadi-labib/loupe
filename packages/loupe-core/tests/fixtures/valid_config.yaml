@@ -1,0 +1,36 @@
+schema_version: 1
+
+models:
+  default: anthropic/claude-opus-4-7
+  threatlens:
+    primary: anthropic/claude-opus-4-7
+    fallback: openai/gpt-5
+    cheap_for: [doc_polish, vex_drafting]
+    cheap_model: anthropic/claude-haiku-4-5
+
+limits:
+  per_run_max_usd: 2.50
+  per_run_max_tokens_in: 500000
+  per_run_max_steps: 30
+
+ci:
+  fail_on:
+    - new_critical_threat_unmitigated
+    - cve_critical_no_vex
+  warn_on:
+    - new_high_threat_unmitigated
+  ignore_paths:
+    - "docs/**"
+
+agent_writable_paths:
+  - .loupe/threats.yaml
+  - .loupe/mitigations.yaml
+  - .loupe/threat-model.md
+  - .loupe/vex.json
+  - .loupe/sbom.cdx.json
+  - .loupe/runs/**
+
+lenses:
+  threatlens:
+    enabled: true
+    minimum_relevance: 0.3
