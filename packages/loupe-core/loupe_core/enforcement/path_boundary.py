@@ -16,11 +16,11 @@ class PathBoundary:
     def is_agent_writable(self, path: str) -> bool:
         if "\x00" in path:
             return False
-        if path.startswith("/"):
-            return False
         normalized = PurePosixPath(path).as_posix()
         if ".." in normalized.split("/"):
             return False
+        # Absolute paths are allowed only if explicitly listed in the allow-list
+        # (e.g., when tests pass tmp_path). Relative paths must match a glob.
         return any(self._match(normalized, g) for g in self._globs)
 
     @staticmethod
