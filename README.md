@@ -40,11 +40,15 @@ pip install loupe-cli loupe-threatlens
 loupe init
 $EDITOR .loupe/context.md   # describe your product, assets, threat actors
 
-# run on a diff (locally)
+# run on a diff (locally) — incremental mode, used in CI
 git diff main... > diff.patch
 loupe ci --diff-file diff.patch --base-sha $(git rev-parse main) --head-sha HEAD
 
-# or run interactively
+# or run a full-repo scan — for first-time onboarding, periodic re-baseline, audit prep
+loupe scan
+loupe scan --paths src/payments/         # scope to specific paths
+
+# or run interactively (handles both kinds of question)
 loupe chat
 
 # or expose Loupe to Claude Code / Cursor / your editor over MCP
@@ -68,6 +72,9 @@ In CI, a tiny composite GitHub Action wraps the CLI:
 | Understand what Loupe is and why it exists | [`docs/ABOUT.md`](docs/ABOUT.md) |
 | Know the values and design principles that guided every decision | [`docs/VALUES.md`](docs/VALUES.md) |
 | See the actual decisions made (and the alternatives rejected) | [`docs/DESIGN-DECISIONS.md`](docs/DESIGN-DECISIONS.md) |
+| Look up a term used elsewhere in the docs | [`docs/GLOSSARY.md`](docs/GLOSSARY.md) |
+| Understand what data Loupe sends to LLMs (and what it doesn't) | [`docs/DATA-HANDLING.md`](docs/DATA-HANDLING.md) |
+| Compare Loupe with Snyk / Wiz / Trivy / OWASP Threat Dragon / etc. | [`docs/COMPARISON.md`](docs/COMPARISON.md) |
 | Develop on Loupe or write a new lens | [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md) |
 | Read the full technical design spec | [``]() |
 | See the phased implementation plan | [``]() |

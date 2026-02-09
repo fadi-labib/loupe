@@ -255,6 +255,39 @@ Six methods, one declared attribute. Anything else is implementation detail.
 
 ---
 
+## D-15 — Full-repo / no-diff scans are first-class via `loupe scan`
+
+**Considered:**
+- Diff-only mode (current implicit assumption — would skip ThreatLens on any no-diff run because `is_relevant()` looks at `ctx.diff.changed_paths`)
+- Treat absence-of-diff as "everything is in scope" implicitly inside `is_relevant()`
+- Two parallel pipelines (diff-pipeline and full-repo-pipeline)
+- **One pipeline with a `scope` field on `RunContext`, plus an explicit `loupe scan` CLI command**
+
+**Chosen:** Add `RunContext.scope: Literal["diff", "full", "scoped"]` (default `"diff"`); when `scope != "diff"`, `Lens.is_relevant()` returns high relevance unconditionally (the lens is being *explicitly* invoked); the agent's system prompt gains a scope-aware section; a new `loupe scan [--paths …]` command bootstraps a `RunContext` with `scope=full` or `scoped`. Same dispatcher, same artefacts, same enforcement.
+
+**Why:**
+- The diff-only assumption silently broke five real scenarios: first-time onboarding, periodic re-baseline, architectural review, audit kickoff, and `loupe chat` questions not tied to a recent change. For many adopters, the *first* time they ever run Loupe will be a no-diff run.
+- Both modes produce the same artefact types (`threats.yaml`, `mitigations.yaml`, `threat-model.md`, `vex.json`, etc.). The difference is in *scope of analysis*, not output shape — which means it's expressible as a field, not a parallel pipeline.
+- Treating no-diff implicitly inside `is_relevant()` would have been clever-but-wrong: the user invoking `loupe scan` is making an explicit choice to pay the higher cost; the system should honour that rather than silently filter.
+- An explicit `loupe scan` command is honest about cost: full-repo runs can easily blow `per_run_max_usd`. We'll require an explicit `--budget-usd <N>` flag when the configured limit is exceeded, rather than failing partway through.
+
+**Implementation impact:**
+- `loupe-core/run_context.py` gains a `scope` field on `RunContext` and a `scope_paths` field on `BootstrapInputs`.
+- `loupe-core/coordinator.py`'s `build_run_plan()` short-circuits the relevance check when `scope != "diff"` (still calls `is_relevant()` for the reason string, but always includes the lens).
+- `loupe-cli` gains a `scan` command in Phase 7.
+- `loupe-threatlens/agent.py` system prompt branches on scope.
+- ThreatLens's `is_relevant()` should still return a useful reason in full mode (e.g., "explicit full-repo scan"), but its `score` is overridden by the coordinator.
+
+**Deferred to v1.x:**
+- `--baseline` workflow (marking a known-good threat model, then comparing future diffs against it).
+- `--since <revision>` for arbitrary git revision diffs.
+- Sampling for very large repos (don't send 200k LOC; pick relevant slices).
+- Scheduled re-baseline (cron-style).
+
+These are real concerns but each adds a meaningful concept (baselines, time-windowed scope, sampling heuristics). v1 keeps the design minimal: diff mode, full mode, scoped-to-paths mode.
+
+---
+
 ## D-14 — Defer commit signing and off-repo retention to v1.x
 
 **Considered as v1.0 features, deferred:**

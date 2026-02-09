@@ -23,7 +23,7 @@ The bet has three parts:
 
 ## What "Loupe" means in practice
 
-Loupe is **the platform**. It is domain-agnostic. It knows nothing about STRIDE, ISO 26262, LINDDUN, or NIST AI RMF. It knows about: parsing diffs, generating SBOMs, talking to multiple LLM providers, building cache-friendly prompts, enforcing write boundaries, persisting structured artefacts, exposing tools over MCP, coordinating multiple lenses to share context cheaply.
+Loupe is **the platform**. It is domain-agnostic. It knows nothing about STRIDE, ISO 26262, LINDDUN, or NIST AI RMF. It knows about: parsing diffs, generating SBOMs, talking to multiple LLM providers, building cache-friendly prompts, enforcing write boundaries, persisting structured artefacts, exposing tools over MCP, coordinating multiple lenses to share context cheaply, and analysing either an incremental change (a PR diff) or a whole codebase from scratch (`loupe scan`) — same artefacts, same enforcement, different scope of analysis (see [`DESIGN-DECISIONS.md` D-15](DESIGN-DECISIONS.md#d-15--full-repo--no-diff-scans-are-first-class-via-loupe-scan)).
 
 A **lens** is a Python package that registers with Loupe (via standard Python entry points) and contributes:
 - A PydanticAI agent specialised for one domain
