@@ -1,6 +1,20 @@
 # Loupe vs. adjacent tools
 
 > Honest comparisons against tools in adjacent spaces. Some are competitors; most are complements. The goal is to help you decide *what to use Loupe for* and *what to keep using your existing tools for*.
+>
+> **Last refreshed:** 2026-05-14 (initial draft 2026-05-13, expanded after web research). The AI-threat-modelling space is moving fast — expect this doc to drift within months.
+
+## Loupe is not unprecedented
+
+A claim worth surfacing up front: **AI-driven threat modelling is now a crowded space**, not an empty one. The first draft of this doc significantly understated the number of directly-comparable tools. After research, the honest framing is:
+
+- Several open-source LLM-based threat-modelling tools already exist (StrideGPT, ThreatCompute, ASTRIDE, TITO, Arrows).
+- The dominant commercial threat-modelling tool (IriusRisk, ~42% market share per PeerSpot, March 2026) has added AI features.
+- Microsoft's Threat Modeling Tool v4.2 has added AI-assisted threat detection.
+- A dedicated CRA-evidence product (Concordance) is on market, mapping engineering data to all 21 CRA Annex I requirements.
+- New frameworks (MAESTRO, STRIFE) are emerging specifically for AI/agentic systems.
+
+Loupe's distinctive combination is: **plugin architecture (multiple domains), in-repo local-first artefacts, four-layer write-boundary enforcement, multi-LLM provider-agnostic, and MCP server exposure**. No single tool in the search results matched all five. But several match three or four. Honest read: Loupe is a *recombination* of capabilities that exist elsewhere, with a coherent platform shape — not a category-creating product.
 
 ---
 
@@ -8,18 +22,174 @@
 
 | Tool | Category | Relationship to Loupe |
 |---|---|---|
-| **Snyk** | SCA + SAST (proprietary) | Complementary; Loupe wraps similar SBOM/CVE tooling but doesn't try to be a SAST |
-| **Trivy** | Vuln scanner (OSS) | Complementary; could be a `loupe-trivy-adapter` lens later |
-| **Wiz** | Cloud security posture | Different layer; cloud runtime, not code |
-| **Semgrep** | Static analysis (OSS + cloud) | Complementary; Loupe could call Semgrep as a tool in a future lens |
-| **OWASP Threat Dragon** | Manual threat-modelling tool (OSS) | Closest competitor *in spirit*; Loupe is AI-driven and diff-aware |
-| **Microsoft Threat Modeling Tool** | Manual threat-modelling tool (Windows-only) | Same category as Threat Dragon |
-| **IriusRisk** | Commercial threat-modelling platform (with AI features) | Closest *commercial* competitor; different deployment model |
-| **GitHub Advanced Security** (CodeQL, Dependabot, secret scanning) | Defect detection (cloud-managed) | Complementary; Loupe consumes Dependabot-equivalent data via SBOM/Grype, doesn't replace CodeQL |
-| **Claude Code / Cursor / Aider** | Generic AI coding assistants | Complementary via MCP; they can drive Loupe |
-| **Renovate / Dependabot** | Dependency-update automation | Complementary; orthogonal concern |
+| **StrideGPT** | Open-source LLM-based STRIDE generator | **Most directly comparable in spirit**; one-shot vs Loupe's continuous |
+| **ThreatCompute** | Academic LLM agent for Kubernetes threat models, uses MCP | **Most architecturally similar**; Kubernetes-specific |
+| **TITO** | Automated threat modelling tool (MAESTRO-based, CI/CD) | Direct competitor in agentic-AI threat modelling |
+| **ASTRIDE / Arrows** | LLM + Vision-Language Models for architecture diagrams | Visual-first variants |
+| **Concordance** | CRA Annex I evidence platform | **Most directly comparable on the CRA-evidence side** |
+| **MAESTRO** (framework, not tool) | Agentic-AI threat modelling methodology (Cloud Security Alliance) | A method ThreatLens *or* a future Loupe lens could adopt |
+| **IriusRisk** | Commercial threat-modelling platform (AI-augmented) | Largest market share commercial product |
+| **Devici** | Visual + AI-augmented threat modelling (commercial SaaS) | Closest "post-Threat-Dragon AI era" commercial product |
+| **OWASP Threat Dragon** | Manual threat-modelling (OSS) | Closest manual-tool predecessor |
+| **Microsoft Threat Modeling Tool v4.2** | Manual + AI-assisted (Windows-only) | Same lineage |
+| **Threagile / pytm** | Threat-modelling-as-code (OSS, not AI) | "As-code" predecessors; share DNA |
+| **Snyk** | SCA + SAST (commercial) | Complementary — vuln scanning, not threat modelling |
+| **Trivy** | Vuln scanner (OSS) | Complementary; could substitute Loupe's Syft+Grype back-end |
+| **Wiz** | Cloud security posture | Different layer entirely |
+| **Semgrep** | Static analysis | Complementary; a future lens could call Semgrep |
+| **GHAS (CodeQL, Dependabot)** | Defect detection | Complementary |
+| **Claude Code / Cursor / Aider** | Generic AI coding assistants | Complementary via MCP |
+| **Renovate / Dependabot** | Dep update automation | Orthogonal |
 
-The pattern: Loupe doesn't try to be a vulnerability scanner, a SAST, a SCA, or a generic AI assistant. It's a **threat-modelling-and-CRA-evidence platform** with multi-lens extensibility, and most existing tools are complementary inputs to it (SBOMs, CVE data, code analysis) rather than substitutes for it.
+---
+
+## AI-driven threat-modelling tools (the most directly comparable cohort)
+
+These are the tools that share Loupe's basic premise: use LLMs to do threat modelling. They differ in scope, deployment model, and depth.
+
+### StrideGPT
+
+**What it is:** Open-source LLM-based threat-modelling tool by Matthew Adams (mrwadams/stride-gpt). Streamlit web UI. User pastes an application description; LLM generates STRIDE threats and attack trees.
+
+**LLM support:** OpenAI, Anthropic, Google AI, Mistral, Groq, plus local hosting via Ollama and LM Studio Server. (Note: my first draft incorrectly said "single-LLM (OpenAI)" — StrideGPT is in fact multi-LLM and has been for some time.)
+
+**Where it overlaps with ThreatLens:** Same core method (STRIDE), same LLM-driven approach.
+
+**Where they differ:**
+- StrideGPT is **one-shot** — paste a description, get a threat model. ThreatLens is **continuous** — runs on diffs, maintains living artefacts.
+- StrideGPT has no in-repo persistence; the threat model lives in the browser session unless you export it.
+- StrideGPT has no write-boundary enforcement (it's not modifying your repo at all).
+- No MCP exposure; no plugin architecture; no CRA-evidence framing.
+
+**Honest read:** If your only need is "generate a STRIDE threat model from a description," StrideGPT is simpler, ships today, and is mature. Loupe's value over StrideGPT is the *platform shape* (continuous, multi-domain, CRA-shaped, enforcement, MCP) — not the threat-modelling technique itself.
+
+### ThreatCompute
+
+**What it is:** Academic LLM agent for automated threat modelling of cloud-native (Kubernetes) applications. Published at the 2025 ACM Cloud Computing Security Workshop. Uses LLMs to dynamically direct reasoning over structured inputs. Designed for CI/CD integration via Kubernetes-native MCP servers.
+
+**Architecturally, this is the closest published work to Loupe.** Same combination: LLM agent + structured inputs + MCP server + CI/CD-friendly.
+
+**Where they differ:**
+- ThreatCompute is Kubernetes-specific. Loupe is repo-agnostic (any language, any deployment target).
+- ThreatCompute is a research project, not a productised platform yet (as of mid-2026).
+- ThreatCompute has a single domain (Kubernetes infrastructure). Loupe's plugin architecture targets multiple domains.
+
+**Honest read:** If you ship on Kubernetes and want a more specialised tool, watch ThreatCompute. If you want a multi-domain platform that's repo-shape-agnostic, Loupe.
+
+### TITO (Threat In and Threat Out)
+
+**What it is:** Automated threat modelling tool. Built on the MAESTRO classification framework (Cloud Security Alliance). Designed for continuous CI/CD-pipeline integration. Targets agentic-AI threat scenarios specifically.
+
+**Where it overlaps with ThreatLens:** CI/CD integration, continuous (not one-shot), automated.
+
+**Where they differ:**
+- TITO is MAESTRO-based; ThreatLens is STRIDE-based. MAESTRO is specifically for agentic-AI systems, STRIDE is general.
+- TITO appears to focus on classifying threats *of* AI systems; Loupe is threat-modelling-for-any-codebase using AI (the agent is the analyst, not the subject).
+
+**Honest read:** If your *product* is an AI/agentic system, MAESTRO is the right method and TITO is purpose-built for it. ThreatLens currently doesn't use MAESTRO; this could be a future lens (e.g., `AIRiskLens` with MAESTRO methodology).
+
+### ASTRIDE / Arrows
+
+**ASTRIDE:** Uses Vision-Language Models to analyse architecture diagrams, then an LLM to write threat reports. "AI to protect AI."
+
+**Arrows:** Uses specialised LLM analysers for each STRIDE category, produces interactive diagrams.
+
+**Where they overlap with ThreatLens:** LLM-based STRIDE threat modelling.
+
+**Where they differ:**
+- Both are diagram-first; ThreatLens is code-first.
+- Both produce reports; ThreatLens produces structured artefacts.
+- I don't have detail on their deployment model, in-repo behaviour, or enforcement story — these may be research-style demos rather than productised platforms.
+
+**Honest read:** Diagram-first is a legitimately different UX. If your team prefers visual threat modelling and you can describe your architecture as a diagram, these are worth investigating.
+
+### MAESTRO (framework, not a tool)
+
+**What it is:** Multi-Agent Environment, Security, Threat, Risk, & Outcome. A threat-modelling *framework* (not a tool) from the Cloud Security Alliance, specifically designed for agentic-AI systems. Addresses the "dynamic trust boundaries" problem that breaks classical STRIDE when applied to LLM-based systems.
+
+**How it relates to Loupe:** ThreatLens could adopt MAESTRO as an additional categorisation alongside STRIDE for AI-system threats. Or, more likely, a future `AIRiskLens` would use MAESTRO as its methodology. Tools like TITO show the framework is implementable.
+
+**Honest read:** MAESTRO is what STRIDE would become if reinvented for agentic AI. ThreatLens stays STRIDE-based because most code isn't agentic; AIRiskLens (if/when built) should probably use MAESTRO.
+
+---
+
+## CRA-specific evidence tooling
+
+### Concordance
+
+**What it is:** Commercial CRA-compliance platform. Continuous evidence mapping — engineering data from your toolchain, structured against Annex I requirements. Observes 50 engineering protocols mapped to all 21 Annex I essential requirements.
+
+**This is the most directly comparable tool on the CRA-evidence side.** Concordance focuses on the *evidence-from-toolchain* angle that Loupe's `runs/*.json` + artefact set is heading toward.
+
+**Where they differ:**
+- Concordance is multi-protocol — it ingests data from many engineering tools and maps them to CRA requirements. Loupe is single-domain — it produces threat-modelling evidence specifically.
+- Concordance is SaaS; Loupe is local-first.
+- Concordance covers all 21 Annex I requirements; Loupe primarily addresses risk-assessment (§1), secure-by-design (§§1b/1c), SBOM (§2), and vulnerability handling. Other Annex I requirements (technical documentation completeness, user information, declaration of conformity) are out of Loupe's scope.
+
+**Honest read:** Concordance and Loupe are *complementary*, not substitutes. Concordance maps existing toolchain output to CRA; Loupe generates the threat-modelling portion of that toolchain output. A buyer of both would get: Loupe produces high-quality `threats.yaml` + `mitigations.yaml` + `vex.json`; Concordance ingests them and maps them into a CRA-conformity package.
+
+### ENISA Single Reporting Platform (SRP) — not a tool, a regulatory artefact
+
+CRA reporting obligations begin **11 September 2026** (4 months from when this doc was last updated). Manufacturers must report certain vulnerabilities and incidents via ENISA's SRP, coordinated through their Member State CSIRT. Loupe is not a reporting tool; Concordance and similar platforms presumably integrate with the SRP.
+
+---
+
+## Threat-modelling-as-code (pre-AI lineage)
+
+### Threagile
+
+**What it is:** Open-source. Threat modelling defined in YAML. Generates threat models from declarative input.
+
+**Lineage shared with Loupe:** "Threat models as version-controlled artefacts" is a Threagile idea ThreatLens inherits. The difference: Threagile YAML is human-authored; Loupe artefacts are AI-drafted-human-approved.
+
+### pytm (OWASP pytm)
+
+**What it is:** Open-source. Python DSL for declaring threat models programmatically. Outputs diagrams + reports.
+
+**Lineage shared with Loupe:** Same as Threagile — version-controlled, code-first. Python rather than YAML.
+
+**Honest read on both:** If your team is comfortable writing threat models by hand and prefers fully-deterministic tooling (no AI), Threagile or pytm are the right choice. Loupe accepts higher variance in exchange for less manual work.
+
+---
+
+## Manual / commercial threat-modelling tools
+
+### IriusRisk
+
+**Largest commercial threat-modelling product by market share** (42.1% per PeerSpot, March 2026). AI-augmented since 2023. SaaS deployment.
+
+| IriusRisk | Loupe |
+|---|---|
+| SaaS, cloud-managed | Local-first, runs in your repo |
+| Pattern-library-based threat generation + AI | AI-drafted with Pydantic-typed artefacts |
+| Single-vendor | Multi-LLM, multi-lens |
+| Enterprise sales motion | Self-serve, OSS |
+| Mature (many years in market) | Pre-alpha |
+
+If you need a mature commercial product *now* and your procurement prefers SaaS with a vendor relationship: IriusRisk. If you want full control over data, multi-LLM flexibility, and platform extensibility: Loupe.
+
+### Devici
+
+**What it is:** Commercial. Founded by ex-OWASP Threat Dragon team. Diagrammatic + AI-augmented threat modelling. SaaS. Built-in threat libraries and visual workflows.
+
+Closest in spirit to "Threat Dragon, but with AI added." Diagram-first like Threat Dragon; AI-enhanced like IriusRisk.
+
+### OWASP Threat Dragon
+
+Open-source, manual. (Detailed earlier draft retained below in the "Pre-AI threat-modelling tools" comparison context.)
+
+| Threat Dragon | ThreatLens |
+|---|---|
+| Manual diagram drawing | Mermaid diagrams generated/maintained from code |
+| Human authors all content | AI drafts, human approves |
+| One-shot artefact | Living artefact, updated on every PR |
+| Single JSON output | Threats + mitigations + VEX + SBOM, all standards-conformant |
+| No CI integration | First-class CI integration |
+| No regulatory framing | CRA Annex I-shaped evidence by default |
+
+### Microsoft Threat Modeling Tool v4.2
+
+Windows-only. Now includes AI-assisted threat detection (added in v4.2). Same lineage as Threat Dragon — visual, manual, with AI augmentation.
 
 ---
 
@@ -88,55 +258,6 @@ The pattern: Loupe doesn't try to be a vulnerability scanner, a SAST, a SCA, or 
 **When to use which**:
 - Use **Semgrep** for codified policy checks (e.g., "no insecure deserialization patterns", "all HTTP routes must call `require_auth()`"). It's deterministic and fast.
 - Use **Loupe** for threat reasoning that requires understanding what the code *does*, not just what patterns it matches.
-
----
-
-## OWASP Threat Dragon
-
-**What Threat Dragon does**: Open-source, manual threat-modelling tool. You draw the data-flow diagram, mark trust boundaries, and the tool prompts you with STRIDE questions per element. Outputs a JSON file.
-
-**This is the closest competitor to ThreatLens in spirit.** They both produce threat models. They differ in how:
-
-| Threat Dragon | ThreatLens |
-|---|---|
-| Manual diagram drawing | Mermaid diagrams generated/maintained from code |
-| Human authors all content | AI drafts, human approves |
-| One-shot artefact (you re-do it when architecture changes) | Living artefact, updated on every PR |
-| Single JSON output | Threats + mitigations + VEX + SBOM, all standards-conformant |
-| No CI integration | First-class CI integration |
-| No regulatory framing | CRA Annex I-shaped evidence by default |
-
-**When to use which**:
-- Use **Threat Dragon** if your team prefers manual threat modelling, a visual tool, and doesn't have AI budget.
-- Use **Loupe** if you want the threat model to stay in sync with the code as it changes, with less ongoing manual effort.
-
-You can also use both: draft the initial architecture in Threat Dragon as a kick-off exercise, then transfer the assets/elements into Loupe's `context.md` and `knowledge.yaml`, and let Loupe maintain it from there.
-
----
-
-## Microsoft Threat Modeling Tool
-
-Conceptually similar to Threat Dragon (manual STRIDE-based modelling), but Windows-only and more enterprise-y. Same tradeoff vs. Loupe.
-
----
-
-## IriusRisk
-
-**What IriusRisk does**: Commercial threat-modelling platform. Pattern-library-based threat generation, integrates with Jira/CI, has AI-augmented features. SaaS deployment.
-
-**This is Loupe's closest *commercial* competitor.** They differ in:
-
-| IriusRisk | Loupe |
-|---|---|
-| SaaS, cloud-managed | Local-first, runs in your repo |
-| Proprietary patterns + AI | Open architecture, multi-LLM, multi-lens |
-| Single vendor lock-in | Provider-agnostic |
-| Enterprise sales motion | Self-serve, OSS |
-| Mature (many years in market) | Pre-alpha |
-
-**When to choose which**:
-- **IriusRisk** if you need a mature commercial product *now* and your procurement prefers SaaS with a vendor relationship.
-- **Loupe** if you want full control over data, multi-LLM flexibility, and a platform you can extend with your own lenses.
 
 ---
 
