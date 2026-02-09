@@ -1,7 +1,8 @@
 from __future__ import annotations
 from datetime import datetime
+from pathlib import Path
 from typing import Any, Literal
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from loupe_core.artifacts.knowledge import KnowledgeGraph
 from loupe_core.artifacts.context import ProjectContext
 
@@ -85,3 +86,45 @@ class RunContext(BaseModel):
 
     def post_fact(self, fact: Fact) -> None:
         self.facts.append(fact)
+
+    @classmethod
+    def bootstrap(cls, inputs: "BootstrapInputs") -> "RunContext":
+        # Local import avoids a circular dependency (diff.py imports CodeDiff).
+        from loupe_core.diff import parse_unified_diff
+
+        project = ProjectContext.from_markdown(inputs.loupe_dir / "context.md")
+        knowledge = KnowledgeGraph.load_or_empty(inputs.loupe_dir / "knowledge.yaml")
+        diff = (
+            parse_unified_diff(
+                inputs.unified_diff,
+                base_sha=inputs.base_sha or "",
+                head_sha=inputs.head_sha or "",
+            )
+            if inputs.unified_diff
+            else None
+        )
+        return cls(
+            run_id=inputs.run_id,
+            mode=inputs.mode,
+            started_at=inputs.started_at,
+            user_intent=inputs.user_intent,
+            diff=diff,
+            sbom_delta=inputs.sbom_delta,
+            project=project,
+            plan=[],
+            knowledge=knowledge,
+        )
+
+
+class BootstrapInputs(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    run_id: str
+    mode: Literal["ci", "interactive"]
+    started_at: datetime
+    user_intent: str
+    loupe_dir: Path
+    unified_diff: str = ""
+    base_sha: str | None = None
+    head_sha: str | None = None
+    sbom_delta: SBOMDelta | None = None
