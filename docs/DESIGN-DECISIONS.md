@@ -288,6 +288,67 @@ These are real concerns but each adds a meaningful concept (baselines, time-wind
 
 ---
 
+## D-16 — Relationship with StrideGPT: learn + attribute, don't fork
+
+**Considered:**
+- Fork StrideGPT and add Loupe's architecture on top of it
+- Integrate StrideGPT at runtime (call it as a subprocess from ThreatLens)
+- Ignore StrideGPT entirely and build clean
+- **Learn from + attribute, build independently**
+
+**Chosen:** Learn from StrideGPT's prompts and STRIDE technique; attribute the influence in Phase 6's `prompts/system.md` and in [`COMPARISON.md`](COMPARISON.md); don't fork or integrate; build the platform independently. Use StrideGPT as a quality benchmark for ThreatLens output.
+
+**Why:**
+- StrideGPT's architecture is fundamentally different from Loupe's: it is a one-shot Streamlit web UI, ~500 lines, with no in-repo persistence, no plugin seam, no write-boundary enforcement, no MCP, no continuous-CI operation. Forking would force us to either gut 80% of it (most of which is the Streamlit UI we don't want) or contort our platform shape to fit theirs.
+- StrideGPT's *prompts and STRIDE category framing*, on the other hand, are battle-tested across many users and refined over multiple iterations. That's the high-value reusable piece. They live in `threat_model.py`, `attack_tree.py`, `mitigations.py`, `dread.py`, `test_cases.py` (no central `prompts.py`).
+- StrideGPT's licence is **MIT** (verified by web fetch on 2026-05-14). Adaptation with attribution is licence-clean.
+- StrideGPT is actively maintained (173 commits, supports recent models like Claude 4.5, GPT-5, Gemini 3) so it remains a trustworthy reference point.
+- Runtime integration would require running their Streamlit app headless or adapting the modules — significant adapter work for less benefit than re-implementing the parts we want.
+
+**Practical actions:**
+1. When writing Phase 6's `packages/loupe-threatlens/loupe_threatlens/prompts/system.md`, study `mrwadams/stride-gpt/threat_model.py` for prompt structure and STRIDE category questions; adapt useful framing with a comment crediting StrideGPT.
+2. Add an explicit attribution line in [`COMPARISON.md`](COMPARISON.md) (already mentions StrideGPT as prior art).
+3. After Phase 6 ships, benchmark ThreatLens output against StrideGPT on 3–5 reference scenarios. If ThreatLens is materially worse, iterate on prompts.
+4. Note in our prompt that this is *inspired by* StrideGPT's approach.
+
+**Things StrideGPT offers that we deliberately defer:**
+- Attack tree generation
+- DREAD risk scoring
+- Gherkin test case generation
+
+These are interesting v1.x features. ThreatLens v1 stays focused on STRIDE threats + mitigations + VEX.
+
+---
+
+## D-17 — Licence: Apache 2.0
+
+**Considered:**
+- MIT — permissive, shortest licence text, but no explicit patent grant or trademark protection
+- Apache 2.0 — permissive + explicit patent grant + patent retaliation + trademark non-grant
+- GPL v3 — copyleft (viral)
+- AGPL v3 — copyleft + network-use clause
+- BSL (Business Source Licence) — eventual-open, time-limited commercial restriction
+- MPL 2.0 — file-level copyleft
+- Proprietary / "all rights reserved"
+
+**Chosen:** **Apache 2.0**. See [`LICENSE`](../LICENSE) at the repo root.
+
+**Why:**
+- **Patent protection.** A security-analysis tool may involve specific analysis methods that could be patentable. Apache 2.0 §3 explicitly grants patent rights from contributors to users, with a retaliation clause that revokes the grant if a licensee sues over patents in the code. MIT is silent on patents — legal theory says they may be implicitly licensed but US case law is inconsistent. For an enterprise-security audience the explicit grant is the right call.
+- **Trademark protection.** Apache 2.0 §6 explicitly states the licence does NOT grant trademark rights. Stops "trademark squatting via fork" — someone can fork the code but can't legally market their fork as "Loupe." MIT is silent.
+- **Contributor IP clarity.** Apache 2.0 §5 spells out that any intentional submission is licensed under the project terms unless explicitly stated otherwise. Removes ambiguity that MIT leaves open.
+- **Enterprise procurement default.** Apache 2.0 is the boring-correct choice for an enterprise-adopted security tool. The CRA audience (regulated industries) has procurement processes that often specifically prefer or require Apache 2.0 over MIT.
+- **Neighbour-licence alignment.** Loupe's adjacent OSS security tools — Syft, Grype, Trivy, OpenSSL (since 3.0) — are all Apache 2.0. Same-licence neighbours reduce procurement friction when teams compose multiple tools.
+- **MPL 2.0** was a serious contender for file-level copyleft, but Loupe is a complete tool (not an embedded library), so file-level copyleft adds friction without clear benefit. Saved for cases where the share-back requirement materially matters.
+- **AGPL** would catch SaaS competitors but creates real adoption friction; the dual-licence model (AGPL + commercial) requires CLA infrastructure that's premature for the project's stage.
+- **Proprietary** would contradict the value proposition (transparency for security audits).
+
+The trade-off accepted: **no commercial support contract.** Users self-support, file issues, contribute fixes. Acceptable for a project whose deployment is local-first and whose maintenance burden is bounded.
+
+**Copyright holder:** Fadi Labib (`github@fadilabib.com`), as the originating author. Future contributors retain copyright on their contributions per usual Apache 2.0 custom; no CLA required at this stage.
+
+---
+
 ## D-14 — Defer commit signing and off-repo retention to v1.x
 
 **Considered as v1.0 features, deferred:**

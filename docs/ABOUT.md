@@ -43,6 +43,112 @@ Future lenses we anticipate (in roadmap order):
 
 None of these are committed; they're directional. The work to deliver each one is roughly "build one lens" — significantly less than the platform work that v1 represents.
 
+## Why Loupe exists — the value proposition
+
+Each of these is a deliberate choice, not a marketing claim. The "why we picked it" reasoning is at least as important as the choice itself.
+
+### Open source, Apache 2.0-licensed
+Threat modelling is a security activity. Security tools that are closed-source ask you to trust their analysis without verification. **Apache 2.0 means you can read every line, fork the project, integrate it into a commercial product, audit it for backdoors, or strip pieces out for your own use.** Apache 2.0 adds an explicit patent grant from contributors to users and a trademark non-grant that protects the project name. No GPL viral effects, no AGPL deployment restrictions, no "free for community, contact sales for enterprise" upsell. The author's name is in `LICENSE`; everything else is yours.
+
+The trade-off: no formal SLA, no commercial support contract. We accept that explicitly. For a security tool with auditor implications, transparency is more valuable than vendor backing.
+
+### Free
+No per-seat fees, no usage limits, no SaaS subscription. You pay only for the LLM tokens consumed by whatever provider you choose — and Loupe's cost-saving levers (prompt caching, shared blackboard, coordinated dispatch) keep that bill realistic. For a docs-only PR, the marginal cost is **less than a tenth of a cent**.
+
+The trade-off: you provide the compute and the LLM API key. We can't promise "your bill will be zero." But we can promise the bill scales with use, not with seats.
+
+### No vendor lock-in (multi-LLM)
+PydanticAI-native multi-provider support means `THREATLENS_MODEL=anthropic:claude-opus-4-7` or `openai:gpt-5` or `google-gla:gemini-2.5-pro` or `ollama:llama-3.3-70b` — same code, different provider. This matters because:
+
+- **Approved-LLM lists exist.** Regulated customers (finance, healthcare, automotive) often have an internal list of permitted LLM vendors. Lock-in eliminates them.
+- **Cross-provider verification is a legitimate audit ask.** "Did you cross-check this threat model against a second model?" — Loupe enables it as a one-line config change.
+- **Cost optimisation works.** Cheap model for bulk CVE annotation; smart model for nuanced threat reasoning. Mix per task.
+- **Vendor risk is real.** Providers go down, raise prices, pivot APIs, get acquired. Lock-in concentrates that risk.
+
+The trade-off: harder to deeply optimise for one provider's edge features. We accept that trade.
+
+### No vendor lock-in (no SaaS, local-first)
+All artefacts live in your repo as plain files. There is no Loupe-hosted service, no telemetry, no cloud database. Migration cost is zero — your `.loupe/` directory IS the state. See [`DATA-HANDLING.md`](DATA-HANDLING.md) for the full data flow.
+
+The trade-off: no centralised dashboard, no cross-repo aggregation in v1. If you need those, you build them on top — the artefacts are structured data, perfectly consumable.
+
+### Multi-flow: one core, three frontends
+Same engine, three ways to invoke:
+
+- **`loupe ci`** — runs on every PR via a tiny GitHub Action (or any CI). Producer of the proposal-PR pattern.
+- **`loupe chat`** — interactive terminal session. Default-N confirmations on every protected-path change.
+- **`loupe mcp`** — exposes Loupe's tools and workflows over the Model Context Protocol. Claude Code, Cursor, ChatGPT desktop, or any MCP-aware client can drive Loupe directly.
+
+Each frontend is thin; the core does all the work. The same artefacts, the same enforcement, the same RunContext blackboard apply to all three. This was a deliberate decision (D-02): both modes first-class from day one, so the platform never becomes one mode bolted onto another.
+
+### Plugin-extensible (multiple domains)
+v1 ships **ThreatLens** for STRIDE-based security threat modelling. The platform supports more lenses on the same core:
+
+- **SafetyLens** (future) — ISO 26262 / HARA for functional safety
+- **PrivacyLens** (future) — LINDDUN / GDPR DPIA for data protection
+- **AIRiskLens** (future) — NIST AI RMF / MAESTRO for AI/ML risk
+
+Each is a separately-installable pip package that registers via Python entry points. Adding a domain doesn't fork the project; it just installs another lens. The plugin contract (six methods, recorded in D-11) is intentionally minimal — we'll refine it when the second lens lands rather than over-design upfront (D-04).
+
+### Auditor-credible by design
+Four enforcement layers (D-08):
+
+1. **Tool surface** — the agent's filesystem-write tools enforce a path allow-list in code, not in prompt instructions
+2. **Branch namespace** — the CI runner can only push to `loupe/proposal-*` branches; CODEOWNERS gates protected paths
+3. **`loupe verify`** — local pre-commit hook + required CI check; verifies hash chain + authorship
+4. **Interactive UX gate** — every protected-path proposal renders as a diff with default-N prompt
+
+Plus standards-conformant outputs (CycloneDX SBOM, OpenVEX statements, STRIDE threats with stable IDs) so a regulator's tooling can verify Loupe's outputs without trusting Loupe. Git history is the audit substrate.
+
+### CI-friendly and cost-disciplined
+Three cost-saving levers (D-10), each built into the architecture rather than relying on individual lens authors to remember:
+
+1. **Stable-prefix prompt assembly** — the part of the prompt that's identical across lens calls (system framing, `context.md`, diff summary, SBOM delta) is paid full price once and ~10% on subsequent calls via Anthropic's prompt cache
+2. **Shared blackboard (RunContext)** — diff parsing, SBOM generation, CVE matching happens once per run; lenses read, never re-derive
+3. **Coordinated dispatch** — the coordinator skips lenses with low relevance to a given diff. A docs-only PR triggers zero LLM calls.
+
+Illustrative per-PR cost (Claude Opus): docs-only ~$0.001, single-dependency change ~$0.07, new-endpoint PR ~$0.11, three-lens analysis ~$0.21. Naive baselines (no cache, no skip) are 3–5× higher.
+
+### AI-assistant native (MCP)
+The MCP server exposes Loupe's capabilities in two namespaces:
+
+- **`loupe.tools.*`** — granular operations (list threats, propose a threat, query the knowledge graph)
+- **`loupe.workflows.*`** — high-level workflows (analyse a diff, draft an audit pack)
+
+This means Claude Code, Cursor, ChatGPT desktop, or any MCP-aware client can drive Loupe directly. Your developer asks Claude Code "what threats does this PR introduce?" and Claude Code calls `loupe.workflows.run_for_diff` — same enforcement, same artefacts.
+
+The trade-off: an extra moving piece in the architecture. We accept it because the alternative (engineers re-explaining context to their AI every conversation) is a worse user experience than "Claude Code already knows the threat model because Loupe maintains it."
+
+### CRA-Annex-I-shaped from day one
+The artefact set (D-06) wasn't designed for threat modelling first and then retrofitted to CRA. It was designed for **the EU CRA Annex I conformity evidence pack** from the start, with STRIDE as the natural method:
+
+| CRA Annex I Requirement | Loupe artefact that addresses it |
+|---|---|
+| §1 — Risk assessment | `threats.yaml` + `threat-model.md` + `mitigations.yaml` |
+| §1(b)(c) — Secure by design rationale | `decisions/*.md` (ADR-style risk acceptances) |
+| §2 — SBOM | `sbom.cdx.json` (CycloneDX) |
+| §2(c) — Vulnerability handling | `vex.json` (OpenVEX) |
+| Audit trail of conformity-assessment activities | `runs/*.json` (hash-chained) |
+
+You can hand these files to an auditor, or to the Concordance / similar platforms that ingest engineering data into a CRA submission package.
+
+---
+
+## Honest trade-offs
+
+A balanced statement of value means stating the costs too:
+
+- **Pre-alpha.** Phases 4–10 of the implementation plan remain. Quality of threat-modelling output is unproven until Phase 6 lands.
+- **One lens at v1.** Multi-domain is the design intent; the second lens hasn't been built yet.
+- **STRIDE only.** No attack trees, no DREAD scoring, no Gherkin test-case generation in v1. StrideGPT has these.
+- **GitHub-first VCS.** GitLab / Gitea / Bitbucket adapters are designed-for but not implemented.
+- **No managed UI.** Loupe is local-first by choice; if you need a dashboard, you build it from the structured outputs.
+- **Self-supported.** Open-source, Apache 2.0, no commercial support contract.
+
+If those are dealbreakers for you, the comparison table in [`COMPARISON.md`](COMPARISON.md) points to alternatives that might fit better.
+
+---
+
 ## Why the name avoids "compliance"
 
 A product that calls itself a "compliance agent" sends two unintended signals:

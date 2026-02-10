@@ -21,6 +21,44 @@ A platform of analysis **lenses** for software-engineering risk activities. v1 s
 
 ---
 
+## Why Loupe — the value proposition
+
+### What you get
+
+| Value | What it means in practice |
+|---|---|
+| **Open source, Apache 2.0 licence** | Read every line, fork it, integrate it, ship it as-is in a commercial product. No license fear, no GPL viral concerns. See [`LICENSE`](LICENSE). |
+| **Free** | No per-seat fees, no usage limits, no SaaS subscription, no "contact sales" tier. You pay only for whatever LLM provider you choose to route to. |
+| **No vendor lock-in (multi-LLM)** | Anthropic, OpenAI, Google, Mistral, Groq, Cohere, Ollama, local LLMs, Bedrock — switch with one env var (`THREATLENS_MODEL=…`). Your security-team's "approved LLM list" doesn't block adoption. |
+| **No vendor lock-in (no SaaS)** | Local-first. All artefacts live in your repo as plain files. No Loupe-hosted backend, no telemetry, no cloud database. Migrate away (or never use) by copying the `.loupe/` directory. |
+| **Multi-flow: one core, three frontends** | `loupe ci` runs on every PR. `loupe chat` runs interactively in the terminal. `loupe mcp` exposes the same capabilities to Claude Code, Cursor, ChatGPT desktop, or any MCP-aware client. Same artefacts, same enforcement, in all three. |
+| **Plugin-extensible (multiple domains)** | v1 ships **ThreatLens** (security). The platform supports `SafetyLens` (ISO 26262 / HARA), `PrivacyLens` (GDPR / LINDDUN), `AIRiskLens` (NIST AI RMF) as separate pip-installable lenses on the same core. One workflow, many domains. |
+| **Auditor-credible by design** | Four-layer write-boundary enforcement, hash-chained run records, standards-conformant artefacts (CycloneDX SBOMs, OpenVEX statements, STRIDE threats with stable IDs). Git history is the audit substrate. |
+| **CI-friendly and cost-disciplined** | Three cost-saving levers built in: stable-prefix prompt caching, shared blackboard (no recompute across lenses), coordinated dispatch (skip irrelevant lenses for trivial PRs). Illustrative per-PR cost: ~$0.001 for docs-only PRs, ~$0.11 for a meaningful code change. |
+| **AI-assistant native** | The MCP server lets Claude Code or Cursor ask "what threats does this PR introduce?" without re-explaining your codebase. The same enforcement applies whether you drive Loupe yourself or your AI assistant does. |
+| **CRA-Annex-I shaped** | Outputs (threat model, mitigations, SBOM, VEX, decision log) match Annex I conformity evidence directly. Not a regulatory afterthought; designed against the requirements from D-01. |
+
+### How this compares with alternatives
+
+| If you also looked at … | What Loupe offers beyond it |
+|---|---|
+| [**StrideGPT**](https://github.com/mrwadams/stride-gpt) (OSS, one-shot STRIDE) | Continuous (every PR) + persistent (in-repo) + multi-domain + CRA-shaped + enforcement layers + MCP exposure |
+| **IriusRisk** (commercial, ~42% market share) | Local-first (vs SaaS), multi-LLM (vs single-vendor), OSS (vs commercial), pluggable (vs single-domain), free (vs licence fee) |
+| **OWASP Threat Dragon** (OSS, manual) | AI-drafted (vs manual diagrams), diff-aware (vs one-shot), CRA-shaped (vs no regulatory framing), CI-native (vs desktop tool) |
+| **Concordance** (commercial, CRA evidence) | Goes deep on threat-modelling specifically; complementary not competitive |
+| **Snyk / Trivy / Wiz** (vuln scanners) | Different category — they find vulns, Loupe builds threat models around them. Run both. |
+| **Claude Code / Cursor** (AI coding assistants) | Different purpose — they write code, Loupe reasons about risk. Compose via MCP. |
+
+See [`docs/COMPARISON.md`](docs/COMPARISON.md) for the deeper analysis.
+
+### Why we built it instead of using one of the above
+
+Honest answer: **the platform shape is the point**, not the threat-modelling technique. Six of the seven Loupe-specific values above are about *being a platform* (plugin architecture, in-repo artefacts, enforcement, MCP, structured outputs, multi-frontend). Only one is about *doing STRIDE threat modelling*. Existing tools each cover one or two pieces; none combine them. If your future plans include multiple regulated domains, continuous operation, and auditor-credible artefacts, no single existing tool fits.
+
+If your plans are smaller — one team, one domain, occasional threat modelling — use [StrideGPT](https://github.com/mrwadams/stride-gpt) and skip the platform. We say so up front because that's honest engineering, not marketing.
+
+---
+
 ## Who Loupe is for
 
 - **Security engineers** who want threat modelling that responds to actual code changes rather than living in stale Confluence pages.
@@ -98,4 +136,4 @@ What's not yet wired up: the Lens API (Phase 4), the coordinator + prompt builde
 
 ## Licence
 
-Not yet decided. Currently treat this as "all rights reserved" while we settle on a licence.
+**Apache 2.0.** See [`LICENSE`](LICENSE). Patent grant included; trademark not granted. Use it, fork it, integrate it, ship it. Attribution appreciated but not required.
