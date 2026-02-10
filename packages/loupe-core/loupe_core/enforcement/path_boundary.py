@@ -26,6 +26,9 @@ class PathBoundary:
     @staticmethod
     def _match(path: str, glob: str) -> bool:
         if glob.endswith("/**"):
+            # Recursive prefix glob: match exactly the prefix or any descendant
+            # path under it. We must NOT match a path that shares the prefix as
+            # a substring (e.g., `.loupe/**` must not match `.loupe-old/x`).
             prefix = glob[:-3]
-            return path == prefix or path.startswith(prefix + "/") or path.startswith(prefix)
+            return path == prefix or path.startswith(prefix + "/")
         return fnmatch.fnmatchcase(path, glob)
