@@ -1,22 +1,23 @@
 """ThreatLens — Loupe's v1 lens for STRIDE-based threat modelling.
 
-Phase 6 of the implementation plan fleshes out the real PydanticAI agent
-and the tool surface. This module provides the minimum required by the
-Lens protocol so that the entry point loads cleanly and the platform's
-end-to-end plumbing can be exercised without an LLM call.
+Wires the PydanticAI agent (defined in agent.py) into the Lens protocol.
+The lens is responsible for: declaring static capabilities, computing
+relevance from the diff (pure Python, no LLM), and orchestrating one
+agent invocation when run.
 
-The `is_relevant()` heuristic is already implemented (Task 6.1) because
-it's pure Python and no LLM. The `run()` method is a no-op until Task 6.3
-wires in the PydanticAI agent; calling `run()` on this stub will produce
-no artefacts but will not error.
+Per D-16, the system prompt at prompts/system.md is informed by
+StrideGPT's prompt structure (MIT-licensed prior art).
 """
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 from loupe_core.enforcement.path_boundary import PathBoundary
 from loupe_core.lens_api import LensCapabilities, McpTool, McpWorkflow
 from loupe_core.run_context import LensRunPlan, RelevanceScore, RunContext
+
+from loupe_threatlens.agent import DEFAULT_MODEL, AgentDeps, build_agent
 
 _CODE_EXTS = (
     ".py", ".ts", ".tsx", ".js", ".jsx", ".go", ".rs",
@@ -80,5 +81,23 @@ class ThreatLens:
         boundary: PathBoundary,
         loupe_dir: Path,
     ) -> None:
-        """Stub. Phase 6 (Task 6.3) wires in the PydanticAI agent + tool calls."""
-        return None
+        """Invoke the PydanticAI agent for one threat-modelling pass.
+
+        The agent uses `propose_threat` (a tool from tools.py) to add
+        threats to threats.yaml via the Layer-1-enforced write path. The
+        agent's free-text return value is discarded; structured outputs
+        are the artefacts written through the tool surface.
+        """
+        model_id = os.environ.get("THREATLENS_MODEL", DEFAULT_MODEL)
+        agent = build_agent(model_id)
+        deps = AgentDeps(
+            ctx=ctx,
+            boundary=boundary,
+            loupe_dir=loupe_dir,
+            model_id=model_id,
+        )
+        prompt = plan_entry.sub_prompt or (
+            "Analyse the provided diff and project context for STRIDE threats. "
+            "Use the propose_threat tool for each threat you identify."
+        )
+        await agent.run(prompt, deps=deps)
