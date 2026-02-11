@@ -2,7 +2,7 @@ name: 'Loupe'
 description: 'Run Loupe lenses on a pull request and propose threat-model updates'
 inputs:
   pr:
-    description: 'Pull request number'
+    description: 'Pull request number (digits only)'
     required: true
   config:
     description: 'Path to loupe config'
@@ -11,8 +11,31 @@ inputs:
 runs:
   using: 'composite'
   steps:
-    - shell: bash
+    - name: Validate and run Loupe
+      shell: bash
+      env:
+        # Pass inputs through env vars rather than direct shell interpolation
+        # so untrusted values can't break out of the command line.
+        INPUT_PR: ${{ inputs.pr }}
+        INPUT_CONFIG: ${{ inputs.config }}
       run: |
         set -euo pipefail
+
+        # Validate PR is digits only — defends against shell injection through
+        # the PR input even though it should always come from GitHub itself.
+        if ! [[ "${INPUT_PR}" =~ ^[0-9]+$ ]]; then
+          echo "::error::pr input must be digits only, got: ${INPUT_PR}" >&2
+          exit 64
+        fi
+
+        # Validate config path: no NULs, no shell metacharacters, not absolute
+        # outside the workspace. Empty is acceptable (default applies).
+        case "${INPUT_CONFIG}" in
+          *$'\n'*|*$'\0'*|*';'*|*'|'*|*'&'*|*'`'*|*'$('*)
+            echo "::error::config input contains disallowed characters" >&2
+            exit 64
+            ;;
+        esac
+
         pip install loupe-cli loupe-threatlens
-        loupe ci --pr ${{ inputs.pr }} --config ${{ inputs.config }}
+        loupe ci --pr "${INPUT_PR}" --config "${INPUT_CONFIG}"
