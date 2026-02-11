@@ -1,15 +1,15 @@
-from datetime import datetime
 import shutil
+from datetime import datetime
 from pathlib import Path
+
 import pytest
-from loupe_core.run_context import RunContext, RelevanceScore, BootstrapInputs
-from loupe_core.lens_api import LensCapabilities
+from loupe_core.config import LensActivation, LoupeConfig
 from loupe_core.coordinator import build_run_plan
 from loupe_core.dispatcher import dispatch_plan
-from loupe_core.config import LoupeConfig, LensActivation
-from loupe_core.tools import write_agent_artifact
 from loupe_core.enforcement.path_boundary import PathBoundary
-
+from loupe_core.lens_api import LensCapabilities
+from loupe_core.run_context import BootstrapInputs, RelevanceScore, RunContext
+from loupe_core.tools import write_agent_artifact
 
 FIXTURES = Path(__file__).parent / "fixtures"
 

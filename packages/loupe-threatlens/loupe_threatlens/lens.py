@@ -11,10 +11,12 @@ wires in the PydanticAI agent; calling `run()` on this stub will produce
 no artefacts but will not error.
 """
 from __future__ import annotations
-from pathlib import Path
-from loupe_core.lens_api import LensCapabilities
-from loupe_core.run_context import RunContext, RelevanceScore
 
+from pathlib import Path
+
+from loupe_core.enforcement.path_boundary import PathBoundary
+from loupe_core.lens_api import LensCapabilities, McpTool, McpWorkflow
+from loupe_core.run_context import LensRunPlan, RelevanceScore, RunContext
 
 _CODE_EXTS = (
     ".py", ".ts", ".tsx", ".js", ".jsx", ".go", ".rs",
@@ -48,11 +50,11 @@ class ThreatLens:
         # Phase 6 (Task 6.3) returns a configured PydanticAI Agent.
         return None
 
-    def mcp_tools(self) -> list:
+    def mcp_tools(self) -> list[McpTool]:
         # Phase 9 (Task 9.3) returns the granular MCP tool list.
         return []
 
-    def mcp_workflows(self) -> list:
+    def mcp_workflows(self) -> list[McpWorkflow]:
         # Phase 9 returns workflow definitions.
         return []
 
@@ -74,9 +76,9 @@ class ThreatLens:
     async def run(
         self,
         ctx: RunContext,
-        plan_entry,
-        boundary,
-        loupe_dir,
+        plan_entry: LensRunPlan,
+        boundary: PathBoundary,
+        loupe_dir: Path,
     ) -> None:
         """Stub. Phase 6 (Task 6.3) wires in the PydanticAI agent + tool calls."""
         return None

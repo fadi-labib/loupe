@@ -1,5 +1,6 @@
 from datetime import datetime
-from loupe_core.run_context import RunContext, Fact, CodeDiff, RelevanceScore
+
+from loupe_core.run_context import CodeDiff, Fact, RunContext
 
 
 def _new_ctx() -> RunContext:
@@ -8,7 +9,10 @@ def _new_ctx() -> RunContext:
         mode="ci",
         started_at=datetime(2026, 5, 13, 14, 32),
         user_intent="analyze diff",
-        diff=CodeDiff(base_sha="a", head_sha="b", changed_paths=["src/x.py"], added_lines=10, removed_lines=2, raw_unified=""),
+        diff=CodeDiff(
+            base_sha="a", head_sha="b", changed_paths=["src/x.py"],
+            added_lines=10, removed_lines=2, raw_unified="",
+        ),
         sbom_delta=None,
         project=None,
         plan=[],

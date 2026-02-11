@@ -1,8 +1,9 @@
 from datetime import date
+
 import pytest
-from pydantic import ValidationError
-from loupe_core.artifacts.mitigation import Mitigation, MitigationsFile, Evidence
+from loupe_core.artifacts.mitigation import Evidence, Mitigation, MitigationsFile
 from loupe_core.artifacts.types import MitigationStatus
+from pydantic import ValidationError
 
 
 def _ev():

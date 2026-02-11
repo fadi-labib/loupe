@@ -20,5 +20,5 @@ def test_threatlens_entry_point_loads():
 def test_threatlens_discoverable_via_registry():
     from loupe_core.lens_registry import discover_lenses
     lenses = discover_lenses()
-    names = {l.capabilities.name for l in lenses}
+    names = {lens.capabilities.name for lens in lenses}
     assert "threatlens" in names

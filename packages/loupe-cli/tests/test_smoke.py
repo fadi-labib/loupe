@@ -1,5 +1,5 @@
-from typer.testing import CliRunner
 from loupe_cli.__main__ import app
+from typer.testing import CliRunner
 
 runner = CliRunner()
 

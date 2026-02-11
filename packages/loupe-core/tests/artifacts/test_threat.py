@@ -1,8 +1,9 @@
 from datetime import date
+
 import pytest
-from pydantic import ValidationError
 from loupe_core.artifacts.threat import Threat, ThreatsFile
-from loupe_core.artifacts.types import Severity, ThreatStatus, StrideCategory
+from loupe_core.artifacts.types import Severity, StrideCategory, ThreatStatus
+from pydantic import ValidationError
 
 
 def _valid_threat_kwargs():

@@ -1,7 +1,8 @@
 from __future__ import annotations
-from loupe_core.run_context import RunContext, LensRunPlan, RelevanceScore
-from loupe_core.lens_api import Lens
+
 from loupe_core.config import LoupeConfig
+from loupe_core.lens_api import Lens
+from loupe_core.run_context import LensRunPlan, RelevanceScore, RunContext
 
 
 def build_run_plan(ctx: RunContext, lenses: list[Lens], config: LoupeConfig) -> list[LensRunPlan]:

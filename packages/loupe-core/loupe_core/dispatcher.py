@@ -1,8 +1,10 @@
 from __future__ import annotations
+
 from pathlib import Path
-from loupe_core.run_context import RunContext
+
 from loupe_core.enforcement.path_boundary import PathBoundary
 from loupe_core.lens_api import Lens
+from loupe_core.run_context import RunContext
 
 
 async def dispatch_plan(
@@ -16,7 +18,7 @@ async def dispatch_plan(
     Each lens must implement `async def run(self, ctx, plan_entry, boundary, loupe_dir)`.
     Lenses are looked up by name from the provided list.
     """
-    by_name = {l.capabilities.name: l for l in lenses}
+    by_name = {lens.capabilities.name: lens for lens in lenses}
     for plan_entry in ctx.plan:
         lens = by_name[plan_entry.lens_name]
         await lens.run(ctx, plan_entry, boundary, loupe_dir)

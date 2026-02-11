@@ -1,7 +1,10 @@
 from __future__ import annotations
-from typing import Protocol, runtime_checkable, Any
+
+from typing import Any, Protocol, runtime_checkable
+
 from pydantic import BaseModel, Field
-from loupe_core.run_context import RunContext, RelevanceScore
+
+from loupe_core.run_context import RelevanceScore, RunContext
 
 
 class LensCapabilities(BaseModel):
@@ -36,4 +39,10 @@ class Lens(Protocol):
     def mcp_tools(self) -> list[McpTool]: ...
     def mcp_workflows(self) -> list[McpWorkflow]: ...
     def is_relevant(self, run_ctx: RunContext) -> RelevanceScore: ...
-    async def run(self, ctx: RunContext, plan_entry: Any, boundary: Any, loupe_dir: Any) -> None: ...
+    async def run(
+        self,
+        ctx: RunContext,
+        plan_entry: Any,
+        boundary: Any,
+        loupe_dir: Any,
+    ) -> None: ...

@@ -1,7 +1,7 @@
+
 import pytest
-from pathlib import Path
 from loupe_core.enforcement.path_boundary import PathBoundary
-from loupe_core.tools import write_agent_artifact, BoundaryViolation
+from loupe_core.tools import BoundaryViolation, write_agent_artifact
 
 
 def test_writes_allowed_path(tmp_path):

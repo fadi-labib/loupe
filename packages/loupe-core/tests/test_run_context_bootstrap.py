@@ -1,7 +1,8 @@
+import shutil
 from datetime import datetime
 from pathlib import Path
-import shutil
-from loupe_core.run_context import RunContext, BootstrapInputs
+
+from loupe_core.run_context import BootstrapInputs, RunContext
 
 FIXTURES = Path(__file__).parent / "fixtures"
 

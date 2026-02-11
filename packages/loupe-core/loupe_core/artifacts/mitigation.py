@@ -1,9 +1,12 @@
 from __future__ import annotations
+
 from datetime import date
 from pathlib import Path
 from typing import Annotated, Literal
+
 from pydantic import BaseModel, Field, StringConstraints
 from ruamel.yaml import YAML
+
 from loupe_core.artifacts.types import MitigationStatus
 
 MitigationId = Annotated[str, StringConstraints(pattern=r"^M-\d{3,}$")]
@@ -40,6 +43,6 @@ class MitigationsFile(BaseModel):
             _yaml.dump(self.model_dump(mode="json"), f)
 
     @classmethod
-    def load(cls, path: Path) -> "MitigationsFile":
+    def load(cls, path: Path) -> MitigationsFile:
         with path.open("r") as f:
             return cls.model_validate(_yaml.load(f) or {})

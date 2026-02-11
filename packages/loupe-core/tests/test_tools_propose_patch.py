@@ -1,7 +1,8 @@
-import pytest
 from pathlib import Path
+
+import pytest
 from loupe_core.enforcement.path_boundary import PathBoundary
-from loupe_core.tools import propose_patch, BoundaryViolation
+from loupe_core.tools import BoundaryViolation, propose_patch
 
 
 def test_stages_proposal_in_proposed_dir(tmp_path):

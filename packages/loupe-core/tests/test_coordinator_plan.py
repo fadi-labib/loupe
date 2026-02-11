@@ -1,15 +1,19 @@
 from datetime import datetime
-from loupe_core.run_context import RunContext, CodeDiff, RelevanceScore
-from loupe_core.lens_api import LensCapabilities
+
+from loupe_core.config import LensActivation, LoupeConfig
 from loupe_core.coordinator import build_run_plan
-from loupe_core.config import LoupeConfig, LensActivation
+from loupe_core.lens_api import LensCapabilities
+from loupe_core.run_context import CodeDiff, RelevanceScore, RunContext
 
 
 def _ctx(paths: list[str]) -> RunContext:
     return RunContext(
         run_id="r", mode="ci", started_at=datetime(2026, 5, 13),
         user_intent="",
-        diff=CodeDiff(base_sha="a", head_sha="b", changed_paths=paths, added_lines=1, removed_lines=0, raw_unified=""),
+        diff=CodeDiff(
+            base_sha="a", head_sha="b", changed_paths=paths,
+            added_lines=1, removed_lines=0, raw_unified="",
+        ),
         sbom_delta=None, project=None, plan=[], knowledge=None,
     )
 
@@ -115,4 +119,6 @@ def test_is_relevant_called_once_per_lens():
     lenses = [_CountingLens("a", 0.9), _CountingLens("b", 0.9)]
     cfg = _cfg({"a": 0.3, "b": 0.3})
     build_run_plan(ctx, lenses, cfg)
-    assert call_counts == {"a": 1, "b": 1}, f"is_relevant should be called once per lens, got {call_counts}"
+    assert call_counts == {"a": 1, "b": 1}, (
+        f"is_relevant should be called once per lens, got {call_counts}"
+    )

@@ -1,8 +1,11 @@
 from __future__ import annotations
+
 import json
 import shutil
 import subprocess
 from pathlib import Path
+from typing import Any
+
 from loupe_core.run_context import SBOMDelta
 
 
@@ -31,7 +34,7 @@ def generate_sbom(*, repo_path: Path, output_path: Path) -> Path:
     return output_path
 
 
-def diff_sboms(*, before: dict, after: dict) -> SBOMDelta:
+def diff_sboms(*, before: dict[str, Any], after: dict[str, Any]) -> SBOMDelta:
     before_map = {c["name"]: c["version"] for c in before.get("components", [])}
     after_map = {c["name"]: c["version"] for c in after.get("components", [])}
     added = [n for n in after_map if n not in before_map]

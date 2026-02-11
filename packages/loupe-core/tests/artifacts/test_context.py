@@ -1,6 +1,7 @@
 from pathlib import Path
+
 import pytest
-from loupe_core.artifacts.context import ProjectContext, ContextMdError
+from loupe_core.artifacts.context import ContextMdError, ProjectContext
 
 FIXTURES = Path(__file__).parent / "fixtures"
 

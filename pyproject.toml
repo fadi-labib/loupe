@@ -7,8 +7,9 @@ requires-python = ">=3.13"
 [tool.uv.workspace]
 members = ["packages/*"]
 
-[tool.uv]
-dev-dependencies = [
+# PEP-735 dependency groups (replaces the deprecated `tool.uv.dev-dependencies`).
+[dependency-groups]
+dev = [
     "pytest>=8",
     "pytest-asyncio>=0.24",
     "pytest-vcr>=1.0",
@@ -22,7 +23,22 @@ target-version = "py313"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "ANN"]
-ignore = ["ANN101", "ANN102"]
+# ANN101/ANN102 (typing of `self`/`cls`) were removed from ruff — they need
+# no entry here. ANN401 (banning `Any`) is too strict for our protocol
+# layer; the framework legitimately uses `Any` for dependency-injection
+# type erasure.
+ignore = ["ANN401"]
+
+# Tests don't need strict type annotations. Test runners discover them by
+# attribute name; explicit `-> None` on every test function adds noise
+# without catching bugs. F841 (unused-variable) is also relaxed in tests
+# because fixtures bind names that may not be used by every test.
+[tool.ruff.lint.per-file-ignores]
+"**/tests/**" = ["ANN001", "ANN201", "ANN202", "ANN204", "F841"]
+# Typer CLI handlers use `typer.Option(...)` calls in argument defaults by
+# design — that's the framework's parameter-introspection API. B008's
+# "no function calls in defaults" rule produces false positives here.
+"**/loupe_cli/**" = ["B008"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
@@ -32,3 +48,12 @@ addopts = "--import-mode=importlib"
 [tool.mypy]
 strict = true
 python_version = "3.13"
+# Test modules are checked but allowed to be sloppy. Pydantic models in
+# tests don't always declare their full type chain, and the importlib
+# pytest mode means multiple `test_smoke.py` modules coexist — mypy
+# would otherwise complain about duplicate module names.
+explicit_package_bases = true
+exclude = [
+    "packages/[^/]+/tests/.*",
+    "tests/.*",
+]

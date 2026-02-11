@@ -1,6 +1,5 @@
 from loupe_core.diff import parse_unified_diff
 
-
 SAMPLE = """\
 diff --git a/src/payments/refund.py b/src/payments/refund.py
 new file mode 100644

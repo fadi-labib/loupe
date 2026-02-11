@@ -1,8 +1,7 @@
 import json
-from pathlib import Path
 from unittest.mock import patch
-from loupe_core.sbom import generate_sbom, diff_sboms
 
+from loupe_core.sbom import diff_sboms, generate_sbom
 
 SAMPLE_BEFORE = {"components": [
     {"name": "requests", "version": "2.30.0", "type": "library"},

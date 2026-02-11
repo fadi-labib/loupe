@@ -1,7 +1,11 @@
 from datetime import datetime
-from pathlib import Path
-import json
-from loupe_core.artifacts.run_record import RunRecord, LensConsidered, save_run_record, load_run_records
+
+from loupe_core.artifacts.run_record import (
+    LensConsidered,
+    RunRecord,
+    load_run_records,
+    save_run_record,
+)
 
 
 def _record(run_id: str, prev: str | None) -> RunRecord:

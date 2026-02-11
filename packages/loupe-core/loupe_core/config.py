@@ -1,5 +1,7 @@
 from __future__ import annotations
+
 from pathlib import Path
+
 from pydantic import BaseModel, Field
 from ruamel.yaml import YAML
 
@@ -38,7 +40,9 @@ class LensActivation(BaseModel):
 class LoupeConfig(BaseModel):
     schema_version: int = 1
     models: ModelsConfig = ModelsConfig(default="anthropic/claude-opus-4-7")
-    limits: LimitsConfig = LimitsConfig(per_run_max_usd=2.5, per_run_max_tokens_in=500_000, per_run_max_steps=30)
+    limits: LimitsConfig = LimitsConfig(
+        per_run_max_usd=2.5, per_run_max_tokens_in=500_000, per_run_max_steps=30,
+    )
     ci: CIConfig = CIConfig()
     agent_writable_paths: list[str] = Field(default_factory=list)
     lenses: dict[str, LensActivation] = Field(default_factory=dict)

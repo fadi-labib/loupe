@@ -1,6 +1,7 @@
-import pytest
 from loupe_core.artifacts.types import (
-    Severity, ThreatStatus, MitigationStatus, StrideCategory, VexStatus,
+    Severity,
+    StrideCategory,
+    ThreatStatus,
 )
 
 

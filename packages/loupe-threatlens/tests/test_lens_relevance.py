@@ -1,13 +1,17 @@
 from datetime import datetime
+
+from loupe_core.run_context import CodeDiff, RunContext
 from loupe_threatlens.lens import ThreatLens
-from loupe_core.run_context import RunContext, CodeDiff
 
 
 def _ctx(paths: list[str]) -> RunContext:
     return RunContext(
         run_id="r", mode="ci", started_at=datetime(2026, 5, 13),
         user_intent="",
-        diff=CodeDiff(base_sha="a", head_sha="b", changed_paths=paths, added_lines=1, removed_lines=0, raw_unified=""),
+        diff=CodeDiff(
+            base_sha="a", head_sha="b", changed_paths=paths,
+            added_lines=1, removed_lines=0, raw_unified="",
+        ),
         sbom_delta=None, project=None, plan=[], knowledge=None,
     )
 

@@ -1,10 +1,13 @@
 from __future__ import annotations
+
 from datetime import date
 from pathlib import Path
 from typing import Annotated
+
 from pydantic import BaseModel, Field, StringConstraints
 from ruamel.yaml import YAML
-from loupe_core.artifacts.types import Severity, ThreatStatus, StrideCategory
+
+from loupe_core.artifacts.types import Severity, StrideCategory, ThreatStatus
 
 ThreatId = Annotated[str, StringConstraints(pattern=r"^T-\d{3,}$")]
 ElementId = Annotated[str, StringConstraints(pattern=r"^E-\d{3,}$")]
@@ -43,7 +46,7 @@ class ThreatsFile(BaseModel):
             _yaml.dump(data, f)
 
     @classmethod
-    def load(cls, path: Path) -> "ThreatsFile":
+    def load(cls, path: Path) -> ThreatsFile:
         with path.open("r") as f:
             data = _yaml.load(f) or {}
         return cls.model_validate(data)

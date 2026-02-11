@@ -1,11 +1,12 @@
 """Common enum types used across Loupe artifacts."""
 from __future__ import annotations
-from enum import Enum
+
+from enum import StrEnum
 from functools import total_ordering
 
 
 @total_ordering
-class Severity(str, Enum):
+class Severity(StrEnum):
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -21,7 +22,7 @@ class Severity(str, Enum):
         return self._order < other._order
 
 
-class ThreatStatus(str, Enum):
+class ThreatStatus(StrEnum):
     PROPOSED = "proposed"
     ACCEPTED = "accepted"
     MITIGATED = "mitigated"
@@ -29,7 +30,7 @@ class ThreatStatus(str, Enum):
     REJECTED = "rejected"
 
 
-class MitigationStatus(str, Enum):
+class MitigationStatus(StrEnum):
     PROPOSED = "proposed"
     PLANNED = "planned"
     IMPLEMENTED = "implemented"
@@ -37,7 +38,7 @@ class MitigationStatus(str, Enum):
     RETIRED = "retired"
 
 
-class StrideCategory(str, Enum):
+class StrideCategory(StrEnum):
     SPOOFING = "S"
     TAMPERING = "T"
     REPUDIATION = "R"
@@ -46,7 +47,7 @@ class StrideCategory(str, Enum):
     ELEVATION_OF_PRIVILEGE = "E"
 
 
-class VexStatus(str, Enum):
+class VexStatus(StrEnum):
     AFFECTED = "affected"
     NOT_AFFECTED = "not_affected"
     FIXED = "fixed"

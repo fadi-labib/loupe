@@ -1,7 +1,9 @@
 from __future__ import annotations
-from datetime import datetime, date, timezone
+
+from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Annotated, Literal
+
 from pydantic import BaseModel, Field, StringConstraints
 from ruamel.yaml import YAML
 
@@ -60,12 +62,12 @@ class KnowledgeGraph(BaseModel):
             _yaml.dump(self.model_dump(mode="json"), f)
 
     @classmethod
-    def load(cls, path: Path) -> "KnowledgeGraph":
+    def load(cls, path: Path) -> KnowledgeGraph:
         with path.open("r") as f:
             return cls.model_validate(_yaml.load(f) or {})
 
     @classmethod
-    def load_or_empty(cls, path: Path) -> "KnowledgeGraph":
+    def load_or_empty(cls, path: Path) -> KnowledgeGraph:
         if not path.exists():
-            return cls(last_updated=datetime.now(timezone.utc))
+            return cls(last_updated=datetime.now(UTC))
         return cls.load(path)

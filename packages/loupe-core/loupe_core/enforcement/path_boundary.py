@@ -1,6 +1,7 @@
 from __future__ import annotations
-from pathlib import PurePosixPath
+
 import fnmatch
+from pathlib import PurePosixPath
 
 
 class PathBoundary:
@@ -10,7 +11,7 @@ class PathBoundary:
     is absolute, or contains a NUL byte is rejected regardless of the allow-list.
     """
 
-    def __init__(self, writable_globs: list[str]):
+    def __init__(self, writable_globs: list[str]) -> None:
         self._globs = list(writable_globs)
 
     def is_agent_writable(self, path: str) -> bool:

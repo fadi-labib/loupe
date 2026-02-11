@@ -6,8 +6,8 @@ Phase 7 fleshes out the real implementation. Until then, the command must:
 3. Exit non-zero with a clear "not yet implemented" message so the action
    doesn't appear to succeed silently
 """
-from typer.testing import CliRunner
 from loupe_cli.__main__ import app
+from typer.testing import CliRunner
 
 runner = CliRunner()
 

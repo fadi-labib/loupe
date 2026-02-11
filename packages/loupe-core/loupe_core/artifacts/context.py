@@ -1,8 +1,9 @@
 from __future__ import annotations
-from pathlib import Path
-import re
-from pydantic import BaseModel
 
+import re
+from pathlib import Path
+
+from pydantic import BaseModel
 
 _REQUIRED_SECTIONS = [
     "Product description",
@@ -27,7 +28,7 @@ class ProjectContext(BaseModel):
     out_of_scope: list[str]
 
     @classmethod
-    def from_markdown(cls, path: Path) -> "ProjectContext":
+    def from_markdown(cls, path: Path) -> ProjectContext:
         text = path.read_text()
         body = _strip_frontmatter(text)
         sections = _split_sections(body)

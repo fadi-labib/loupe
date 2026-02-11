@@ -1,7 +1,8 @@
 from __future__ import annotations
-import re
-from loupe_core.run_context import CodeDiff
 
+import re
+
+from loupe_core.run_context import CodeDiff
 
 _PATH_RE = re.compile(r"^diff --git a/(.+?) b/.+$")
 

@@ -1,5 +1,7 @@
 from __future__ import annotations
-from importlib.metadata import entry_points
+
+from importlib.metadata import EntryPoints, entry_points
+
 from loupe_core.lens_api import Lens
 
 
@@ -7,7 +9,7 @@ class LensRegistryError(RuntimeError):
     pass
 
 
-def _entry_points(group: str):
+def _entry_points(group: str) -> EntryPoints:
     return entry_points(group=group)
 
 

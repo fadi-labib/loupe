@@ -1,6 +1,11 @@
-from datetime import datetime, date
+from datetime import date, datetime
+
 from loupe_core.artifacts.knowledge import (
-    Asset, Element, Decision, CrossReference, KnowledgeGraph,
+    Asset,
+    CrossReference,
+    Decision,
+    Element,
+    KnowledgeGraph,
 )
 
 

@@ -1,10 +1,13 @@
 from __future__ import annotations
+
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Literal
+
 from pydantic import BaseModel, ConfigDict, Field
-from loupe_core.artifacts.knowledge import KnowledgeGraph
+
 from loupe_core.artifacts.context import ProjectContext
+from loupe_core.artifacts.knowledge import KnowledgeGraph
 
 
 class CodeDiff(BaseModel):
@@ -88,7 +91,7 @@ class RunContext(BaseModel):
         self.facts.append(fact)
 
     @classmethod
-    def bootstrap(cls, inputs: "BootstrapInputs") -> "RunContext":
+    def bootstrap(cls, inputs: BootstrapInputs) -> RunContext:
         # Local import avoids a circular dependency (diff.py imports CodeDiff).
         from loupe_core.diff import parse_unified_diff
 

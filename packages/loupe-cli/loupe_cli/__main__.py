@@ -1,4 +1,5 @@
 from pathlib import Path
+
 import typer
 from loupe_core import __version__
 

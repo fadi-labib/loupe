@@ -1,7 +1,8 @@
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock
-from loupe_core.lens_registry import discover_lenses, LensRegistryError
 from loupe_core.lens_api import LensCapabilities
+from loupe_core.lens_registry import LensRegistryError, discover_lenses
 
 
 class FakeLensA:
@@ -38,7 +39,7 @@ def _fake_entry_points(group):
 def test_discovers_two_lenses():
     with patch("loupe_core.lens_registry._entry_points", _fake_entry_points):
         lenses = discover_lenses()
-    assert {l.capabilities.name for l in lenses} == {"a", "b"}
+    assert {lens.capabilities.name for lens in lenses} == {"a", "b"}
 
 
 def test_rejects_conflicting_artifact_paths():

@@ -1,6 +1,8 @@
 from pathlib import Path
+
 import pytest
-from loupe_core.config import LoupeConfig, load_config
+from loupe_core.config import load_config
+from pydantic import ValidationError
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
@@ -22,6 +24,12 @@ def test_missing_config_raises(tmp_path):
 
 def test_invalid_relevance_threshold_rejected(tmp_path):
     bad = tmp_path / "bad.yaml"
-    bad.write_text("schema_version: 1\nlenses:\n  threatlens:\n    enabled: true\n    minimum_relevance: 1.5\n")
-    with pytest.raises(Exception):  # pydantic ValidationError
+    bad.write_text(
+        "schema_version: 1\n"
+        "lenses:\n"
+        "  threatlens:\n"
+        "    enabled: true\n"
+        "    minimum_relevance: 1.5\n"
+    )
+    with pytest.raises(ValidationError):
         load_config(bad)
