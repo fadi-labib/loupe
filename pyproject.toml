@@ -34,7 +34,7 @@ ignore = ["ANN401"]
 # without catching bugs. F841 (unused-variable) is also relaxed in tests
 # because fixtures bind names that may not be used by every test.
 [tool.ruff.lint.per-file-ignores]
-"**/tests/**" = ["ANN001", "ANN201", "ANN202", "ANN204", "F841"]
+"**/tests/**" = ["ANN001", "ANN003", "ANN201", "ANN202", "ANN204", "F841"]
 # Typer CLI handlers use `typer.Option(...)` calls in argument defaults by
 # design — that's the framework's parameter-introspection API. B008's
 # "no function calls in defaults" rule produces false positives here.
