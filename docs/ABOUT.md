@@ -25,6 +25,13 @@ The bet has three parts:
 
 Loupe is **the platform**. It is domain-agnostic. It knows nothing about STRIDE, ISO 26262, LINDDUN, or NIST AI RMF. It knows about: parsing diffs, generating SBOMs, talking to multiple LLM providers, building cache-friendly prompts, enforcing write boundaries, persisting structured artefacts, exposing tools over MCP, coordinating multiple lenses to share context cheaply, and analysing either an incremental change (a PR diff) or a whole codebase from scratch (`loupe scan`) — same artefacts, same enforcement, different scope of analysis (see [`DESIGN-DECISIONS.md` D-15](DESIGN-DECISIONS.md#d-15--full-repo--no-diff-scans-are-first-class-via-loupe-scan)).
 
+The platform has **two extension points**, not one:
+
+- **Lenses** — *domain* plugins (the noun): ThreatLens for security, future SafetyLens for ISO 26262, future PrivacyLens for GDPR. A lens reasons about a domain.
+- **Capabilities** — *tool-agnostic operation* plugins (the verb): `SbomCapability`, `CveCapability`, `SecretDetectionCapability`, `StaticAnalysisCapability`, etc. A capability does one job and is fulfilled by a backend (Syft, Trivy, gitleaks, Semgrep, …). Multiple backends per capability can compose via modes like `union` or `consensus`. Lenses declare which capabilities they need and the platform resolves the backends. See [`DESIGN-DECISIONS.md` D-18](DESIGN-DECISIONS.md#d-18--capability-abstraction-tool-agnostic-functional-building-blocks) and [`CAPABILITIES.md`](CAPABILITIES.md).
+
+The result: no tool lock-in either. Different teams can run Loupe on Syft or Trivy; with one CVE scanner or three; with belt-and-braces secret detection or a single fast scanner — all via configuration, not code changes.
+
 A **lens** is a Python package that registers with Loupe (via standard Python entry points) and contributes:
 - A PydanticAI agent specialised for one domain
 - Pydantic-typed artefacts that lens owns

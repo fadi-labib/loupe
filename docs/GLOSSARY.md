@@ -14,6 +14,14 @@ Terms you'll encounter across the codebase and docs. Alphabetical.
 
 **BoundaryViolation** — the exception raised when an agent tool attempts to write outside its allow-list. Caught by callers; logged in run records as `enforcement_error`. Surfacing this exception aborts the lens; surfacing it in CI fails the run.
 
+**Capability** — a typed Python Protocol describing one focused, tool-agnostic operation (e.g., `SbomCapability` for SBOM generation, `CveCapability` for CVE matching, `SecretDetectionCapability` for secret scanning). Capabilities are the verbs of the system; lenses are the nouns. A lens declares which capabilities it `requires_capabilities` and the platform resolves backends from registered packages. See [`CAPABILITIES.md`](CAPABILITIES.md) and [`DESIGN-DECISIONS.md` D-18](DESIGN-DECISIONS.md#d-18--capability-abstraction-tool-agnostic-functional-building-blocks).
+
+**CapabilityBackend** — a concrete implementation of a Capability Protocol. Backends are pip-installable packages that register via Python entry points under `loupe.capabilities.<capability_name>` (e.g., `loupe-cap-sbom-syft` provides a `SyftBackend` under `loupe.capabilities.sbom`). Same discovery pattern as lenses.
+
+**CapabilityRegistry** — the runtime facade in `loupe_core/capabilities/` that discovers backends at startup, reads the project's `config.yaml` for backend selection and composition mode, and routes capability calls. Available to lenses as `ctx.capabilities.<capability_name>`.
+
+**Composition mode** — how the registry combines multiple backends for the same capability: `single` (use the first available), `fallback` (try in order on failure), `union` (run all and merge findings), `consensus` (only emit findings agreed by ≥N backends), `pipeline` (chain output of one into the next). Configured per-capability in `config.yaml`. The composition mode is part of the project's audit posture — a regulator can read it.
+
 **CodeDiff** — the parsed representation of a unified diff: base SHA, head SHA, changed paths, added/removed line counts, and the raw unified-diff text. Produced by `parse_unified_diff()` once per `RunContext.bootstrap()`.
 
 **Conformity assessment** — the EU CRA's term for "the process of proving you meet the requirements." Loupe's artefacts (`threats.yaml`, `mitigations.yaml`, `threat-model.md`, `sbom.cdx.json`, `vex.json`) feed CRA Annex I conformity evidence directly.
@@ -58,7 +66,7 @@ Terms you'll encounter across the codebase and docs. Alphabetical.
 
 **Layer 4** — Interactive UX gate. Every protected-path proposal renders as a unified diff with `[y/N/edit/skip]` prompt, default-N. No `--auto-confirm` flag.
 
-**Lens** — a Python package that registers with Loupe via Python entry points (`loupe.lenses` group). Contributes a PydanticAI agent, Pydantic-typed artefacts it owns, MCP tools and workflows, and a pure-Python `is_relevant()` heuristic. v1 ships exactly one: **ThreatLens**.
+**Lens** — a Python package that registers with Loupe via Python entry points (`loupe.lenses` group). Contributes a PydanticAI agent, Pydantic-typed artefacts it owns, MCP tools and workflows, a pure-Python `is_relevant()` heuristic, and a list of `requires_capabilities` (see Capability). v1 ships exactly one: **ThreatLens**. Lenses are the *domain* extension point; Capabilities are the *tool* extension point.
 
 **LensCapabilities** — the static metadata a lens declares: `name`, `domain`, `handles_intent_keywords`, `artifact_paths`, `requires_lenses`. Loupe-core inspects this at registration time (e.g., to detect conflicting `artifact_paths`).
 

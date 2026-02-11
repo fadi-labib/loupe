@@ -14,7 +14,9 @@ A claim worth surfacing up front: **AI-driven threat modelling is now a crowded 
 - A dedicated CRA-evidence product (Concordance) is on market, mapping engineering data to all 21 CRA Annex I requirements.
 - New frameworks (MAESTRO, STRIFE) are emerging specifically for AI/agentic systems.
 
-Loupe's distinctive combination is: **plugin architecture (multiple domains), in-repo local-first artefacts, four-layer write-boundary enforcement, multi-LLM provider-agnostic, and MCP server exposure**. No single tool in the search results matched all five. But several match three or four. Honest read: Loupe is a *recombination* of capabilities that exist elsewhere, with a coherent platform shape — not a category-creating product.
+Loupe's distinctive combination is: **plugin architecture (multiple domains via lenses *and* multiple tools via capabilities), in-repo local-first artefacts, four-layer write-boundary enforcement, multi-LLM provider-agnostic, and MCP server exposure**. No single tool in the search results matched all five. But several match three or four. Honest read: Loupe is a *recombination* of capabilities that exist elsewhere, with a coherent platform shape — not a category-creating product.
+
+One consequence of the capability architecture (see [`CAPABILITIES.md`](CAPABILITIES.md)) is that tools listed below as "competitors" are often Loupe *backends* in disguise. Syft, Trivy, Grype, gitleaks, TruffleHog, Semgrep — these all become registerable backends behind their respective Capability Protocols. The comparison is therefore not "Loupe vs these" but "Loupe vs the typical assembly-by-hand of these."
 
 ---
 

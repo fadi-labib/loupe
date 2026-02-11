@@ -30,6 +30,7 @@ A platform of analysis **lenses** for software-engineering risk activities. v1 s
 | **Open source, Apache 2.0 licence** | Read every line, fork it, integrate it, ship it as-is in a commercial product. No license fear, no GPL viral concerns. See [`LICENSE`](LICENSE). |
 | **Free** | No per-seat fees, no usage limits, no SaaS subscription, no "contact sales" tier. You pay only for whatever LLM provider you choose to route to. |
 | **No vendor lock-in (multi-LLM)** | Anthropic, OpenAI, Google, Mistral, Groq, Cohere, Ollama, local LLMs, Bedrock — switch with one env var (`THREATLENS_MODEL=…`). Your security-team's "approved LLM list" doesn't block adoption. |
+| **No vendor lock-in (multi-tool, pluggable capabilities)** | Every non-LLM tool category (SBOM gen, CVE scan, secret detect, static analysis, license scan, vuln-DB lookup) is a typed Protocol with registerable backends. Run Syft *or* Trivy *or* both-merged. Run TruffleHog *and* gitleaks for belt-and-braces secret detection. Composition modes (single/fallback/union/consensus/pipeline) make audit posture configurable. See [`docs/CAPABILITIES.md`](docs/CAPABILITIES.md). |
 | **No vendor lock-in (no SaaS)** | Local-first. All artefacts live in your repo as plain files. No Loupe-hosted backend, no telemetry, no cloud database. Migrate away (or never use) by copying the `.loupe/` directory. |
 | **Multi-flow: one core, three frontends** | `loupe ci` runs on every PR. `loupe chat` runs interactively in the terminal. `loupe mcp` exposes the same capabilities to Claude Code, Cursor, ChatGPT desktop, or any MCP-aware client. Same artefacts, same enforcement, in all three. |
 | **Plugin-extensible (multiple domains)** | v1 ships **ThreatLens** (security). The platform supports `SafetyLens` (ISO 26262 / HARA), `PrivacyLens` (GDPR / LINDDUN), `AIRiskLens` (NIST AI RMF) as separate pip-installable lenses on the same core. One workflow, many domains. |
@@ -112,6 +113,7 @@ In CI, a tiny composite GitHub Action wraps the CLI:
 | See the actual decisions made (and the alternatives rejected) | [`docs/DESIGN-DECISIONS.md`](docs/DESIGN-DECISIONS.md) |
 | Look up a term used elsewhere in the docs | [`docs/GLOSSARY.md`](docs/GLOSSARY.md) |
 | Understand what data Loupe sends to LLMs (and what it doesn't) | [`docs/DATA-HANDLING.md`](docs/DATA-HANDLING.md) |
+| Understand the capability / tool-agnostic plugin model | [`docs/CAPABILITIES.md`](docs/CAPABILITIES.md) |
 | Compare Loupe with Snyk / Wiz / Trivy / OWASP Threat Dragon / etc. | [`docs/COMPARISON.md`](docs/COMPARISON.md) |
 | Develop on Loupe or write a new lens | [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md) |
 | Read the full technical design spec | [``]() |

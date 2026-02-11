@@ -320,6 +320,45 @@ These are interesting v1.x features. ThreatLens v1 stays focused on STRIDE threa
 
 ---
 
+## D-18 — Capability abstraction (tool-agnostic functional building blocks)
+
+**Considered:**
+- Hardcode each tool (current state: `loupe_core/sbom.py` calls Syft directly; future SBOM/CVE/secret tools would each become a hardcoded module)
+- Pluggable per-tool (e.g., introduce only an `SbomBackend` abstraction; keep CVE / secrets / static-analysis hardcoded)
+- **Generalised capability abstraction** — every non-LLM tool category becomes a typed Protocol with multiple backends discoverable via entry points
+
+**Chosen:** Generalised capability abstraction. A **Capability** is a typed Python `Protocol` describing one functional operation (`SbomCapability`, `CveCapability`, `SecretDetectionCapability`, `StaticAnalysisCapability`, `LicenseScanCapability`, `VulnDbCapability`). **Backends** are concrete implementations that register via entry points (`loupe.capabilities.sbom`, `loupe.capabilities.cve`, etc.). **Composition modes** (`single`, `fallback`, `union`, `consensus`, `pipeline`) let the operator configure how multiple backends interact. Lenses declare `requires_capabilities` and access them via `ctx.capabilities.*`.
+
+Full design at [`CAPABILITIES.md`](CAPABILITIES.md).
+
+**Why:**
+- **Parity with the LLM-provider value.** [VALUES.md §7](VALUES.md#7-multi-llm-by-default-never-single-vendor-lock-in) commits us to no LLM-vendor lock-in via PydanticAI. The original v1 spec accidentally re-introduced lock-in at the tool layer (Syft hardcoded in `sbom.py`). Capabilities extend the same pattern down a layer.
+- **Cross-lens reuse.** ThreatLens needs SBOM, CVE matching, secret detection. SafetyLens (future) will need static analysis, dependency-graph analysis. PrivacyLens will need PII detection, data-flow analysis. Without capabilities, each lens re-implements its own tool wrappers. With capabilities, a `SecretDetectionCapability` is shared infrastructure.
+- **Composition is audit-relevant.** "Run TruffleHog AND gitleaks and merge" (`union`) catches what either alone misses. "Require 2-of-3 static analysers to corroborate" (`consensus`) reduces false-positive noise. These are real audit patterns the current code can't express.
+- **Tool availability varies.** A CI runner may have Trivy but not Syft, or vice versa. The agent's logic shouldn't care which is installed; that's the registry's job.
+- **The naming insight from D-04/D-05 applies again.** Capabilities are verbs ("do SBOM generation"); lenses are nouns ("ThreatLens does security"). Conflating them in a single class hierarchy would have produced the same domain-locking problem we hit when we briefly named the platform "ThreatLens."
+
+**Why not just an SBOM-only abstraction:**
+- The same problem recurs in CVE matching (Grype vs osv-scanner vs Trivy), secret detection (gitleaks vs TruffleHog vs detect-secrets), static analysis (Semgrep vs CodeQL vs Bandit), license scanning (ScanCode vs FOSSA), and vuln-DB lookup (NVD vs OSV vs GHSA). Solving it five times in five ad-hoc ways is worse than solving it once with a small framework.
+- The cost of generalising is real (one extension point to maintain, configuration surface area, versioning concerns) but bounded. The cost of *not* generalising compounds — each new capability category becomes its own design decision.
+
+**Trade-offs accepted:**
+- **More framework code.** ~1 week to land the registry + Protocols + RunContext integration. Worth it because every subsequent backend is a pip-install, not a fork.
+- **Versioning across capability protocols is a real concern.** Mitigated by versioning each Protocol's input/output models with Pydantic schema versions; we'll evolve them carefully when a real second backend lands and tests their compatibility.
+- **The `loupe-core` install grows the surface area but not the dependency count.** Core ships zero backends. Users install `loupe-capabilities-essential` (Syft + Grype + gitleaks) or `-full` (more backends) or pick individual `loupe-cap-*` packages.
+
+**Implementation:** Deferred to v1.x. Sequencing in [`CAPABILITIES.md`](CAPABILITIES.md#implementation-roadmap). Recording the decision now so:
+1. Contributors can write capability backends today against the documented Protocols
+2. Phase 6 (ThreatLens real agent) doesn't paint itself into a corner with new hardcoded tools
+3. The competitive distinctness vs StrideGPT/Devici/IriusRisk has another structural argument behind it
+
+**Migration path for existing code:**
+- Phase 6 (Task 6.3) lands ThreatLens with hardcoded Syft (the current state) — keeps Phase 6 scope tight
+- Phase v1.x-A migrates `loupe_core/sbom.py` to `SbomCapability` with `SyftBackend` as the bundled default
+- One minor version of deprecation warning on the old function signature; then removed
+
+---
+
 ## D-17 — Licence: Apache 2.0
 
 **Considered:**

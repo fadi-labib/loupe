@@ -136,6 +136,22 @@ The exception, for completeness: a developer iterating on a prompt re-records th
 
 ---
 
+## 11. No tool lock-in — pluggable capabilities
+
+The same logic that rules out LLM-vendor lock-in (§7) rules out tool-vendor lock-in. Loupe's analysis pipeline calls out to non-LLM tools — SBOM generators (Syft, Trivy, cdxgen, GitHub API), CVE scanners (Grype, osv-scanner, Trivy), secret detectors (TruffleHog, gitleaks, detect-secrets), static analysers (Semgrep, CodeQL, Bandit), and others. Each of these is a category, not a single tool.
+
+The v1 spec accidentally re-introduced lock-in here: `loupe_core/sbom.py` calls `syft` directly. The capability abstraction (D-18) corrects this by making each tool category a typed Protocol with multiple registerable backends:
+
+- A lens declares `requires_capabilities=["sbom", "cve", "secret_detect"]` — it doesn't know or care which tool fulfils each.
+- The capability registry resolves to a configured backend (`syft`, or `trivy`, or `github-api`, etc.).
+- Composition modes (`single` / `fallback` / `union` / `consensus` / `pipeline`) let operators run multiple backends for the same capability — e.g., "merge findings from TruffleHog and gitleaks" because either alone has gaps.
+
+**The practical consequence**: when a new tool category appears (SAST that beats Semgrep; SBOM signing via Sigstore; PII-detection libraries), we add it as a new Capability Protocol and a backend package — no fork, no rewrite. And the auditor can read the project's `config.yaml`, see `secret_detect: mode: union, backends: [trufflehog, gitleaks]`, and immediately understand the team's posture.
+
+See [`CAPABILITIES.md`](CAPABILITIES.md) for the full design.
+
+---
+
 ## 10. Naming reflects activity, not regulation
 
 The platform is "Loupe" (an inspection instrument), not "ComplianceMate."
