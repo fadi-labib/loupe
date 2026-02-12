@@ -15,7 +15,9 @@ def build_run_plan(ctx: RunContext, lenses: list[Lens], config: LoupeConfig) -> 
        resulting plan. Dependent lenses with unmet dependencies are dropped.
     3. The plan respects topological order: dependencies precede dependents.
     """
-    # 1. Score every lens once
+    # 1. Score every lens once (the score is also needed for the run
+    #    record's reason string in scan mode, so we call is_relevant()
+    #    even when scope overrides the filter).
     scores: dict[str, tuple[Lens, RelevanceScore]] = {}
     for lens in lenses:
         name = lens.capabilities.name
@@ -25,11 +27,16 @@ def build_run_plan(ctx: RunContext, lenses: list[Lens], config: LoupeConfig) -> 
         score = lens.is_relevant(ctx)
         scores[name] = (lens, score)
 
-    # 2. Filter by relevance threshold
+    # 2. Filter by relevance threshold IFF scope=='diff'. In scan / scoped
+    #    mode (D-15) the user has explicitly invoked the lens and the
+    #    coordinator must NOT suppress it via the relevance heuristic.
+    #    Config-level `enabled=False` still wins — that's an opt-out the
+    #    user expressed statically, which scope mode doesn't override.
     selected: dict[str, tuple[Lens, RelevanceScore]] = {}
+    bypass_relevance = ctx.scope != "diff"
     for name, (lens, score) in scores.items():
         activation = config.lenses[name]
-        if score.score >= activation.minimum_relevance:
+        if bypass_relevance or score.score >= activation.minimum_relevance:
             selected[name] = (lens, score)
 
     if not selected:

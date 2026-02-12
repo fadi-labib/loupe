@@ -74,6 +74,11 @@ class RunContext(BaseModel):
     project: ProjectContext | None
     plan: list[LensRunPlan] = Field(default_factory=list)
     knowledge: KnowledgeGraph | None
+    # D-15: scope of analysis. "diff" is the default and filters lenses by
+    # is_relevant() score; "full" runs every enabled lens against the whole
+    # repo; "scoped" runs every enabled lens against scope_paths only.
+    scope: Literal["diff", "full", "scoped"] = "diff"
+    scope_paths: list[str] = Field(default_factory=list)
 
     # Mutable blackboard
     findings: dict[str, dict[str, Any]] = Field(default_factory=dict)
@@ -116,6 +121,8 @@ class RunContext(BaseModel):
             project=project,
             plan=[],
             knowledge=knowledge,
+            scope=inputs.scope,
+            scope_paths=list(inputs.scope_paths),
         )
 
 
@@ -131,3 +138,6 @@ class BootstrapInputs(BaseModel):
     base_sha: str | None = None
     head_sha: str | None = None
     sbom_delta: SBOMDelta | None = None
+    # D-15: defaults preserve the original diff-mode behaviour.
+    scope: Literal["diff", "full", "scoped"] = "diff"
+    scope_paths: list[str] = []
