@@ -5,6 +5,7 @@ from loupe_core import __version__
 
 from loupe_cli.ci_cmd import ci_command
 from loupe_cli.init_cmd import init_command
+from loupe_cli.verify_cmd import verify_command
 
 app = typer.Typer(no_args_is_help=True, add_completion=False)
 
@@ -34,6 +35,12 @@ def ci_cmd(
     """Run Loupe in CI mode on a unified diff."""
     text = diff_file.read_text() if diff_file is not None else diff
     raise typer.Exit(code=ci_command(text, base_sha, head_sha, config))
+
+
+@app.command("verify")
+def verify_cmd() -> None:
+    """Verify Loupe state — hash chain, schemas, authorship."""
+    raise typer.Exit(code=verify_command())
 
 
 if __name__ == "__main__":
