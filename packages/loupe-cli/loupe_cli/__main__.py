@@ -3,6 +3,7 @@ from pathlib import Path
 import typer
 from loupe_core import __version__
 
+from loupe_cli.chat_cmd import chat_command
 from loupe_cli.ci_cmd import ci_command
 from loupe_cli.init_cmd import init_command
 from loupe_cli.verify_cmd import verify_command
@@ -41,6 +42,12 @@ def ci_cmd(
 def verify_cmd() -> None:
     """Verify Loupe state — hash chain, schemas, authorship."""
     raise typer.Exit(code=verify_command())
+
+
+@app.command("chat")
+def chat_cmd() -> None:
+    """Interactive Loupe chat session (requires TTY)."""
+    raise typer.Exit(code=chat_command())
 
 
 if __name__ == "__main__":
