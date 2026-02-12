@@ -48,7 +48,10 @@ def save_run_record(runs_dir: Path, record: RunRecord) -> RunRecord:
     record = record.model_copy(update={"self_hash": ""})
     record.self_hash = record.compute_self_hash()
     runs_dir.mkdir(parents=True, exist_ok=True)
-    filename = record.timestamp.strftime("%Y-%m-%dT%H-%M-%SZ") + f"-{record.run_id}.json"
+    # Microsecond precision ensures two runs in the same wall-clock second
+    # still sort chronologically by filename. Lexical filename sort then
+    # matches chain order; no need for hash-chain traversal at load time.
+    filename = record.timestamp.strftime("%Y-%m-%dT%H-%M-%S-%fZ") + f"-{record.run_id}.json"
     out = runs_dir / filename
     out.write_text(json.dumps(record.model_dump(mode="json"), indent=2, sort_keys=True))
     return record
