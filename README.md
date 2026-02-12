@@ -109,6 +109,7 @@ In CI, a tiny composite GitHub Action wraps the CLI:
 | You want to | Read this |
 |---|---|
 | Understand what Loupe is and why it exists | [`docs/ABOUT.md`](docs/ABOUT.md) |
+| See the architecture visually (C4 diagrams + sequence flows, GitHub-rendered) | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) |
 | Know the values and design principles that guided every decision | [`docs/VALUES.md`](docs/VALUES.md) |
 | See the actual decisions made (and the alternatives rejected) | [`docs/DESIGN-DECISIONS.md`](docs/DESIGN-DECISIONS.md) |
 | Look up a term used elsewhere in the docs | [`docs/GLOSSARY.md`](docs/GLOSSARY.md) |
