@@ -44,19 +44,29 @@ def _cassette_present() -> bool:
     return (CASSETTE_DIR / "test_threatlens_proposes_threats_on_diff.yaml").exists()
 
 
+def _can_record() -> bool:
+    """An API key in the env means we can record a cassette on this run."""
+    import os
+    return bool(os.environ.get("ANTHROPIC_API_KEY"))
+
+
 @pytest.mark.skipif(
-    not _cassette_present(),
+    not (_cassette_present() or _can_record()),
     reason=(
-        "VCR cassette not yet recorded. Run with ANTHROPIC_API_KEY set and "
-        "--record-mode=once to record. See test docstring."
+        "VCR cassette not yet recorded and no ANTHROPIC_API_KEY in env to "
+        "record one. Set ANTHROPIC_API_KEY and rerun with --record-mode=once."
     ),
 )
 @pytest.mark.vcr
 async def test_threatlens_proposes_threats_on_diff(tmp_path, monkeypatch):
     """Agent receives a synthetic diff, calls propose_threat ≥1 time."""
+    import os
     monkeypatch.setenv("THREATLENS_MODEL", "anthropic:claude-haiku-4-5")
-    # Set a non-empty value so deferred check passes; VCR replays the response.
-    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key-for-vcr-replay")
+    # In replay mode, PydanticAI's auth machinery still needs *some* value in
+    # ANTHROPIC_API_KEY before VCR intercepts the call. Only set a placeholder
+    # if no real key is present — during recording, the real key must survive.
+    if not os.environ.get("ANTHROPIC_API_KEY"):
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key-for-vcr-replay")
 
     loupe_dir = tmp_path / ".loupe"
     loupe_dir.mkdir()
