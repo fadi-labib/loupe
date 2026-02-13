@@ -115,6 +115,7 @@ In CI, a tiny composite GitHub Action wraps the CLI:
 | Look up a term used elsewhere in the docs | [`docs/GLOSSARY.md`](docs/GLOSSARY.md) |
 | Understand what data Loupe sends to LLMs (and what it doesn't) | [`docs/DATA-HANDLING.md`](docs/DATA-HANDLING.md) |
 | Understand the capability / tool-agnostic plugin model | [`docs/CAPABILITIES.md`](docs/CAPABILITIES.md) |
+| See the two-tier evaluation benchmark methodology (Mongoose + Mosquitto + StrideGPT comparison) | [`docs/EVALUATION.md`](docs/EVALUATION.md) |
 | Compare Loupe with Snyk / Wiz / Trivy / OWASP Threat Dragon / etc. | [`docs/COMPARISON.md`](docs/COMPARISON.md) |
 | Develop on Loupe or write a new lens | [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md) |
 | Read the full technical design spec | [``]() |

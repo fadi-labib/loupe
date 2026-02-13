@@ -320,6 +320,61 @@ These are interesting v1.x features. ThreatLens v1 stays focused on STRIDE threa
 
 ---
 
+## D-19 — Benchmark projects: two-tier (Cesanta Mongoose + Eclipse Mosquitto)
+
+**Considered:**
+- **libpng / libtiff / libwebp** — rich CVE history but pure-C and memory-safety-dominated; STRIDE coverage too narrow
+- **dropbear SSH** — tiny (~30k LOC), good protocol CVEs; pure C, less mixed-level
+- **paho.mqtt.c** — client-side only; less interesting threat surface
+- **OpenSSL / cURL / nghttp2** — too large to fully audit (200k+ LOC); cost per scenario dominates
+- **Eclipse Mosquitto only** — best for STRIDE breadth + CRA framing, but ~5× slower per scenario than smaller alternatives
+- **Cesanta Mongoose only** — fastest iteration loop, smaller CVE corpus, GPL/commercial dual licence
+- **Both Mongoose and Mosquitto, two-tier** — selected
+
+**Chosen:** A **two-tier benchmark**: Cesanta Mongoose as the Tier-1 "fast smoke test" suite, Eclipse Mosquitto as the Tier-2 "release evaluation" suite. Full methodology in [`EVALUATION.md`](EVALUATION.md).
+
+| | Tier 1 — Mongoose | Tier 2 — Mosquitto |
+|---|---|---|
+| What it is | Embedded networking library | MQTT broker (service) |
+| Size | ~15k LOC core | ~70k LOC |
+| Languages | C (single-file design) | C broker + C++ plugins |
+| CVE history (5y) | ~12 | ~15 |
+| STRIDE breadth | Mostly T/I/D (parser/protocol) | All six categories |
+| Licence | dual GPL-2 / commercial | EPL-2.0 |
+| When run | Per Loupe PR | Per Loupe release |
+| Target scenario count | ~10 | ~15 |
+| Target wall time | < 5 minutes | < 30 minutes |
+| Public report? | Optional | Yes — this is what we publish |
+
+**Why two tiers (not just one):**
+
+- **Iteration speed vs. evaluation rigour are in tension.** A single big suite (Mosquitto-only) is rigorous but slow — running it gates every commit, and the cost stops people running it. A single small suite (Mongoose-only) iterates fast but biases toward memory-safety CVEs where Loupe is honestly weakest. Two tiers separates the concerns cleanly.
+- **The "gate every PR" suite needs to be fast enough that contributors actually run it.** Tier 1 (Mongoose) must run in under 5 minutes so it's part of the PR feedback loop. That cost target rules out Mosquitto for this role.
+- **The "publishable evaluation" suite needs STRIDE breadth and architectural richness for the result to be representative.** Tier 2 (Mosquitto) covers all six STRIDE categories in its CVE corpus, has real architectural elements (auth, ACL, retained messages, plugins, bridges, persistence) to populate `context.md`, and is CRA-relevant. That's the suite whose numbers go in the release notes.
+- **The methodology is shared.** Same scoring engine, same per-scenario manifest schema, same comparison-against-StrideGPT pattern (per [D-16](DESIGN-DECISIONS.md#d-16--relationship-with-stridegpt-learn--attribute-dont-fork)). Only the scenario catalogues differ. Maintaining two catalogues is cheaper than maintaining two methodologies.
+
+**Why these two specifically over alternatives:**
+
+- **Mongoose (over dropbear / paho)** for Tier 1: smallest viable option (5× smaller than dropbear's 30k LOC), single-file design makes failures easy to localise, embedded/IoT framing keeps both tiers thematically aligned with the CRA story.
+- **Mosquitto (over Mongoose-alone or OpenSSL)** for Tier 2: only Mosquitto combines (a) audit-able size, (b) STRIDE breadth across all six categories in real CVE history, (c) mixed C/C++ architecture, (d) clean EPL licence, (e) CRA-product-shape relevance. OpenSSL would dominate cost; Mongoose-alone would bias toward memory-safety bugs.
+
+**Licence handling for Mongoose:** Cesanta Mongoose is dual GPL-2 / commercial. For evaluation purposes (fork → run Loupe → record results, no redistribution of modified Mongoose), the GPL terms don't bite. The scenarios catalogue and scoring code Loupe ships are Apache-2.0-licensed and don't include Mongoose code itself — they reference upstream commit SHAs.
+
+**Honest expected outcomes** (recorded in EVALUATION.md so the result isn't a surprise):
+- Tier 1 (Mongoose) — heavy on parser/protocol-state CVEs. Loupe will under-perform on the memory-safety-pure ones; this is the explicit motivation for [D-18](DESIGN-DECISIONS.md#d-18--capability-abstraction-tool-agnostic-functional-building-blocks)'s `StaticAnalysisCapability`.
+- Tier 2 (Mosquitto) — broader spread. Loupe should do well on auth / ACL / authorisation CVEs; mixed on memory-safety; mediocre on race conditions.
+- **The asymmetric results between tiers are themselves a finding**: they show *where the capability backends earn their keep*.
+
+**Acceptance thresholds for v1.0** (per-tier, committed in EVALUATION.md):
+- Tier 1: detection ≥ 50%, median cost ≤ $0.10/scenario (lower bar because the corpus is narrower)
+- Tier 2: detection ≥ 70%, classification accuracy ≥ 80%, specific-match ≥ 50%, severity ±1 level, median cost ≤ $0.50/scenario
+
+**Implementation timing:** Methodology recorded now. The `benchmarks/tier1-mongoose/` and `benchmarks/tier2-mosquitto/` directories, scoring code, and initial scenario catalogues land in **Phase 10** (polish + demo). Contributors can write scenarios today against the documented schema.
+
+**Side benefit:** The shared scoring methodology is publishable as an industry rubric. Other STRIDE-tool authors can run the same scenarios against their own tools and report results in the same shape. Loupe contributes the benchmark suite as a separate artefact from the tool itself.
+
+---
+
 ## D-18 — Capability abstraction (tool-agnostic functional building blocks)
 
 **Considered:**
