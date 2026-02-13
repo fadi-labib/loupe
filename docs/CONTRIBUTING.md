@@ -55,10 +55,16 @@ loupe/
 │   ├── VALUES.md
 │   ├── DESIGN-DECISIONS.md
 │   ├── CONTRIBUTING.md
-├── specs/                          Design specs
+│   ├── ARCHITECTURE.md
+│   ├── CAPABILITIES.md
+│   ├── COMPARISON.md
+│   ├── DATA-HANDLING.md
+│   ├── EVALUATION.md
+│   ├── GLOSSARY.md
+│   ├── specs/                          Design specs
+│   │   └── 2026-05-13-loupe-design.md
 │   └── plans/                          Implementation plans
-│       ├── specs/2026-05-13-loupe-design.md
-│       └── plans/2026-05-13-loupe-v1-implementation.md
+│       └── 2026-05-13-loupe-v1-implementation.md
 ├── packages/                            All Python packages
 │   ├── loupe-core/                      The platform
 │   ├── loupe-cli/                       The CLI shell
