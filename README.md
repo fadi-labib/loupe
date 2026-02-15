@@ -137,8 +137,6 @@ critical or high threat is reported. Set `fail_on: []` to report-only.
 | See the two-tier evaluation benchmark methodology (Mongoose + Mosquitto + StrideGPT comparison) | [`docs/EVALUATION.md`](docs/EVALUATION.md) |
 | Compare Loupe with Snyk / Wiz / Trivy / OWASP Threat Dragon / etc. | [`docs/COMPARISON.md`](docs/COMPARISON.md) |
 | Develop on Loupe or write a new lens | [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md) |
-| Read the full technical design spec | [``]() |
-| See the phased implementation plan | [``]() |
 
 ---
 

@@ -118,7 +118,7 @@ The rule of three says: design an abstraction when you have three instances. We 
 
 We will redesign the contract when SafetyLens lands. The cost of that redesign is bounded (it's one big PR, not a re-architecture). The cost of designing the contract upfront for imagined needs is invariably wrong, expensive, and locked in.
 
-**The practical consequence**: when tempted to add a feature to the plugin API for a hypothetical future lens, write it down in `` as a deferred concern and revisit when the lens arrives.
+**The practical consequence**: when tempted to add a feature to the plugin API for a hypothetical future lens, write it down as a deferred concern and revisit when the lens actually arrives.
 
 ---
 

@@ -2,7 +2,7 @@
 
 > A chronological record of the major decisions made during the design of Loupe v1, with what was considered, what was chosen, and why. Decisions are numbered roughly in the order they were made. Each one has a permanent identifier (`D-NN`) so future code and docs can reference them.
 
-The conversation that produced these decisions happened on 2026-05-13. The full design spec is at [``](specs/2026-05-13-loupe-design.md). The principles that emerged are at [`VALUES.md`](VALUES.md).
+The principles that emerged from these decisions are at [`VALUES.md`](VALUES.md).
 
 ---
 

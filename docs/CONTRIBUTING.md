@@ -60,11 +60,7 @@ loupe/
 │   ├── COMPARISON.md
 │   ├── DATA-HANDLING.md
 │   ├── EVALUATION.md
-│   ├── GLOSSARY.md
-│   ├── specs/                          Design specs
-│   │   └── 2026-05-13-loupe-design.md
-│   └── plans/                          Implementation plans
-│       └── 2026-05-13-loupe-v1-implementation.md
+│   └── GLOSSARY.md
 ├── packages/                            All Python packages
 │   ├── loupe-core/                      The platform
 │   ├── loupe-cli/                       The CLI shell
@@ -92,7 +88,7 @@ Every code change should:
 4. Commit with a Conventional Commits–style message (`feat(core):`, `fix(threatlens):`, `chore:`, `docs:`, `test:`, etc.).
 5. Never add `Co-Authored-By` lines attributing AI in commit messages.
 
-The plan in `` shows the expected granularity: ~2–5 minutes per step, ~5 steps per task, ~5 tasks per phase.
+Granularity rule of thumb: ~2–5 minutes per step, ~5 steps per task, ~5 tasks per logical chunk of work. If a change starts feeling bigger than that, split it.
 
 ### Adding a new artefact schema
 

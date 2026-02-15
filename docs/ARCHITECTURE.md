@@ -4,7 +4,7 @@
 >
 > The diagrams are deliberately layered (C4-style): start at **Context** for the big picture, drill into **Container** for the package shape, then **Component** for `loupe-core` internals. The two **sequence** diagrams at the end show dynamic behaviour (CI run, interactive run).
 >
-> If something looks wrong in a diagram, the design spec at [`specs/2026-05-13-loupe-design.md`](specs/2026-05-13-loupe-design.md) is the source of truth.
+> If something looks wrong in a diagram, the code is the source of truth — open a PR with the correction.
 
 ---
 
@@ -209,7 +209,7 @@ Solid arrows = current v1; dashed arrows + dashed boxes = future v1.x.
 
 ## Sequence diagram — CI run on a PR
 
-A walkthrough of what happens when a developer opens a PR and the GitHub Action runs `loupe ci`. This is the "happy path" — the one Loupe is optimised for. See [§7 of the spec](specs/2026-05-13-loupe-design.md#section-7--end-to-end-flows-ci--interactive) for the full prose narrative.
+A walkthrough of what happens when a developer opens a PR and the GitHub Action runs `loupe ci`. This is the "happy path" — the one Loupe is optimised for.
 
 ```mermaid
 sequenceDiagram
@@ -347,7 +347,7 @@ A few discipline rules:
 2. **When a new component lands in `loupe-core/`**, add a Component box to the Level 3 diagram and update the `Rel(...)` lines.
 3. **When a new lens lands**, add it to the "Lens / Capability extension model" diagram with the appropriate `requires_capabilities` arrows.
 4. **When a new capability protocol is defined**, add the box + at least one backend; promote any "future / dashed" status to "current / solid" once shipped.
-5. **The sequence diagrams** should be updated when a step in [`§7 of the spec`](specs/2026-05-13-loupe-design.md#section-7--end-to-end-flows-ci--interactive) changes — they're meant to be the visual companion to that narrative.
+5. **The sequence diagrams** should be updated when the corresponding CI / interactive flow changes in code — they're meant to be the visual companion to the actual behaviour.
 
 A future PR-review-toolkit hook could even diff this file's Mermaid against the live entry-point graph and warn on drift, but that's out of scope for v1.
 
