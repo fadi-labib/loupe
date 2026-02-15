@@ -13,6 +13,11 @@ class LensCapabilities(BaseModel):
     handles_intent_keywords: list[str] = Field(default_factory=list)
     artifact_paths: list[str] = Field(default_factory=list)
     requires_lenses: list[str] = Field(default_factory=list)
+    # D-18: capability categories this lens needs (e.g., ["sbom", "cve"]).
+    # The coordinator resolves the union across selected lenses and the
+    # capability registry runs each backend once, populating typed fields
+    # on RunContext that every lens then reads.
+    requires_capabilities: list[str] = Field(default_factory=list)
 
 
 class McpTool(BaseModel):

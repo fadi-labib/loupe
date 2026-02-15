@@ -8,6 +8,12 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from loupe_core.artifacts.context import ProjectContext
 from loupe_core.artifacts.knowledge import KnowledgeGraph
+from loupe_core.capabilities.protocols import (
+    CveResult,
+    SbomResult,
+    SecretDetectionResult,
+    StaticAnalysisResult,
+)
 
 
 class CodeDiff(BaseModel):
@@ -79,6 +85,13 @@ class RunContext(BaseModel):
     # repo; "scoped" runs every enabled lens against scope_paths only.
     scope: Literal["diff", "full", "scoped"] = "diff"
     scope_paths: list[str] = Field(default_factory=list)
+
+    # D-18: typed capability results, populated once before lenses run
+    # so every lens reads the same cached output (VALUES §4).
+    sbom: SbomResult | None = None
+    cve_findings: CveResult | None = None
+    secrets: SecretDetectionResult | None = None
+    static_findings: StaticAnalysisResult | None = None
 
     # Mutable blackboard
     findings: dict[str, dict[str, Any]] = Field(default_factory=dict)
