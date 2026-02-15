@@ -1,35 +1,57 @@
 name: 'Loupe'
-description: 'Run Loupe lenses on a pull request and propose threat-model updates'
+description: 'Run Loupe lenses on a pull request and post a sticky threat-model comment'
 inputs:
   pr:
     description: 'Pull request number (digits only)'
     required: true
   config:
-    description: 'Path to loupe config'
+    description: 'Path to the loupe config file, relative to the workspace'
     required: false
     default: '.loupe/config.yaml'
+  comment_mode:
+    description: |
+      How to post the analysis comment on the PR:
+        sticky  (default) — edit a single comment in place across pushes
+        new               — post a fresh comment each run
+        none              — do not post any comment
+    required: false
+    default: 'sticky'
+outputs:
+  findings_count:
+    description: 'Total number of threats reported by this run'
+    value: ${{ steps.loupe.outputs.findings_count }}
+  findings_critical:
+    description: 'Number of critical-severity threats'
+    value: ${{ steps.loupe.outputs.findings_critical }}
+  findings_high:
+    description: 'Number of high-severity threats'
+    value: ${{ steps.loupe.outputs.findings_high }}
+  run_id:
+    description: 'Run identifier (matches the .loupe/runs/<id>.json filename)'
+    value: ${{ steps.loupe.outputs.run_id }}
+  run_hash:
+    description: 'Self-hash of the run record (links into the audit chain)'
+    value: ${{ steps.loupe.outputs.run_hash }}
+  exit_code:
+    description: 'Final exit code (0 clean, 1 gate failed, 64 usage error)'
+    value: ${{ steps.loupe.outputs.exit_code }}
 runs:
   using: 'composite'
   steps:
-    - name: Validate and run Loupe
+    - name: Validate inputs (bash-side defence in depth)
       shell: bash
       env:
-        # Pass inputs through env vars rather than direct shell interpolation
-        # so untrusted values can't break out of the command line.
         INPUT_PR: ${{ inputs.pr }}
         INPUT_CONFIG: ${{ inputs.config }}
+        INPUT_COMMENT_MODE: ${{ inputs.comment_mode }}
       run: |
         set -euo pipefail
 
-        # Validate PR is digits only — defends against shell injection through
-        # the PR input even though it should always come from GitHub itself.
         if ! [[ "${INPUT_PR}" =~ ^[0-9]+$ ]]; then
           echo "::error::pr input must be digits only, got: ${INPUT_PR}" >&2
           exit 64
         fi
 
-        # Validate config path: no NULs, no shell metacharacters, not absolute
-        # outside the workspace. Empty is acceptable (default applies).
         case "${INPUT_CONFIG}" in
           *$'\n'*|*$'\0'*|*';'*|*'|'*|*'&'*|*'`'*|*'$('*)
             echo "::error::config input contains disallowed characters" >&2
@@ -37,5 +59,25 @@ runs:
             ;;
         esac
 
-        pip install loupe-cli loupe-threatlens
-        loupe ci --pr "${INPUT_PR}" --config "${INPUT_CONFIG}"
+        case "${INPUT_COMMENT_MODE}" in
+          sticky|new|none) ;;
+          *)
+            echo "::error::comment_mode must be sticky, new, or none" >&2
+            exit 64
+            ;;
+        esac
+
+    - name: Install Loupe
+      shell: bash
+      run: |
+        pip install loupe-action loupe-threatlens
+
+    - name: Run Loupe
+      id: loupe
+      shell: bash
+      env:
+        INPUT_PR: ${{ inputs.pr }}
+        INPUT_CONFIG: ${{ inputs.config }}
+        INPUT_COMMENT_MODE: ${{ inputs.comment_mode }}
+      run: |
+        python -m loupe_action.entrypoint
