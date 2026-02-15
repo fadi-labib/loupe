@@ -90,3 +90,12 @@ def test_resolve_raises_when_named_backend_not_registered():
 def test_list_backends_returns_empty_for_unknown_capability():
     reg = _make_registry()
     assert reg.list_backends("not_a_real_capability") == []
+
+
+def test_real_entry_points_discover_bundled_backends():
+    # No mocks — exercises the real importlib.metadata.entry_points() path.
+    # If this fails, the loupe-core pyproject.toml [project.entry-points]
+    # section drifted away from what's in capabilities/backends/.
+    reg = CapabilityRegistry.discover()
+    assert "syft" in reg.list_backends("sbom")
+    assert "grype" in reg.list_backends("cve")
