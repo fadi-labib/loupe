@@ -194,4 +194,4 @@ Through a structured brainstorming session, the design narrowed:
 - From "use whatever LLM framework" to "PydanticAI specifically" — because (a) provider-agnostic from day one, (b) Pydantic models double as artefact schemas + tool I/O + MCP schemas, three jobs from one definition, (c) lightweight without LangChain's abstraction tax.
 - From "save context" interpreted as session-resumption-over-time, then (when the user clarified) re-interpreted as **cost-saving via shared blackboard within one run** — which led to the explicit three-lever cost design (prompt cache + blackboard + coordinated dispatch).
 
-The full decision log lives at [`DESIGN-DECISIONS.md`](DESIGN-DECISIONS.md). The values that emerged through those decisions are at [`VALUES.md`](VALUES.md).
+The full decision log lives at [`DESIGN-DECISIONS.md`](DESIGN-DECISIONS.md). The values that emerged through those decisions are at [`PRINCIPLES.md`](PRINCIPLES.md).

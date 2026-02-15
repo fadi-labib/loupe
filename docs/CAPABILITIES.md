@@ -14,7 +14,7 @@ Loupe's value proposition has two pluggable layers:
 
 The original v1 design conflated these. `loupe_core/sbom.py` calls `syft` directly — Syft is hardcoded, not a backend. As a result:
 
-- **Vendor lock-in at the tool layer.** Anchore's Syft is fine, but the spec also wants no lock-in (see [VALUES.md §7](VALUES.md#7-multi-llm-by-default-never-single-vendor-lock-in)). We achieve that for LLMs and abandon it for tools — inconsistent.
+- **Vendor lock-in at the tool layer.** Anchore's Syft is fine, but the spec also wants no lock-in (see [PRINCIPLES.md §7](PRINCIPLES.md#7-multi-llm-by-default-never-single-vendor-lock-in)). We achieve that for LLMs and abandon it for tools — inconsistent.
 - **No way to compose tools.** "Run both TruffleHog and gitleaks and merge findings" is a real audit pattern (different tools find different secrets); the current shape can't express it.
 - **Cross-lens reuse is limited.** Both ThreatLens (security) and a future SafetyLens (functional safety) will want static-analysis output. Each shouldn't re-implement Semgrep wrappers.
 - **Tool availability varies by environment.** Some CI runners have Syft installed; some don't; some have Trivy instead. The agent's behaviour shouldn't depend on which tool the operator preferred.
@@ -419,7 +419,7 @@ Total estimated v1.x effort: **~4–5 weeks** distributed across releases. Each 
 Worth stating explicitly so the design stays focused:
 
 - **Not a generic plugin framework.** Capabilities are typed, schema-checked, narrowly-scoped. We will not let arbitrary code mount "any tool" — every backend must conform to a published Protocol.
-- **Not a marketplace.** Anyone can publish a capability backend on PyPI; Loupe doesn't curate. But installation is a deliberate `pip install` by the operator (see [VALUES.md §1](VALUES.md#1-produce-evidence-not-theatre) on transparency).
+- **Not a marketplace.** Anyone can publish a capability backend on PyPI; Loupe doesn't curate. But installation is a deliberate `pip install` by the operator (see [PRINCIPLES.md §1](PRINCIPLES.md#1-produce-evidence-not-theatre) on transparency).
 - **Not a substitute for lenses.** A capability does *one* thing. A lens *reasons* about a domain using one or more capabilities. The agent — and therefore the LLM — lives in the lens, not the capability.
 - **Not an abstraction over LLM providers.** PydanticAI already handles that. Capabilities are about *non-LLM* tools (scanners, generators, validators).
 
@@ -428,8 +428,8 @@ Worth stating explicitly so the design stays focused:
 ## Cross-references
 
 - [D-18 in DESIGN-DECISIONS.md](DESIGN-DECISIONS.md#d-18--capability-abstraction-tool-agnostic-functional-building-blocks) — the decision record
-- [VALUES.md §7 (no LLM lock-in)](VALUES.md#7-multi-llm-by-default-never-single-vendor-lock-in) — the parallel principle for LLMs
-- [VALUES.md §11 (no tool lock-in)](VALUES.md#11-no-tool-lock-in-pluggable-capabilities) — the new principle this capability layer enforces
+- [PRINCIPLES.md §7 (no LLM lock-in)](PRINCIPLES.md#7-multi-llm-by-default-never-single-vendor-lock-in) — the parallel principle for LLMs
+- [PRINCIPLES.md §11 (no tool lock-in)](PRINCIPLES.md#11-no-tool-lock-in-pluggable-capabilities) — the new principle this capability layer enforces
 - [ABOUT.md "Why Loupe"](ABOUT.md) — the value proposition this strengthens
 - [COMPARISON.md](COMPARISON.md) — competitive context (Trivy vs Syft; gitleaks vs TruffleHog; etc.)
 - [GLOSSARY.md](GLOSSARY.md) — `Capability`, `CapabilityBackend`, `CapabilityRegistry`, `composition mode`, individual capability types

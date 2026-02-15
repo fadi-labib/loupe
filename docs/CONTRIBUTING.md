@@ -30,7 +30,7 @@ uv run pytest -v                    # verbose
 uv run pytest -k threat             # tests matching 'threat'
 ```
 
-Tests must pass with no API keys present. Any test that talks to an LLM does so via VCR cassettes (recorded once, replayed forever — see [`VALUES.md` §9](VALUES.md#9-test-discipline-vcr-or-no-llm-never-live-calls-in-ci)).
+Tests must pass with no API keys present. Any test that talks to an LLM does so via VCR cassettes (recorded once, replayed forever — see [`PRINCIPLES.md` §9](PRINCIPLES.md#9-test-discipline-vcr-or-no-llm-never-live-calls-in-ci)).
 
 ## Code style
 
@@ -52,7 +52,7 @@ Configured in the root `pyproject.toml`:
 loupe/
 ├── docs/                                Documentation (you are here)
 │   ├── ABOUT.md
-│   ├── VALUES.md
+│   ├── PRINCIPLES.md
 │   ├── DESIGN-DECISIONS.md
 │   ├── CONTRIBUTING.md
 │   ├── ARCHITECTURE.md
@@ -76,7 +76,7 @@ loupe/
 
 Read the relevant section of [`DESIGN-DECISIONS.md`](DESIGN-DECISIONS.md). If your change updates an existing decision (D-NN), note that in the PR description and update the log. If it creates a new decision, add the next available `D-NN` to the log.
 
-When a change touches enforcement, cost-saving, or human-in-the-loop concerns, [`VALUES.md`](VALUES.md) is the source of truth for what we will and won't compromise on.
+When a change touches enforcement, cost-saving, or human-in-the-loop concerns, [`PRINCIPLES.md`](PRINCIPLES.md) is the source of truth for what we will and won't compromise on.
 
 ### Implementation discipline
 
@@ -222,6 +222,6 @@ Never use `--no-verify` or `Co-Authored-By` lines.
 
 When the repo opens:
 
-1. Read [`ABOUT.md`](ABOUT.md), [`VALUES.md`](VALUES.md), and [`DESIGN-DECISIONS.md`](DESIGN-DECISIONS.md) before opening a PR with a structural change.
+1. Read [`ABOUT.md`](ABOUT.md), [`PRINCIPLES.md`](PRINCIPLES.md), and [`DESIGN-DECISIONS.md`](DESIGN-DECISIONS.md) before opening a PR with a structural change.
 2. For a bug fix or small feature: open a PR with a failing test in the same commit as the description, and the fix in a follow-up commit.
 3. For a new lens: open a discussion issue first to discuss the lens API surface — adding a second instance is the moment we expect to refine the plugin contract (D-04).

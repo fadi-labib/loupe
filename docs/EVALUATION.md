@@ -8,7 +8,7 @@
 
 Loupe makes two distinguishing claims:
 
-1. **"Evidence-grade"** — outputs are auditor-credible (see [VALUES.md §1](VALUES.md#1-produce-evidence-not-theatre)).
+1. **"Evidence-grade"** — outputs are auditor-credible (see [PRINCIPLES.md §1](PRINCIPLES.md#1-produce-evidence-not-theatre)).
 2. **"Better-shaped than existing tools"** — the platform value justifies the build over using StrideGPT + a CI wrapper (see [COMPARISON.md](COMPARISON.md) and [D-16](DESIGN-DECISIONS.md#d-16--relationship-with-stridegpt-learn--attribute-dont-fork)).
 
 Both claims are testable. **Without evaluation, they're marketing.** With evaluation, they become measurable properties an external party can verify by re-running the suite.
@@ -324,4 +324,4 @@ In that sense the EVALUATION.md is part of the contribution Loupe makes, separat
 - [D-19](DESIGN-DECISIONS.md#d-19--benchmark-project-choice-eclipse-mosquitto) — the decision record
 - [D-16](DESIGN-DECISIONS.md#d-16--relationship-with-stridegpt-learn--attribute-dont-fork) — StrideGPT as a quality benchmark
 - [D-18](DESIGN-DECISIONS.md#d-18--capability-abstraction-tool-agnostic-functional-building-blocks) — Capability backends (Semgrep / CodeQL) close the memory-safety gap
-- [VALUES.md §1](VALUES.md#1-produce-evidence-not-theatre) — why "verifiable by an external party" is non-negotiable
+- [PRINCIPLES.md §1](PRINCIPLES.md#1-produce-evidence-not-theatre) — why "verifiable by an external party" is non-negotiable

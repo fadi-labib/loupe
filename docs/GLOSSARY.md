@@ -38,7 +38,7 @@ Terms you'll encounter across the codebase and docs. Alphabetical.
 
 **Dispatcher** — the runtime in `loupe_core/dispatcher.py` that executes a `LensRunPlan`. Calls each lens's `run()` method in order, sharing the same `RunContext` across all calls.
 
-**Evidence-grade** — Loupe's quality bar. Artefacts that an external auditor could verify with their own tooling, without trusting Loupe. Standard formats (CycloneDX, OpenVEX), stable IDs, hash chains, Git as the audit substrate. See [`VALUES.md` §1](VALUES.md#1-produce-evidence-not-theatre).
+**Evidence-grade** — Loupe's quality bar. Artefacts that an external auditor could verify with their own tooling, without trusting Loupe. Standard formats (CycloneDX, OpenVEX), stable IDs, hash chains, Git as the audit substrate. See [`PRINCIPLES.md` §1](PRINCIPLES.md#1-produce-evidence-not-theatre).
 
 **Fact** — a cross-cutting datum posted by a lens to `RunContext.facts`. `Fact(subject, predicate, value, confidence, rationale)`. Read by other lenses to coordinate; promoted to the persistent knowledge graph only when high-confidence and corroborated. Contrast: **Finding**, which is lens-private.
 
