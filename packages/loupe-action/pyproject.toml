@@ -3,15 +3,14 @@ name = "loupe-action"
 version = "0.0.1"
 description = "GitHub Action wrapper that invokes loupe ci on a PR"
 requires-python = ">=3.13"
-dependencies = ["loupe-cli"]
+dependencies = ["loupe-cli", "httpx>=0.27", "pydantic>=2.9"]
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-# entrypoint.py is the action's only Python module; package as a sdist-only style
-only-include = ["entrypoint.py", "action.yml"]
+packages = ["loupe_action"]
 
 [tool.uv.sources]
 loupe-cli = { workspace = true }
