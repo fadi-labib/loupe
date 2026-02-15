@@ -158,6 +158,34 @@ myname = "loupe_myname.lens:MyLens"
 
 Once your package is installed alongside `loupe-cli`, `loupe lens list` will discover it.
 
+### Working on the GitHub Action
+
+The Action lives in `packages/loupe-action/`:
+
+- `action.yml` — the composite-action manifest GitHub reads.
+- `loupe_action/inputs.py` — typed env-var validation.
+- `loupe_action/pr_fetcher.py` — fetch PR base/head SHA + unified diff via the API.
+- `loupe_action/formatter.py` — render run record + threats as Markdown.
+- `loupe_action/comment_poster.py` — sticky comment (find-or-create).
+- `loupe_action/entrypoint.py` — top-level `run(env, client, cwd)` orchestrator.
+
+`run(...)` takes its environment, HTTP client, and working directory as
+parameters so tests can drive it end-to-end with `httpx.MockTransport` +
+a `tmp_path` workspace + a stubbed `ci_command`. See
+`tests/test_entrypoint.py` for the pattern.
+
+To test against a real GitHub PR locally:
+
+```bash
+export GITHUB_TOKEN=ghp_...
+export GITHUB_REPOSITORY=acme/widgets
+export GITHUB_WORKSPACE=$PWD
+export INPUT_PR=123
+export INPUT_CONFIG=.loupe/config.yaml
+export INPUT_COMMENT_MODE=none    # don't actually post while iterating
+python -m loupe_action.entrypoint
+```
+
 ## Useful commands
 
 ```bash

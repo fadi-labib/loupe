@@ -94,13 +94,32 @@ loupe chat
 loupe mcp
 ```
 
-In CI, a tiny composite GitHub Action wraps the CLI:
+In CI, the composite GitHub Action wraps the CLI, fetches the PR diff,
+posts a sticky comment, and surfaces machine-readable outputs:
 
 ```yaml
 - uses: loupe-action@v1
   with:
     pr: ${{ github.event.pull_request.number }}
+    # comment_mode: sticky    # sticky (default) / new / none
+    # config: .loupe/config.yaml
+  env:
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
+
+The Action emits the following outputs for downstream steps:
+
+| Output | Type | Description |
+|---|---|---|
+| `findings_count` | int | Total threats reported by this run |
+| `findings_critical` / `findings_high` / `findings_medium` / `findings_low` | int | Per-severity counts |
+| `run_id` | string | Matches `.loupe/runs/<id>.json` |
+| `run_hash` | string | Self-hash of the run record — your audit chain anchor |
+| `exit_code` | int | `0` clean, `1` gate failed, `64` usage/config error |
+
+Exit codes are driven by the `ci.fail_on` list in `config.yaml`. Adding
+`fail_on: [critical, high]` makes the step fail (exit 1) the moment a
+critical or high threat is reported. Set `fail_on: []` to report-only.
 
 ---
 
@@ -134,7 +153,8 @@ Phases 0–3 of the implementation plan are complete. The codebase has:
 - A diff parser and SBOM/Grype subprocess wrappers
 - 40 unit tests, all passing
 
-What's not yet wired up: the Lens API (Phase 4), the coordinator + prompt builder (Phase 5), the ThreatLens PydanticAI agent (Phase 6), the CLI commands (Phase 7), the GitHub Action entrypoint (Phase 8), the MCP server (Phase 9), and the polish work (Phase 10).
+What's not yet wired up: the MCP server (Phase 9), benchmark fixtures + cost
+regression test (Phase 10).
 
 ---
 
