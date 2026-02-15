@@ -45,6 +45,11 @@ class ThreatLens:
             ".loupe/vex.json",
             ".loupe/sbom.cdx.json",
         ],
+        # D-18: SBOM + CVE come from the capability layer. ThreatLens reads
+        # the typed results off ctx.sbom / ctx.cve_findings; no subprocess
+        # calls inside the lens, and any other lens needing the same data
+        # observes it on the shared blackboard (VALUES §4).
+        requires_capabilities=["sbom", "cve"],
     )
 
     def build_agent(self, deps_type: type) -> None:
