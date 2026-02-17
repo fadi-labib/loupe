@@ -192,7 +192,7 @@ Loupe's tests use `pytest-vcr` to record HTTP fixtures for the LLM calls, then r
 ## Data retention
 
 - **Run records** are kept indefinitely in your Git history. To purge them, you'd have to rewrite Git history — which by design is what the hash chain detects.
-- **Knowledge graph** is overwritten on every run (with promotion rules — see [`DESIGN-DECISIONS.md` D-07](DESIGN-DECISIONS.md#d-07--shared-state-within-run-runcontext-blackboard--persistent-knowledge-graph)). Older versions live in Git history.
+- **Knowledge graph** is overwritten on every run (with promotion rules — see [`DECISIONS.md` D-07](DECISIONS.md#d-07--shared-state-within-run-runcontext-blackboard--persistent-knowledge-graph)). Older versions live in Git history.
 - **Artefacts** are overwritten on every run that affects them. Older versions live in Git history.
 - **Proposal branches** persist until you delete them. They're not auto-cleaned.
 
