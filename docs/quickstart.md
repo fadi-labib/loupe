@@ -35,7 +35,7 @@ This creates `.loupe/` with the minimum files Loupe expects:
 └── decisions/           # ADR-style risk acceptances
 ```
 
-`config.yaml` ships with sensible defaults: ThreatLens enabled at relevance threshold 0.3, the `sbom` capability backed by Syft, the `cve` capability backed by Grype.
+`config.yaml` ships with sensible defaults: ThreatLens enabled at relevance threshold 0.3, the `agent_writable_paths` allow-list pointing at the standard ThreatLens artefact locations, and a `ci.fail_on` gate. The capability registry exists in the codebase (see `concepts/capabilities.md`) but the default `config.yaml` does not yet wire its backends into the CI flow; that wiring lands when the ThreatLens agent goes live against an LLM.
 
 `context.md` is your responsibility. Open it in an editor and fill in the marked sections.
 
@@ -59,13 +59,17 @@ loupe ci \
   --head-sha HEAD
 ```
 
-What happens:
+What happens today:
 
 1. The CLI bootstraps a `RunContext` from the diff, `context.md`, and `knowledge.yaml`.
 2. The coordinator asks each enabled lens `is_relevant(ctx)` and skips anything below threshold.
-3. The capability registry runs the SBOM and CVE backends once. Results land on the `RunContext` for any lens that wants them.
-4. Selected lenses run in topological order.
-5. A run record gets written to `.loupe/runs/<id>.json` with a SHA-256 hash chain pointing at the previous run.
+3. Selected lenses run in topological order. ThreatLens runs its scaffolded pipeline; the LLM step is stubbed.
+4. A run record gets written to `.loupe/runs/<id>.json` with a SHA-256 hash chain pointing at the previous run.
+
+What will happen once the agent wiring lands:
+
+5. The capability bootstrap pass runs the configured SBOM and CVE backends once before any lens executes. Typed results land on `ctx.sbom` and `ctx.cve_findings` for every lens to read.
+6. ThreatLens's PydanticAI agent gets called with the diff, the SBOM, the CVE list, and `context.md` as a stable-prefix prompt, then proposes threats through `propose_threat` tool calls.
 
 Output ends with the lens names that ran and the path of the new run record.
 
@@ -77,7 +81,7 @@ The run record is the canonical artefact. It captures inputs (diff hash, context
 loupe verify
 ```
 
-That command walks the run records, checks the hash chain, validates authorship, and confirms each schema. It exits non-zero on the first tamper signal.
+Today the command checks one thing: the hash-chain integrity across `.loupe/runs/*.json`. It exits non-zero on the first tamper signal. Authorship of protected paths, schema consistency of each artefact, and threats-to-mitigations cross-reference integrity are documented as Layer 3 checks but not yet implemented; they land in subsequent commits.
 
 The threats themselves are in `.loupe/threats.yaml` once ThreatLens emits any. Each threat has a stable ID (`T-NNN`), a STRIDE category, severity, status, links to the diff lines that introduced it, and a list of mitigation IDs.
 
