@@ -149,7 +149,7 @@ If you later install SafetyLens, step 4 does not change. Syft already ran. Safet
 
 The agent has two write tools: `write_agent_artifact` (path must be in the allow-list) and `propose_patch` (writes to `.loupe/.proposed/` for human review). There is no general "write any file" tool. There is no Bash tool. Protected files (`context.md`, `decisions/*.md`, `config.yaml`) are not in the allow-list; the agent can propose patches but cannot commit them.
 
-The platform refuses to run unattended when modifying protected paths. `loupe chat` prompts `[y/N/edit/skip]` with default-N. There is no `--auto-confirm` flag and no environment variable that lowers the bar.
+The platform is designed so that `loupe chat`, once implemented, prompts `[y/N/edit/skip]` with default-N before each protected-path proposal. There is no `--auto-confirm` flag, no environment variable that lowers the bar, and no way to scriptwrap the prompt away. Today the chat command is a placeholder; the same principle holds for the CI flow, which restricts the agent to its allow-list paths.
 
 ## Where to go next
 

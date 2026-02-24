@@ -8,7 +8,7 @@ A *loupe* is the precision lens jewellers and watchmakers use to inspect detail 
 
 ## What it does for you
 
-Three frontends, one core. `loupe ci` runs on every PR via the GitHub Action and posts a sticky comment with severity-grouped findings. `loupe chat` runs the same pipeline interactively in your terminal. `loupe mcp` (in progress) exposes the same tools to Claude Code, Cursor, or any MCP-aware client.
+Three frontends are designed, one is shipping. `loupe ci` runs on every PR via the GitHub Action and posts a sticky comment with severity-grouped findings; this is implemented and the agent wiring is the next milestone. `loupe chat` (interactive REPL) and `loupe mcp` (Model Context Protocol server) are designed in this repo but not yet implemented; `loupe chat` currently prints a placeholder, and `loupe mcp` is not registered as a command yet.
 
 Outputs live in `.loupe/` as Git-tracked plain files: threats, mitigations, a CycloneDX SBOM, OpenVEX statements, hash-chained run records, and an ADR-style decision log. An auditor can verify any of this with their own tooling. There is no SaaS, no telemetry, no Loupe-hosted backend.
 

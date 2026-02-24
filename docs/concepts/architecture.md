@@ -6,10 +6,10 @@ Two diagrams. The first shows what Loupe is made of and where the plugin slots a
 
 ```mermaid
 flowchart TB
-    subgraph frontends["Three frontends"]
-        ci["loupe ci"]
-        chat["loupe chat"]
-        mcp["loupe mcp"]
+    subgraph frontends["Three frontends, one shipping"]
+        ci["loupe ci (shipping)"]
+        chat["loupe chat (placeholder)"]
+        mcp["loupe mcp (not registered)"]
     end
 
     core["loupe-core<br/>Coordinator · RunContext · enforcement · prompt builder · run records"]
@@ -68,7 +68,7 @@ sequenceDiagram
 
 `is_relevant()` is pure Python and decides whether the lens runs at all. The SBOM and CVE scans run once per invocation regardless of how many lenses ask for the results. Writes to `.loupe/` go through `write_agent_artifact()`, which enforces the path allow-list from `config.yaml`. Anything outside the allow-list goes to `.loupe/.proposed/` for human review.
 
-The interactive flow (`loupe chat`) is the same sequence with a `[y/N/edit/skip]` prompt inserted before each artefact write, and a TTY guard that refuses to run unattended. The MCP flow is the same sequence wrapped in JSON-RPC and exposed as `loupe.tools.*` and `loupe.workflows.*`.
+The interactive (`loupe chat`) and MCP (`loupe mcp`) flows are designed to be the same sequence with different shells: chat inserts a `[y/N/edit/skip]` prompt before each artefact write under a TTY guard; MCP wraps the same operations as `loupe.tools.*` and `loupe.workflows.*` over JSON-RPC. Neither is implemented yet. `loupe chat` is currently a placeholder that prints a "not yet implemented" message and exits; the MCP command is not registered.
 
 ## Keeping the diagrams honest
 

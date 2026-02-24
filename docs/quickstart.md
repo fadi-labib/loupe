@@ -85,13 +85,13 @@ Today the command checks one thing: the hash-chain integrity across `.loupe/runs
 
 The threats themselves are in `.loupe/threats.yaml` once ThreatLens emits any. Each threat has a stable ID (`T-NNN`), a STRIDE category, severity, status, links to the diff lines that introduced it, and a list of mitigation IDs.
 
-## Run interactively
+## Run interactively (not yet shipped)
 
 ```bash
 loupe chat
 ```
 
-A REPL. Same pipeline as `loupe ci`, but every protected-path proposal pauses for a `[y/N/edit/skip]` confirmation with default-N. There is no `--auto-confirm` flag. The session refuses to start if stdin is not a TTY, so accidental unattended runs cannot happen.
+This currently prints a placeholder saying the full conversational REPL is a v1.x feature and not yet implemented. The TTY guard is in place (the command refuses to run with stdin redirected) but the conversational pipeline that drives lenses with `[y/N/edit/skip]` confirmation prompts has not been wired. Tracked alongside the MCP server as part of the second-frontend work.
 
 ## Wire up the GitHub Action
 
