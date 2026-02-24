@@ -427,9 +427,9 @@ Worth stating explicitly so the design stays focused:
 
 ## Cross-references
 
-- [D-18 in decisions.md](decisions.md#d-18--capability-abstraction-tool-agnostic-functional-building-blocks) the decision record
+- [D-18 in ../reference/decisions.md](../reference/decisions.md#d-18--capability-abstraction-tool-agnostic-functional-building-blocks) the decision record
 - [principles.md §7 (no LLM lock-in)](principles.md#7-multi-llm-by-default-never-single-vendor-lock-in) the parallel principle for LLMs
 - [principles.md §11 (no tool lock-in)](principles.md#11-no-tool-lock-in-pluggable-capabilities) the new principle this capability layer enforces
 - [about.md "Why Loupe"](about.md) the value proposition this strengthens
 - [comparison.md](comparison.md) competitive context (Trivy vs Syft; gitleaks vs TruffleHog; etc.)
-- [glossary.md](glossary.md) `Capability`, `CapabilityBackend`, `CapabilityRegistry`, `composition mode`, individual capability types
+- [../reference/glossary.md](../reference/glossary.md) `Capability`, `CapabilityBackend`, `CapabilityRegistry`, `composition mode`, individual capability types

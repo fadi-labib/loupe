@@ -53,14 +53,14 @@ loupe/
 ├── docs/                                Documentation (you are here)
 │   ├── about.md
 │   ├── principles.md
-│   ├── decisions.md
+│   ├── reference/decisions.md
 │   ├── contributing.md
-│   ├── architecture.md
-│   ├── capabilities.md
+│   ├── concepts/architecture.md
+│   ├── concepts/capabilities.md
 │   ├── comparison.md
-│   ├── data-handling.md
-│   ├── evaluation.md
-│   └── glossary.md
+│   ├── reference/data-handling.md
+│   ├── reference/evaluation.md
+│   └── reference/glossary.md
 ├── packages/                            All Python packages
 │   ├── loupe-core/                      The platform
 │   ├── loupe-cli/                       The CLI shell
@@ -74,7 +74,7 @@ loupe/
 
 ### Before changing code
 
-Read the relevant section of [`decisions.md`](decisions.md). If your change updates an existing decision (D-NN), note that in the PR description and update the log. If it creates a new decision, add the next available `D-NN` to the log.
+Read the relevant section of [`reference/decisions.md`](reference/decisions.md). If your change updates an existing decision (D-NN), note that in the PR description and update the log. If it creates a new decision, add the next available `D-NN` to the log.
 
 When a change touches enforcement, cost-saving, or human-in-the-loop concerns, [`principles.md`](principles.md) is the source of truth for what we will and won't compromise on.
 
@@ -111,7 +111,7 @@ Artefacts are Pydantic models with a YAML or JSON round-trip:
 
 ### Writing a new lens
 
-(This will be properly documented once Phase 4 lands and the lens API is stable. The current minimal contract is in [`decisions.md` D-11](decisions.md#d-11--lens-contract-is-six-methods-minimal-v1-api).)
+(This will be properly documented once Phase 4 lands and the lens API is stable. The current minimal contract is in [`reference/decisions.md` D-11](reference/decisions.md#d-11--lens-contract-is-six-methods-minimal-v1-api).)
 
 The minimum shape:
 
@@ -222,6 +222,6 @@ Never use `--no-verify` or `Co-Authored-By` lines.
 
 When the repo opens:
 
-1. Read [`about.md`](about.md), [`principles.md`](principles.md), and [`decisions.md`](decisions.md) before opening a PR with a structural change.
+1. Read [`about.md`](about.md), [`principles.md`](principles.md), and [`reference/decisions.md`](reference/decisions.md) before opening a PR with a structural change.
 2. For a bug fix or small feature: open a PR with a failing test in the same commit as the description, and the fix in a follow-up commit.
 3. For a new lens: open a discussion issue first to discuss the lens API surface adding a second instance is the moment we expect to refine the plugin contract (D-04).

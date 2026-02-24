@@ -8,7 +8,7 @@ AI-driven threat modelling is a crowded space, not an empty one. Several open-so
 
 Loupe's distinctive combination is plugin architecture (multiple domains via lenses and multiple tools via capabilities), in-repo local-first artefacts, four-layer write-boundary enforcement, multi-LLM provider-agnostic, and MCP server exposure. No single tool in the search results matched all five. Several match three or four. Loupe is a recombination of capabilities that exist elsewhere, with a coherent platform shape, not a category-creating product.
 
-One consequence of the capability architecture (see [`capabilities.md`](capabilities.md)) is that tools listed below as "competitors" are often Loupe backends in disguise. Syft, Trivy, Grype, gitleaks, TruffleHog, Semgrep all become registerable backends behind their respective Capability Protocols. The comparison is therefore not "Loupe vs these" but "Loupe vs the typical assembly-by-hand of these."
+One consequence of the capability architecture (see [`concepts/capabilities.md`](concepts/capabilities.md)) is that tools listed below as "competitors" are often Loupe backends in disguise. Syft, Trivy, Grype, gitleaks, TruffleHog, Semgrep all become registerable backends behind their respective Capability Protocols. The comparison is therefore not "Loupe vs these" but "Loupe vs the typical assembly-by-hand of these."
 
 ---
 

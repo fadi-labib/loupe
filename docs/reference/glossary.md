@@ -14,7 +14,7 @@ Terms you'll encounter across the codebase and docs. Alphabetical.
 
 **BoundaryViolation**: the exception raised when an agent tool attempts to write outside its allow-list. Caught by callers; logged in run records as `enforcement_error`. Surfacing this exception aborts the lens; surfacing it in CI fails the run.
 
-**Capability**: a typed Python Protocol describing one focused, tool-agnostic operation (e.g., `SbomCapability` for SBOM generation, `CveCapability` for CVE matching, `SecretDetectionCapability` for secret scanning). Capabilities are the verbs of the system; lenses are the nouns. A lens declares which capabilities it `requires_capabilities` and the platform resolves backends from registered packages. See [`capabilities.md`](capabilities.md) and [`decisions.md` D-18](decisions.md#d-18--capability-abstraction-tool-agnostic-functional-building-blocks).
+**Capability**: a typed Python Protocol describing one focused, tool-agnostic operation (e.g., `SbomCapability` for SBOM generation, `CveCapability` for CVE matching, `SecretDetectionCapability` for secret scanning). Capabilities are the verbs of the system; lenses are the nouns. A lens declares which capabilities it `requires_capabilities` and the platform resolves backends from registered packages. See [`../concepts/capabilities.md`](../concepts/capabilities.md) and [`decisions.md` D-18](decisions.md#d-18--capability-abstraction-tool-agnostic-functional-building-blocks).
 
 **CapabilityBackend**: a concrete implementation of a Capability Protocol. Backends are pip-installable packages that register via Python entry points under `loupe.capabilities.<capability_name>` (e.g., `loupe-cap-sbom-syft` provides a `SyftBackend` under `loupe.capabilities.sbom`). Same discovery pattern as lenses.
 

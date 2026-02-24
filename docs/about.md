@@ -82,4 +82,4 @@ The name comes from the engineering activity (close inspection through the right
 
 ## See also
 
-The eleven principles that guide every decision: [`principles.md`](principles.md). The decision log itself: [`decisions.md`](decisions.md).
+The eleven principles that guide every decision: [`principles.md`](principles.md). The decision log itself: [`reference/decisions.md`](reference/decisions.md).
