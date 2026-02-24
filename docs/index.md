@@ -156,8 +156,8 @@ The platform refuses to run unattended when modifying protected paths. `loupe ch
 | You want to | Read |
 |---|---|
 | Get something running | [`start.md`](start.md) |
-| Understand the principles | [`PRINCIPLES.md`](PRINCIPLES.md) |
-| Know why each decision was made | [`DECISIONS.md`](DECISIONS.md) |
-| Compare with adjacent tools | [`COMPARISON.md`](COMPARISON.md) |
-| Check what data leaves your repo | [`DATA-HANDLING.md`](DATA-HANDLING.md) |
-| Contribute code or a new lens | [`CONTRIBUTING.md`](CONTRIBUTING.md) |
+| Understand the principles | [`principles.md`](principles.md) |
+| Know why each decision was made | [`decisions.md`](decisions.md) |
+| Compare with adjacent tools | [`comparison.md`](comparison.md) |
+| Check what data leaves your repo | [`data-handling.md`](data-handling.md) |
+| Contribute code or a new lens | [`contributing.md`](contributing.md) |

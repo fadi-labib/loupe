@@ -160,4 +160,4 @@ When the agent wiring lands, expect three to five threats on a typical small PR,
 
 `loupe ci --verbose` prints the full plan and per-step timing. `loupe verify --strict` catches more than the default check.
 
-For anything beyond that, [`docs/CONTRIBUTING.md`](CONTRIBUTING.md) describes how to file an issue and how to reproduce locally.
+For anything beyond that, [`docs/contributing.md`](contributing.md) describes how to file an issue and how to reproduce locally.

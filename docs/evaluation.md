@@ -8,8 +8,8 @@
 
 Loupe makes two distinguishing claims:
 
-1. **"Evidence-grade"** outputs are auditor-credible (see [PRINCIPLES.md §1](PRINCIPLES.md#1-produce-evidence-not-theatre)).
-2. **"Better-shaped than existing tools"** the platform value justifies the build over using StrideGPT + a CI wrapper (see [COMPARISON.md](COMPARISON.md) and [D-16](DECISIONS.md#d-16--relationship-with-stridegpt-learn--attribute-dont-fork)).
+1. **"Evidence-grade"** outputs are auditor-credible (see [principles.md §1](principles.md#1-produce-evidence-not-theatre)).
+2. **"Better-shaped than existing tools"** the platform value justifies the build over using StrideGPT + a CI wrapper (see [comparison.md](comparison.md) and [D-16](decisions.md#d-16--relationship-with-stridegpt-learn--attribute-dont-fork)).
 
 Both claims are testable. **Without evaluation, they're marketing.** With evaluation, they become measurable properties an external party can verify by re-running the suite.
 
@@ -33,7 +33,7 @@ The crucial property: the CVE advisories are **externally audited**. NVD, the pr
 
 ## The benchmark projects: two-tier (D-19)
 
-Recorded as **[D-19](DECISIONS.md#d-19--benchmark-projects-two-tier-cesanta-mongoose--eclipse-mosquitto)**. The two-tier choice:
+Recorded as **[D-19](decisions.md#d-19--benchmark-projects-two-tier-cesanta-mongoose--eclipse-mosquitto)**. The two-tier choice:
 
 ### Tier 1 Cesanta Mongoose (fast smoke test)
 
@@ -61,7 +61,7 @@ Recorded as **[D-19](DECISIONS.md#d-19--benchmark-projects-two-tier-cesanta-mong
 
 - A single big suite (Mosquitto-only) gates iteration. If it takes 30 minutes to validate a prompt tweak, contributors stop running it locally and quality regresses.
 - A single small suite (Mongoose-only) biases toward memory-safety CVEs exactly the category where Loupe is honestly weakest. Reporting on Mongoose-only would understate Loupe's value.
-- Two tiers separates the concerns: fast feedback for development, rigorous coverage for release. Same scoring engine, same scenario-manifest schema, same StrideGPT-comparison protocol ([D-16](DECISIONS.md#d-16--relationship-with-stridegpt-learn--attribute-dont-fork)) only the catalogues differ.
+- Two tiers separates the concerns: fast feedback for development, rigorous coverage for release. Same scoring engine, same scenario-manifest schema, same StrideGPT-comparison protocol ([D-16](decisions.md#d-16--relationship-with-stridegpt-learn--attribute-dont-fork)) only the catalogues differ.
 
 ### What each tier deliberately is NOT
 
@@ -171,7 +171,7 @@ expected_threats:
 | **specific-match rate** | scenarios where `specific_match == True` / detected scenarios |
 | **average severity error** | mean absolute distance from expected severity, in levels |
 | **median cost per scenario** | typical $ to evaluate one CVE |
-| **comparison vs. StrideGPT** | same metrics computed against StrideGPT's output for the same scenarios (per [D-16](DECISIONS.md#d-16--relationship-with-stridegpt-learn--attribute-dont-fork)) |
+| **comparison vs. StrideGPT** | same metrics computed against StrideGPT's output for the same scenarios (per [D-16](decisions.md#d-16--relationship-with-stridegpt-learn--attribute-dont-fork)) |
 
 ### Acceptance thresholds (for v1.0)
 
@@ -204,7 +204,7 @@ A Tier 1 miss is a regression worth investigating but doesn't gate release it ga
 
 ## Comparison with StrideGPT (D-16 in action)
 
-Per [D-16](DECISIONS.md#d-16--relationship-with-stridegpt-learn--attribute-dont-fork), StrideGPT is our quality benchmark. For each scenario we run *both* tools and tabulate:
+Per [D-16](decisions.md#d-16--relationship-with-stridegpt-learn--attribute-dont-fork), StrideGPT is our quality benchmark. For each scenario we run *both* tools and tabulate:
 
 | Scenario | Loupe found | StrideGPT found | Winner |
 |---|---|---|---|
@@ -238,13 +238,13 @@ What we expect the evaluation to show stating this upfront so the results aren't
 - **Bugs in code Loupe didn't read** if the vulnerable code is in a file the agent didn't see (because the diff was elsewhere, or the prompt-cache filter dropped it), we miss it. This is a *known* failure mode of all LLM tools.
 - **Subtle race conditions** multi-threaded reasoning is hard for LLMs. We'll have a few of these in the Mosquitto CVE list and they'll mostly be missed.
 
-The fix for the memory-safety gap is **[D-18 capability backends](DECISIONS.md#d-18--capability-abstraction-tool-agnostic-functional-building-blocks)** the `StaticAnalysisCapability` lets a future ThreatLens query Semgrep / CodeQL findings and *incorporate* them into reasoning. The eval suite is the artefact that proves this matters: scenarios Loupe fails on solo, plus a Semgrep backend, should pass.
+The fix for the memory-safety gap is **[D-18 capability backends](decisions.md#d-18--capability-abstraction-tool-agnostic-functional-building-blocks)** the `StaticAnalysisCapability` lets a future ThreatLens query Semgrep / CodeQL findings and *incorporate* them into reasoning. The eval suite is the artefact that proves this matters: scenarios Loupe fails on solo, plus a Semgrep backend, should pass.
 
 ### What "false positives" really means
 
 If Loupe proposes a threat at a place that wasn't a CVE, that's a false positive *for this evaluation*. It may still be a real threat that just hasn't been filed yet, or a defence-in-depth concern, or a latent bug not yet exploited.
 
-The scoring engine counts FPs, but the EVALUATION.md result reporting must distinguish:
+The scoring engine counts FPs, but the evaluation.md result reporting must distinguish:
 
 - **Hard FP** proposed threat at code that has no realistic exploit path (the human reviewer agrees)
 - **Soft FP** proposed threat the maintainers chose not to file a CVE for but agree is legitimate
@@ -315,13 +315,13 @@ Specifically:
 - A future PrivacyLens evaluation needs LINDDUN-categorised scenarios.
 - The scoring shape (per-scenario booleans + aggregate rollups + comparison vs. baseline) generalises beyond security threat modelling.
 
-In that sense the EVALUATION.md is part of the contribution Loupe makes, separate from the agent itself.
+In that sense the evaluation.md is part of the contribution Loupe makes, separate from the agent itself.
 
 ---
 
 ## Cross-references
 
-- [D-19](DECISIONS.md#d-19--benchmark-project-choice-eclipse-mosquitto) the decision record
-- [D-16](DECISIONS.md#d-16--relationship-with-stridegpt-learn--attribute-dont-fork) StrideGPT as a quality benchmark
-- [D-18](DECISIONS.md#d-18--capability-abstraction-tool-agnostic-functional-building-blocks) Capability backends (Semgrep / CodeQL) close the memory-safety gap
-- [PRINCIPLES.md §1](PRINCIPLES.md#1-produce-evidence-not-theatre) why "verifiable by an external party" is non-negotiable
+- [D-19](decisions.md#d-19--benchmark-project-choice-eclipse-mosquitto) the decision record
+- [D-16](decisions.md#d-16--relationship-with-stridegpt-learn--attribute-dont-fork) StrideGPT as a quality benchmark
+- [D-18](decisions.md#d-18--capability-abstraction-tool-agnostic-functional-building-blocks) Capability backends (Semgrep / CodeQL) close the memory-safety gap
+- [principles.md §1](principles.md#1-produce-evidence-not-theatre) why "verifiable by an external party" is non-negotiable

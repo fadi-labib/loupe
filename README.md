@@ -40,7 +40,7 @@ In a GitHub workflow:
 |---|---|
 | What's the mental model? | [`docs/index.md`](docs/index.md) |
 | How do I get started? | [`docs/start.md`](docs/start.md) |
-| What are the principles? | [`docs/PRINCIPLES.md`](docs/PRINCIPLES.md) |
+| What are the principles? | [`docs/principles.md`](docs/principles.md) |
 | Why was X decided this way? | [`docs/decisions.md`](docs/decisions.md) |
 | How does Loupe compare with other tools? | [`docs/comparison.md`](docs/comparison.md) |
 | What data leaves my repo? | [`docs/data.md`](docs/data.md) |

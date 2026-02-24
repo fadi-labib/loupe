@@ -72,7 +72,7 @@ No managed UI. Loupe is local-first by choice. If you need a dashboard, you buil
 
 Self-supported. Apache 2.0, no commercial support contract.
 
-If any of those are dealbreakers, [`COMPARISON.md`](COMPARISON.md) points to alternatives.
+If any of those are dealbreakers, [`comparison.md`](comparison.md) points to alternatives.
 
 ## Why the name avoids "compliance"
 
@@ -82,4 +82,4 @@ The name comes from the engineering activity (close inspection through the right
 
 ## See also
 
-The eleven principles that guide every decision: [`PRINCIPLES.md`](PRINCIPLES.md). The decision log itself: [`DECISIONS.md`](DECISIONS.md).
+The eleven principles that guide every decision: [`principles.md`](principles.md). The decision log itself: [`decisions.md`](decisions.md).
