@@ -5,7 +5,7 @@
 - **Python 3.13** (uv will fetch it automatically if not installed)
 - **uv** ≥ 0.10 [installation instructions](https://docs.astral.sh/uv/getting-started/installation/)
 - **git** ≥ 2.40
-- (For Phase 6+ work) An **Anthropic API key** to record VCR cassettes
+- An **Anthropic API key** if you are re-recording VCR cassettes (the test suite replays cassettes without one)
 
 ## Initial setup
 
@@ -24,7 +24,7 @@ This will:
 ## Running tests
 
 ```bash
-uv run pytest                       # all 40 tests, ~0.2s
+uv run pytest                       # whole workspace, currently 186 tests
 uv run pytest packages/loupe-core   # only core tests
 uv run pytest -v                    # verbose
 uv run pytest -k threat             # tests matching 'threat'
@@ -107,11 +107,11 @@ Artefacts are Pydantic models with a YAML or JSON round-trip:
 2. Define a result model (Pydantic).
 3. Implement the tool function. It MUST use `write_agent_artifact` (or `propose_patch`) to mutate state never write directly.
 4. Add a unit test that exercises the tool without an LLM.
-5. (Phase 6 onwards) Register the tool with the lens's PydanticAI agent via `@agent.tool`.
+5. Register the tool with the lens's PydanticAI agent via `@agent.tool`.
 
 ### Writing a new lens
 
-(This will be properly documented once Phase 4 lands and the lens API is stable. The current minimal contract is in [`reference/decisions.md` D-11](reference/decisions.md#d-11--lens-contract-is-six-methods-minimal-v1-api).)
+The lens API has shipped; the current minimal contract (six methods, one declared attribute) is recorded in [`reference/decisions.md` D-11](reference/decisions.md#d-11--lens-contract-is-six-methods-minimal-v1-api). When the second lens lands, the API will get refined; until then, the v1 shape is what to follow.
 
 The minimum shape:
 
