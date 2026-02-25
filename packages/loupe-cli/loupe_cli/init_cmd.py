@@ -61,10 +61,15 @@ limits:
   per_run_max_steps: 30
 
 ci:
+  # Severities that fail the build (exit code 1). Bare severity strings
+  # match the Action's gate today: 'critical', 'high', 'medium', 'low'.
+  # Richer semantic tokens (e.g., 'new_critical_threat_unmitigated') are
+  # planned but not yet consumed by the gate logic.
   fail_on:
-    - new_critical_threat_unmitigated
+    - critical
+    - high
   warn_on:
-    - new_high_threat_unmitigated
+    - medium
   ignore_paths:
     - "docs/**"
 

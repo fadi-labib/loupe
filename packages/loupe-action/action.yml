@@ -26,6 +26,12 @@ outputs:
   findings_high:
     description: 'Number of high-severity threats'
     value: ${{ steps.loupe.outputs.findings_high }}
+  findings_medium:
+    description: 'Number of medium-severity threats'
+    value: ${{ steps.loupe.outputs.findings_medium }}
+  findings_low:
+    description: 'Number of low-severity threats'
+    value: ${{ steps.loupe.outputs.findings_low }}
   run_id:
     description: 'Run identifier (matches the .loupe/runs/<id>.json filename)'
     value: ${{ steps.loupe.outputs.run_id }}
