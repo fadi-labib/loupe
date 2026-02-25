@@ -1,25 +1,16 @@
-# Capabilities Tool-Agnostic Functional Building Blocks
+# Capabilities: tool-agnostic functional building blocks
 
-> **Status:** Design recorded; implementation deferred to v1.x. The current `loupe-core` ships only `sbom.py` with a hardcoded Syft backend (Phase 3, Task 3.3). This document captures the design we're committing to so that when v1.x lands, the work has a clear specification and so contributors can write capability backends today against the documented contract.
+> **Status:** Shipped in the codebase. `loupe-core/loupe_core/capabilities/` holds the protocol definitions, the registry, the composition modes, and the bundled Syft + Grype backends. The `loupe.capabilities` entry-point group is wired in `loupe-core/pyproject.toml`. What remains is the wiring into the live CI flow: `ci_cmd.py` does not yet call `bootstrap_capabilities()`, so the typed `ctx.sbom` and `ctx.cve_findings` fields are populated on demand inside tests but not yet during a real run. That wiring lands with the ThreatLens agent.
 
----
+## Why two extension points
 
-## The shape of the problem
+Loupe has two distinct pluggable layers. Lenses are domain-specific agents (the noun): ThreatLens does security threat modelling, SafetyLens (future) does ISO 26262 hazard analysis, PrivacyLens (future) does GDPR DPIA. A lens reasons about a domain.
 
-Loupe's value proposition has two pluggable layers:
+Capabilities are tool-agnostic operations (the verb): generate an SBOM, match CVEs against an SBOM, find secrets in code, run static analysis with a rule pack. A capability produces an input or verifies a fact; lenses consume those outputs.
 
-1. **Lenses** are domain-specific *agents* (a noun): ThreatLens does security threat modelling; SafetyLens (future) does ISO 26262 hazard analysis; PrivacyLens (future) does GDPR DPIA. A lens is the thing that reasons.
+The original v1 spec conflated the two: `loupe_core/sbom.py` called `syft` directly with no abstraction. That introduced vendor lock-in at the tool layer (same lock-in the principles forbid for LLMs), made cross-tool composition impossible (no way to express "run TruffleHog and gitleaks and merge"), forced each lens to re-implement its own tool wrappers, and made the agent's behaviour depend on which tool the operator had installed.
 
-2. **Capabilities** are tool-agnostic *operations* (a verb): "generate an SBOM", "match CVEs against an SBOM", "find secrets in code", "run static analysis with rule R". A capability is the thing that produces an input or verifies a fact.
-
-The original v1 design conflated these. `loupe_core/sbom.py` calls `syft` directly Syft is hardcoded, not a backend. As a result:
-
-- **Vendor lock-in at the tool layer.** Anchore's Syft is fine, but the spec also wants no lock-in (see [principles.md §7](principles.md#7-multi-llm-by-default-never-single-vendor-lock-in)). We achieve that for LLMs and abandon it for tools inconsistent.
-- **No way to compose tools.** "Run both TruffleHog and gitleaks and merge findings" is a real audit pattern (different tools find different secrets); the current shape can't express it.
-- **Cross-lens reuse is limited.** Both ThreatLens (security) and a future SafetyLens (functional safety) will want static-analysis output. Each shouldn't re-implement Semgrep wrappers.
-- **Tool availability varies by environment.** Some CI runners have Syft installed; some don't; some have Trivy instead. The agent's behaviour shouldn't depend on which tool the operator preferred.
-
-The fix is a second extension point **capabilities** alongside lenses.
+The fix is a second extension point sitting alongside lenses.
 
 ---
 
@@ -27,7 +18,7 @@ The fix is a second extension point **capabilities** alongside lenses.
 
 ### Definition
 
-A **Capability** is a typed Protocol describing a single, focused operation. A **CapabilityBackend** is a concrete implementation of that Protocol (e.g., `SyftBackend` implements the `SbomCapability` Protocol). Backends register via Python entry points under a per-capability group (e.g., `loupe.capabilities.sbom`).
+A **Capability** is a typed Protocol describing a single, focused operation. A **CapabilityBackend** is a concrete implementation of that Protocol (e.g., `SyftSbomBackend` implements the `SbomCapability` Protocol). Backends register via Python entry points under the single `loupe.capabilities` group; the `name` attribute on each backend class declares which capability it implements.
 
 Loupe's core ships a small set of Protocol definitions in `loupe_core/capabilities/`. It does *not* ship backends except for trivial built-ins. Real backends live in their own pip-installable packages exactly like lenses.
 
@@ -252,10 +243,11 @@ class ThreatLens:
     )
 
     async def run(self, ctx, plan_entry, boundary, loupe_dir):
-        sbom = await ctx.capabilities.sbom.generate(repo_path)
-        cves = await ctx.capabilities.cve.scan(sbom)
-        secrets = await ctx.capabilities.secret_detect.scan(repo_path, since=ctx.diff.base_sha)
-        # Hand structured results to the agent, no LLM call needed for these inputs
+        # ctx.sbom and ctx.cve_findings are populated by bootstrap_capabilities()
+        # before any lens runs. Each lens reads typed results off the blackboard.
+        sbom = ctx.sbom                # SbomResult, or None if no SBOM backend ran
+        cves = ctx.cve_findings        # CveResult, or None
+        # Hand structured results to the agent; no LLM call needed for these inputs.
 ```
 
 The lens does not know which backend(s) produced the results. That's the point.
@@ -289,45 +281,47 @@ A lens never silently runs without its capabilities. Same contract guarantee as 
 
 ## RunContext integration
 
-`RunContext` gains a `capabilities` attribute:
+`RunContext` carries one typed slot per capability, populated before any lens runs:
 
 ```python
 class RunContext(BaseModel):
     # ... existing fields ...
-    capabilities: CapabilityRegistry         # NEW resolved at bootstrap
+    sbom: SbomResult | None = None
+    cve_findings: CveResult | None = None
+    secrets: SecretDetectionResult | None = None
+    static_findings: StaticAnalysisResult | None = None
 
 # Usage from inside a lens
-sbom = await ctx.capabilities.sbom.generate(repo_path)
-findings = await ctx.capabilities.secret_detect.scan(repo_path, since=None)
+sbom = ctx.sbom              # SbomResult or None
+findings = ctx.secrets       # SecretDetectionResult or None
 ```
 
-`CapabilityRegistry` is a small facade that:
+`bootstrap_capabilities()` in `loupe_core/capabilities/bootstrap.py` does the population:
 
-- Discovers backends via entry points at startup (same mechanism as lenses)
-- Reads `config.yaml`'s `capabilities` section for backend selection + composition mode
-- Calls `is_available()` on each backend; logs (doesn't crash) when an expected one is missing
-- Caches results within a single run (don't regenerate the same SBOM twice)
-- Routes per-capability calls through the configured composition mode
+- Computes the union of `requires_capabilities` across selected lenses.
+- For each, resolves backends through the registry and invokes them under the configured composition mode.
+- Stores the typed result on the corresponding RunContext slot.
+- Implicit dependencies are handled (declaring `["cve"]` implicitly pulls `sbom`, since every CVE backend in practice consumes an SBOM).
 
----
+The registry caches results within a single run; multiple lenses asking for the same SBOM pay for it once.
 
 ## Entry-point convention
 
-Mirrors the lens convention exactly. Backend packages declare:
+Mirrors the lens convention. Backend packages declare entries under the single `loupe.capabilities` group; the backend class's `name` attribute identifies the capability category.
 
 ```toml
-# loupe-cap-sbom-syft/pyproject.toml
+# loupe-core/pyproject.toml (bundled defaults)
 
-[project.entry-points."loupe.capabilities.sbom"]
-syft = "loupe_cap_sbom_syft.backend:SyftBackend"
+[project.entry-points."loupe.capabilities"]
+syft  = "loupe_core.capabilities.backends.syft_sbom:SyftSbomBackend"
+grype = "loupe_core.capabilities.backends.grype_cve:GrypeCveBackend"
 
-# loupe-cap-secret-trufflehog/pyproject.toml
-
-[project.entry-points."loupe.capabilities.secret_detect"]
-trufflehog = "loupe_cap_secret_trufflehog.backend:TruffleHogBackend"
+# A third-party backend in its own package
+[project.entry-points."loupe.capabilities"]
+trivy = "loupe_cap_trivy.backend:TrivyBackend"
 ```
 
-`loupe-core` discovers everything under `loupe.capabilities.*` at startup.
+`loupe-core` discovers every entry under `loupe.capabilities` at startup, then indexes by `(capability_name, backend_name)` where `capability_name` comes from the class's `name` attribute (e.g., `"sbom"`, `"cve"`) and `backend_name` comes from the entry-point key (`"syft"`, `"trivy"`).
 
 ---
 
