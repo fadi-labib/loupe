@@ -155,7 +155,7 @@ The platform is designed so that `loupe chat`, once implemented, prompts `[y/N/e
 
 | You want to | Read |
 |---|---|
-| Get something running | [`start.md`](start.md) |
+| Get something running | [`quickstart.md`](quickstart.md) |
 | Understand the principles | [`principles.md`](principles.md) |
 | Know why each decision was made | [`reference/decisions.md`](reference/decisions.md) |
 | Compare with adjacent tools | [`comparison.md`](comparison.md) |

@@ -38,7 +38,7 @@ Terms you'll encounter across the codebase and docs. Alphabetical.
 
 **Dispatcher**: the runtime in `loupe_core/dispatcher.py` that executes a `LensRunPlan`. Calls each lens's `run()` method in order, sharing the same `RunContext` across all calls.
 
-**Evidence-grade**: Loupe's quality bar. Artefacts that an external auditor could verify with their own tooling, without trusting Loupe. Standard formats (CycloneDX, OpenVEX), stable IDs, hash chains, Git as the audit substrate. See [`principles.md` §1](principles.md#principle-1).
+**Evidence-grade**: Loupe's quality bar. Artefacts that an external auditor could verify with their own tooling, without trusting Loupe. Standard formats (CycloneDX, OpenVEX), stable IDs, hash chains, Git as the audit substrate. See [`principles.md` §1](../principles.md#principle-1).
 
 **Fact**: a cross-cutting datum posted by a lens to `RunContext.facts`. `Fact(subject, predicate, value, confidence, rationale)`. Read by other lenses to coordinate; promoted to the persistent knowledge graph only when high-confidence and corroborated. Contrast: **Finding**, which is lens-private.
 
@@ -74,7 +74,7 @@ Terms you'll encounter across the codebase and docs. Alphabetical.
 
 **LINDDUN**: privacy threat-modelling methodology (Linkability, Identifiability, Non-repudiation, Detectability, Disclosure of information, Unawareness, Non-compliance). Not in scope for v1; will be the focus of a future **PrivacyLens**.
 
-**Loupe**: the platform. Named after the precision inspection lens used by jewellers and watchmakers. Not "ComplianceMate." See [`about.md`](about.md#why-the-name-avoids-compliance).
+**Loupe**: the platform. Named after the precision inspection lens used by jewellers and watchmakers. Not "ComplianceMate." See [`about.md`](../about.md#why-the-name-avoids-compliance).
 
 **MCP**: Model Context Protocol. An open JSON-RPC protocol (Anthropic-originated) for LLM tool/resource/prompt exposure. Loupe exposes both granular tools (`loupe.tools.*`) and high-level workflows (`loupe.workflows.*`) over MCP. Transports: stdio (local) or HTTP+SSE (remote).
 
