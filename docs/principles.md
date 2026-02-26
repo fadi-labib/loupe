@@ -2,6 +2,24 @@
 
 Eleven things we will not compromise on. These came out of the design conversation rather than being declared upfront. When reviewing a change, ask which one it would break.
 
+## Summary
+
+| # | Principle | One-line summary |
+|---|---|---|
+| 1 | [Evidence, not theatre](#principle-1) | Auditor-verifiable outputs only; no green-tick PDFs nobody reads |
+| 2 | [The write boundary is a Python function](#principle-2) | Constraints live in code, not prompts |
+| 3 | [Defence in depth](#principle-3) | Four enforcement layers, no single one load-bearing |
+| 4 | [Cost discipline](#principle-4) | Cache + blackboard + dispatch built into the architecture |
+| 5 | [Humans stay in the decision seat](#principle-5) | Agent drafts; humans decide. No --auto-confirm |
+| 6 | [Standard formats](#principle-6) | CycloneDX, OpenVEX, STRIDE, JSON-RPC. Never invent |
+| 7 | [Multi-LLM by default](#principle-7) | Anthropic, OpenAI, Google, Ollama, switched via env var |
+| 8 | [Plugin contracts grow with the second instance](#principle-8) | Minimal seam now; refine when SafetyLens lands |
+| 9 | [VCR or no LLM in CI](#principle-9) | Live API calls in tests are an anti-pattern |
+| 10 | [Naming reflects activity, not regulation](#principle-10) | ThreatLens, not "CRA Agent" |
+| 11 | [No tool lock-in](#principle-11) | Capabilities are categories; backends are brands |
+
+---
+
 ## Evidence, not theatre { #principle-1 }
 
 A compliance scanner that emits a 200-page green-tick PDF and passes its own audit is theatre. We want the opposite: artefacts an auditor can verify with their own tooling. In practice that means CycloneDX for SBOMs, OpenVEX for vulnerability statements, structured threats with stable IDs, hash-chained run records, and git as the audit substrate. It rules out free-form reports, proprietary formats, "trust us" claims, and risk scores divorced from the underlying evidence.
