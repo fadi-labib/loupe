@@ -185,7 +185,12 @@ python -m loupe_action.entrypoint
 ## Useful commands
 
 ```bash
-# Find all TODO/FIXME (should be empty in this repo)
+# Find TODO/FIXME markers across the Python source.
+# The default-config template at loupe-cli/init_cmd.py contains
+# intentional TODO placeholders inside the .loupe/context.md scaffold
+# (those are markers for the user to fill in, not code debt). Filter
+# those out with `grep -v init_cmd` if you want a clean list of source
+# TODOs.
 grep -rn "TODO\|FIXME" packages/
 
 # Build all packages
