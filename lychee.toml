@@ -1,0 +1,38 @@
+# Configuration for lychee link checker.
+# Run locally with: lychee --config lychee.toml './**/*.md'
+
+# Only check Markdown source. The build output under site/ is excluded
+# along with the local-only plan/spec dirs.
+exclude_path = [
+  "site",
+  "docs/plans",
+  "docs/specs",
+  ".venv",
+  ".git",
+]
+
+# External links can be flaky; allow common transient failures.
+exclude = [
+  # Anchors that depend on a JS-rendered ToC; lychee can't see them.
+  "^https?://.+#",
+  # Placeholder repo URL used in templates; safe to leave dangling.
+  "https://github.com/fadilabib/loupe",
+]
+
+# Treat redirects as success.
+accept = [200, 206, 301, 302, 303, 307, 308, 999]
+
+# Reasonable network budgets.
+timeout = 20
+max_redirects = 5
+max_concurrency = 8
+
+# Retry transient failures.
+max_retries = 2
+retry_wait_time = 2
+
+# We do not check mailto: or tel: links.
+exclude_mail = true
+
+# Cache results between runs in CI so re-running PRs is fast.
+cache = true
