@@ -6,7 +6,7 @@ The principles that emerged from these decisions are at [`principles.md`](princi
 
 ---
 
-## D-01: scope is diff-aware threat modelling plus CRA evidence
+## D-01: scope is diff-aware threat modelling plus CRA evidence { #d-01 }
 
 The candidates were TARA (automotive cybersecurity, automotive-only audience), HARA (functional safety, weak diff-fit), CRA-driven SBOM and vulnerability evidence (broad audience, real deadline), standard-agnostic threat modelling (reusable but no regulatory anchor), and a "broad compliance agent" covering all of the above.
 
@@ -16,7 +16,7 @@ STRIDE applies to any product, not just automotive. CRA gives the outputs a regu
 
 ---
 
-## D-02: CI and interactive modes are first-class peers
+## D-02: CI and interactive modes are first-class peers { #d-02 }
 
 Three options: CI-first with an interactive CLI bolted on, interactive-first with a CI mode bolted on, or both equal from day one.
 
@@ -24,17 +24,17 @@ Both equal won. The two modes share one core engine with thin frontends. The use
 
 ---
 
-## D-03: Python 3.13 plus PydanticAI, multi-LLM via env var
+## D-03: Python 3.13 plus PydanticAI, multi-LLM via env var { #d-03 }
 
 The candidates were TypeScript with the Vercel AI SDK (best multi-LLM developer experience but locked out of Python's security/SBOM ecosystem), Claude Agent SDK (most agentic features, Claude-only), OpenAI Agents SDK with LiteLLM (multi-LLM through a translation layer), LangGraph (most flexible, heaviest abstraction), raw provider SDKs, or PydanticAI.
 
 PydanticAI on Python 3.13 won. Multi-LLM lives in an environment variable: `THREATLENS_MODEL=anthropic:claude-opus-4-7` or `openai:gpt-5` or `google-gla:gemini-2.5-pro`. The Vercel AI Gateway remains optional as an OpenAI-compatible HTTPS router.
 
-Python is the lingua franca of security and SBOM tooling (`cyclonedx-python-lib`, `openvex` parsers). PydanticAI's typed `deps` mechanism is the exact shape the shared `RunContext` blackboard needs (D-07). Pydantic models double as artefact schemas, tool I/O, and MCP schemas: three jobs from one definition. Multi-LLM is a hard requirement ([principles.md §7](principles.md#7-multi-llm-by-default-never-single-vendor-lock-in)) and PydanticAI ships Anthropic, OpenAI, Google, Mistral, Groq, Cohere, Ollama, and Bedrock natively. Claude Agent SDK was the strongest alternative but is Claude-only; its plan-mode, hooks, and subagent features would have to be rebuilt for multi-LLM, eliminating most of the benefit.
+Python is the lingua franca of security and SBOM tooling (`cyclonedx-python-lib`, `openvex` parsers). PydanticAI's typed `deps` mechanism is the exact shape the shared `RunContext` blackboard needs (D-07). Pydantic models double as artefact schemas, tool I/O, and MCP schemas: three jobs from one definition. Multi-LLM is a hard requirement ([principles.md §7](principles.md#principle-7)) and PydanticAI ships Anthropic, OpenAI, Google, Mistral, Groq, Cohere, Ollama, and Bedrock natively. Claude Agent SDK was the strongest alternative but is Claude-only; its plan-mode, hooks, and subagent features would have to be rebuilt for multi-LLM, eliminating most of the benefit.
 
 ---
 
-## D-04: plugin architecture with a minimal v1 API
+## D-04: plugin architecture with a minimal v1 API { #d-04 }
 
 Considered a monolithic single package, a core library with thin shells but no plugin seam, microagents from day one, a plugin architecture with a fully designed API, and a plugin architecture with the minimum API needed to ship one lens.
 
@@ -44,17 +44,17 @@ The user mentioned future lenses (safety analysis, others) from the start. The r
 
 ---
 
-## D-05: platform is "Loupe", lenses are `<Domain>Lens`
+## D-05: platform is "Loupe", lenses are `<Domain>Lens` { #d-05 }
 
 The candidates were "ThreatLens" as the platform name (rejected once D-04 made plugin architecture central), Prism (best metaphor, PyPI namespace likely taken), Aperture (strong metaphor), Loupe (the inspection instrument), and a handful of alternatives (Optica, Sightline, Lumen).
 
 Loupe is the platform; lenses follow the `<Domain>Lens` pattern: `ThreatLens`, `SafetyLens`, `PrivacyLens`, `AIRiskLens`.
 
-Calling the core "ThreatLens" was wrong once the plugin architecture was central. The loupe metaphor connotes precision inspection, which matches [principles.md §1](principles.md#1-produce-evidence-not-theatre). Loupe is short enough to be a CLI name. The `<Domain>Lens` suffix is self-documenting: a reader who sees "PrivacyLens" knows what it does. Naming reflects activity, not regulation ([principles.md §10](principles.md#10-naming-reflects-activity-not-regulation)).
+Calling the core "ThreatLens" was wrong once the plugin architecture was central. The loupe metaphor connotes precision inspection, which matches [principles.md §1](principles.md#principle-1). Loupe is short enough to be a CLI name. The `<Domain>Lens` suffix is self-documenting: a reader who sees "PrivacyLens" knows what it does. Naming reflects activity, not regulation ([principles.md §10](principles.md#principle-10)).
 
 ---
 
-## D-06: nine artefacts in `.loupe/`, markdown plus YAML pattern
+## D-06: nine artefacts in `.loupe/`, markdown plus YAML pattern { #d-06 }
 
 Nine files live in `.loupe/`, paired markdown (human-readable) and YAML/JSON (machine-readable) where the concept is "living":
 
@@ -70,11 +70,11 @@ Nine files live in `.loupe/`, paired markdown (human-readable) and YAML/JSON (ma
 | `runs/*.json` | Audit trail of every run, hash-chained | Agent (core) |
 | `config.yaml` | Project config | Human |
 
-The markdown is for engineers and auditors; the YAML is for the agent and CI gates; the agent's job is to keep them in sync. Every artefact has a stable ID scheme (`T-001`, `M-007`, `D-2026-05-13-x`); without IDs nothing cross-references and the threat model becomes prose, not evidence. `context.md` is the most under-rated file: most AI threat-modelling demos fail because the LLM does not know what the product actually does. The SBOM is generated by Syft, not LLM-written. Standards conformance (CycloneDX, OpenVEX, STRIDE) is non-negotiable ([principles.md §6](principles.md#6-standard-formats-over-proprietary-ones)).
+The markdown is for engineers and auditors; the YAML is for the agent and CI gates; the agent's job is to keep them in sync. Every artefact has a stable ID scheme (`T-001`, `M-007`, `D-2026-05-13-x`); without IDs nothing cross-references and the threat model becomes prose, not evidence. `context.md` is the most under-rated file: most AI threat-modelling demos fail because the LLM does not know what the product actually does. The SBOM is generated by Syft, not LLM-written. Standards conformance (CycloneDX, OpenVEX, STRIDE) is non-negotiable ([principles.md §6](principles.md#principle-6)).
 
 ---
 
-## D-07: within-run blackboard plus persistent knowledge graph
+## D-07: within-run blackboard plus persistent knowledge graph { #d-07 }
 
 This decision evolved through two clarifications. The initial misread was that "save context" meant session resumption (save chat, resume tomorrow). The user clarified it twice: first to cross-agent shared knowledge (lenses coordinating without re-sending context), then to cost-saving (within one invocation, share the diff, SBOM, and project context across all lenses).
 
@@ -84,7 +84,7 @@ The blackboard eliminates redundant CPU work (parsing the diff once, generating 
 
 ---
 
-## D-08: write boundary enforced in four layers
+## D-08: write boundary enforced in four layers { #d-08 }
 
 The candidates were Layer 1 only, Layers 1 plus 4, Layers 1 plus 2 plus 4 (skip the hash chain), or all four.
 
@@ -99,7 +99,7 @@ The audit story has to hold when one layer has a bug. Defence in depth is what m
 
 ---
 
-## D-09: MCP server with both granular tools and high-level workflows
+## D-09: MCP server with both granular tools and high-level workflows { #d-09 }
 
 The MCP server is the third frontend, alongside the CLI and CI runner, using the same `loupe-core` engine. Two namespaces: `loupe.tools.*` for granular operations (propose a threat, query the knowledge graph) for clients that want to compose their own workflows, and `loupe.workflows.*` for high-level operations (analyse this diff) for clients that just want to invoke the whole thing.
 
@@ -107,7 +107,7 @@ The user wanted MCP exposure as a hard requirement. Both namespaces future-proof
 
 ---
 
-## D-10: three cost levers as architectural concerns
+## D-10: three cost levers as architectural concerns { #d-10 }
 
 After D-07 reframed "save context" as cost-saving, three levers were formalised as required properties of the architecture.
 
@@ -121,7 +121,7 @@ Each lever lives in a specific core component (`PromptParts`, `RunContext`, `Coo
 
 ---
 
-## D-11: lens contract is six methods
+## D-11: lens contract is six methods { #d-11 }
 
 ```python
 class Lens(Protocol):
@@ -139,7 +139,7 @@ Six methods, one declared attribute. Anything else is implementation detail.
 
 ---
 
-## D-12: run records form a tamper-evident hash chain
+## D-12: run records form a tamper-evident hash chain { #d-12 }
 
 Each `runs/*.json` contains a `self_hash` (SHA-256 of its own content, excluding the `self_hash` field) and a `prev_run_hash` (the previous record's `self_hash`). `loupe verify` walks the chain.
 
@@ -147,21 +147,21 @@ Auditors need to detect history rewriting. Without the chain, a malicious actor 
 
 ---
 
-## D-13: VCR for LLM tests, never live calls in CI
+## D-13: VCR for LLM tests, never live calls in CI { #d-13 }
 
 Integration tests with an agent use `pytest-vcr`. A developer records cassettes once (with an API key) and commits them. CI replays them without any API key.
 
-LLM tests are non-deterministic, slow, and expensive when they hit a real API. VCR makes them deterministic, fast, and free. This is the only way to keep `uv run pytest` working in zero seconds for every contributor. See [principles.md §9](principles.md#9-test-discipline-vcr-or-no-llm-never-live-calls-in-ci).
+LLM tests are non-deterministic, slow, and expensive when they hit a real API. VCR makes them deterministic, fast, and free. This is the only way to keep `uv run pytest` working in zero seconds for every contributor. See [principles.md §9](principles.md#principle-9).
 
 ---
 
-## D-14: defer commit signing and off-repo retention
+## D-14: defer commit signing and off-repo retention { #d-14 }
 
 Sigstore or GPG commit signing, an off-repo retention store, and C2PA-style cryptographic provenance for AI outputs are all real concerns and all deferred. Git's SHA history plus the run-record hash chain (D-12) is sufficient evidence for v1. These features add real implementation cost and operational complexity; we add them when a real customer asks. The spec notes "Off-repo append-only log can be added as a v1.x feature without core changes."
 
 ---
 
-## D-15: full-repo scans are first class via `loupe scan`
+## D-15: full-repo scans are first class via `loupe scan` { #d-15 }
 
 The candidates were diff-only (would have skipped ThreatLens on no-diff runs because `is_relevant()` looks at `ctx.diff.changed_paths`), treating no-diff implicitly as "everything in scope" inside `is_relevant()`, two parallel pipelines (diff and full-repo), or one pipeline with a `scope` field on `RunContext` plus an explicit `loupe scan` command.
 
@@ -175,7 +175,7 @@ Deferred to v1.x: a `--baseline` workflow (mark a known-good model, compare futu
 
 ---
 
-## D-16: learn from StrideGPT, do not fork
+## D-16: learn from StrideGPT, do not fork { #d-16 }
 
 The candidates were forking StrideGPT, integrating it at runtime (calling it as a subprocess), ignoring it entirely, or learning from it and attributing the influence.
 
@@ -191,7 +191,7 @@ Deliberately deferred from StrideGPT's feature set: attack-tree generation, DREA
 
 ---
 
-## D-17: Apache 2.0
+## D-17: Apache 2.0 { #d-17 }
 
 The candidates were MIT (permissive, no explicit patent grant or trademark protection), Apache 2.0 (permissive with explicit patent grant, patent retaliation, trademark non-grant), GPL v3 (copyleft), AGPL v3 (copyleft plus network-use clause), BSL (eventual-open with time-limited commercial restriction), MPL 2.0 (file-level copyleft), and proprietary.
 
@@ -205,13 +205,13 @@ Trade-off: no commercial support contract. Acceptable for a local-first project 
 
 ---
 
-## D-18: capability abstraction for tool-agnostic operations
+## D-18: capability abstraction for tool-agnostic operations { #d-18 }
 
 The candidates were hardcoded tools (Syft directly in `loupe_core/sbom.py`, each future SBOM/CVE/secret tool similarly), per-tool pluggability (introduce `SbomBackend` but keep CVE/secrets/static-analysis hardcoded), or a generalised capability abstraction.
 
 The generalised abstraction won, and it has shipped: `loupe-core/loupe_core/capabilities/` contains the protocol definitions, the registry, the composition modes, and the bundled Syft and Grype backends. A Capability is a typed Protocol describing one functional operation (`SbomCapability`, `CveCapability`, `SecretDetectionCapability`, `StaticAnalysisCapability`). Backends register through Python entry points under a single `loupe.capabilities` group; the class's `name` attribute declares which capability it satisfies. Composition modes (`single`, `fallback`, `union`, `consensus`, `pipeline`) let the operator configure how multiple backends interact. Lenses declare `requires_capabilities`; before the lens runs, `bootstrap_capabilities()` populates typed slots (`ctx.sbom`, `ctx.cve_findings`, `ctx.secrets`, `ctx.static_findings`) that every lens reads from the shared blackboard. The wiring of `bootstrap_capabilities()` into the live `ci_cmd.py` flow remains; that lands alongside the ThreatLens agent going live. Full design in [`../concepts/capabilities.md`](../concepts/capabilities.md).
 
-Parity with the LLM-provider value matters: [principles.md §7](principles.md#7-multi-llm-by-default-never-single-vendor-lock-in) commits us to no LLM-vendor lock-in via PydanticAI, and the original v1 spec accidentally re-introduced lock-in at the tool layer. Capabilities extend the same pattern down a layer. Cross-lens reuse matters too: ThreatLens needs SBOM, CVE matching, secret detection; SafetyLens will need static analysis and dependency-graph analysis; PrivacyLens will need PII detection. Without capabilities each lens re-implements its own tool wrappers.
+Parity with the LLM-provider value matters: [principles.md §7](principles.md#principle-7) commits us to no LLM-vendor lock-in via PydanticAI, and the original v1 spec accidentally re-introduced lock-in at the tool layer. Capabilities extend the same pattern down a layer. Cross-lens reuse matters too: ThreatLens needs SBOM, CVE matching, secret detection; SafetyLens will need static analysis and dependency-graph analysis; PrivacyLens will need PII detection. Without capabilities each lens re-implements its own tool wrappers.
 
 Composition is audit-relevant: "run TruffleHog and gitleaks and merge" (`union`) catches what either alone misses; "require two of three static analysers to corroborate" (`consensus`) reduces false-positive noise. These are real audit patterns the current code cannot express. Tool availability also varies by environment; the agent's logic should not care which is installed.
 
@@ -223,7 +223,7 @@ Migration: Phase 6 (Task 6.3) lands ThreatLens with hardcoded Syft; Phase v1.x-A
 
 ---
 
-## D-19: two-tier benchmark, Mongoose plus Mosquitto
+## D-19: two-tier benchmark, Mongoose plus Mosquitto { #d-19 }
 
 The candidates were libpng/libtiff/libwebp (rich CVE history but memory-safety-dominated, STRIDE coverage too narrow), dropbear SSH (tiny, good protocol CVEs, but less mixed-level), paho.mqtt.c (client-side only), OpenSSL/cURL/nghttp2 (too large), Mosquitto alone (best STRIDE breadth and CRA framing, but five times slower per scenario than smaller alternatives), Mongoose alone (fastest iteration loop, smaller CVE corpus), or both in two tiers.
 

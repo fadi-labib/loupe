@@ -4,7 +4,7 @@ Terms you'll encounter across the codebase and docs. Alphabetical.
 
 ---
 
-**Artifact**: a structured file Loupe maintains in `.loupe/`. Each artifact has a Pydantic schema and (where it's machine-readable) a YAML/JSON round-trip. The nine artifacts are: `context.md`, `threat-model.md`, `threats.yaml`, `mitigations.yaml`, `sbom.cdx.json`, `vex.json`, `decisions/*.md`, `runs/*.json`, `config.yaml`. See [`decisions.md` D-06](decisions.md#d-06--nine-artifact-files-in-loupe-two-file-pattern-markdown--yaml).
+**Artifact**: a structured file Loupe maintains in `.loupe/`. Each artifact has a Pydantic schema and (where it's machine-readable) a YAML/JSON round-trip. The nine artifacts are: `context.md`, `threat-model.md`, `threats.yaml`, `mitigations.yaml`, `sbom.cdx.json`, `vex.json`, `decisions/*.md`, `runs/*.json`, `config.yaml`. See [`decisions.md` D-06](decisions.md#d-06).
 
 **Audit trail**: the chronological record of every Loupe run. Implemented as `runs/*.json` files with a SHA-256 hash chain (each record references the previous one's `self_hash`). Tampering with history breaks the chain and is detected by `loupe verify`.
 
@@ -14,7 +14,7 @@ Terms you'll encounter across the codebase and docs. Alphabetical.
 
 **BoundaryViolation**: the exception raised when an agent tool attempts to write outside its allow-list. Caught by callers; logged in run records as `enforcement_error`. Surfacing this exception aborts the lens; surfacing it in CI fails the run.
 
-**Capability**: a typed Python Protocol describing one focused, tool-agnostic operation (e.g., `SbomCapability` for SBOM generation, `CveCapability` for CVE matching, `SecretDetectionCapability` for secret scanning). Capabilities are the verbs of the system; lenses are the nouns. A lens declares which capabilities it `requires_capabilities` and the platform resolves backends from registered packages. See [`../concepts/capabilities.md`](../concepts/capabilities.md) and [`decisions.md` D-18](decisions.md#d-18--capability-abstraction-tool-agnostic-functional-building-blocks).
+**Capability**: a typed Python Protocol describing one focused, tool-agnostic operation (e.g., `SbomCapability` for SBOM generation, `CveCapability` for CVE matching, `SecretDetectionCapability` for secret scanning). Capabilities are the verbs of the system; lenses are the nouns. A lens declares which capabilities it `requires_capabilities` and the platform resolves backends from registered packages. See [`../concepts/capabilities.md`](../concepts/capabilities.md) and [`decisions.md` D-18](decisions.md#d-18).
 
 **CapabilityBackend**: a concrete implementation of a Capability Protocol. Backends register via Python entry points under the single `loupe.capabilities` group; the class's `name` attribute declares which capability it satisfies (e.g., `name = "sbom"`). Bundled defaults (Syft, Grype) live in `loupe_core/capabilities/backends/`; third-party backends ship as their own pip packages.
 
@@ -38,13 +38,13 @@ Terms you'll encounter across the codebase and docs. Alphabetical.
 
 **Dispatcher**: the runtime in `loupe_core/dispatcher.py` that executes a `LensRunPlan`. Calls each lens's `run()` method in order, sharing the same `RunContext` across all calls.
 
-**Evidence-grade**: Loupe's quality bar. Artefacts that an external auditor could verify with their own tooling, without trusting Loupe. Standard formats (CycloneDX, OpenVEX), stable IDs, hash chains, Git as the audit substrate. See [`principles.md` §1](principles.md#1-produce-evidence-not-theatre).
+**Evidence-grade**: Loupe's quality bar. Artefacts that an external auditor could verify with their own tooling, without trusting Loupe. Standard formats (CycloneDX, OpenVEX), stable IDs, hash chains, Git as the audit substrate. See [`principles.md` §1](principles.md#principle-1).
 
 **Fact**: a cross-cutting datum posted by a lens to `RunContext.facts`. `Fact(subject, predicate, value, confidence, rationale)`. Read by other lenses to coordinate; promoted to the persistent knowledge graph only when high-confidence and corroborated. Contrast: **Finding**, which is lens-private.
 
 **Finding**: a lens-private datum stored in `RunContext.findings["<lens-name>"]`. Other lenses can read findings from completed lenses but writes are namespaced (one lens can't clobber another). Contrast: **Fact**, which is cross-cutting.
 
-**Full-repo mode**: `loupe scan`. The agent analyses the whole codebase as if it were a giant diff against an empty baseline. Used for onboarding, periodic re-baseline, audit prep. Higher cost than diff mode. See [`decisions.md` D-15](decisions.md#d-15--full-repo--no-diff-scans-are-first-class-via-loupe-scan).
+**Full-repo mode**: `loupe scan`. The agent analyses the whole codebase as if it were a giant diff against an empty baseline. Used for onboarding, periodic re-baseline, audit prep. Higher cost than diff mode. See [`decisions.md` D-15](decisions.md#d-15).
 
 **HARA**: Hazard Analysis and Risk Assessment. ISO 26262's term for functional-safety risk analysis. Not in scope for v1; will be the focus of a future **SafetyLens**.
 

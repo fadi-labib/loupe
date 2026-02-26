@@ -30,7 +30,7 @@ uv run pytest -v                    # verbose
 uv run pytest -k threat             # tests matching 'threat'
 ```
 
-Tests must pass with no API keys present. Any test that talks to an LLM does so via VCR cassettes (recorded once, replayed forever see [`principles.md` §9](principles.md#9-test-discipline-vcr-or-no-llm-never-live-calls-in-ci)).
+Tests must pass with no API keys present. Any test that talks to an LLM does so via VCR cassettes (recorded once, replayed forever see [`principles.md` §9](principles.md#principle-9)).
 
 ## Code style
 
@@ -111,7 +111,7 @@ Artefacts are Pydantic models with a YAML or JSON round-trip:
 
 ### Writing a new lens
 
-The lens API has shipped; the current minimal contract (six methods, one declared attribute) is recorded in [`reference/decisions.md` D-11](reference/decisions.md#d-11--lens-contract-is-six-methods-minimal-v1-api). When the second lens lands, the API will get refined; until then, the v1 shape is what to follow.
+The lens API has shipped; the current minimal contract (six methods, one declared attribute) is recorded in [`reference/decisions.md` D-11](reference/decisions.md#d-11). When the second lens lands, the API will get refined; until then, the v1 shape is what to follow.
 
 The minimum shape:
 

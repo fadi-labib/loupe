@@ -413,7 +413,7 @@ Total estimated v1.x effort: **~4–5 weeks** distributed across releases. Each 
 Worth stating explicitly so the design stays focused:
 
 - **Not a generic plugin framework.** Capabilities are typed, schema-checked, narrowly-scoped. We will not let arbitrary code mount "any tool" every backend must conform to a published Protocol.
-- **Not a marketplace.** Anyone can publish a capability backend on PyPI; Loupe doesn't curate. But installation is a deliberate `pip install` by the operator (see [principles.md §1](principles.md#1-produce-evidence-not-theatre) on transparency).
+- **Not a marketplace.** Anyone can publish a capability backend on PyPI; Loupe doesn't curate. But installation is a deliberate `pip install` by the operator (see [principles.md §1](principles.md#principle-1) on transparency).
 - **Not a substitute for lenses.** A capability does *one* thing. A lens *reasons* about a domain using one or more capabilities. The agent and therefore the LLM lives in the lens, not the capability.
 - **Not an abstraction over LLM providers.** PydanticAI already handles that. Capabilities are about *non-LLM* tools (scanners, generators, validators).
 
@@ -421,9 +421,9 @@ Worth stating explicitly so the design stays focused:
 
 ## Cross-references
 
-- [D-18 in ../reference/decisions.md](../reference/decisions.md#d-18--capability-abstraction-tool-agnostic-functional-building-blocks) the decision record
-- [principles.md §7 (no LLM lock-in)](principles.md#7-multi-llm-by-default-never-single-vendor-lock-in) the parallel principle for LLMs
-- [principles.md §11 (no tool lock-in)](principles.md#11-no-tool-lock-in-pluggable-capabilities) the new principle this capability layer enforces
+- [D-18 in ../reference/decisions.md](../reference/decisions.md#d-18) the decision record
+- [principles.md §7 (no LLM lock-in)](principles.md#principle-7) the parallel principle for LLMs
+- [principles.md §11 (no tool lock-in)](principles.md#principle-11) the new principle this capability layer enforces
 - [about.md "Why Loupe"](about.md) the value proposition this strengthens
 - [comparison.md](comparison.md) competitive context (Trivy vs Syft; gitleaks vs TruffleHog; etc.)
 - [../reference/glossary.md](../reference/glossary.md) `Capability`, `CapabilityBackend`, `CapabilityRegistry`, `composition mode`, individual capability types

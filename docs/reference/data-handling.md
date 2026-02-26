@@ -163,7 +163,7 @@ A `loupe verify` check that fails the build if a cassette contains an `Authoriza
 
 Run records persist indefinitely in git history. Purging them requires rewriting history, which by design is what the hash chain detects.
 
-The knowledge graph is overwritten each run (with promotion rules; see [`decisions.md` D-07](decisions.md#d-07-within-run-blackboard-plus-persistent-knowledge-graph)). Older versions live in git history.
+The knowledge graph is overwritten each run (with promotion rules; see [`decisions.md` D-07](decisions.md#d-07)). Older versions live in git history.
 
 Artefacts are overwritten each run that affects them. Older versions live in git history.
 
