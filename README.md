@@ -39,11 +39,11 @@ In a GitHub workflow:
 | Question | File |
 |---|---|
 | What's the mental model? | [`docs/index.md`](docs/index.md) |
-| How do I get started? | [`docs/start.md`](docs/start.md) |
+| How do I get started? | [`docs/quickstart.md`](docs/quickstart.md) |
 | What are the principles? | [`docs/principles.md`](docs/principles.md) |
 | Why was X decided this way? | [`docs/reference/decisions.md`](docs/reference/decisions.md) |
 | How does Loupe compare with other tools? | [`docs/comparison.md`](docs/comparison.md) |
-| What data leaves my repo? | [`docs/data.md`](docs/data.md) |
+| What data leaves my repo? | [`docs/reference/data-handling.md`](docs/reference/data-handling.md) |
 | Term I don't recognise? | [`docs/reference/glossary.md`](docs/reference/glossary.md) |
 | How do I contribute? | [`docs/contributing.md`](docs/contributing.md) |
 

@@ -195,7 +195,7 @@ Deliberately deferred from StrideGPT's feature set: attack-tree generation, DREA
 
 The candidates were MIT (permissive, no explicit patent grant or trademark protection), Apache 2.0 (permissive with explicit patent grant, patent retaliation, trademark non-grant), GPL v3 (copyleft), AGPL v3 (copyleft plus network-use clause), BSL (eventual-open with time-limited commercial restriction), MPL 2.0 (file-level copyleft), and proprietary.
 
-Apache 2.0. See [`LICENSE`](../LICENSE) at the repo root.
+Apache 2.0. See [`LICENSE`](../../LICENSE) at the repo root.
 
 A security-analysis tool may involve patentable analysis methods; Apache 2.0 §3 explicitly grants patent rights with a retaliation clause that revokes the grant if a licensee sues over patents in the code. MIT is silent on patents and US case law is inconsistent there. Apache 2.0 §6 explicitly does not grant trademark rights, blocking trademark squatting via fork. §5 spells out that intentional submissions are licensed under the project terms unless explicitly stated otherwise. Apache 2.0 is the boring-correct choice for enterprise-procured security tools; the CRA audience often requires it.
 

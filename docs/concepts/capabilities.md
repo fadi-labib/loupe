@@ -195,7 +195,7 @@ capabilities:
   static_analysis:
     mode: consensus
     backends: [semgrep, codeql, bandit]
-    threshold: 2                          # at least 2 of 3 must agree
+    consensus_threshold: 2                          # at least 2 of 3 must agree
 ```
 
 ### `pipeline`
@@ -345,7 +345,7 @@ capabilities:
   static_analysis:
     mode: consensus                          # require corroboration
     backends: [semgrep, codeql]
-    threshold: 2
+    consensus_threshold: 2
 
   vuln_db:
     mode: single
