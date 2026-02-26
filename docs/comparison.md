@@ -1,6 +1,8 @@
 # Loupe vs adjacent tools
 
-> Comparisons against tools in adjacent spaces. Some are competitors, most are complements. The goal is to help you decide what to use Loupe for and what to keep using your existing tools for. The AI-threat-modelling space moves fast; expect this doc to drift within months.
+> **Last reviewed:** 2026-05-15. The AI-threat-modelling space moves fast; treat anything older than three months in this doc as stale and worth re-verifying.
+
+Comparisons against tools in adjacent spaces. Some are competitors, most are complements. The goal is to help you decide what to use Loupe for and what to keep using your existing tools for.
 
 ## Loupe is not unprecedented
 
