@@ -32,7 +32,7 @@ A **capability** is a tool-agnostic operation plugin (the verb): `SbomCapability
 
 The result is no tool lock-in alongside no LLM lock-in. A team can run Loupe on Syft or Trivy, with one CVE scanner or three, with belt-and-braces secret detection or a single fast scanner, all through configuration.
 
-v1 ships ThreatLens. It looks for STRIDE-shaped threats, maintains a threat-model narrative and machine-readable threat and mitigation indexes, and generates per-CVE VEX statements. Its outputs feed CRA Annex I conformity evidence.
+v1 ships the ThreatLens scaffolding. Once its PydanticAI agent is wired to a live LLM, it will look for STRIDE-shaped threats, maintain a threat-model narrative and machine-readable threat and mitigation indexes, and generate per-CVE VEX statements. The artefact shapes are defined and the pipeline is scaffolded; the LLM-driven content generation is the next milestone. The outputs are designed to feed CRA Annex I conformity evidence.
 
 Future lenses we anticipate:
 

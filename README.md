@@ -10,7 +10,7 @@ A *loupe* is the precision lens jewellers and watchmakers use to inspect detail 
 
 Three frontends are designed, one is shipping. `loupe ci` runs on every PR via the GitHub Action and posts a sticky comment with severity-grouped findings; this is implemented and the agent wiring is the next milestone. `loupe chat` (interactive REPL) and `loupe mcp` (Model Context Protocol server) are designed in this repo but not yet implemented; `loupe chat` currently prints a placeholder, and `loupe mcp` is not registered as a command yet.
 
-Outputs live in `.loupe/` as Git-tracked plain files: threats, mitigations, a CycloneDX SBOM, OpenVEX statements, hash-chained run records, and an ADR-style decision log. An auditor can verify any of this with their own tooling. There is no SaaS, no telemetry, no Loupe-hosted backend.
+Outputs live in `.loupe/` as Git-tracked plain files. The artefact set is designed as: threats, mitigations, a CycloneDX SBOM, OpenVEX statements, hash-chained run records, and an ADR-style decision log. Today the platform writes the run records and the scaffolding for the rest; the LLM-driven generation of mitigation, SBOM, and VEX artefacts is gated on the ThreatLens agent going live. There is no SaaS, no telemetry, no Loupe-hosted backend.
 
 You pick the LLM. PydanticAI gives you Anthropic, OpenAI, Google, Mistral, Groq, Cohere, Ollama, and Bedrock through one env var. You pick the tools. SBOM, CVE, secret detection, and static analysis are pluggable Capability Protocols with composition modes (`single`, `fallback`, `union`, `consensus`, `pipeline`).
 
