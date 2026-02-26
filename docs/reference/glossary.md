@@ -60,11 +60,11 @@ Terms you'll encounter across the codebase and docs. Alphabetical.
 
 **Layer 1**: Tool-surface enforcement (in-process). The agent's only write tools are `write_agent_artifact` (path must be in the allow-list) and `propose_patch` (writes to `.proposed/`). The boundary is a Python function, not a prompt instruction. The strongest of the four layers.
 
-**Layer 2**: Branch-namespace enforcement (CI runtime). The GitHub App token can only push to `loupe/proposal-*` branches; CODEOWNERS gates `.loupe/context.md`, `.loupe/decisions/**`, `.loupe/config.yaml`. The runner literally cannot push to `main`.
+**Layer 2** (designed, not yet enforced at runtime): Branch-namespace enforcement at the CI runner. The commitment is that a fine-grained GitHub App token only allows pushes to `loupe/proposal-*` branches and that CODEOWNERS gates `.loupe/context.md`, `.loupe/decisions/**`, and `.loupe/config.yaml`. Today the Action uses the standard `GITHUB_TOKEN` and the branch restriction is a commitment rather than a runtime constraint.
 
-**Layer 3**: `loupe verify`. Installed as a pre-commit hook + required CI check. Authorship check, run-record hash chain, schema consistency. Verifiable by an external auditor running `loupe verify` themselves.
+**Layer 3** (partial): `loupe verify`. Designed to ship as a pre-commit hook + required CI check. Today checks one thing: run-record hash-chain integrity. Authorship of protected paths, artefact schema consistency, and threats-to-mitigations cross-references are documented in `verify_cmd.py` as planned checks that have not yet landed.
 
-**Layer 4**: Interactive UX gate. Every protected-path proposal renders as a unified diff with `[y/N/edit/skip]` prompt, default-N. No `--auto-confirm` flag.
+**Layer 4** (designed): Interactive UX gate. Once `loupe chat` is implemented, every protected-path proposal will render as a unified diff with a `[y/N/edit/skip]` prompt, default-N, with no `--auto-confirm` flag. The chat command is currently a placeholder.
 
 **Lens**: a Python package that registers with Loupe via Python entry points (`loupe.lenses` group). Contributes a PydanticAI agent, Pydantic-typed artefacts it owns, MCP tools and workflows, a pure-Python `is_relevant()` heuristic, and a list of `requires_capabilities` (see Capability). v1 ships exactly one: **ThreatLens**. Lenses are the *domain* extension point; Capabilities are the *tool* extension point.
 

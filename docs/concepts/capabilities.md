@@ -20,7 +20,7 @@ The fix is a second extension point sitting alongside lenses.
 
 A **Capability** is a typed Protocol describing a single, focused operation. A **CapabilityBackend** is a concrete implementation of that Protocol (e.g., `SyftSbomBackend` implements the `SbomCapability` Protocol). Backends register via Python entry points under the single `loupe.capabilities` group; the `name` attribute on each backend class declares which capability it implements.
 
-Loupe's core ships a small set of Protocol definitions in `loupe_core/capabilities/`. It does *not* ship backends except for trivial built-ins. Real backends live in their own pip-installable packages exactly like lenses.
+Loupe's core ships the Protocol definitions in `loupe_core/capabilities/protocols/` plus two bundled default backends (Syft for `sbom`, Grype for `cve`) under `loupe_core/capabilities/backends/`. Third-party backends live in their own pip-installable packages and register under the same `loupe.capabilities` entry-point group; the core never imports a backend by name.
 
 ### Mental model
 
