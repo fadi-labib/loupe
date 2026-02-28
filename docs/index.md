@@ -153,11 +153,70 @@ The platform is designed so that `loupe chat`, once implemented, prompts `[y/N/e
 
 ## Where to go next
 
-| You want to | Read |
-|---|---|
-| Get something running | [`quickstart.md`](quickstart.md) |
-| Understand the principles | [`principles.md`](principles.md) |
-| Know why each decision was made | [`reference/decisions.md`](reference/decisions.md) |
-| Compare with adjacent tools | [`comparison.md`](comparison.md) |
-| Check what data leaves your repo | [`reference/data-handling.md`](reference/data-handling.md) |
-| Contribute code or a new lens | [`contributing.md`](contributing.md) |
+<div class="grid cards" markdown>
+
+-   :material-rocket-launch:{ .lg .middle } **Get something running**
+
+    ---
+
+    Install, scaffold `.loupe/`, run the first `loupe ci` against a real diff.
+
+    [→ Quickstart](quickstart.md)
+
+-   :material-compass-outline:{ .lg .middle } **Understand the principles**
+
+    ---
+
+    The eleven things Loupe will not compromise on, with a one-line summary table.
+
+    [→ Principles](principles.md)
+
+-   :material-book-open-page-variant:{ .lg .middle } **Know why each decision was made**
+
+    ---
+
+    D-01 through D-19. What was considered, what was chosen, why.
+
+    [→ Decisions](reference/decisions.md)
+
+-   :material-scale-balance:{ .lg .middle } **Compare with adjacent tools**
+
+    ---
+
+    Loupe vs StrideGPT, IriusRisk, Threat Dragon, Snyk, Trivy, others.
+
+    [→ Comparison](comparison.md)
+
+-   :material-shield-lock-outline:{ .lg .middle } **Check what data leaves your repo**
+
+    ---
+
+    Network surface, API-key handling, run-record contents, retention.
+
+    [→ Data handling](reference/data-handling.md)
+
+-   :material-source-pull:{ .lg .middle } **Contribute code or a new lens**
+
+    ---
+
+    Workspace layout, test discipline, commit conventions.
+
+    [→ Contributing](contributing.md)
+
+-   :material-console:{ .lg .middle } **Look up a command or flag**
+
+    ---
+
+    Every CLI command, every flag, every exit code.
+
+    [→ CLI reference](reference/cli.md)
+
+-   :material-cog-outline:{ .lg .middle } **Configure capabilities and gates**
+
+    ---
+
+    `config.yaml` end-to-end, with three example presets (minimal, production, audit-heavy).
+
+    [→ Config reference](reference/config.md)
+
+</div>
