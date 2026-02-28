@@ -1,35 +1,14 @@
 # Threat
 
-Sourced from `packages/loupe-core/loupe_core/artifacts/threat.py`. Each entry in `.loupe/threats.yaml` is a `Threat` record; the file root is `ThreatsFile`.
+The on-disk shape of one entry in `.loupe/threats.yaml`. Rendered from the Pydantic source so any field added in code shows up here on the next build.
 
 ## Threat
 
-| Field | Type | Required | Validation | Notes |
-|---|---|---|---|---|
-| `id` | `str` | yes | matches `^T-\d{3,}$` | Stable identifier; never reuse across runs |
-| `element_id` | `str` | yes | matches `^E-\d{3,}$` | Refers to a system component declared in `knowledge.yaml` |
-| `stride_category` | `StrideCategory` enum | yes | `S` / `T` / `R` / `I` / `D` / `E` | Single-letter STRIDE category |
-| `title` | `str` | yes | length 1–200 | Short label; appears in PR-comment summaries |
-| `description` | `str` | yes | length ≥ 1 | Full prose description |
-| `severity` | `Severity` enum | yes | `low` / `medium` / `high` / `critical` | Feeds `ci.fail_on` gating |
-| `status` | `ThreatStatus` enum | yes | `proposed` / `accepted` / `mitigated` / `accepted_risk` / `rejected` | The agent writes `proposed`; humans transition the rest |
-| `mitigation_ids` | `list[str]` | no, default `[]` | each entry is a Mitigation ID | Cross-reference into `mitigations.yaml` |
-| `cwe_refs` | `list[str]` | no, default `[]` |   | e.g., `["CWE-79", "CWE-89"]` |
-| `attack_pattern_refs` | `list[str]` | no, default `[]` |   | e.g., CAPEC IDs |
-| `introduced_in_pr` | `str \| null` | no, default `null` |   | PR number or `null` for pre-existing |
-| `last_reviewed` | `date` | yes | ISO date | When a human last reviewed |
-| `review_due` | `date \| null` | no, default `null` |   | Schedule next review |
-| `rationale` | `str` | yes |   | Why this threat exists and how it was identified |
-| `proposed_by` | `str` | yes |   | Agent identity or human name |
+::: loupe_core.artifacts.threat.Threat
 
 ## ThreatsFile
 
-The root of `.loupe/threats.yaml`:
-
-| Field | Type | Default | Notes |
-|---|---|---|---|
-| `schema_version` | `int` | `1` | Bumps on a breaking schema change |
-| `threats` | `list[Threat]` | `[]` | All threats for the project |
+::: loupe_core.artifacts.threat.ThreatsFile
 
 ## Example
 
@@ -53,17 +32,12 @@ threats:
     review_due: 2026-08-15
     rationale: |
       Reviewing the diff for /api/users, I noticed the new exception
-      handler raises Exception directly without sanitisation. The
-      framework's default 500 handler will echo the message.
+      handler raises Exception directly without sanitisation.
     proposed_by: threatlens
 ```
 
 ## Cross-references
 
 - Mitigation IDs in `mitigation_ids` must exist in [Mitigation](mitigation.md).
-- Element IDs in `element_id` must exist in `knowledge.yaml` (see ProjectContext / knowledge graph).
-- `last_reviewed` and `review_due` participate in the audit trail; the run record references the threats it touched.
-
-## Validation behaviour
-
-`Threat` is validated on load via `ThreatsFile.load(path)`. Errors surface as `pydantic.ValidationError` with field-level detail; the CLI catches them and exits with code 2.
+- Element IDs in `element_id` must exist in `knowledge.yaml`.
+- `last_reviewed` and `review_due` are surfaced in the run record's `artifacts_changed` summary.

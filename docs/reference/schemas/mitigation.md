@@ -1,38 +1,18 @@
 # Mitigation
 
-Sourced from `packages/loupe-core/loupe_core/artifacts/mitigation.py`. Each entry in `.loupe/mitigations.yaml` is a `Mitigation` record; the file root is `MitigationsFile`.
+The on-disk shape of one entry in `.loupe/mitigations.yaml`. Rendered from the Pydantic source.
 
 ## Mitigation
 
-| Field | Type | Required | Validation | Notes |
-|---|---|---|---|---|
-| `id` | `str` | yes | matches `^M-\d{3,}$` | Stable identifier; never reuse |
-| `title` | `str` | yes | length 1–200 | Short label |
-| `description` | `str` | yes | length ≥ 1 | What this mitigation does |
-| `threats_addressed` | `list[str]` | no, default `[]` | each entry a Threat ID | Reverse-of `Threat.mitigation_ids` |
-| `status` | `MitigationStatus` enum | yes | `proposed` / `planned` / `implemented` / `verified` / `retired` | Lifecycle state |
-| `evidence` | `list[Evidence]` | no, default `[]` | see below | Where to look to confirm the mitigation exists |
-| `verified_by` | `str \| null` | no, default `null` |   | Whoever verified the mitigation |
-| `last_verified` | `date \| null` | no, default `null` |   | When the verification happened |
+::: loupe_core.artifacts.mitigation.Mitigation
 
 ## Evidence
 
-A pointer into the codebase, docs, or external system that backs the mitigation claim.
-
-| Field | Type | Required | Validation | Notes |
-|---|---|---|---|---|
-| `kind` | `Literal` | yes | `code` / `doc` / `test` / `config` / `external` | What kind of artefact |
-| `location` | `str` | yes | length ≥ 1 | Path, URL, or reference (e.g., `src/auth/login.py:42`) |
-| `note` | `str \| null` | no, default `null` |   | Free-text annotation |
+::: loupe_core.artifacts.mitigation.Evidence
 
 ## MitigationsFile
 
-The root of `.loupe/mitigations.yaml`:
-
-| Field | Type | Default | Notes |
-|---|---|---|---|
-| `schema_version` | `int` | `1` | Bumps on a breaking schema change |
-| `mitigations` | `list[Mitigation]` | `[]` | All mitigations for the project |
+::: loupe_core.artifacts.mitigation.MitigationsFile
 
 ## Example
 
@@ -43,8 +23,8 @@ mitigations:
     title: Sanitise exception messages before returning 500 responses
     description: |
       Wrap the framework's default error handler so internal exception
-      messages do not leak in HTTP responses. Log the full traceback
-      server-side; return a generic message + a request ID to the client.
+      messages do not leak in HTTP responses. Log the traceback server
+      side; return a generic message plus a request ID to the client.
     threats_addressed: [T-001]
     status: planned
     evidence:
@@ -61,5 +41,5 @@ mitigations:
 ## Cross-references
 
 - Every Threat ID in `threats_addressed` must exist in [Threat](threat.md)'s file.
-- `evidence[].location` is treated as a hint, not a hard constraint; the validator does not check that the path exists.
-- A mitigation with `status: verified` and no `verified_by` field is allowed but is a code smell; future `loupe verify` checks may warn on this.
+- `evidence[].location` is treated as a hint; the validator does not check the path exists.
+- A mitigation with `status: verified` and a null `verified_by` is allowed but is a code smell; future `loupe verify` checks may warn on this.
