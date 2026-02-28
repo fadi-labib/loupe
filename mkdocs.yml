@@ -1,0 +1,145 @@
+site_name: Loupe
+site_description: A platform of analysis lenses for software-engineering risk activities. v1 ships ThreatLens for diff-aware STRIDE threat modelling and EU CRA Annex I evidence.
+site_url: https://fadilabib.github.io/loupe/
+repo_url: https://github.com/fadilabib/loupe
+repo_name: fadilabib/loupe
+edit_uri: edit/main/docs/
+docs_dir: docs
+site_dir: site
+
+# Local-only plan/spec subdirs (kept on disk via .git/info/exclude) should
+# not get built into the published site.
+exclude_docs: |
+  plans/
+  specs/
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: deep purple
+      accent: deep orange
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: deep purple
+      accent: deep orange
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  font:
+    text: Inter
+    code: JetBrains Mono
+  icon:
+    logo: material/magnify
+    repo: fontawesome/brands/github
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.indexes
+    - navigation.top
+    - navigation.path
+    - toc.follow
+    - search.suggest
+    - search.highlight
+    - search.share
+    - content.code.copy
+    - content.code.annotate
+    - content.tabs.link
+    - content.tooltips
+    - content.action.edit
+
+nav:
+  - Home: index.md
+  - Quickstart: quickstart.md
+  - Principles: principles.md
+  - Concepts:
+      - Architecture: concepts/architecture.md
+      - Capabilities: concepts/capabilities.md
+  - Reference:
+      - CLI: reference/cli.md
+      - Config: reference/config.md
+      - Verification: reference/verification.md
+      - Decisions: reference/decisions.md
+      - Glossary: reference/glossary.md
+      - Data handling: reference/data-handling.md
+      - Evaluation: reference/evaluation.md
+      - Schemas:
+          - Overview: reference/schemas/index.md
+          - Threat: reference/schemas/threat.md
+          - Mitigation: reference/schemas/mitigation.md
+          - RunRecord: reference/schemas/run-record.md
+          - ProjectContext: reference/schemas/project-context.md
+          - Capability results: reference/schemas/capabilities.md
+  - About: about.md
+  - Comparison: comparison.md
+  - Contributing: contributing.md
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - footnotes
+  - abbr
+  - toc:
+      permalink: true
+      toc_depth: 3
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.smartsymbols
+  - pymdownx.caret
+  - pymdownx.mark
+  - pymdownx.tilde
+  - pymdownx.keys
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+
+plugins:
+  - search:
+      separator: '[\s\-\.]+'
+  - callouts                # Convert GitHub-style > [!NOTE] alerts to Material admonitions
+  - mkdocstrings:
+      handlers:
+        python:
+          paths:
+            - packages/loupe-core
+            - packages/loupe-cli
+            - packages/loupe-threatlens
+            - packages/loupe-action
+          options:
+            docstring_style: google
+            show_source: true
+            show_root_heading: true
+            show_signature_annotations: true
+            separate_signature: true
+            members_order: source
+            heading_level: 3
+
+extra:
+  generator: false
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/fadilabib/loupe
+      name: Source on GitHub
