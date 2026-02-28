@@ -1,6 +1,7 @@
 # Capabilities: tool-agnostic functional building blocks
 
-> **Status:** Shipped in the codebase. `loupe-core/loupe_core/capabilities/` holds the protocol definitions, the registry, the composition modes, and the bundled Syft + Grype backends. The `loupe.capabilities` entry-point group is wired in `loupe-core/pyproject.toml`. What remains is the wiring into the live CI flow: `ci_cmd.py` does not yet call `bootstrap_capabilities()`, so the typed `ctx.sbom` and `ctx.cve_findings` fields are populated on demand inside tests but not yet during a real run. That wiring lands with the ThreatLens agent.
+> [!NOTE]
+> **Status:** D-18 has shipped in the codebase. `loupe-core/loupe_core/capabilities/` holds the protocol definitions, the registry, the composition modes, and the bundled Syft + Grype backends; the `loupe.capabilities` entry-point group is wired in `loupe-core/pyproject.toml`. **What remains:** `ci_cmd.py` does not yet call `bootstrap_capabilities()`, so the typed `ctx.sbom` and `ctx.cve_findings` fields are populated inside tests but not yet during a real run. That wiring lands with the ThreatLens agent.
 
 ## Why two extension points
 

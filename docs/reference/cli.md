@@ -8,7 +8,10 @@ Every command Loupe currently registers, with its flags, exit codes, and what it
 loupe <command> [OPTIONS]
 ```
 
-The five commands registered today: `init`, `ci`, `verify`, `chat`, `scan`. Two more are designed but not yet registered: `mcp` (Model Context Protocol server) and discovery subcommands (`lens list`, `cap list`).
+The five commands registered today: `init`, `ci`, `verify`, `chat`, `scan`.
+
+> [!NOTE]
+> Two more commands are designed but not yet registered: `mcp` (Model Context Protocol server) and discovery subcommands (`lens list`, `cap list`). See [Commands not yet registered](#commands-not-yet-registered) at the bottom.
 
 ## `loupe init`
 

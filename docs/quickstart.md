@@ -4,7 +4,8 @@ This walks through installing Loupe, scaffolding the `.loupe/` directory in your
 
 ## Before you begin
 
-Loupe is pre-alpha. The platform, capability registry, CLI, and GitHub Action all exist. The PydanticAI agent inside ThreatLens is scaffolded but not yet wired to a live LLM. That means `loupe ci` will currently run the full pipeline (parse diff, run capabilities, build run record) and emit a stub threats file, not real STRIDE analysis. The wiring is the next milestone.
+> [!WARNING]
+> **Pre-alpha.** The platform, capability registry, CLI, and GitHub Action all exist. The PydanticAI agent inside ThreatLens is scaffolded but not yet wired to a live LLM. `loupe ci` will currently run the full pipeline (parse diff, run capabilities, build run record) and emit a stub threats file, not real STRIDE analysis.
 
 If you are evaluating Loupe for production use, wait for the agent wiring to land. If you are exploring the architecture, run the steps below.
 
@@ -85,13 +86,16 @@ Today the command checks one thing: the hash-chain integrity across `.loupe/runs
 
 The threats themselves are in `.loupe/threats.yaml` once ThreatLens emits any. Each threat has a stable ID (`T-NNN`), a STRIDE category, severity, status, links to the diff lines that introduced it, and a list of mitigation IDs.
 
-## Run interactively (not yet shipped)
+## Run interactively
 
 ```bash
 loupe chat
 ```
 
-This currently prints a placeholder saying the full conversational REPL is a v1.x feature and not yet implemented. The TTY guard is in place (the command refuses to run with stdin redirected) but the conversational pipeline that drives lenses with `[y/N/edit/skip]` confirmation prompts has not been wired. Tracked alongside the MCP server as part of the second-frontend work.
+> [!NOTE]
+> **Not yet shipped.** The command currently prints a placeholder saying the conversational REPL is a v1.x feature.
+
+The TTY guard is in place (the command refuses to run with stdin redirected) but the conversational pipeline that drives lenses with `[y/N/edit/skip]` confirmation prompts has not been wired. Tracked alongside the MCP server as part of the second-frontend work.
 
 ## Wire up the GitHub Action
 

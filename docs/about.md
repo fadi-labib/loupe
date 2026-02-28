@@ -60,7 +60,8 @@ You can hand these files to an auditor, or to a CRA submission platform such as 
 
 ## Trade-offs worth stating
 
-Pre-alpha. The platform, capability registry, CLI, and GitHub Action exist; the ThreatLens PydanticAI agent is scaffolded but not yet wired to a live LLM. Quality of threat-modelling output is unproven until that lands.
+> [!WARNING]
+> **Pre-alpha.** The platform, capability registry, CLI, and GitHub Action exist; the ThreatLens PydanticAI agent is scaffolded but not yet wired to a live LLM. Quality of threat-modelling output is unproven until that lands.
 
 One lens at v1. The multi-domain design is real, but the second lens has not been built.
 
