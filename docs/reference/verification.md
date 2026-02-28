@@ -1,0 +1,162 @@
+# Verification reference
+
+The auditor-facing page. Each of Loupe's principles makes a claim. This page tells you how to mechanically verify it. Where a check is not yet implemented, the page says so and points at the file or test that proves the intent.
+
+> [!NOTE]
+> Loupe is pre-alpha. Several checks listed here are aspirational and pointed at the code that documents their intent rather than a working command. Each row in the tables below says which.
+
+## How to read this page
+
+Each principle maps to one of three verification kinds:
+
+| Kind | What it means |
+|---|---|
+| **Command** | A shell incantation an auditor can run and watch succeed or fail |
+| **File** | A path the auditor can `cat` or `grep` to confirm the claim |
+| **Test** | A pytest test that asserts the claim; the test itself is the verification |
+
+## Principle-by-principle
+
+### P-1: Evidence, not theatre
+
+The claim: every artefact Loupe writes is verifiable with external tooling.
+
+| What to verify | Kind | How |
+|---|---|---|
+| SBOM is real CycloneDX 1.6 | Command | `cyclonedx validate --input-file .loupe/sbom.cdx.json` (run against any Loupe-produced SBOM) |
+| VEX statements are real OpenVEX 0.2 | Command | `openvex validate .loupe/vex.json` (uses the openvex-go CLI) |
+| Threats have stable IDs | File | `grep -E '^- id: T-' .loupe/threats.yaml`; every entry has a `T-NNN` line |
+| Run records form a hash chain | Command | `loupe verify` |
+| Audit trail is git-resident | Command | `git log -- .loupe/` shows commit-by-commit who touched what |
+
+### P-2: The write boundary is a Python function
+
+The claim: writes are gated by code, not by a prompt instruction.
+
+| What to verify | Kind | How |
+|---|---|---|
+| `PathBoundary` is real code | File | `packages/loupe-core/loupe_core/enforcement/path_boundary.py` |
+| The agent only has two write tools | File | `grep -nE 'def (write_agent_artifact\|propose_patch)' packages/loupe-core/loupe_core/tools.py` |
+| No general "write any file" tool exists | Command | `grep -rn 'def.*write\b' packages/loupe-core/loupe_core/tools.py` returns only those two |
+| The boundary rejects paths outside the allow-list | Test | `uv run pytest packages/loupe-core/tests/enforcement/ -v` |
+| The boundary rejects path traversal regardless of allow-list | Test | Same suite; look for `test_rejects_dotdot` style names |
+
+### P-3: Defence in depth
+
+The claim: four enforcement layers, no single one load-bearing.
+
+| Layer | Status | How to verify |
+|---|---|---|
+| Layer 1 (tool surface) | Shipped | See P-2 above |
+| Layer 2 (branch namespace) | Designed, not enforced | The Action uses the default `GITHUB_TOKEN`; the fine-grained PAT design lives in `action.yml`'s comments. See [`data-handling.md` § CI data flow](data-handling.md#ci-data-flow) |
+| Layer 3 (`loupe verify`) | Partial | `loupe verify` checks the hash chain today. Authorship, schema, and cross-reference checks are documented in `verify_cmd.py` as `# Coming in future commits`. |
+| Layer 4 (interactive UX gate) | Designed | `loupe chat` is a placeholder. The `[y/N/edit/skip]` prompt logic is not yet wired |
+
+### P-4: Cost discipline
+
+The claim: stable-prefix prompt caching, shared blackboard, coordinated dispatch.
+
+| What to verify | Kind | How |
+|---|---|---|
+| `PromptParts` separates stable and variable content | File | `packages/loupe-core/loupe_core/prompt_builder.py` |
+| The blackboard caches SBOM and CVE results | File | `packages/loupe-core/loupe_core/capabilities/bootstrap.py` calls each capability once; the result lands on `RunContext.sbom` / `ctx.cve_findings` |
+| `is_relevant()` is pure Python, no LLM call | Test | `uv run pytest packages/loupe-threatlens/tests/test_lens_relevance.py` runs with no API key set |
+| Coordinator skips below-threshold lenses | Test | `uv run pytest packages/loupe-core/tests/test_coordinator_plan.py` |
+| Run records log token counts and cache-hit rate | File | A `.loupe/runs/<id>.json` carries `total_tokens_in`, `total_tokens_out`, `cache_hit_rate`, `cost_usd_estimate` |
+
+### P-5: Humans stay in the decision seat
+
+The claim: agent drafts, humans decide.
+
+| What to verify | Kind | How |
+|---|---|---|
+| No `--auto-confirm` flag exists | Command | `grep -rn -- "--auto-confirm" packages/` returns nothing |
+| No env var lowers the confirmation bar | Command | `grep -rn -E "LOUPE.*AUTO\|SKIP_CONFIRM\|FORCE_YES" packages/` returns nothing |
+| `context.md`, `decisions/`, `config.yaml` are not in `agent_writable_paths` | File | `cat .loupe/config.yaml` shows the allow-list explicitly |
+| `propose_patch` writes to `.proposed/` for human review | File | `packages/loupe-core/loupe_core/tools.py` shows the staging-dir logic |
+| `loupe chat` requires a TTY | Test | `uv run pytest packages/loupe-cli/tests/test_chat_cmd.py` includes the TTY-guard test |
+
+### P-6: Standard formats
+
+The claim: industry standards, never proprietary inventions.
+
+| Artefact | Standard | Spec link |
+|---|---|---|
+| `sbom.cdx.json` | CycloneDX 1.6 | <https://cyclonedx.org/specification/overview/> |
+| `vex.json` | OpenVEX 0.2 | <https://openvex.dev/> |
+| `threats.yaml` STRIDE field | STRIDE (Microsoft) | <https://learn.microsoft.com/azure/security/develop/threat-modeling-tool-threats> |
+| Tool I/O schemas | Pydantic / JSON Schema | Generated by `model.model_json_schema()` |
+| `context.md`, `threat-model.md` | CommonMark + YAML frontmatter | <https://commonmark.org/> |
+| MCP transport | JSON-RPC 2.0 | <https://www.jsonrpc.org/specification> |
+
+To verify any of these, run the canonical validator against the corresponding `.loupe/<file>`.
+
+### P-7: Multi-LLM by default
+
+The claim: switching LLM provider is an env-var change, never a code change.
+
+| What to verify | Kind | How |
+|---|---|---|
+| Provider switching works at runtime | Command | `THREATLENS_MODEL='openai:gpt-5' loupe ci ...` runs without code edits |
+| The agent factory accepts arbitrary provider:model strings | File | `packages/loupe-threatlens/loupe_threatlens/agent.py` calls PydanticAI's `Agent(model=os.environ['THREATLENS_MODEL'])` |
+| No provider is hardcoded in core | Command | `grep -rni 'anthropic\|openai\|gemini\|claude' packages/loupe-core/loupe_core/ --include='*.py'` returns only references in comments or model-id defaults, never imports |
+
+### P-8: Plugin contracts grow with the second instance
+
+The claim: minimal lens API today; refined when SafetyLens lands.
+
+| What to verify | Kind | How |
+|---|---|---|
+| The lens contract is six methods + one attribute | File | `packages/loupe-core/loupe_core/lens_api.py` |
+| The contract is unchanged since v1 | Command | `git log --oneline packages/loupe-core/loupe_core/lens_api.py` since the file landed |
+| Lens registry discovers via entry points | Test | `uv run pytest packages/loupe-core/tests/test_lens_registry.py` |
+| A new lens needs only an entry-point line | File | The ThreatLens package's `pyproject.toml` `[project.entry-points."loupe.lenses"]` block is one line |
+
+### P-9: VCR or no LLM in CI
+
+The claim: `uv run pytest` works without an API key.
+
+| What to verify | Kind | How |
+|---|---|---|
+| The full suite passes with no API keys | Command | `unset ANTHROPIC_API_KEY OPENAI_API_KEY GOOGLE_API_KEY && uv run pytest` |
+| Cassettes scrub auth headers before disk | File | `packages/loupe-threatlens/tests/conftest.py` declares `filter_headers` |
+| No test makes a live API call | Command | `grep -rn "vcr_mode='all'\|record_mode=.*all" packages/` returns nothing in committed code |
+
+### P-10: Naming reflects activity, not regulation
+
+This is a process commitment more than a verifiable claim. The auditor can spot-check:
+
+| What to verify | Kind | How |
+|---|---|---|
+| Lenses follow `<Domain>Lens` pattern | Command | `find packages/loupe-* -name 'lens.py' -path '*threatlens*'` (one example) |
+| No filenames or class names reference regulations directly | Command | `grep -rni 'cra\|iso26262\|gdpr\|hipaa' packages/ --include='*.py'` returns only documentation/comments, never module names |
+
+### P-11: No tool lock-in
+
+The claim: every non-LLM tool category is a Capability Protocol with multiple registerable backends.
+
+| What to verify | Kind | How |
+|---|---|---|
+| Each category is a Protocol class | File | `packages/loupe-core/loupe_core/capabilities/protocols/` has `sbom.py`, `cve.py`, `secret_detect.py`, `static_analysis.py` |
+| Backends register via entry points | File | `packages/loupe-core/pyproject.toml`'s `[project.entry-points."loupe.capabilities"]` section |
+| Switching backends is a config change | File | `.loupe/config.yaml` `capabilities:` section selects backend by name |
+| Composition modes are real code | Test | `uv run pytest packages/loupe-core/tests/capabilities/test_composition.py` exercises `single`, `fallback`, `union`, `consensus`, `pipeline` |
+| Core never imports a backend by name | Command | `grep -rn 'syft\|grype\|trivy\|trufflehog' packages/loupe-core/loupe_core/ --include='*.py' --exclude-dir=capabilities/backends` returns nothing |
+
+## Reproducing a run from in-repo state
+
+Auditors who want to confirm a specific run record is genuine:
+
+1. `cat .loupe/runs/<run_id>.json` and note `base_sha`, `head_sha`, `diff_hash`, `context_md_hash`.
+2. `git diff <base_sha> <head_sha> > /tmp/diff.txt`
+3. `sha256sum /tmp/diff.txt` matches `diff_hash`.
+4. `git show <head_sha>:.loupe/context.md > /tmp/context.md && sha256sum /tmp/context.md` matches `context_md_hash`.
+5. `loupe verify` confirms `self_hash` and `prev_run_hash` link correctly through every run in the directory.
+
+If any of those fail, the run record was tampered with.
+
+## What this page deliberately does not promise
+
+- That `loupe verify` is exhaustive today. It is not; only the hash-chain check is wired. The other Layer 3 checks are documented as planned in `verify_cmd.py` and tracked in the changelog.
+- That an auditor can verify quality of LLM analysis without an LLM. They cannot; LLM output reasoning is a separate question from artefact integrity. Loupe's claim is that the *evidence pack is genuine*, not that the analysis is correct.
+- That every standard validator listed above is currently installed in CI. Some auditors will want to run them themselves; others will trust the format. The point of standards is that either path works.
