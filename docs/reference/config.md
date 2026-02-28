@@ -133,13 +133,78 @@ The `single` / `fallback` / `union` / `consensus` / `pipeline` modes are documen
 
 `loupe init` writes the template above. After that the file is human-managed. The agent has no tool that can edit `config.yaml`; the path is deliberately not in `agent_writable_paths`. Changes go through git and PR review like any other code change.
 
-## Minimal valid config
+## Example configs
 
-```yaml
-schema_version: 1
-lenses:
-  threatlens:
-    enabled: true
-```
+=== "Minimal"
 
-That is enough to run `loupe ci`. Everything else picks up defaults.
+    Enough to run `loupe ci`; everything else picks up defaults.
+
+    ```yaml
+    schema_version: 1
+    lenses:
+      threatlens:
+        enabled: true
+    ```
+
+=== "Production (typical)"
+
+    What most teams will start with: ThreatLens enabled, capability registry wired for SBOM and CVE, sensible CI gate.
+
+    ```yaml
+    schema_version: 1
+    ci:
+      fail_on: [critical, high]
+      warn_on: [medium]
+      ignore_paths: ["docs/**", "**/*.md"]
+    agent_writable_paths:
+      - .loupe/threats.yaml
+      - .loupe/mitigations.yaml
+      - .loupe/threat-model.md
+      - .loupe/vex.json
+      - .loupe/sbom.cdx.json
+      - .loupe/runs/**
+    lenses:
+      threatlens:
+        enabled: true
+        minimum_relevance: 0.3
+    capabilities:
+      sbom:
+        mode: single
+        backends: [syft]
+      cve:
+        mode: fallback
+        backends: [grype, osv-scanner]
+    ```
+
+=== "Audit-heavy"
+
+    Belt-and-braces secret detection, consensus-based SAST, lower relevance threshold so more PRs get analysed. Higher cost per run, stronger evidence.
+
+    ```yaml
+    schema_version: 1
+    ci:
+      fail_on: [critical, high, medium]
+      warn_on: [low]
+    limits:
+      per_run_max_usd: 5.0
+      per_run_max_tokens_in: 1500000
+      per_run_max_steps: 60
+    lenses:
+      threatlens:
+        enabled: true
+        minimum_relevance: 0.15
+    capabilities:
+      sbom:
+        mode: union
+        backends: [syft, trivy]
+      cve:
+        mode: union
+        backends: [grype, osv-scanner, trivy]
+      secret_detect:
+        mode: union
+        backends: [trufflehog, gitleaks]
+      static_analysis:
+        mode: consensus
+        consensus_threshold: 2
+        backends: [semgrep, codeql, bandit]
+    ```

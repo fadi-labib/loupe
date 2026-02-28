@@ -147,7 +147,50 @@ The following are part of the CLI design but not in `__main__.py`:
 
 | Variable | Used by | Purpose |
 |---|---|---|
-| `THREATLENS_MODEL` | `loupe-threatlens` | LLM provider+model identifier; e.g., `anthropic:claude-opus-4-7`, `openai:gpt-5`, `google-gla:gemini-2.5-pro`, `ollama:llama-3.3-70b` |
+| `THREATLENS_MODEL` | `loupe-threatlens` | LLM provider+model identifier (see provider-specific examples below) |
 | `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `GOOGLE_API_KEY` | The configured LLM provider | Auth for the LLM call. Never read by Loupe itself; only by PydanticAI's transport |
 | `AI_GATEWAY_API_KEY` | The Vercel AI Gateway provider option | Optional |
-| `INPUT_PR`, `INPUT_CONFIG`, `INPUT_COMMENT_MODE`, `GITHUB_TOKEN`, `GITHUB_REPOSITORY`, `GITHUB_WORKSPACE`, `GITHUB_OUTPUT`, `GITHUB_API_URL` | `loupe-action` entrypoint | See [`reference/data-handling.md`](data-handling.md) and `action.yml` |
+| `INPUT_PR`, `INPUT_CONFIG`, `INPUT_COMMENT_MODE`, `GITHUB_TOKEN`, `GITHUB_REPOSITORY`, `GITHUB_WORKSPACE`, `GITHUB_OUTPUT`, `GITHUB_API_URL` | `loupe-action` entrypoint | See [`data-handling.md`](data-handling.md) and `action.yml` |
+
+### Switching LLM providers
+
+The `THREATLENS_MODEL` identifier follows PydanticAI's format: `<provider>:<model>`. Set the matching API key env var.
+
+=== "Anthropic"
+
+    ```bash
+    export THREATLENS_MODEL='anthropic:claude-opus-4-7'
+    export ANTHROPIC_API_KEY='sk-ant-...'
+    ```
+
+=== "OpenAI"
+
+    ```bash
+    export THREATLENS_MODEL='openai:gpt-5'
+    export OPENAI_API_KEY='sk-...'
+    ```
+
+=== "Google"
+
+    ```bash
+    export THREATLENS_MODEL='google-gla:gemini-2.5-pro'
+    export GOOGLE_API_KEY='...'
+    ```
+
+=== "Ollama (local)"
+
+    ```bash
+    export THREATLENS_MODEL='ollama:llama-3.3-70b'
+    # No API key. The OLLAMA_HOST env var (default http://localhost:11434)
+    # determines where the local Ollama server is listening.
+    ```
+
+=== "Vercel AI Gateway"
+
+    ```bash
+    # The Gateway speaks the OpenAI API shape, so PydanticAI can route to it
+    # with the openai provider plus an alternate base URL.
+    export THREATLENS_MODEL='openai:gpt-5'
+    export AI_GATEWAY_API_KEY='...'
+    export OPENAI_BASE_URL='https://gateway.ai.vercel.com/...'
+    ```
