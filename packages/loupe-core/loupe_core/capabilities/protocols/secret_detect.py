@@ -9,16 +9,20 @@ Severity = Literal["critical", "high", "medium", "low", "informational"]
 
 
 class SecretFinding(BaseModel):
-    file: str
-    line: int = Field(ge=0)
-    rule_id: str
-    redacted_match: str
-    severity: Severity = "high"
+    """One leaked-credential candidate."""
+
+    file: str = Field(description="Repo-relative path containing the match.")
+    line: int = Field(ge=0, description="1-based line number; 0 for whole-file matches.")
+    rule_id: str = Field(description="Backend-specific identifier (e.g., `aws-access-key-id`).")
+    redacted_match: str = Field(description="The matched secret, scrubbed for safe display.")
+    severity: Severity = Field(default="high", description="Severity; defaults to high.")
 
 
 class SecretDetectionResult(BaseModel):
-    findings: list[SecretFinding] = Field(default_factory=list)
-    backend_name: str = ""
+    """Typed return of a secret-detection-capability invocation."""
+
+    findings: list[SecretFinding] = Field(default_factory=list, description="All detected secrets.")
+    backend_name: str = Field(default="", description="Backend that produced the result.")
 
 
 @runtime_checkable

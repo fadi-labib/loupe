@@ -11,19 +11,25 @@ Severity = Literal["critical", "high", "medium", "low", "informational"]
 
 
 class CveFinding(BaseModel):
-    cve_id: str
-    component_name: str
-    component_version: str
-    severity: Severity
-    summary: str
-    source_url: str | None = None
-    cvss_score: float | None = Field(default=None, ge=0.0, le=10.0)
-    fixed_version: str | None = None
+    """A single CVE matched against a component in the SBOM."""
+
+    cve_id: str = Field(description="CVE identifier such as `CVE-2024-12345`.")
+    component_name: str = Field(description="SBOM component the CVE applies to.")
+    component_version: str = Field(description="Component version when matched.")
+    severity: Severity = Field(description="Severity normalised to five levels.")
+    summary: str = Field(description="One-line description from the source feed.")
+    source_url: str | None = Field(default=None, description="Authoritative URL for the CVE.")
+    cvss_score: float | None = Field(
+        default=None, ge=0.0, le=10.0, description="CVSS base score 0.0-10.0."
+    )
+    fixed_version: str | None = Field(default=None, description="Upstream-fixed version.")
 
 
 class CveResult(BaseModel):
-    findings: list[CveFinding] = Field(default_factory=list)
-    backend_name: str = ""
+    """Typed return of a CVE-capability invocation."""
+
+    findings: list[CveFinding] = Field(default_factory=list, description="All matched CVEs.")
+    backend_name: str = Field(default="", description="Backend that produced the result.")
 
     def by_severity(self) -> dict[Severity, list[CveFinding]]:
         out: dict[Severity, list[CveFinding]] = defaultdict(list)

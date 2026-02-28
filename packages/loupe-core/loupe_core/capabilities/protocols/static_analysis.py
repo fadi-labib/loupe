@@ -9,16 +9,20 @@ Severity = Literal["critical", "high", "medium", "low", "informational"]
 
 
 class StaticFinding(BaseModel):
-    rule_id: str
-    file: str
-    line: int = Field(ge=0)
-    severity: Severity
-    message: str
+    """One SAST-rule violation."""
+
+    rule_id: str = Field(description="Rule identifier from the analyser.")
+    file: str = Field(description="Repo-relative path of the violation.")
+    line: int = Field(ge=0, description="1-based line number.")
+    severity: Severity = Field(description="Severity assigned by the rule.")
+    message: str = Field(description="One-line description from the analyser.")
 
 
 class StaticAnalysisResult(BaseModel):
-    findings: list[StaticFinding] = Field(default_factory=list)
-    backend_name: str = ""
+    """Typed return of a static-analysis-capability invocation."""
+
+    findings: list[StaticFinding] = Field(default_factory=list, description="All findings.")
+    backend_name: str = Field(default="", description="Backend that produced the result.")
 
 
 @runtime_checkable

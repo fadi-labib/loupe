@@ -6,37 +6,55 @@ from datetime import datetime
 from pathlib import Path
 from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class LensConsidered(BaseModel):
-    name: str
-    score: float
-    reason: str
+    """One lens the coordinator considered, with its relevance score."""
+
+    name: str = Field(description="Lens name, e.g., `threatlens`.")
+    score: float = Field(description="Score from `is_relevant()`.")
+    reason: str = Field(description="Free-text reason from `is_relevant()`.")
 
 
 class RunRecord(BaseModel):
-    run_id: str
-    timestamp: datetime
-    mode: Literal["ci", "interactive"]
-    invoked_by: str
-    trigger: str
-    base_sha: str | None
-    head_sha: str | None
-    diff_hash: str
-    context_md_hash: str
-    lenses_considered: list[LensConsidered]
-    lenses_run: list[str]
-    models_used: dict[str, str]
-    total_tokens_in: int
-    total_tokens_out: int
-    cost_usd_estimate: float
-    cache_hit_rate: float | None
-    artifacts_changed: list[str]
-    proposed_patches: list[str]
-    pending_decisions: list[str]
-    prev_run_hash: str | None
-    self_hash: str = ""
+    """Tamper-evident audit entry for one Loupe invocation.
+
+    Written to `.loupe/runs/<timestamp>-<run_id>.json` as canonical JSON (sorted
+    keys, no whitespace) so `self_hash` is reproducible. Each record's
+    `prev_run_hash` points at the previous record's `self_hash`, forming the
+    chain that `loupe verify` walks.
+    """
+
+    run_id: str = Field(description="Unique identifier such as `run-a3f2b1c4`.")
+    timestamp: datetime = Field(description="UTC, microsecond precision.")
+    mode: Literal["ci", "interactive"] = Field(description="Which frontend invoked Loupe.")
+    invoked_by: str = Field(description="Bot identity (CI) or user email (interactive).")
+    trigger: str = Field(description="What started the run: github_pr / manual_ci / chat_session.")
+    base_sha: str | None = Field(description="Base git SHA; null for `loupe scan`.")
+    head_sha: str | None = Field(description="Head git SHA.")
+    diff_hash: str = Field(description="SHA-256 of the unified-diff text.")
+    context_md_hash: str = Field(description="SHA-256 of `context.md` at run time.")
+    lenses_considered: list[LensConsidered] = Field(
+        description="Every enabled lens with its triage result."
+    )
+    lenses_run: list[str] = Field(description="Subset of `lenses_considered` that ran.")
+    models_used: dict[str, str] = Field(description="Map lens-name to model identifier.")
+    total_tokens_in: int = Field(description="Sum across all LLM calls this run.")
+    total_tokens_out: int = Field(description="Sum across all LLM calls this run.")
+    cost_usd_estimate: float = Field(description="Estimated cost in USD.")
+    cache_hit_rate: float | None = Field(description="Prompt-cache hit rate; null if unmeasurable.")
+    artifacts_changed: list[str] = Field(description="Paths in `.loupe/` written this run.")
+    proposed_patches: list[str] = Field(
+        description="Paths in `.loupe/.proposed/` created this run."
+    )
+    pending_decisions: list[str] = Field(description="Decisions awaiting human sign-off.")
+    prev_run_hash: str | None = Field(
+        description="Previous record's `self_hash`; null on first run."
+    )
+    self_hash: str = Field(
+        default="", description="SHA-256 of this record's content excluding `self_hash`."
+    )
 
     def compute_self_hash(self) -> str:
         data = self.model_dump(mode="json", exclude={"self_hash"})

@@ -25,37 +25,55 @@ Loupe's core ships the Protocol definitions in `loupe_core/capabilities/protocol
 
 ### Mental model
 
-```
-                         ┌─────────────────────────────────┐
-                         │     loupe-core (the platform)   │
-                         │   ┌─────────────────────────┐   │
-                         │   │  CapabilityRegistry     │   │
-                         │   │  - SbomCapability       │   │
-                         │   │  - CveCapability        │   │
-                         │   │  - SecretDetectCap...   │   │
-                         │   │  - StaticAnalysisCap... │   │
-                         │   │  - VulnDbCapability     │   │
-                         │   └────────────┬────────────┘   │
-                         └────────────────│────────────────┘
-                                          │
-            ┌─────────────────────────────┼─────────────────────────────┐
-            │                             │                             │
-   ┌────────▼─────────┐         ┌────────▼─────────┐         ┌────────▼─────────┐
-   │ loupe-cap-sbom-  │         │ loupe-cap-secret-│         │  loupe-cap-cve-  │
-   │      syft        │         │   trufflehog     │         │     grype        │
-   │  (pip package)   │         │   (pip package)  │         │  (pip package)   │
-   └──────────────────┘         └──────────────────┘         └──────────────────┘
-   ┌──────────────────┐         ┌──────────────────┐         ┌──────────────────┐
-   │ loupe-cap-sbom-  │         │ loupe-cap-secret-│         │  loupe-cap-cve-  │
-   │      trivy       │         │     gitleaks     │         │   osv-scanner    │
-   └──────────────────┘         └──────────────────┘         └──────────────────┘
-   ┌──────────────────┐
-   │ loupe-cap-sbom-  │         …(more backends as needed)
-   │   github-api     │
-   └──────────────────┘
+```mermaid
+flowchart TB
+    subgraph core["loupe-core (the platform)"]
+        registry["CapabilityRegistry"]
+        subgraph protocols["Typed Protocols"]
+            sbom["SbomCapability"]
+            cve["CveCapability"]
+            sd["SecretDetectionCapability"]
+            sast["StaticAnalysisCapability"]
+        end
+        registry --> protocols
+    end
+
+    subgraph sbom_backends["SBOM backends"]
+        b_syft["syft (bundled)"]
+        b_trivy["trivy"]
+        b_gh["github-api"]
+    end
+
+    subgraph cve_backends["CVE backends"]
+        b_grype["grype (bundled)"]
+        b_osv["osv-scanner"]
+    end
+
+    subgraph sd_backends["Secret-detect backends"]
+        b_th["trufflehog"]
+        b_gl["gitleaks"]
+    end
+
+    subgraph sast_backends["SAST backends"]
+        b_sem["semgrep"]
+        b_cq["codeql"]
+        b_ba["bandit"]
+    end
+
+    sbom -.->|"`loupe.capabilities`<br/>entry points"| sbom_backends
+    cve -.-> cve_backends
+    sd -.-> sd_backends
+    sast -.-> sast_backends
+
+    classDef coreNode fill:#fef3c7,stroke:#a16207,stroke-width:2px
+    classDef protoNode fill:#f3e8ff,stroke:#7e22ce,stroke-width:2px
+    classDef backendNode fill:#ffe4e6,stroke:#be123c,stroke-width:1px
+    class registry coreNode
+    class sbom,cve,sd,sast protoNode
+    class b_syft,b_trivy,b_gh,b_grype,b_osv,b_th,b_gl,b_sem,b_cq,b_ba backendNode
 ```
 
-Lenses *request* capabilities; the registry resolves them from installed backends according to per-project config.
+The core holds typed Protocols. Each Protocol is satisfied by one or more backends, which register through the single `loupe.capabilities` entry-point group. Lenses request a capability category (`sbom`, `cve`, `secret_detect`, `static_analysis`); the registry resolves to the operator-configured backend list, runs each backend, and combines results via the composition mode declared in `config.yaml`.
 
 ---
 

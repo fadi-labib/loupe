@@ -17,25 +17,44 @@ _yaml.indent(mapping=2, sequence=4, offset=2)
 
 
 class Evidence(BaseModel):
-    kind: Literal["code", "doc", "test", "config", "external"]
-    location: str = Field(min_length=1)
-    note: str | None = None
+    """Pointer into the codebase / docs / external system that backs a mitigation."""
+
+    kind: Literal["code", "doc", "test", "config", "external"] = Field(
+        description="Where this evidence lives."
+    )
+    location: str = Field(min_length=1, description="Path, URL, or other reference.")
+    note: str | None = Field(default=None, description="Optional annotation.")
 
 
 class Mitigation(BaseModel):
-    id: MitigationId
-    title: str = Field(min_length=1, max_length=200)
-    description: str = Field(min_length=1)
-    threats_addressed: list[str] = Field(default_factory=list)
-    status: MitigationStatus
-    evidence: list[Evidence] = Field(default_factory=list)
-    verified_by: str | None = None
-    last_verified: date | None = None
+    """One mitigation, written into `.loupe/mitigations.yaml`.
+
+    A mitigation addresses one or more threats. It carries a lifecycle state
+    (proposed to verified to retired) and Evidence pointers that say where the
+    mitigation is realised. Reverse relation: `Threat.mitigation_ids`.
+    """
+
+    id: MitigationId = Field(description="Stable ID, format `M-NNN`.")
+    title: str = Field(min_length=1, max_length=200, description="Short label.")
+    description: str = Field(min_length=1, description="What this mitigation does.")
+    threats_addressed: list[str] = Field(
+        default_factory=list, description="Threat IDs this addresses."
+    )
+    status: MitigationStatus = Field(description="Lifecycle state.")
+    evidence: list[Evidence] = Field(
+        default_factory=list, description="Where this mitigation is realised."
+    )
+    verified_by: str | None = Field(default=None, description="Whoever verified the mitigation.")
+    last_verified: date | None = Field(default=None, description="When verification happened.")
 
 
 class MitigationsFile(BaseModel):
-    schema_version: int = 1
-    mitigations: list[Mitigation] = Field(default_factory=list)
+    """Root of `.loupe/mitigations.yaml`."""
+
+    schema_version: int = Field(default=1, description="Bumped on breaking schema change.")
+    mitigations: list[Mitigation] = Field(
+        default_factory=list, description="All mitigations for the project."
+    )
 
     def save(self, path: Path) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)

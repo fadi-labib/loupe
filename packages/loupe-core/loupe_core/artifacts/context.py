@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 _REQUIRED_SECTIONS = [
     "Product description",
@@ -16,16 +16,24 @@ _REQUIRED_SECTIONS = [
 
 
 class ContextMdError(ValueError):
-    pass
+    """Raised when `.loupe/context.md` is missing a required section or fails to parse."""
 
 
 class ProjectContext(BaseModel):
-    product_description: str
-    assets: list[str]
-    users: list[str]
-    deployment: str
-    threat_actors: list[str]
-    out_of_scope: list[str]
+    """Parsed representation of `.loupe/context.md`, the human-authored product brief.
+
+    Anti-hallucination anchor: every run reads it so the LLM knows what the product
+    actually does. The agent cannot edit it directly; it can only propose patches.
+    `from_markdown(path)` parses the Markdown file and raises `ContextMdError` on
+    a missing required section.
+    """
+
+    product_description: str = Field(description="Two or three sentences describing the product.")
+    assets: list[str] = Field(description="Critical assets (data, keys, signing material).")
+    users: list[str] = Field(description="User types and what each can do.")
+    deployment: str = Field(description="Where the product runs; trust-boundary topology.")
+    threat_actors: list[str] = Field(description="Who you worry about (insider, supply chain).")
+    out_of_scope: list[str] = Field(description="Threats you deliberately do not address.")
 
     @classmethod
     def from_markdown(cls, path: Path) -> ProjectContext:
