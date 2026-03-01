@@ -35,11 +35,17 @@ The claim: writes are gated by code, not by a prompt instruction.
 
 | What to verify | Kind | How |
 |---|---|---|
-| `PathBoundary` is real code | File | `packages/loupe-core/loupe_core/enforcement/path_boundary.py` |
+| `PathBoundary` is real code | File | `packages/loupe-core/loupe_core/enforcement/path_boundary.py` (shown below) |
 | The agent only has two write tools | File | `grep -nE 'def (write_agent_artifact\|propose_patch)' packages/loupe-core/loupe_core/tools.py` |
 | No general "write any file" tool exists | Command | `grep -rn 'def.*write\b' packages/loupe-core/loupe_core/tools.py` returns only those two |
 | The boundary rejects paths outside the allow-list | Test | `uv run pytest packages/loupe-core/tests/enforcement/ -v` |
 | The boundary rejects path traversal regardless of allow-list | Test | Same suite; look for `test_rejects_dotdot` style names |
+
+The class itself, embedded directly from the source so this page can never drift from the implementation:
+
+```python title="packages/loupe-core/loupe_core/enforcement/path_boundary.py"
+--8<-- "packages/loupe-core/loupe_core/enforcement/path_boundary.py"
+```
 
 ### P-3: Defence in depth
 
