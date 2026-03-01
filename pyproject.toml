@@ -25,6 +25,11 @@ docs = [
     "mkdocs-callouts>=1.13",
     "mkdocstrings[python]>=0.26",
     "mkdocs-git-revision-date-localized-plugin>=1.2",
+    # Material social-card generation needs cairo + pango + the
+    # python pillow bindings. ubuntu-latest runners ship cairo/pango;
+    # the pip-installable bit is here.
+    "pillow>=10",
+    "cairosvg>=2.7",
 ]
 
 [tool.ruff]

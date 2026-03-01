@@ -130,6 +130,12 @@ plugins:
       exclude:
         - plans/*
         - specs/*
+  # Material's social-card plugin generates OG previews per page so shared
+  # links look polished on Slack, X, GitHub PRs, etc.
+  - social:
+      cards_layout_options:
+        background_color: "#5e35b1"   # deep purple, matches the theme palette
+        color: "#ffffff"
   - mkdocstrings:
       handlers:
         python:
