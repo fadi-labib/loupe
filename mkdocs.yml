@@ -120,6 +120,16 @@ plugins:
   - search:
       separator: '[\s\-\.]+'
   - callouts                # Convert GitHub-style > [!NOTE] alerts to Material admonitions
+  - git-revision-date-localized:
+      enable_creation_date: true
+      type: date
+      fallback_to_build_date: false
+      # The plans/ and specs/ subdirs are kept on disk for local reference
+      # but never tracked in git (.git/info/exclude). Skip them so the
+      # plugin does not warn about missing git history.
+      exclude:
+        - plans/*
+        - specs/*
   - mkdocstrings:
       handlers:
         python:

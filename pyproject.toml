@@ -24,6 +24,7 @@ docs = [
     "pymdown-extensions>=10.0",
     "mkdocs-callouts>=1.13",
     "mkdocstrings[python]>=0.26",
+    "mkdocs-git-revision-date-localized-plugin>=1.2",
 ]
 
 [tool.ruff]
