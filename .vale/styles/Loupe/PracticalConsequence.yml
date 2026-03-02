@@ -1,0 +1,8 @@
+extends: existence
+message: "'The practical consequence:' footer is the principles-doc template we removed during the humanizer pass. Trust the reader to infer the consequence."
+level: warning
+scope: text
+ignorecase: true
+tokens:
+  - '\*\*The practical consequence\*\*:'
+  - 'The practical consequence:'

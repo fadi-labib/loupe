@@ -39,6 +39,27 @@ uv run mkdocs serve
 
 Opens at <http://127.0.0.1:8000>. Live-reloads on save. `uv run mkdocs build --strict` is what CI runs; same command runs cleanly locally.
 
+## Prose linting (Vale)
+
+`.vale.ini` plus the rules under `.vale/styles/Loupe/` enforce the voice the docs were rewritten into: no em-dash overuse, no bold-prefixed sentence openers, no AI-vocabulary smell-test words, no templated `**The practical consequence**:` footers. The same checks run on every PR.
+
+Install Vale once:
+
+```bash
+# Linux: brew, apt, or download the binary from https://vale.sh/
+brew install vale
+# or
+sudo snap install vale
+```
+
+Then locally:
+
+```bash
+vale docs/
+```
+
+CI fails on any new warning introduced by the PR (`filter_mode: added`), so the lint stays focused on the diff, not the whole corpus.
+
 ## Running tests
 
 ```bash

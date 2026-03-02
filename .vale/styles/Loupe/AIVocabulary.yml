@@ -1,0 +1,27 @@
+extends: substitution
+message: "AI-vocabulary tell. Use the rewording in the suggestion."
+level: warning
+ignorecase: true
+swap:
+  # The most common Wikipedia 'Signs of AI writing' offenders in our docs.
+  delve into: dig into|study|examine
+  delving into: digging into
+  pivotal: important|key
+  testament: evidence|proof
+  showcasing: showing
+  showcase: show|demonstrate
+  underscoring: emphasising
+  underscore: emphasise
+  intricate: complex
+  intricacies: details
+  multifaceted: complex
+  navigate the (intricacies|complexities): work through
+  vibrant: lively|active
+  groundbreaking: novel
+  cutting-edge: leading
+  state-of-the-art: leading|modern
+  in the realm of: in
+  in the landscape of: in
+  in today's: today,
+  it is worth noting that: ""
+  it should be noted that: ""

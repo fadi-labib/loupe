@@ -1,0 +1,9 @@
+extends: existence
+message: "Bold-prefixed sentence opener. Reads as templated. Drop the bold or rewrite as plain prose; reserve bold for genuine emphasis."
+level: warning
+scope: text
+ignorecase: false
+# Matches paragraphs that open with '**Bold phrase**' followed by a period
+# or 'X.' style continuation.
+tokens:
+  - '^\*\*[A-Z][^*]{1,60}\*\* '

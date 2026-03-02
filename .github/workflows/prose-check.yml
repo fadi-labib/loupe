@@ -1,0 +1,43 @@
+# Vale prose linting on every PR that touches Markdown.
+#
+# Security note: no untrusted github.event.* inputs are interpolated into
+# shell commands. The only template substitution is ${{ secrets.GITHUB_TOKEN }}
+# (a GitHub-issued token, not user-controlled) passed to vale-action via env.
+
+name: prose-check
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**/*.md'
+      - '.vale.ini'
+      - '.vale/**'
+      - '.github/workflows/prose-check.yml'
+  pull_request:
+    paths:
+      - 'docs/**/*.md'
+      - '.vale.ini'
+      - '.vale/**'
+      - '.github/workflows/prose-check.yml'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  vale:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Vale
+        uses: errata-ai/vale-action@reviewdog
+        with:
+          version: 3.9.1
+          files: docs
+          fail_on_error: true
+          reporter: github-pr-review
+          filter_mode: added
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

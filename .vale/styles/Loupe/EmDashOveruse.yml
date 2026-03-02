@@ -1,0 +1,9 @@
+extends: occurrence
+message: "Em-dash overuse. Replace with a comma, period, or parentheses; budget around two per 100 lines of prose."
+level: warning
+scope: text
+ignorecase: false
+limit: 1
+# One em-dash per paragraph is fine; this flags paragraphs with two or more.
+tokens:
+  - '—.*—'
