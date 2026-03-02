@@ -36,11 +36,18 @@ In a GitHub workflow:
 
 ## Where to go next
 
+The published docs site lives at <https://fadilabib.github.io/loupe/> with search, navigation, and per-page social previews. The table below is the GitHub-flavoured Markdown fallback for browsing in-tree.
+
 | Question | File |
 |---|---|
 | What's the mental model? | [`docs/index.md`](docs/index.md) |
 | How do I get started? | [`docs/quickstart.md`](docs/quickstart.md) |
 | What are the principles? | [`docs/principles.md`](docs/principles.md) |
+| What changed in this release? | [`CHANGELOG.md`](CHANGELOG.md) |
+| How do I run the CLI? | [`docs/reference/cli.md`](docs/reference/cli.md) |
+| How do I configure `.loupe/config.yaml`? | [`docs/reference/config.md`](docs/reference/config.md) |
+| How do I verify the principles? | [`docs/reference/verification.md`](docs/reference/verification.md) |
+| What does each artefact look like? | [`docs/reference/schemas/`](docs/reference/schemas/index.md) |
 | Why was X decided this way? | [`docs/reference/decisions.md`](docs/reference/decisions.md) |
 | How does Loupe compare with other tools? | [`docs/comparison.md`](docs/comparison.md) |
 | What data leaves my repo? | [`docs/reference/data-handling.md`](docs/reference/data-handling.md) |
