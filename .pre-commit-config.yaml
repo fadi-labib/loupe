@@ -1,0 +1,35 @@
+# Local-only hooks. Install with:
+#
+#     uv tool install pre-commit
+#     pre-commit install
+#
+# Then every git commit runs the listed checks against the staged files.
+# CI runs the same checks as standalone workflows; this file is for the
+# fast-feedback loop on the developer's machine.
+
+repos:
+  - repo: local
+    hooks:
+      - id: mkdocs-strict
+        name: mkdocs build (strict)
+        description: Fail on any broken link, missing snippet target, or stale anchor.
+        entry: uv run mkdocs build --strict --quiet --site-dir /tmp/loupe-precommit-site
+        language: system
+        pass_filenames: false
+        files: ^(docs/.*\.md|mkdocs\.yml|packages/.*\.py)$
+
+      - id: ruff
+        name: ruff check
+        description: Lint Python.
+        entry: uv run ruff check .
+        language: system
+        pass_filenames: false
+        types_or: [python, pyi]
+
+      - id: ruff-format
+        name: ruff format (check only)
+        description: Verify formatting without rewriting; same rule as CI.
+        entry: uv run ruff format --check .
+        language: system
+        pass_filenames: false
+        types_or: [python, pyi]

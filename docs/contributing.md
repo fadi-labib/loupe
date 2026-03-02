@@ -21,6 +21,24 @@ This will:
 3. Install all four workspace packages (`loupe-core`, `loupe-cli`, `loupe-threatlens`, `loupe-action`) in editable mode
 4. Install dev dependencies (`pytest`, `pytest-vcr`, `ruff`, `mypy`)
 
+Recommended one-time setup of the pre-commit hooks, which run the strict docs build, ruff lint, and ruff format-check on every commit:
+
+```bash
+uv tool install pre-commit
+pre-commit install
+```
+
+The hooks add about two seconds per commit and catch broken doc links, ruff regressions, and format drift before push.
+
+## Running the documentation site locally
+
+```bash
+uv sync --all-packages --group docs
+uv run mkdocs serve
+```
+
+Opens at <http://127.0.0.1:8000>. Live-reloads on save. `uv run mkdocs build --strict` is what CI runs; same command runs cleanly locally.
+
 ## Running tests
 
 ```bash
