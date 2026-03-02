@@ -84,3 +84,5 @@ The name comes from the engineering activity (close inspection through the right
 ## See also
 
 The eleven principles that guide every decision: [`principles.md`](principles.md). The decision log itself: [`reference/decisions.md`](reference/decisions.md).
+
+The published documentation site is at <https://fadilabib.github.io/loupe/> (with search, social previews, and the full nav). The README in the repo root is the entry point for browsing on github.com.
