@@ -85,6 +85,19 @@ Configured in the root `pyproject.toml`:
 - Ruff rules: `E`, `F`, `I`, `B`, `UP`, `ANN` (with `ANN101`/`ANN102` ignored no `self`/`cls` annotations needed)
 - mypy `strict = true`
 
+## What CI runs on every PR
+
+Four workflows under `.github/workflows/` gate every PR. They run in parallel; a PR is mergeable when all four are green.
+
+| Workflow | When it triggers | What it does | What blocks the PR |
+|---|---|---|---|
+| `tests` (assumed default) | On any push | pytest across the full workspace; ruff lint + format; mypy strict | Any test failure, lint error, or type error |
+| `docs` | Push to main, plus PRs touching `docs/`, `mkdocs.yml`, `pyproject.toml`, or `packages/**/*.py` | Builds the MkDocs site with `--strict`; on main, deploys to GitHub Pages via `actions/deploy-pages@v4` | Any broken link, missing snippet target, stale anchor, or unrecognised plugin directive |
+| `link-check` | Push or PR touching `**.md` | Runs lychee against every Markdown file; caches results between runs | A broken external URL or unresolvable relative link |
+| `prose-check` | Push or PR touching `docs/**/*.md`, `.vale.ini`, or `.vale/**` | Runs Vale against `docs/` with `filter_mode: added`; only flags warnings introduced by the diff | Any new em-dash overuse, bold-prefixed sentence opener, AI-vocabulary word, or templated footer |
+
+Locally, the pre-commit hook (see [Initial setup](#initial-setup) above) runs the docs strict build, ruff lint, and ruff format-check on every commit. That covers two of the four CI workflows without waiting for the PR.
+
 ## Workspace layout
 
 ```
