@@ -114,9 +114,9 @@
 }
 
 /* --------------------------------------------------------------------------
-   Typography — Geist as a single family; Material loads it from Google
-   Fonts via theme.font.text / theme.font.code. Headings inherit the same
-   family with a tighter letter-spacing for editorial precision.
+   Typography — Geist single family. Heading sizes tightened to match
+   modern dev-doc sites (Stripe, Linear, Vercel) — denser than Material's
+   defaults so the eye moves faster through reference material.
    -------------------------------------------------------------------------- */
 
 .md-typeset h1,
@@ -130,11 +130,12 @@
 }
 
 .md-typeset h1 {
-  font-size: clamp(2rem, 2.5vw, 2.6rem);
-  line-height: 1.12;
+  font-size: 1.875rem;        /* down from clamp(2-2.6rem) */
+  line-height: 1.15;
   letter-spacing: -0.03em;
   color: var(--loupe-navy-950);
-  margin-top: 0.5rem;
+  margin-top: 0.25rem;
+  margin-bottom: 1.5rem;
 }
 
 [data-md-color-scheme="slate"] .md-typeset h1 {
@@ -142,27 +143,87 @@
 }
 
 .md-typeset h2 {
-  font-size: clamp(1.4rem, 1.8vw, 1.85rem);
-  line-height: 1.2;
-  margin-top: 2.5rem;
-  letter-spacing: -0.025em;
+  font-size: 1.375rem;        /* down from clamp(1.4-1.85rem) */
+  line-height: 1.25;
+  margin-top: 2.25rem;
+  margin-bottom: 0.875rem;
+  letter-spacing: -0.02em;
+  /* Subtle accent line under H2 — visual rhythm between sections without
+     adding a full divider rule */
+  padding-bottom: 0.3rem;
+  border-bottom: 1px solid rgba(15, 30, 61, 0.06);
+}
+
+[data-md-color-scheme="slate"] .md-typeset h2 {
+  border-bottom-color: rgba(147, 197, 253, 0.08);
 }
 
 .md-typeset h3 {
-  font-size: 1.2rem;
-  margin-top: 2rem;
+  font-size: 1.125rem;        /* down from 1.2rem */
+  margin-top: 1.75rem;
+  margin-bottom: 0.625rem;
   letter-spacing: -0.015em;
 }
 
+.md-typeset h4 {
+  font-size: 1rem;
+  margin-top: 1.25rem;
+}
+
 .md-typeset {
-  font-size: 0.85rem;
-  line-height: 1.75;
+  font-size: 0.82rem;         /* slightly denser body */
+  line-height: 1.7;
 }
 
 /* Site title in the header takes the same display weight */
 .md-header__title {
   font-weight: 700;
   letter-spacing: -0.015em;
+}
+
+/* Paragraphs: tighter margin so density feels editorial, not airy */
+.md-typeset p {
+  margin-top: 0.75em;
+  margin-bottom: 0.75em;
+}
+
+/* --------------------------------------------------------------------------
+   Layout — wider content area, narrower sidebars. Material's defaults
+   give the left navigation too much weight relative to body content.
+   -------------------------------------------------------------------------- */
+
+/* Widen the overall content frame on large screens */
+@media screen and (min-width: 76.25em) {
+  .md-grid {
+    max-width: 76rem;          /* up from default 61rem */
+  }
+
+  /* Narrow the left navigation sidebar */
+  .md-sidebar--primary {
+    width: 10rem;              /* down from 12.1rem default */
+  }
+
+  /* TOC stays at a comfortable reading width */
+  .md-sidebar--secondary {
+    width: 11rem;
+  }
+}
+
+/* Slimmer per-link padding makes the dense nav less cramped */
+.md-nav__link {
+  padding-top: 0.28rem;
+  padding-bottom: 0.28rem;
+}
+
+/* Reduce nav font size slightly for density */
+.md-nav__title,
+.md-nav__link {
+  font-size: 0.74rem;
+}
+
+/* TOC links a touch smaller */
+.md-sidebar--secondary .md-nav__link {
+  font-size: 0.72rem;
 }
 
 /* --------------------------------------------------------------------------
