@@ -80,6 +80,7 @@ nav:
   - About: about.md
   - Comparison: comparison.md
   - Contributing: contributing.md
+  - Changelog: changelog.md
 
 markdown_extensions:
   - admonition
