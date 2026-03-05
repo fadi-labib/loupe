@@ -1,0 +1,457 @@
+/* ==========================================================================
+   Loupe docs — custom theme overlay on mkdocs-material.
+
+   Palette sourced from the personal-website brand (BRAND.md): cold-only navy
+   foundation, indigo primary accent, cyan secondary accent. No warm colours
+   for decoration; warm tones appear only in the semantic severity tokens
+   below, which are used to display security data (threat severity, CVE
+   status) and never for ornamentation.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Brand tokens — direct from personal-website BRAND.md so the two surfaces
+   never drift. If the BRAND palette evolves, copy the new tokens here.
+   -------------------------------------------------------------------------- */
+
+:root {
+  --loupe-navy-950: #0F1E3D;
+  --loupe-navy-900: #152849;
+  --loupe-navy-800: #1E3A5F;
+  --loupe-navy-700: #264B7D;
+  --loupe-navy-600: #2F5D99;
+  --loupe-navy-500: #3B7DD8;
+  --loupe-navy-400: #6BA3E8;
+  --loupe-navy-300: #93C5FD;
+  --loupe-navy-200: #BFDBFE;
+  --loupe-navy-100: #DBEAFE;
+  --loupe-navy-50:  #EFF6FF;
+
+  --loupe-indigo-700: #4338CA;
+  --loupe-indigo-600: #4F46E5;
+  --loupe-indigo-500: #6366F1;
+  --loupe-indigo-400: #818CF8;
+  --loupe-indigo-300: #A5B4FC;
+
+  --loupe-cyan-600: #0891B2;
+  --loupe-cyan-500: #06B6D4;
+  --loupe-cyan-400: #22D3EE;
+  --loupe-cyan-300: #67E8F9;
+
+  --loupe-bg-light:    #F1F5FB;
+  --loupe-bg-dark:     #07111f;
+  --loupe-text-light:  #1E293B;
+
+  /* Semantic severity tokens — used for threat/CVE content ONLY. */
+  --loupe-sev-critical: #B91C1C;
+  --loupe-sev-high:     #DC2626;
+  --loupe-sev-medium:   #D97706;
+  --loupe-sev-low:      #65A30D;
+  --loupe-sev-info:     #64748B;
+}
+
+/* --------------------------------------------------------------------------
+   Material variable overrides — light scheme (default)
+   -------------------------------------------------------------------------- */
+
+[data-md-color-scheme="default"] {
+  /* Header / footer chrome */
+  --md-primary-fg-color:        var(--loupe-navy-950);
+  --md-primary-fg-color--light: var(--loupe-navy-800);
+  --md-primary-fg-color--dark:  var(--loupe-bg-dark);
+  --md-primary-bg-color:        #FFFFFF;
+  --md-primary-bg-color--light: var(--loupe-navy-100);
+
+  /* Interactive accent (links, focused tabs, hover) */
+  --md-accent-fg-color:             var(--loupe-indigo-600);
+  --md-accent-fg-color--transparent: rgba(79, 70, 229, 0.12);
+  --md-accent-bg-color:             #FFFFFF;
+  --md-accent-bg-color--light:      var(--loupe-indigo-300);
+
+  /* Page surfaces */
+  --md-default-bg-color:           var(--loupe-bg-light);
+  --md-default-fg-color:           var(--loupe-text-light);
+  --md-default-fg-color--light:    var(--loupe-navy-600);
+  --md-default-fg-color--lighter:  var(--loupe-navy-400);
+  --md-default-fg-color--lightest: rgba(15, 30, 61, 0.07);
+
+  /* Body links */
+  --md-typeset-a-color: var(--loupe-indigo-600);
+
+  /* Inline code chips */
+  --md-code-bg-color: rgba(79, 70, 229, 0.08);
+  --md-code-fg-color: var(--loupe-indigo-600);
+
+  /* Footer */
+  --md-footer-bg-color:      var(--loupe-navy-950);
+  --md-footer-bg-color--dark: var(--loupe-bg-dark);
+}
+
+/* --------------------------------------------------------------------------
+   Material variable overrides — dark scheme (slate)
+   -------------------------------------------------------------------------- */
+
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color:        var(--loupe-navy-950);
+  --md-primary-fg-color--light: var(--loupe-navy-800);
+  --md-primary-fg-color--dark:  var(--loupe-bg-dark);
+  --md-primary-bg-color:        #FFFFFF;
+
+  --md-accent-fg-color:             var(--loupe-navy-300);
+  --md-accent-fg-color--transparent: rgba(147, 197, 253, 0.14);
+
+  --md-default-bg-color:          var(--loupe-bg-dark);
+  --md-default-fg-color:          var(--loupe-navy-100);
+  --md-default-fg-color--light:   var(--loupe-navy-300);
+  --md-default-fg-color--lighter: var(--loupe-navy-500);
+
+  --md-typeset-a-color: var(--loupe-navy-300);
+
+  --md-code-bg-color: rgba(165, 180, 252, 0.08);
+  --md-code-fg-color: var(--loupe-indigo-300);
+
+  --md-footer-bg-color:      var(--loupe-bg-dark);
+  --md-footer-bg-color--dark: #050B17;
+}
+
+/* --------------------------------------------------------------------------
+   Typography — Geist as a single family; Material loads it from Google
+   Fonts via theme.font.text / theme.font.code. Headings inherit the same
+   family with a tighter letter-spacing for editorial precision.
+   -------------------------------------------------------------------------- */
+
+.md-typeset h1,
+.md-typeset h2,
+.md-typeset h3,
+.md-typeset h4,
+.md-typeset h5,
+.md-typeset h6 {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.md-typeset h1 {
+  font-size: clamp(2rem, 2.5vw, 2.6rem);
+  line-height: 1.12;
+  letter-spacing: -0.03em;
+  color: var(--loupe-navy-950);
+  margin-top: 0.5rem;
+}
+
+[data-md-color-scheme="slate"] .md-typeset h1 {
+  color: #FFFFFF;
+}
+
+.md-typeset h2 {
+  font-size: clamp(1.4rem, 1.8vw, 1.85rem);
+  line-height: 1.2;
+  margin-top: 2.5rem;
+  letter-spacing: -0.025em;
+}
+
+.md-typeset h3 {
+  font-size: 1.2rem;
+  margin-top: 2rem;
+  letter-spacing: -0.015em;
+}
+
+.md-typeset {
+  font-size: 0.85rem;
+  line-height: 1.75;
+}
+
+/* Site title in the header takes the same display weight */
+.md-header__title {
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}
+
+/* --------------------------------------------------------------------------
+   Hero tagline — used on the homepage immediately below the H1
+   -------------------------------------------------------------------------- */
+
+.md-typeset .hero-tagline {
+  font-size: clamp(1.05rem, 1.3vw, 1.25rem);
+  line-height: 1.5;
+  color: var(--md-default-fg-color--light);
+  margin-top: -0.5rem;
+  margin-bottom: 2.25rem;
+  letter-spacing: -0.005em;
+  max-width: 32em;
+}
+
+/* --------------------------------------------------------------------------
+   Glossary auto-tooltip target — `abbr` elements rendered from the
+   `includes/abbreviations.md` snippet pick up Material's content.tooltips.
+   Subtle dotted underline marks the term without dominating the paragraph.
+   -------------------------------------------------------------------------- */
+
+.md-typeset abbr {
+  text-decoration: none;
+  border-bottom: 1px dotted var(--md-default-fg-color--light);
+  cursor: help;
+}
+
+[data-md-color-scheme="slate"] .md-typeset abbr {
+  border-bottom-color: var(--md-default-fg-color--lighter);
+}
+
+/* --------------------------------------------------------------------------
+   Selection — brand indigo
+   -------------------------------------------------------------------------- */
+
+::selection {
+  background: rgba(79, 70, 229, 0.28);
+  color: var(--loupe-navy-950);
+}
+
+[data-md-color-scheme="slate"] ::selection {
+  background: rgba(147, 197, 253, 0.28);
+  color: #FFFFFF;
+}
+
+/* --------------------------------------------------------------------------
+   Inline code — subtle indigo tint, tight padding
+   -------------------------------------------------------------------------- */
+
+.md-typeset code {
+  border-radius: 0.35rem;
+  padding: 0.12em 0.4em;
+  font-weight: 500;
+}
+
+/* Code blocks — navy background for high-contrast precision */
+[data-md-color-scheme="default"] .md-typeset .highlight,
+[data-md-color-scheme="default"] .md-typeset pre {
+  background: var(--loupe-navy-950);
+}
+
+[data-md-color-scheme="default"] .md-typeset .highlight code,
+[data-md-color-scheme="default"] .md-typeset pre code {
+  background: transparent;
+  color: var(--loupe-navy-100);
+}
+
+/* --------------------------------------------------------------------------
+   Tables — sticky headers, accent underline, denser rows
+   -------------------------------------------------------------------------- */
+
+.md-typeset table:not([class]) {
+  font-size: 0.83rem;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  border: 1px solid var(--md-default-fg-color--lightest);
+}
+
+.md-typeset table:not([class]) thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--md-default-bg-color);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  border-bottom: 2px solid var(--md-accent-fg-color);
+}
+
+.md-typeset table:not([class]) tr:nth-child(even) {
+  background: rgba(15, 30, 61, 0.025);
+}
+
+[data-md-color-scheme="slate"] .md-typeset table:not([class]) tr:nth-child(even) {
+  background: rgba(147, 197, 253, 0.04);
+}
+
+/* --------------------------------------------------------------------------
+   Admonitions — left-bar-only, cold accent by default, semantic warm only
+   for warning/danger (which are the few cases the BRAND allows).
+   -------------------------------------------------------------------------- */
+
+.md-typeset .admonition,
+.md-typeset details {
+  border-left: 4px solid var(--md-accent-fg-color);
+  border-top: none;
+  border-right: none;
+  border-bottom: none;
+  border-radius: 0 0.5rem 0.5rem 0;
+  box-shadow: none;
+  background: var(--md-accent-fg-color--transparent);
+  font-size: 0.85rem;
+}
+
+.md-typeset .admonition-title,
+.md-typeset summary {
+  font-weight: 700;
+  letter-spacing: 0.005em;
+  background: transparent !important;
+}
+
+.md-typeset .admonition.warning,
+.md-typeset details.warning {
+  border-left-color: var(--loupe-sev-medium);
+  background: rgba(217, 119, 6, 0.06);
+}
+
+.md-typeset .admonition.danger,
+.md-typeset details.danger,
+.md-typeset .admonition.failure,
+.md-typeset details.failure {
+  border-left-color: var(--loupe-sev-high);
+  background: rgba(220, 38, 38, 0.06);
+}
+
+.md-typeset .admonition.success,
+.md-typeset details.success {
+  border-left-color: #16A34A;
+  background: rgba(22, 163, 74, 0.06);
+}
+
+.md-typeset .admonition.tip,
+.md-typeset details.tip {
+  border-left-color: var(--loupe-cyan-500);
+  background: rgba(6, 182, 212, 0.06);
+}
+
+/* --------------------------------------------------------------------------
+   Mermaid — drive node/edge colours from the active Material palette so
+   diagrams reskin automatically with the light/dark toggle.
+   -------------------------------------------------------------------------- */
+
+.md-typeset .mermaid {
+  --md-mermaid-node-bg-color: var(--md-code-bg-color);
+  --md-mermaid-node-fg-color: var(--md-default-fg-color);
+  --md-mermaid-edge-color:    var(--md-accent-fg-color);
+  --md-mermaid-label-bg-color: var(--md-code-bg-color);
+  --md-mermaid-label-fg-color: var(--md-default-fg-color);
+}
+
+/* --------------------------------------------------------------------------
+   Grid cards (homepage launchpad) — brand-style hover lift
+   -------------------------------------------------------------------------- */
+
+.md-typeset .grid.cards > ul > li,
+.md-typeset .grid > .card {
+  border-radius: 0.75rem;
+  border: 1px solid rgba(15, 30, 61, 0.08);
+  background: rgba(255, 255, 255, 0.85);
+  transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
+}
+
+[data-md-color-scheme="slate"] .md-typeset .grid.cards > ul > li,
+[data-md-color-scheme="slate"] .md-typeset .grid > .card {
+  background: rgba(21, 40, 73, 0.4);
+  border-color: rgba(147, 197, 253, 0.12);
+}
+
+.md-typeset .grid.cards > ul > li:hover,
+.md-typeset .grid > .card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(79, 70, 229, 0.3);
+  box-shadow: 0 12px 30px rgba(79, 70, 229, 0.12);
+}
+
+[data-md-color-scheme="slate"] .md-typeset .grid.cards > ul > li:hover,
+[data-md-color-scheme="slate"] .md-typeset .grid > .card:hover {
+  border-color: rgba(147, 197, 253, 0.3);
+  box-shadow: 0 12px 30px rgba(7, 17, 31, 0.6);
+}
+
+/* --------------------------------------------------------------------------
+   Section labels — cyan, uppercase, tracked. Mirrors BRAND.md's section
+   labels so docs and personal-website read as one visual system.
+   Apply with: <span class="section-label">Status</span>.
+   -------------------------------------------------------------------------- */
+
+.section-label,
+.md-typeset .section-label {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--loupe-cyan-500);
+}
+
+[data-md-color-scheme="slate"] .section-label,
+[data-md-color-scheme="slate"] .md-typeset .section-label {
+  color: var(--loupe-cyan-400);
+}
+
+/* --------------------------------------------------------------------------
+   Semantic severity badges — for threat tables, CVE rows, and any other
+   place security data is rendered. NEVER decorative. Apply via:
+       <span class="sev-critical">Critical</span>
+   or with attr_list:
+       { .sev-critical }
+   -------------------------------------------------------------------------- */
+
+.md-typeset .sev-critical,
+.md-typeset .sev-high,
+.md-typeset .sev-medium,
+.md-typeset .sev-low,
+.md-typeset .sev-info {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.18em 0.55em;
+  border-radius: 0.3rem;
+  border: 1px solid currentColor;
+}
+
+.md-typeset .sev-critical { color: var(--loupe-sev-critical); background: rgba(185, 28, 28, 0.08); }
+.md-typeset .sev-high     { color: var(--loupe-sev-high);     background: rgba(220, 38, 38, 0.08); }
+.md-typeset .sev-medium   { color: var(--loupe-sev-medium);   background: rgba(217, 119, 6, 0.08); }
+.md-typeset .sev-low      { color: var(--loupe-sev-low);      background: rgba(101, 163, 13, 0.08); }
+.md-typeset .sev-info     { color: var(--loupe-sev-info);     background: rgba(100, 116, 139, 0.08); }
+
+/* --------------------------------------------------------------------------
+   Announce banner — navy gradient, light cyan link
+   -------------------------------------------------------------------------- */
+
+.md-banner {
+  background: linear-gradient(90deg, var(--loupe-navy-950), var(--loupe-navy-800));
+  color: var(--loupe-navy-100);
+  font-size: 0.82rem;
+}
+
+.md-banner a {
+  color: var(--loupe-cyan-400);
+  text-decoration: underline;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.18em;
+}
+
+.md-banner a:hover {
+  color: #FFFFFF;
+}
+
+/* --------------------------------------------------------------------------
+   Footer — navy with subtle indigo top border to signal end of content
+   -------------------------------------------------------------------------- */
+
+.md-footer-meta {
+  background: var(--md-footer-bg-color--dark);
+}
+
+.md-footer-nav__link {
+  border-top: 1px solid rgba(147, 197, 253, 0.08);
+}
+
+/* --------------------------------------------------------------------------
+   Reduced-motion respect (BRAND.md parity)
+   -------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .md-typeset .grid.cards > ul > li:hover,
+  .md-typeset .grid > .card:hover {
+    transform: none;
+  }
+}

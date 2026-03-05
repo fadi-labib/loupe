@@ -1,3 +1,9 @@
+---
+tags:
+  - concept
+  - capability
+---
+
 # Capabilities: tool-agnostic functional building blocks
 
 > [!NOTE]
@@ -404,26 +410,7 @@ The net argument: **paying this complexity once means we never pay it again per 
 
 ## Implementation roadmap
 
-This is a v1.x feature. Sequencing:
-
-1. **D-18 record** (this conversation) captures the design publicly so contributors can write backend packages today against the documented Protocols.
-2. **Phase v1.x-A Capability protocols + registry skeleton** (~1 week)
-   - Add `loupe_core/capabilities/` with the 6 Protocol definitions
-   - Add `CapabilityRegistry` with entry-point discovery
-   - Add `CapabilityRegistry` to `RunContext`
-   - Coordinator dependency check
-   - Unit tests with fake backends
-3. **Phase v1.x-B SBOM capability + Syft backend** (~3 days)
-   - Refactor `loupe_core/sbom.py` into a `SbomCapability` Protocol with `SyftBackend` as a backend package
-   - Migration: existing `generate_sbom()` becomes a thin facade for backward compat for one minor version, then removed
-4. **Phase v1.x-C CVE capability + Grype/osv-scanner backends** (~3 days)
-5. **Phase v1.x-D Secret-detection capability + gitleaks/TruffleHog backends** (~3 days)
-6. **Phase v1.x-E Static-analysis capability + Semgrep backend** (~3 days)
-7. **Phase v1.x-F Composition modes (union/consensus/pipeline)** (~1 week)
-   - `single` and `fallback` ship in v1.x-A
-   - The richer modes come once we have ≥2 backends per capability to compose
-
-Total estimated v1.x effort: **~4–5 weeks** distributed across releases. Each phase produces working, shippable software on its own.
+The phased sequencing for the capability layer (Phase v1.x-A through v1.x-F) lives in [`../roadmap.md`](../roadmap.md) alongside the broader release plan, so the concept page stays evergreen and the roadmap stays editable as priorities shift.
 
 ---
 
@@ -441,8 +428,8 @@ Worth stating explicitly so the design stays focused:
 ## Cross-references
 
 - [D-18 in ../reference/decisions.md](../reference/decisions.md#d-18) the decision record
-- [principles.md §7 (no LLM lock-in)](../principles.md#principle-7) the parallel principle for LLMs
-- [principles.md §11 (no tool lock-in)](../principles.md#principle-11) the new principle this capability layer enforces
+- [principles.md §3 (multi-LLM by default)](../principles.md#principle-3) the parallel principle for LLMs
+- [principles.md §4 (no tool lock-in)](../principles.md#principle-4) the principle this capability layer enforces
 - [about.md "Why Loupe"](../about.md) the value proposition this strengthens
 - [comparison.md](../comparison.md) competitive context (Trivy vs Syft; gitleaks vs TruffleHog; etc.)
 - [../reference/glossary.md](../reference/glossary.md) `Capability`, `CapabilityBackend`, `CapabilityRegistry`, `composition mode`, individual capability types

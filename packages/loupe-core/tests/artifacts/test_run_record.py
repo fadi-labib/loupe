@@ -21,7 +21,7 @@ def _record(run_id: str, prev: str | None) -> RunRecord:
         context_md_hash="1" * 64,
         lenses_considered=[LensConsidered(name="threatlens", score=0.95, reason="code changes")],
         lenses_run=["threatlens"],
-        models_used={"threatlens": "anthropic/claude-opus-4-7"},
+        models_used={"threatlens": "anthropic:claude-opus-4-7"},
         total_tokens_in=12000,
         total_tokens_out=800,
         cost_usd_estimate=0.05,

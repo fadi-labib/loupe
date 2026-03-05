@@ -93,6 +93,7 @@ Each `.loupe/runs/*.json` captures:
 | `models_used` | Provider/model identifier strings |
 | `total_tokens_in`, `total_tokens_out` | Cost and usage metrics |
 | `cost_usd_estimate` | Estimated dollar cost |
+| `cache_hit_rate` | Prompt-cache hit ratio for the run |
 | `artifacts_changed` | List of paths in `.loupe/` written this run |
 | `prev_run_hash`, `self_hash` | SHA-256 chain |
 

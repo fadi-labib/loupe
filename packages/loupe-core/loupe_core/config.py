@@ -12,32 +12,70 @@ CompositionModeName = Literal["single", "fallback", "union", "consensus", "pipel
 
 
 class LensModelConfig(BaseModel):
-    primary: str
-    fallback: str | None = None
-    cheap_for: list[str] = Field(default_factory=list)
-    cheap_model: str | None = None
+    """Per-lens model selection. Optional override of `ModelsConfig.default`."""
+
+    primary: str = Field(description="Primary `provider:model` identifier for this lens.")
+    fallback: str | None = Field(default=None, description="Fallback `provider:model` if `primary` fails.")
+    cheap_for: list[str] = Field(
+        default_factory=list,
+        description="Task names that should use `cheap_model` instead of `primary`.",
+    )
+    cheap_model: str | None = Field(
+        default=None,
+        description="Cheaper `provider:model` for non-critical sub-tasks listed in `cheap_for`.",
+    )
 
 
 class ModelsConfig(BaseModel):
-    default: str
-    threatlens: LensModelConfig | None = None
+    """Project-wide LLM selection. Identifiers use PydanticAI's `provider:model` form."""
+
+    default: str = Field(description="Default `provider:model` (e.g., `anthropic:claude-opus-4-7`).")
+    threatlens: LensModelConfig | None = Field(
+        default=None, description="Per-lens override for ThreatLens; falls back to `default`.",
+    )
 
 
 class LimitsConfig(BaseModel):
-    per_run_max_usd: float = Field(gt=0)
-    per_run_max_tokens_in: int = Field(gt=0)
-    per_run_max_steps: int = Field(gt=0)
+    """Hard cost and step caps. A run that would exceed any of these stops cleanly."""
+
+    per_run_max_usd: float = Field(
+        gt=0, description="Maximum estimated cost per run, in USD. Must be > 0.",
+    )
+    per_run_max_tokens_in: int = Field(
+        gt=0, description="Maximum input-token budget per run. Must be > 0.",
+    )
+    per_run_max_steps: int = Field(
+        gt=0, description="Maximum number of LLM steps per run. Must be > 0.",
+    )
 
 
 class CIConfig(BaseModel):
-    fail_on: list[str] = Field(default_factory=list)
-    warn_on: list[str] = Field(default_factory=list)
-    ignore_paths: list[str] = Field(default_factory=list)
+    """Gate behaviour for the GitHub Action and `loupe ci`."""
+
+    fail_on: list[str] = Field(
+        default_factory=list,
+        description="Severities that fail the build (exit 1). Bare strings: `critical`, `high`, `medium`, `low`. Empty = report-only.",
+    )
+    warn_on: list[str] = Field(
+        default_factory=list,
+        description="Severities that warn but do not fail. Surfaced in the PR comment.",
+    )
+    ignore_paths: list[str] = Field(
+        default_factory=list,
+        description="Glob patterns the lenses skip when computing relevance.",
+    )
 
 
 class LensActivation(BaseModel):
-    enabled: bool = True
-    minimum_relevance: float = Field(ge=0.0, le=1.0, default=0.3)
+    """Operator's opt-in for one installed lens."""
+
+    enabled: bool = Field(
+        default=True, description="Run this lens? `false` skips it regardless of relevance.",
+    )
+    minimum_relevance: float = Field(
+        ge=0.0, le=1.0, default=0.3,
+        description="Skip the lens when `is_relevant(ctx).score` is below this threshold.",
+    )
 
 
 class CapabilityActivation(BaseModel):
@@ -47,9 +85,18 @@ class CapabilityActivation(BaseModel):
     not exceed ``len(backends)``. All other modes ignore the field.
     """
 
-    mode: CompositionModeName = "single"
-    backends: list[str] = Field(min_length=1)
-    consensus_threshold: int | None = Field(default=None, ge=1)
+    mode: CompositionModeName = Field(
+        default="single",
+        description="How to combine backends: `single`, `fallback`, `union`, `consensus`, `pipeline`.",
+    )
+    backends: list[str] = Field(
+        min_length=1,
+        description="Backend names in the desired order. Must be non-empty.",
+    )
+    consensus_threshold: int | None = Field(
+        default=None, ge=1,
+        description="Required when `mode == 'consensus'`. Must be ≥1 and ≤ `len(backends)`.",
+    )
 
     @model_validator(mode="after")
     def _validate_consensus(self) -> Self:
@@ -67,15 +114,42 @@ class CapabilityActivation(BaseModel):
 
 
 class LoupeConfig(BaseModel):
-    schema_version: int = 1
-    models: ModelsConfig = ModelsConfig(default="anthropic/claude-opus-4-7")
-    limits: LimitsConfig = LimitsConfig(
-        per_run_max_usd=2.5, per_run_max_tokens_in=500_000, per_run_max_steps=30,
+    """Parsed and validated `.loupe/config.yaml`.
+
+    Authoritative shape for the operator-facing configuration file. Every field
+    below carries its description from `Field(description=…)`; the rendered
+    Markdown reference at `docs/reference/config.md` reuses these descriptions
+    via `mkdocstrings`, so there is no second source of truth to drift.
+    """
+
+    schema_version: int = Field(
+        default=1, description="Migration marker. v1 today; bumped on a breaking schema change.",
     )
-    ci: CIConfig = CIConfig()
-    agent_writable_paths: list[str] = Field(default_factory=list)
-    lenses: dict[str, LensActivation] = Field(default_factory=dict)
-    capabilities: dict[str, CapabilityActivation] = Field(default_factory=dict)
+    models: ModelsConfig = Field(
+        default=ModelsConfig(default="anthropic:claude-opus-4-7"),
+        description="LLM provider/model selection, per lens and overall.",
+    )
+    limits: LimitsConfig = Field(
+        default=LimitsConfig(
+            per_run_max_usd=2.5, per_run_max_tokens_in=500_000, per_run_max_steps=30,
+        ),
+        description="Hard cost and step caps for a single run.",
+    )
+    ci: CIConfig = Field(
+        default=CIConfig(), description="Gate behaviour for CI (severity → fail/warn).",
+    )
+    agent_writable_paths: list[str] = Field(
+        default_factory=list,
+        description="Layer 1 allow-list: glob patterns the agent's `write_agent_artifact` tool may write to.",
+    )
+    lenses: dict[str, LensActivation] = Field(
+        default_factory=dict,
+        description="Per-lens activation (by lens name). Unknown names are silently ignored.",
+    )
+    capabilities: dict[str, CapabilityActivation] = Field(
+        default_factory=dict,
+        description="Per-capability backend selection and composition mode (D-18).",
+    )
 
 
 def load_config(path: Path) -> LoupeConfig:

@@ -19,6 +19,23 @@ class ContextMdError(ValueError):
     """Raised when `.loupe/context.md` is missing a required section or fails to parse."""
 
 
+class BulletItem(BaseModel):
+    """One bullet from a `context.md` list section.
+
+    A bullet may be a bare label (`- PAN`) or a label with an inline description
+    after the first colon (`- Customer: places orders, views own profile`). Both
+    forms are preserved: `label` is the short identifier, `note` is the full
+    descriptive text after the colon. Rendering the bullet back with `str(item)`
+    reproduces the original `label: note` form for prompt assembly.
+    """
+
+    label: str = Field(description="Short identifier before the first ':', or the whole bullet.")
+    note: str | None = Field(default=None, description="Free text after the first ':', if any.")
+
+    def __str__(self) -> str:
+        return f"{self.label}: {self.note}" if self.note else self.label
+
+
 class ProjectContext(BaseModel):
     """Parsed representation of `.loupe/context.md`, the human-authored product brief.
 
@@ -29,11 +46,11 @@ class ProjectContext(BaseModel):
     """
 
     product_description: str = Field(description="Two or three sentences describing the product.")
-    assets: list[str] = Field(description="Critical assets (data, keys, signing material).")
-    users: list[str] = Field(description="User types and what each can do.")
+    assets: list[BulletItem] = Field(description="Critical assets (data, keys, signing material).")
+    users: list[BulletItem] = Field(description="User types and what each can do.")
     deployment: str = Field(description="Where the product runs; trust-boundary topology.")
-    threat_actors: list[str] = Field(description="Who you worry about (insider, supply chain).")
-    out_of_scope: list[str] = Field(description="Threats you deliberately do not address.")
+    threat_actors: list[BulletItem] = Field(description="Who you worry about (insider, supply chain).")
+    out_of_scope: list[BulletItem] = Field(description="Threats you deliberately do not address.")
 
     @classmethod
     def from_markdown(cls, path: Path) -> ProjectContext:
@@ -78,12 +95,15 @@ def _split_sections(body: str) -> dict[str, str]:
     return sections
 
 
-def _parse_bullets(section_body: str) -> list[str]:
-    items: list[str] = []
+def _parse_bullets(section_body: str) -> list[BulletItem]:
+    items: list[BulletItem] = []
     for line in section_body.splitlines():
         stripped = line.strip()
-        if stripped.startswith("- "):
-            items.append(stripped[2:].split(":", 1)[0].strip())
-        elif stripped.startswith("* "):
-            items.append(stripped[2:].split(":", 1)[0].strip())
+        if stripped.startswith("- ") or stripped.startswith("* "):
+            body = stripped[2:].strip()
+            if ":" in body:
+                label, note = body.split(":", 1)
+                items.append(BulletItem(label=label.strip(), note=note.strip() or None))
+            else:
+                items.append(BulletItem(label=body))
     return items

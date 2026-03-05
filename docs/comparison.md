@@ -6,7 +6,7 @@ Comparisons against tools in adjacent spaces. Some are competitors, most are com
 
 ## Loupe is not unprecedented
 
-AI-driven threat modelling is a crowded space, not an empty one. Several open-source LLM-based threat-modelling tools already exist (StrideGPT, ThreatCompute, ASTRIDE, TITO, Arrows). The dominant commercial threat-modelling tool (IriusRisk, around 42% market share per PeerSpot, March 2026) has added AI features. Microsoft's Threat Modeling Tool v4.2 has added AI-assisted threat detection. A dedicated CRA-evidence product (Concordance) is on market, mapping engineering data to all 21 CRA Annex I requirements. New frameworks (MAESTRO, STRIFE) are emerging specifically for AI/agentic systems.
+AI-driven threat modelling is a crowded space, not an empty one. Several open-source LLM-based threat-modelling tools already exist (StrideGPT, ThreatCompute, ASTRIDE, TITO, Arrows). The dominant commercial threat-modelling tool (IriusRisk, around 42% market share per PeerSpot, March 2026[^peerspot-iriusrisk]) has added AI features. Microsoft's Threat Modeling Tool v4.2 has added AI-assisted threat detection[^ms-tmt-v42]. A dedicated CRA-evidence product (Concordance) is on market, mapping engineering data to all 21 CRA Annex I requirements[^concordance]. New frameworks (MAESTRO[^maestro], STRIFE) are emerging specifically for AI/agentic systems.
 
 Loupe's distinctive combination is plugin architecture (multiple domains via lenses and multiple tools via capabilities), in-repo local-first artefacts, four-layer write-boundary enforcement, multi-LLM provider-agnostic, and MCP server exposure. No single tool in the search results matched all five. Several match three or four. Loupe is a recombination of capabilities that exist elsewhere, with a coherent platform shape, not a category-creating product.
 
@@ -47,7 +47,7 @@ These are the tools that share Loupe's basic premise: use LLMs to do threat mode
 
 **What it is:** Open-source LLM-based threat-modelling tool by Matthew Adams (mrwadams/stride-gpt). Streamlit web UI. User pastes an application description; LLM generates STRIDE threats and attack trees.
 
-**LLM support:** OpenAI, Anthropic, Google AI, Mistral, Groq, plus local hosting via Ollama and LM Studio Server. (Note: my first draft incorrectly said "single-LLM (OpenAI)" StrideGPT is in fact multi-LLM and has been for some time.)
+**LLM support:** OpenAI, Anthropic, Google AI, Mistral, Groq, plus local hosting via Ollama and LM Studio Server[^stridegpt]. (Note: my first draft incorrectly said "single-LLM (OpenAI)" StrideGPT is in fact multi-LLM and has been for some time.)
 
 **Where it overlaps with ThreatLens:** Same core method (STRIDE), same LLM-driven approach.
 
@@ -61,7 +61,7 @@ These are the tools that share Loupe's basic premise: use LLMs to do threat mode
 
 ### ThreatCompute
 
-**What it is:** Academic LLM agent for automated threat modelling of cloud-native (Kubernetes) applications. Published at the 2025 ACM Cloud Computing Security Workshop. Uses LLMs to dynamically direct reasoning over structured inputs. Designed for CI/CD integration via Kubernetes-native MCP servers.
+**What it is:** Academic LLM agent for automated threat modelling of cloud-native (Kubernetes) applications. Published at the 2025 ACM Cloud Computing Security Workshop[^threatcompute]. Uses LLMs to dynamically direct reasoning over structured inputs. Designed for CI/CD integration via Kubernetes-native MCP servers.
 
 **Architecturally, this is the closest published work to Loupe.** Same combination: LLM agent + structured inputs + MCP server + CI/CD-friendly.
 
@@ -126,7 +126,7 @@ These are the tools that share Loupe's basic premise: use LLMs to do threat mode
 
 ### ENISA Single Reporting Platform (SRP) not a tool, a regulatory artefact
 
-CRA reporting obligations begin **11 September 2026** (4 months from when this doc was last updated). Manufacturers must report certain vulnerabilities and incidents via ENISA's SRP, coordinated through their Member State CSIRT. Loupe is not a reporting tool; Concordance and similar platforms presumably integrate with the SRP.
+CRA reporting obligations begin **11 September 2026**[^cra-reporting] (4 months from when this doc was last updated). Manufacturers must report certain vulnerabilities and incidents via ENISA's SRP, coordinated through their Member State CSIRT. Loupe is not a reporting tool; Concordance and similar platforms presumably integrate with the SRP.
 
 ---
 
@@ -152,7 +152,7 @@ CRA reporting obligations begin **11 September 2026** (4 months from when this d
 
 ### IriusRisk
 
-**Largest commercial threat-modelling product by market share** (42.1% per PeerSpot, March 2026). AI-augmented since 2023. SaaS deployment.
+**Largest commercial threat-modelling product by market share** (42.1% per PeerSpot, March 2026[^peerspot-iriusrisk]). AI-augmented since 2023. SaaS deployment.
 
 | IriusRisk | Loupe |
 |---|---|
@@ -318,3 +318,17 @@ To save you and us time:
 - **You're an AI-augmented engineering team** wanting your AI assistants to share a structured risk model via MCP, instead of re-prompting the model with the same context every conversation.
 
 If those describe you, Loupe is the right shape. If they don't, one of the tools above is probably better.
+
+---
+
+## Sources
+
+External claims in this page are anchored to footnotes. URLs marked `pending` need to be filled in from the original references — they were not fabricated and are not yet verified.
+
+[^peerspot-iriusrisk]: IriusRisk market-share figure. Source: PeerSpot "Threat Modeling Tools" category review, March 2026. URL pending. Accessed: pending.
+[^ms-tmt-v42]: Microsoft Threat Modeling Tool v4.2 release notes — AI-assisted threat detection. URL pending. Accessed: pending.
+[^concordance]: Concordance product page / documentation — coverage of CRA Annex I and 50-protocol mapping. URL pending. Accessed: pending.
+[^maestro]: MAESTRO framework — Cloud Security Alliance publication. URL pending. Accessed: pending.
+[^stridegpt]: StrideGPT (mrwadams/stride-gpt) — supported providers documented in the project README. URL pending. Accessed: pending.
+[^threatcompute]: ThreatCompute — paper at the 2025 ACM Cloud Computing Security Workshop (CCSW). URL pending. Accessed: pending.
+[^cra-reporting]: EU CRA reporting-obligation start date — Regulation (EU) 2024/2847. Reporting obligations apply from 11 September 2026; full applicability 11 December 2027. URL pending (Official Journal of the EU). Accessed: pending.

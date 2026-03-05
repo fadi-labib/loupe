@@ -20,7 +20,7 @@ def _valid_threat_kwargs():
         last_reviewed=date(2026, 5, 13),
         review_due=None,
         rationale="High severity due to PAN access.",
-        proposed_by="threatlens/anthropic/claude-opus-4-7",
+        proposed_by="threatlens/anthropic:claude-opus-4-7",
     )
 
 

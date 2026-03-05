@@ -1,3 +1,9 @@
+---
+tags:
+  - tutorial
+  - getting-started
+---
+
 # Getting started
 
 This walks through installing Loupe, scaffolding the `.loupe/` directory in your repository, running a first CI invocation, and reading the output. It assumes you have Python 3.13 and `uv` (or `pip`) available.
@@ -11,11 +17,26 @@ If you are evaluating Loupe for production use, wait for the agent wiring to lan
 
 ## Install
 
+> [!NOTE]
+> PyPI publishing lands with the v0.1 tag; see [CHANGELOG.md](changelog.md) for the release-process outline. Until then, install from source.
+
+From source (pre-alpha, today):
+
+```bash
+git clone https://github.com/fadilabib/loupe.git
+cd loupe
+uv sync --all-packages
+```
+
+This installs the four workspace packages (`loupe-core`, `loupe-cli`, `loupe-threatlens`, `loupe-action`) in editable mode. Invoke the CLI through `uv run loupe …`.
+
+Once v0.1 is published, the install simplifies to:
+
 ```bash
 pip install loupe-cli loupe-threatlens
 ```
 
-That gives you the `loupe` command and the v1 lens. The GitHub Action wrapper (`loupe-action`) installs separately when you use it in CI.
+The GitHub Action wrapper (`loupe-action`) is part of the same workspace; nothing extra to install for it.
 
 ## Scaffold the repo
 
@@ -31,12 +52,14 @@ This creates `.loupe/` with the minimum files Loupe expects:
 .loupe/
 ├── config.yaml          # operator settings (capabilities, lenses, CI gates)
 ├── context.md           # your product description (human-authored)
-├── knowledge.yaml       # persistent knowledge graph across runs
+├── knowledge.yaml       # persistent knowledge graph (scaffolded empty)
 ├── runs/                # hash-chained run records
 └── decisions/           # ADR-style risk acceptances
 ```
 
 `config.yaml` ships with sensible defaults: ThreatLens enabled at relevance threshold 0.3, the `agent_writable_paths` allow-list pointing at the standard ThreatLens artefact locations, and a `ci.fail_on` gate. The capability registry exists in the codebase (see `concepts/capabilities.md`) but the default `config.yaml` does not yet wire its backends into the CI flow; that wiring lands when the ThreatLens agent goes live against an LLM.
+
+`knowledge.yaml` is scaffolded as an empty graph (`schema_version: 1`, empty asset/element/decision lists) with a leading banner comment. Lens runs that promote high-confidence Facts append to it across invocations; you can delete the file at any time to reset.
 
 `context.md` is your responsibility. Open it in an editor and fill in the marked sections.
 

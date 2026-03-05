@@ -11,6 +11,9 @@ dist/
 build/
 *.egg-info/
 
+# mkdocs-material social-card plugin local cache
+.cache/
+
 # uv
 .venv/
 uv.lock
@@ -26,3 +29,8 @@ uv.lock
 # OS
 .DS_Store
 site/
+
+# Private design artefacts kept locally only.
+# These were scrubbed from git history; do not re-commit. See docs/contributing.md.
+/docs/plans/
+/docs/specs/

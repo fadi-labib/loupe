@@ -1,3 +1,9 @@
+---
+tags:
+  - reference
+  - cli
+---
+
 # CLI reference
 
 Every command Loupe currently registers, with its flags, exit codes, and what it actually does. Sourced from `packages/loupe-cli/loupe_cli/__main__.py` and the per-command modules; treat that source as authoritative if this page drifts.

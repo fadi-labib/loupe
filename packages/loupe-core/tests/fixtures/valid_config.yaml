@@ -1,12 +1,12 @@
 schema_version: 1
 
 models:
-  default: anthropic/claude-opus-4-7
+  default: anthropic:claude-opus-4-7
   threatlens:
-    primary: anthropic/claude-opus-4-7
-    fallback: openai/gpt-5
+    primary: anthropic:claude-opus-4-7
+    fallback: openai:gpt-5
     cheap_for: [doc_polish, vex_drafting]
-    cheap_model: anthropic/claude-haiku-4-5
+    cheap_model: anthropic:claude-haiku-4-5
 
 limits:
   per_run_max_usd: 2.50

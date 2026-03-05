@@ -27,5 +27,5 @@ def test_bootstrap_reads_context_and_kg(tmp_path):
     ctx = RunContext.bootstrap(inputs)
     assert ctx.run_id == "run-1"
     assert ctx.project.product_description == "Test product."
-    assert "PAN" in ctx.project.assets
+    assert any(a.label == "PAN" for a in ctx.project.assets)
     assert ctx.knowledge.assets == []

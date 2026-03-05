@@ -1,3 +1,9 @@
+---
+tags:
+  - concept
+  - architecture
+---
+
 # Architecture
 
 Two diagrams. The first shows what Loupe is made of and where the plugin slots are. The second shows what happens when a PR rolls in.

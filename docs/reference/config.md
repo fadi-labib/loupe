@@ -1,15 +1,15 @@
 # Config reference
 
-Every field of `.loupe/config.yaml` end-to-end, with defaults and validation rules. Sourced from `packages/loupe-core/loupe_core/config.py` (`LoupeConfig` and its nested models). Treat the Pydantic source as authoritative; this page is a readable companion.
+`.loupe/config.yaml` is parsed and validated as a `LoupeConfig`. The Pydantic model in `packages/loupe-core/loupe_core/config.py` is authoritative; this page renders the fields from that source. There is no hand-typed field table to drift.
 
 ## Top-level shape
 
 ```yaml
 schema_version: 1
 models:
-  default: anthropic/claude-opus-4-7
+  default: anthropic:claude-opus-4-7
   threatlens:
-    primary: anthropic/claude-opus-4-7
+    primary: anthropic:claude-opus-4-7
 limits:
   per_run_max_usd: 2.5
   per_run_max_tokens_in: 500000
@@ -38,54 +38,57 @@ capabilities:
     backends: [grype, osv-scanner]
 ```
 
-All keys are optional except where noted. The file is parsed with `ruamel.yaml` and validated as a `LoupeConfig`. Validation errors are raised at `loupe ci` / `loupe scan` startup, not silently ignored.
+All keys are optional except where Pydantic marks them required. The file is parsed with `ruamel.yaml` and validated as a `LoupeConfig`. Validation errors are raised at `loupe ci` / `loupe scan` startup, not silently ignored.
 
-## `schema_version` (int, default `1`)
+Model identifiers use the **PydanticAI native `provider:model` form** (colon, not slash). Examples: `anthropic:claude-opus-4-7`, `openai:gpt-5`, `google-gla:gemini-2.5-pro`, `ollama:llama-3.3-70b`. The environment variable `THREATLENS_MODEL` overrides `models.threatlens.primary` when set.
 
-Future migrations bump this. v1 today.
+## LoupeConfig
 
-## `models` (object)
+::: loupe_core.config.LoupeConfig
 
-Per-lens model selection and fallback. Used by lenses (not yet wired into the live agent flow).
+## ModelsConfig
 
-| Field | Type | Default | Notes |
-|---|---|---|---|
-| `models.default` | string | `anthropic/claude-opus-4-7` | Provider:model identifier. Format matches PydanticAI: `anthropic:claude-opus-4-7`, `openai:gpt-5`, `google-gla:gemini-2.5-pro`, `ollama:llama-3.3-70b`. |
-| `models.threatlens` | object \| null | `null` | Per-lens override; see below |
-| `models.threatlens.primary` | string | (required if override given) | Primary model for ThreatLens |
-| `models.threatlens.fallback` | string \| null | `null` | Fallback if primary fails |
-| `models.threatlens.cheap_for` | list[string] | `[]` | Task names that should use `cheap_model` |
-| `models.threatlens.cheap_model` | string \| null | `null` | Cheaper model for non-critical sub-tasks |
+::: loupe_core.config.ModelsConfig
 
-The environment variable `THREATLENS_MODEL` overrides `models.threatlens.primary` if set.
+### LensModelConfig
 
-## `limits` (object)
+::: loupe_core.config.LensModelConfig
 
-Hard cost and step caps; the runtime aborts a run when any is exceeded.
+## LimitsConfig
 
-| Field | Type | Default | Validation |
-|---|---|---|---|
-| `limits.per_run_max_usd` | float | `2.5` | Must be > 0 |
-| `limits.per_run_max_tokens_in` | int | `500000` | Must be > 0 |
-| `limits.per_run_max_steps` | int | `30` | Must be > 0 |
+::: loupe_core.config.LimitsConfig
 
-These are budgets, not estimates. A run that would exceed any of them stops cleanly with a `budget_exceeded` entry in the run record.
+## CIConfig
 
-## `ci` (object)
+::: loupe_core.config.CIConfig
 
-Gate behaviour for the GitHub Action and `loupe ci`. The Action consults this to compute the step exit code.
+## `lenses` (dict[name, LensActivation])
 
-| Field | Type | Default | Meaning |
-|---|---|---|---|
-| `ci.fail_on` | list[string] | `[]` | Severities that fail the build (exit 1). Bare strings: `critical`, `high`, `medium`, `low`. Empty list = report-only |
-| `ci.warn_on` | list[string] | `[]` | Severities that warn but do not fail. Reserved for future surfacing in the PR comment |
-| `ci.ignore_paths` | list[string] | `[]` | Glob patterns the lenses skip when computing relevance |
+One key per installed lens. The lens registers itself via the `loupe.lenses` entry-point group; the operator opts each one in or out here. Both fields below are consulted by the coordinator at plan-build time.
 
-The richer semantic tokens documented in earlier versions (`new_critical_threat_unmitigated`, etc.) are designed but not yet consumed by the gate logic. Stick to bare severities.
+A lens key referencing an unknown lens (one not installed via entry point) is allowed and silently ignored, so projects can carry forward-looking configs that work as new lenses are added.
 
-## `agent_writable_paths` (list[string])
+The value type:
 
-The Layer 1 allow-list. `write_agent_artifact` checks every path the agent tries to write against this list. Anything not matching ends up as a proposal under `.loupe/.proposed/` instead, or fails with `BoundaryViolation`.
+::: loupe_core.config.LensActivation
+
+## `capabilities` (dict[name, CapabilityActivation])
+
+One key per capability the operator wants to wire. The capability registers itself via the `loupe.capabilities` entry-point group; this section says which backends to use and how to combine them.
+
+The five composition modes (`single`, `fallback`, `union`, `consensus`, `pipeline`) and their audit-relevance are documented end-to-end in [`concepts/capabilities.md`](../concepts/capabilities.md). Validation summary (enforced by `CapabilityActivation`):
+
+- `backends` must be non-empty.
+- If `mode == "consensus"` and `consensus_threshold` is `null`, parsing fails.
+- If `consensus_threshold > len(backends)`, parsing fails.
+
+The value type:
+
+::: loupe_core.config.CapabilityActivation
+
+## `agent_writable_paths`
+
+The Layer 1 allow-list. `write_agent_artifact` checks every path the agent tries to write against this list. Anything not matching ends up as a proposal under `.loupe/.proposed/` instead, or fails with `BoundaryViolation`. `PathBoundary` is constructed from this list in `packages/loupe-cli/loupe_cli/ci_cmd.py`.
 
 The default-config template from `loupe init` lists:
 
@@ -97,33 +100,6 @@ The default-config template from `loupe init` lists:
 - `.loupe/runs/**` (recursive)
 
 The boundary normalises paths and rejects any path containing `..` regardless of the allow-list. Absolute paths are allowed only if explicitly listed.
-
-## `lenses` (dict[name, LensActivation])
-
-One key per installed lens. The lens registers itself via the `loupe.lenses` entry-point group; the operator opts each one in or out here.
-
-| Field per lens | Type | Default | Meaning |
-|---|---|---|---|
-| `enabled` | bool | `true` | Run this lens? `false` skips it entirely regardless of relevance |
-| `minimum_relevance` | float [0.0–1.0] | `0.3` | Skip the lens when `is_relevant(ctx).score < minimum_relevance` |
-
-A lens key referencing an unknown lens (one not installed via entry point) is allowed and silently ignored, so projects can have ambitious configs that work as lenses get added.
-
-## `capabilities` (dict[name, CapabilityActivation])
-
-One key per capability the operator wants to wire. The capability registers itself via the `loupe.capabilities` entry-point group; this section says which backends to use and how to combine them.
-
-| Field per capability | Type | Default | Meaning |
-|---|---|---|---|
-| `mode` | enum | `single` | Composition mode: `single`, `fallback`, `union`, `consensus`, `pipeline` |
-| `backends` | list[string] | (required, min length 1) | Backend names in the desired order |
-| `consensus_threshold` | int \| null | `null` | Required when `mode == "consensus"`; must be ≥1 and ≤`len(backends)` |
-
-The `single` / `fallback` / `union` / `consensus` / `pipeline` modes are documented in [`concepts/capabilities.md`](../concepts/capabilities.md). Validation rules from `CapabilityActivation`:
-
-- `backends` cannot be empty.
-- If `mode == "consensus"` and `consensus_threshold` is `null`, parsing fails.
-- If `consensus_threshold > len(backends)`, parsing fails.
 
 ## Validation behaviour
 
@@ -152,6 +128,8 @@ The `single` / `fallback` / `union` / `consensus` / `pipeline` modes are documen
 
     ```yaml
     schema_version: 1
+    models:
+      default: anthropic:claude-opus-4-7
     ci:
       fail_on: [critical, high]
       warn_on: [medium]

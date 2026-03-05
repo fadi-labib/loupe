@@ -1,6 +1,6 @@
 # Threat
 
-The on-disk shape of one entry in `.loupe/threats.yaml`. Rendered from the Pydantic source so any field added in code shows up here on the next build.
+The on-disk shape of one entry in `.loupe/threats.yaml`. Rendered from the Pydantic source so any field added in code shows up here on the next build — there is no hand-typed field table to drift.
 
 ## Threat
 

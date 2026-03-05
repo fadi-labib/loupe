@@ -39,7 +39,7 @@ def _init_project(tmp_path: Path) -> Path:
     shutil.copy(FIXTURES / "valid_context.md", loupe / "context.md")
     (loupe / "config.yaml").write_text(
         "schema_version: 1\n"
-        "models:\n  default: anthropic/claude-opus-4-7\n"
+        "models:\n  default: anthropic:claude-opus-4-7\n"
         "limits:\n"
         "  per_run_max_usd: 1.0\n"
         "  per_run_max_tokens_in: 100000\n"

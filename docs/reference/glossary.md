@@ -1,117 +1,173 @@
 # Loupe glossary
 
-Terms you'll encounter across the codebase and docs. Alphabetical.
+Terms you'll encounter across the codebase and docs. Alphabetical. Each entry carries a stable `#term-<slug>` anchor so other docs can deep-link.
 
 ---
 
-**Artifact**: a structured file Loupe maintains in `.loupe/`. Each artifact has a Pydantic schema and (where it's machine-readable) a YAML/JSON round-trip. The nine artifacts are: `context.md`, `threat-model.md`, `threats.yaml`, `mitigations.yaml`, `sbom.cdx.json`, `vex.json`, `decisions/*.md`, `runs/*.json`, `config.yaml`. See [`decisions.md` D-06](decisions.md#d-06).
+**Artifact**{: #term-artifact }
+: A structured file Loupe maintains in `.loupe/`. Each artifact has a Pydantic schema and (where it's machine-readable) a YAML/JSON round-trip. The nine artifacts are: `context.md`, `threat-model.md`, `threats.yaml`, `mitigations.yaml`, `sbom.cdx.json`, `vex.json`, `decisions/*.md`, `runs/*.json`, `config.yaml`. See [`decisions.md` D-06](decisions.md#d-06).
 
-**Audit trail**: the chronological record of every Loupe run. Implemented as `runs/*.json` files with a SHA-256 hash chain (each record references the previous one's `self_hash`). Tampering with history breaks the chain and is detected by `loupe verify`.
+**Audit trail**{: #term-audit-trail }
+: The chronological record of every Loupe run. Implemented as `runs/*.json` files with a SHA-256 hash chain (each record references the previous one's `self_hash`). Tampering with history breaks the chain and is detected by `loupe verify`.
 
-**Baseline**: a "known-good" snapshot of a project's threat model against which future diffs can be compared. **Deferred to v1.x**; v1 ships only diff mode and full-repo scan, with no explicit baseline concept.
+**Baseline**{: #term-baseline }
+: A "known-good" snapshot of a project's threat model against which future diffs can be compared. **Deferred to v1.x**; v1 ships only diff mode and full-repo scan, with no explicit baseline concept.
 
-**Blackboard**: the `RunContext` object, treated as a shared workspace where lenses read and write within a single invocation. The blackboard pattern (from classical multi-agent systems) is what lets multiple lenses coordinate cheaply without re-sending each other's context to the LLM.
+**Blackboard**{: #term-blackboard }
+: The `RunContext` object, treated as a shared workspace where lenses read and write within a single invocation. The blackboard pattern (from classical multi-agent systems) is what lets multiple lenses coordinate cheaply without re-sending each other's context to the LLM.
 
-**BoundaryViolation**: the exception raised when an agent tool attempts to write outside its allow-list. Caught by callers; logged in run records as `enforcement_error`. Surfacing this exception aborts the lens; surfacing it in CI fails the run.
+**BoundaryViolation**{: #term-boundary-violation }
+: The exception raised when an agent tool attempts to write outside its allow-list. Caught by callers; logged in run records as `enforcement_error`. Surfacing this exception aborts the lens; surfacing it in CI fails the run.
 
-**Capability**: a typed Python Protocol describing one focused, tool-agnostic operation (e.g., `SbomCapability` for SBOM generation, `CveCapability` for CVE matching, `SecretDetectionCapability` for secret scanning). Capabilities are the verbs of the system; lenses are the nouns. A lens declares which capabilities it `requires_capabilities` and the platform resolves backends from registered packages. See [`../concepts/capabilities.md`](../concepts/capabilities.md) and [`decisions.md` D-18](decisions.md#d-18).
+**Capability**{: #term-capability }
+: A typed Python Protocol describing one focused, tool-agnostic operation (e.g., `SbomCapability` for SBOM generation, `CveCapability` for CVE matching, `SecretDetectionCapability` for secret scanning). Capabilities are the verbs of the system; lenses are the nouns. A lens declares which capabilities it `requires_capabilities` and the platform resolves backends from registered packages. See [`../concepts/capabilities.md`](../concepts/capabilities.md) and [`decisions.md` D-18](decisions.md#d-18).
 
-**CapabilityBackend**: a concrete implementation of a Capability Protocol. Backends register via Python entry points under the single `loupe.capabilities` group; the class's `name` attribute declares which capability it satisfies (e.g., `name = "sbom"`). Bundled defaults (Syft, Grype) live in `loupe_core/capabilities/backends/`; third-party backends ship as their own pip packages.
+**CapabilityBackend**{: #term-capability-backend }
+: A concrete implementation of a Capability Protocol. Backends register via Python entry points under the single `loupe.capabilities` group; the class's `name` attribute declares which capability it satisfies (e.g., `name = "sbom"`). Bundled defaults (Syft, Grype) live in `loupe_core/capabilities/backends/`; third-party backends ship as their own pip packages.
 
-**CapabilityRegistry**: the runtime facade in `loupe_core/capabilities/registry.py` that discovers backends at startup and resolves `(capability_name, backend_name)` pairs to concrete instances. `bootstrap_capabilities()` invokes them and populates the typed `RunContext` slots (`ctx.sbom`, `ctx.cve_findings`, `ctx.secrets`, `ctx.static_findings`).
+**CapabilityRegistry**{: #term-capability-registry }
+: The runtime facade in `loupe_core/capabilities/registry.py` that discovers backends at startup and resolves `(capability_name, backend_name)` pairs to concrete instances. `bootstrap_capabilities()` invokes them and populates the typed `RunContext` slots (`ctx.sbom`, `ctx.cve_findings`, `ctx.secrets`, `ctx.static_findings`).
 
-**Composition mode**: how the registry combines multiple backends for the same capability: `single` (use the first available), `fallback` (try in order on failure), `union` (run all and merge findings), `consensus` (only emit findings agreed by ≥N backends), `pipeline` (chain output of one into the next). Configured per-capability in `config.yaml`. The composition mode is part of the project's audit posture; a regulator can read it.
+**Composition mode**{: #term-composition-mode }
+: How the registry combines multiple backends for the same capability: `single` (use the first available), `fallback` (try in order on failure), `union` (run all and merge findings), `consensus` (only emit findings agreed by ≥N backends), `pipeline` (chain output of one into the next). Configured per-capability in `config.yaml`. The composition mode is part of the project's audit posture; a regulator can read it.
 
-**CodeDiff**: the parsed representation of a unified diff: base SHA, head SHA, changed paths, added/removed line counts, and the raw unified-diff text. Produced by `parse_unified_diff()` once per `RunContext.bootstrap()`.
+**CodeDiff**{: #term-code-diff }
+: The parsed representation of a unified diff: base SHA, head SHA, changed paths, added/removed line counts, and the raw unified-diff text. Produced by `parse_unified_diff()` once per `RunContext.bootstrap()`.
 
-**Conformity assessment**: the EU CRA's term for "the process of proving you meet the requirements." Loupe's artefacts (`threats.yaml`, `mitigations.yaml`, `threat-model.md`, `sbom.cdx.json`, `vex.json`) feed CRA Annex I conformity evidence directly.
+**Conformity assessment**{: #term-conformity-assessment }
+: The EU CRA's term for "the process of proving you meet the requirements." Loupe's artefacts (`threats.yaml`, `mitigations.yaml`, `threat-model.md`, `sbom.cdx.json`, `vex.json`) feed CRA Annex I conformity evidence directly.
 
-**Coordinator**: the top-level orchestrator in `loupe_core/coordinator.py`. Builds the `LensRunPlan` for an invocation: which lenses run, in what order, with what dependencies between them. Uses each lens's `is_relevant()` to skip lenses cheaply.
+**Coordinator**{: #term-coordinator }
+: The top-level orchestrator in `loupe_core/coordinator.py`. Builds the `LensRunPlan` for an invocation: which lenses run, in what order, with what dependencies between them. Uses each lens's `is_relevant()` to skip lenses cheaply.
 
-**CRA**: EU Cyber Resilience Act. Regulation 2024/2847. Fully applicable December 2027. Requires manufacturers of "products with digital elements" to maintain risk assessment, secure-by-design rationale, SBOM, and per-vulnerability impact statements.
+**CRA**{: #term-cra }
+: EU Cyber Resilience Act. Regulation 2024/2847. Fully applicable December 2027. Requires manufacturers of "products with digital elements" to maintain risk assessment, secure-by-design rationale, SBOM, and per-vulnerability impact statements.
 
-**CycloneDX**: the SBOM format Loupe uses, generated by Syft. Loupe never authors CycloneDX with the LLM; the tool produces it deterministically.
+**CycloneDX**{: #term-cyclonedx }
+: The SBOM format Loupe uses, generated by Syft. Loupe never authors CycloneDX with the LLM; the tool produces it deterministically.
 
-**Defence in depth**: Loupe's enforcement model. Four layers (tool surface, branch namespace, verify command, interactive UX gate) each enforce write boundaries independently. No single layer is load-bearing; if one fails, the others still hold.
+**Defence in depth**{: #term-defence-in-depth }
+: Loupe's enforcement model. Four layers (tool surface, branch namespace, verify command, interactive UX gate) each enforce write boundaries independently. No single layer is load-bearing; if one fails, the others still hold.
 
-**Diff mode**: `loupe ci --diff …`. The agent analyses only what's in the unified diff, with high prompt-cache hit rate and minimal cost. The default invocation mode. Contrast: **full-repo mode** (`loupe scan`).
+**Diff mode**{: #term-diff-mode }
+: `loupe ci --diff …`. The agent analyses only what's in the unified diff, with high prompt-cache hit rate and minimal cost. The default invocation mode. Contrast: **full-repo mode** (`loupe scan`).
 
-**Dispatcher**: the runtime in `loupe_core/dispatcher.py` that executes a `LensRunPlan`. Calls each lens's `run()` method in order, sharing the same `RunContext` across all calls.
+**Dispatcher**{: #term-dispatcher }
+: The runtime in `loupe_core/dispatcher.py` that executes a `LensRunPlan`. Calls each lens's `run()` method in order, sharing the same `RunContext` across all calls.
 
-**Evidence-grade**: Loupe's quality bar. Artefacts that an external auditor could verify with their own tooling, without trusting Loupe. Standard formats (CycloneDX, OpenVEX), stable IDs, hash chains, Git as the audit substrate. See [`principles.md` §1](../principles.md#principle-1).
+**Evidence-grade**{: #term-evidence-grade }
+: Loupe's quality bar. Artefacts that an external auditor could verify with their own tooling, without trusting Loupe. Standard formats (CycloneDX, OpenVEX), stable IDs, hash chains, Git as the audit substrate. See [`principles.md` §1](../principles.md#principle-1).
 
-**Fact**: a cross-cutting datum posted by a lens to `RunContext.facts`. `Fact(subject, predicate, value, confidence, rationale)`. Read by other lenses to coordinate; promoted to the persistent knowledge graph only when high-confidence and corroborated. Contrast: **Finding**, which is lens-private.
+**Fact**{: #term-fact }
+: A cross-cutting datum posted by a lens to `RunContext.facts`. `Fact(subject, predicate, value, confidence, rationale)`. Read by other lenses to coordinate; promoted to the persistent knowledge graph only when high-confidence and corroborated. Contrast: **Finding**, which is lens-private.
 
-**Finding**: a lens-private datum stored in `RunContext.findings["<lens-name>"]`. Other lenses can read findings from completed lenses but writes are namespaced (one lens can't clobber another). Contrast: **Fact**, which is cross-cutting.
+**Finding**{: #term-finding }
+: A lens-private datum stored in `RunContext.findings["<lens-name>"]`. Other lenses can read findings from completed lenses but writes are namespaced (one lens can't clobber another). Contrast: **Fact**, which is cross-cutting.
 
-**Full-repo mode**: `loupe scan`. The agent analyses the whole codebase as if it were a giant diff against an empty baseline. Used for onboarding, periodic re-baseline, audit prep. Higher cost than diff mode. See [`decisions.md` D-15](decisions.md#d-15).
+**Full-repo mode**{: #term-full-repo-mode }
+: `loupe scan`. The agent analyses the whole codebase as if it were a giant diff against an empty baseline. Used for onboarding, periodic re-baseline, audit prep. Higher cost than diff mode. See [`decisions.md` D-15](decisions.md#d-15).
 
-**HARA**: Hazard Analysis and Risk Assessment. ISO 26262's term for functional-safety risk analysis. Not in scope for v1; will be the focus of a future **SafetyLens**.
+**HARA**{: #term-hara }
+: Hazard Analysis and Risk Assessment. ISO 26262's term for functional-safety risk analysis. Not in scope for v1; will be the focus of a future **SafetyLens**.
 
-**Hash chain**: the cryptographic linking of run records, each storing a SHA-256 hash of the previous one. Tamper-evident audit trail. Implemented in `loupe_core/artifacts/run_record.py`.
+**Hash chain**{: #term-hash-chain }
+: The cryptographic linking of run records, each storing a SHA-256 hash of the previous one. Tamper-evident audit trail. Implemented in `loupe_core/artifacts/run_record.py`.
 
-**Hook**: (Claude Agent SDK concept; not used in Loupe.) We considered the Claude Agent SDK's `PreToolUse` hooks for enforcement but went with PydanticAI instead; our Layer 1 enforcement lives in tool function bodies, not hooks.
+**Hook**{: #term-hook }
+: (Claude Agent SDK concept; not used in Loupe.) We considered the Claude Agent SDK's `PreToolUse` hooks for enforcement but went with PydanticAI instead; our Layer 1 enforcement lives in tool function bodies, not hooks.
 
-**Intent keyword**: a string in a lens's `capabilities.handles_intent_keywords` list, used by the coordinator to route natural-language user requests to the right lens in interactive mode.
+**Intent keyword**{: #term-intent-keyword }
+: A string in a lens's `capabilities.handles_intent_keywords` list, used by the coordinator to route natural-language user requests to the right lens in interactive mode.
 
-**`is_relevant()`**: a required Lens method. Pure-Python (no LLM call). Returns `RelevanceScore(score, reason)` based on the contents of `RunContext`. Used by the coordinator for cost-saving dispatch: lenses below the configured `minimum_relevance` are skipped entirely. In full-repo mode (D-15), the coordinator overrides the score but still calls `is_relevant()` for the reason string.
+**`is_relevant()`**{: #term-is-relevant }
+: A required Lens method. Pure-Python (no LLM call). Returns `RelevanceScore(score, reason)` based on the contents of `RunContext`. Used by the coordinator for cost-saving dispatch: lenses below the configured `minimum_relevance` are skipped entirely. In full-repo mode (D-15), the coordinator overrides the score but still calls `is_relevant()` for the reason string.
 
-**Knowledge graph**: `.loupe/knowledge.yaml`. Persistent across runs. Holds assets, architectural elements, decisions, and cross-references between lenses. Promoted from in-memory `Fact`s only when high-confidence + corroborated. Schema is open at the edges (additive new sections, new predicates) and closed at the core (immutable run inputs).
+**Knowledge graph**{: #term-knowledge-graph }
+: `.loupe/knowledge.yaml`. Persistent across runs. Holds assets, architectural elements, decisions, and cross-references between lenses. Promoted from in-memory `Fact`s only when high-confidence + corroborated. Schema is open at the edges (additive new sections, new predicates) and closed at the core (immutable run inputs).
 
-**Layer 1**: Tool-surface enforcement (in-process). The agent's only write tools are `write_agent_artifact` (path must be in the allow-list) and `propose_patch` (writes to `.proposed/`). The boundary is a Python function, not a prompt instruction. The strongest of the four layers.
+**Layer 1**{: #term-layer-1 }
+: Tool-surface enforcement (in-process). The agent's only write tools are `write_agent_artifact` (path must be in the allow-list) and `propose_patch` (writes to `.proposed/`). The boundary is a Python function, not a prompt instruction. The strongest of the four layers.
 
-**Layer 2** (designed, not yet enforced at runtime): Branch-namespace enforcement at the CI runner. The commitment is that a fine-grained GitHub App token only allows pushes to `loupe/proposal-*` branches and that CODEOWNERS gates `.loupe/context.md`, `.loupe/decisions/**`, and `.loupe/config.yaml`. Today the Action uses the standard `GITHUB_TOKEN` and the branch restriction is a commitment rather than a runtime constraint.
+**Layer 2**{: #term-layer-2 }
+: (Designed, not yet enforced at runtime.) Branch-namespace enforcement at the CI runner. The commitment is that a fine-grained GitHub App token only allows pushes to `loupe/proposal-*` branches and that CODEOWNERS gates `.loupe/context.md`, `.loupe/decisions/**`, and `.loupe/config.yaml`. Today the Action uses the standard `GITHUB_TOKEN` and the branch restriction is a commitment rather than a runtime constraint.
 
-**Layer 3** (partial): `loupe verify`. Designed to ship as a pre-commit hook + required CI check. Today checks one thing: run-record hash-chain integrity. Authorship of protected paths, artefact schema consistency, and threats-to-mitigations cross-references are documented in `verify_cmd.py` as planned checks that have not yet landed.
+**Layer 3**{: #term-layer-3 }
+: (Partial.) `loupe verify`. Designed to ship as a pre-commit hook + required CI check. Today checks one thing: run-record hash-chain integrity. Authorship of protected paths, artefact schema consistency, and threats-to-mitigations cross-references are documented in `verify_cmd.py` as planned checks that have not yet landed.
 
-**Layer 4** (designed): Interactive UX gate. Once `loupe chat` is implemented, every protected-path proposal will render as a unified diff with a `[y/N/edit/skip]` prompt, default-N, with no `--auto-confirm` flag. The chat command is currently a placeholder.
+**Layer 4**{: #term-layer-4 }
+: (Designed.) Interactive UX gate. Once `loupe chat` is implemented, every protected-path proposal will render as a unified diff with a `[y/N/edit/skip]` prompt, default-N, with no `--auto-confirm` flag. The chat command is currently a placeholder.
 
-**Lens**: a Python package that registers with Loupe via Python entry points (`loupe.lenses` group). Contributes a PydanticAI agent, Pydantic-typed artefacts it owns, MCP tools and workflows, a pure-Python `is_relevant()` heuristic, and a list of `requires_capabilities` (see Capability). v1 ships exactly one: **ThreatLens**. Lenses are the *domain* extension point; Capabilities are the *tool* extension point.
+**Lens**{: #term-lens }
+: A Python package that registers with Loupe via Python entry points (`loupe.lenses` group). Contributes a PydanticAI agent, Pydantic-typed artefacts it owns, MCP tools and workflows, a pure-Python `is_relevant()` heuristic, and a list of `requires_capabilities` (see Capability). v1 ships exactly one: **ThreatLens**. Lenses are the *domain* extension point; Capabilities are the *tool* extension point.
 
-**LensCapabilities**: the static metadata a lens declares: `name`, `domain`, `handles_intent_keywords`, `artifact_paths`, `requires_lenses`. Loupe-core inspects this at registration time (e.g., to detect conflicting `artifact_paths`).
+**LensCapabilities**{: #term-lens-capabilities }
+: The static metadata a lens declares: `name`, `domain`, `handles_intent_keywords`, `artifact_paths`, `requires_lenses`. Loupe-core inspects this at registration time (e.g., to detect conflicting `artifact_paths`).
 
-**LensRunPlan**: one entry in `RunContext.plan`. Built by the coordinator. Specifies which lens to run, its relevance score, its dependencies on other lenses, and the sub-prompt the agent should receive.
+**LensRunPlan**{: #term-lens-run-plan }
+: One entry in `RunContext.plan`. Built by the coordinator. Specifies which lens to run, its relevance score, its dependencies on other lenses, and the sub-prompt the agent should receive.
 
-**LINDDUN**: privacy threat-modelling methodology (Linkability, Identifiability, Non-repudiation, Detectability, Disclosure of information, Unawareness, Non-compliance). Not in scope for v1; will be the focus of a future **PrivacyLens**.
+**LINDDUN**{: #term-linddun }
+: Privacy threat-modelling methodology (Linkability, Identifiability, Non-repudiation, Detectability, Disclosure of information, Unawareness, Non-compliance). Not in scope for v1; will be the focus of a future **PrivacyLens**.
 
-**Loupe**: the platform. Named after the precision inspection lens used by jewellers and watchmakers. Not "ComplianceMate." See [`about.md`](../about.md#why-the-name-avoids-compliance).
+**Loupe**{: #term-loupe }
+: The platform. Named after the precision inspection lens used by jewellers and watchmakers. Not "ComplianceMate." See [`about.md`](../about.md#why-the-name-avoids-compliance).
 
-**MCP**: Model Context Protocol. An open JSON-RPC protocol (Anthropic-originated) for LLM tool/resource/prompt exposure. Loupe exposes both granular tools (`loupe.tools.*`) and high-level workflows (`loupe.workflows.*`) over MCP. Transports: stdio (local) or HTTP+SSE (remote).
+**MCP**{: #term-mcp }
+: Model Context Protocol. An open JSON-RPC protocol (Anthropic-originated) for LLM tool/resource/prompt exposure. Loupe exposes both granular tools (`loupe.tools.*`) and high-level workflows (`loupe.workflows.*`) over MCP. Transports: stdio (local) or HTTP+SSE (remote).
 
-**OpenVEX**: the vulnerability-impact-statement format Loupe uses. Standard from the openvex.dev community. Each statement says "we are / are not / fixed / are investigating affected by CVE-X because Y."
+**OpenVEX**{: #term-openvex }
+: The vulnerability-impact-statement format Loupe uses. Standard from the openvex.dev community. Each statement says "we are / are not / fixed / are investigating affected by CVE-X because Y."
 
-**PathBoundary**: the Python object that decides whether a given path is agent-writable. Constructed from the `agent_writable_paths` list in `config.yaml`. Rejects path traversal (`..`) regardless of the allow-list.
+**PathBoundary**{: #term-path-boundary }
+: The Python object that decides whether a given path is agent-writable. Constructed from the `agent_writable_paths` list in `config.yaml`. Rejects path traversal (`..`) regardless of the allow-list.
 
-**PromptParts / PromptBuilder**: the cache-friendly prompt assembly in `loupe_core/prompt_builder.py`. Separates **stable prefix** (system framing + context.md + diff + SBOM delta) from **variable suffix** (lens-specific task + prior findings). The stable prefix is paid full price once per run and ~10% per subsequent lens call via Anthropic prompt cache.
+**PromptParts / PromptBuilder**{: #term-prompt-parts }
+: The cache-friendly prompt assembly in `loupe_core/prompt_builder.py`. Separates **stable prefix** (system framing + context.md + diff + SBOM delta) from **variable suffix** (lens-specific task + prior findings). The stable prefix is paid full price once per run and ~10% per subsequent lens call via Anthropic prompt cache.
 
-**Proposal PR**: a pull request opened against a `loupe/proposal-*` branch by the CI runner. Contains the agent's artefact changes (and any `propose_patch` drafts) for human review. Never auto-merged.
+**Proposal PR**{: #term-proposal-pr }
+: A pull request opened against a `loupe/proposal-*` branch by the CI runner. Contains the agent's artefact changes (and any `propose_patch` drafts) for human review. Never auto-merged.
 
-**`propose_patch`**: one of two agent write tools. Used for paths the agent does *not* own (`context.md`, `decisions/*`, `config.yaml`). Writes a draft into `.loupe/.proposed/` for human review and explicit application.
+**`propose_patch`**{: #term-propose-patch }
+: One of two agent write tools. Used for paths the agent does *not* own (`context.md`, `decisions/*`, `config.yaml`). Writes a draft into `.loupe/.proposed/` for human review and explicit application.
 
-**PydanticAI**: the LLM agent framework Loupe is built on. Multi-provider (Anthropic, OpenAI, Google, Mistral, Groq, Cohere, Ollama, Bedrock), typed I/O via Pydantic, lightweight, no LangChain abstractions. By the Pydantic team.
+**PydanticAI**{: #term-pydantic-ai }
+: The LLM agent framework Loupe is built on. Multi-provider (Anthropic, OpenAI, Google, Mistral, Groq, Cohere, Ollama, Bedrock), typed I/O via Pydantic, lightweight, no LangChain abstractions. By the Pydantic team.
 
-**RelevanceScore**: `RelevanceScore(score: float[0..1], reason: str)`. Returned by `Lens.is_relevant()`. Used by the coordinator's dispatch logic.
+**RelevanceScore**{: #term-relevance-score }
+: `RelevanceScore(score: float[0..1], reason: str)`. Returned by `Lens.is_relevant()`. Used by the coordinator's dispatch logic.
 
-**Risk acceptance**: a documented decision that a specific risk is acknowledged and tolerated. Recorded in `decisions/D-<date>-<slug>.md`. Authored by a human (the agent can only *draft*, never author).
+**Risk acceptance**{: #term-risk-acceptance }
+: A documented decision that a specific risk is acknowledged and tolerated. Recorded in `decisions/D-<date>-<slug>.md`. Authored by a human (the agent can only *draft*, never author).
 
-**RunContext**: the in-memory shared workspace passed via PydanticAI's `deps` to every lens agent in a single invocation. Holds the parsed diff, SBOM delta, project context, run plan, knowledge-graph snapshot, plus the mutable findings dict, facts list, pending decisions, and proposed patches. Discarded at end of run; only its persistent outputs (artefacts, run record, promoted knowledge graph entries) survive.
+**RunContext**{: #term-run-context }
+: The in-memory shared workspace passed via PydanticAI's `deps` to every lens agent in a single invocation. Holds the parsed diff, SBOM delta, project context, run plan, knowledge-graph snapshot, plus the mutable findings dict, facts list, pending decisions, and proposed patches. Discarded at end of run; only its persistent outputs (artefacts, run record, promoted knowledge graph entries) survive.
 
-**Run record**: one `.loupe/runs/*.json` file. Captures everything about one Loupe invocation: inputs (hashed), lenses considered + run, models used, tokens consumed, artifacts changed, hash-chain pointer to the previous run.
+**Run record**{: #term-run-record }
+: One `.loupe/runs/*.json` file. Captures everything about one Loupe invocation: inputs (hashed), lenses considered + run, models used, tokens consumed, artifacts changed, hash-chain pointer to the previous run.
 
-**Scope**: `RunContext.scope: Literal["diff", "full", "scoped"]`. Set during bootstrap based on which CLI command invoked Loupe. Controls whether the coordinator filters lenses by relevance or runs all of them.
+**Scope**{: #term-scope }
+: `RunContext.scope: Literal["diff", "full", "scoped"]`. Set during bootstrap based on which CLI command invoked Loupe. Controls whether the coordinator filters lenses by relevance or runs all of them.
 
-**Stable prefix**: the portion of an LLM prompt that's identical across all lens calls in one run. Cache-pinned via Anthropic's `cache_control: {type: "ephemeral"}` marker. The first cost lever of three.
+**Stable prefix**{: #term-stable-prefix }
+: The portion of an LLM prompt that's identical across all lens calls in one run. Cache-pinned via Anthropic's `cache_control: {type: "ephemeral"}` marker. The first cost lever of three.
 
-**STRIDE**: Microsoft's threat-modelling categorisation: Spoofing, Tampering, Repudiation, Information disclosure, Denial of service, Elevation of privilege. The method ThreatLens uses.
+**STRIDE**{: #term-stride }
+: Microsoft's threat-modelling categorisation: Spoofing, Tampering, Repudiation, Information disclosure, Denial of service, Elevation of privilege. The method ThreatLens uses.
 
-**Syft**: open-source SBOM generator from Anchore. Loupe shells out to it for `sbom.cdx.json`. Loupe never asks the LLM to author an SBOM.
+**Syft**{: #term-syft }
+: Open-source SBOM generator from Anchore. Loupe shells out to it for `sbom.cdx.json`. Loupe never asks the LLM to author an SBOM.
 
-**TARA**: Threat Analysis and Risk Assessment. ISO/SAE 21434's term (automotive cybersecurity). Not the v1 framing; ThreatLens uses STRIDE because it's broader, but TARA-shaped output is achievable from the same artefacts.
+**TARA**{: #term-tara }
+: Threat Analysis and Risk Assessment. ISO/SAE 21434's term (automotive cybersecurity). Not the v1 framing; ThreatLens uses STRIDE because it's broader, but TARA-shaped output is achievable from the same artefacts.
 
-**ThreatLens**: Loupe's v1 lens. STRIDE-based threat modelling. Maintains `threats.yaml`, `mitigations.yaml`, `threat-model.md`, drafts `vex.json` entries, references `sbom.cdx.json`.
+**ThreatLens**{: #term-threatlens }
+: Loupe's v1 lens. STRIDE-based threat modelling. Maintains `threats.yaml`, `mitigations.yaml`, `threat-model.md`, drafts `vex.json` entries, references `sbom.cdx.json`.
 
-**VCR**: `pytest-vcr`. Records HTTP fixtures once (with an API key) and replays forever (without one). Loupe tests use VCR for any LLM-involving integration test. Cassettes are committed to the repo.
+**VCR**{: #term-vcr }
+: `pytest-vcr`. Records HTTP fixtures once (with an API key) and replays forever (without one). Loupe tests use VCR for any LLM-involving integration test. Cassettes are committed to the repo.
 
-**VEX**: Vulnerability EXploitability eXchange. OpenVEX is the standard format. Each statement says "is this product affected by this CVE? why?"; letting downstream consumers and auditors filter noise. Generated by ThreatLens; `not_affected` statements require human approval (Layer 1 routes them through `propose_patch`).
+**VEX**{: #term-vex }
+: Vulnerability EXploitability eXchange. OpenVEX is the standard format. Each statement says "is this product affected by this CVE? why?"; letting downstream consumers and auditors filter noise. Generated by ThreatLens; `not_affected` statements require human approval (Layer 1 routes them through `propose_patch`).
 
-**`write_agent_artifact`**: one of two agent write tools. Used for paths the agent owns (`.loupe/threats.yaml`, etc.). Checks the path against the `PathBoundary` and raises `BoundaryViolation` if rejected.
+**`write_agent_artifact`**{: #term-write-agent-artifact }
+: One of two agent write tools. Used for paths the agent owns (`.loupe/threats.yaml`, etc.). Checks the path against the `PathBoundary` and raises `BoundaryViolation` if rejected.

@@ -2,9 +2,15 @@
 
 The parsed representation of `.loupe/context.md`. Rendered from the Pydantic source.
 
+Each list field (`assets`, `users`, `threat_actors`, `out_of_scope`) holds `BulletItem` values. A bullet like `- Customer: places orders` parses into `BulletItem(label="Customer", note="places orders")`; a bullet without a colon has `note=None`. `str(item)` re-renders the bullet for prompt assembly.
+
 ## ProjectContext
 
 ::: loupe_core.artifacts.context.ProjectContext
+
+## BulletItem
+
+::: loupe_core.artifacts.context.BulletItem
 
 ## ContextMdError
 

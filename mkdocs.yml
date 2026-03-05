@@ -15,36 +15,54 @@ exclude_docs: |
 
 theme:
   name: material
+  # The overrides/ directory at the repo root holds the announce-banner
+  # template (overrides/main.html). Kept outside docs/ so MkDocs doesn't
+  # try to build it as a page.
+  custom_dir: overrides
+  # Custom SVG mark replaces Material's stock magnify icon. Lives under
+  # docs/assets/ so it ships into the built site automatically.
+  logo: assets/logo.svg
+  favicon: assets/favicon.svg
+  # Cold-only palette from the personal-website BRAND.md: navy #0F1E3D
+  # primary, indigo #4F46E5 / navy #93C5FD accent (light/dark), cyan
+  # #06B6D4 for section labels. Material 9.x respects `custom` and reads
+  # the actual values from CSS variables in docs/stylesheets/extra.css.
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default
-      primary: deep purple
-      accent: deep orange
+      primary: custom
+      accent: custom
       toggle:
         icon: material/weather-night
         name: Switch to dark mode
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
-      primary: deep purple
-      accent: deep orange
+      primary: custom
+      accent: custom
       toggle:
         icon: material/weather-sunny
         name: Switch to light mode
+  # Geist single-family across body + headings + code. Material auto-loads
+  # from Google Fonts (Geist + Geist Mono ship there as of 2025).
   font:
-    text: Inter
-    code: JetBrains Mono
+    text: Geist
+    code: Geist Mono
   icon:
-    logo: material/magnify
     repo: fontawesome/brands/github
   features:
+    - announce.dismiss          # show the pre-alpha banner, dismissible
     - navigation.instant
+    - navigation.instant.prefetch  # prefetch on hover, site feels instantaneous
+    - navigation.instant.progress  # subtle top-of-page progress bar between pages
     - navigation.tracking
     - navigation.tabs
     - navigation.tabs.sticky
     - navigation.sections
     - navigation.indexes
+    - navigation.prune          # render only the active section in the sidebar
     - navigation.top
     - navigation.path
+    - navigation.footer         # Prev/Next links at the bottom of every page
     - toc.follow
     - search.suggest
     - search.highlight
@@ -52,12 +70,18 @@ theme:
     - content.code.copy
     - content.code.annotate
     - content.tabs.link
-    - content.tooltips
+    - content.tooltips          # tooltips for any element with a `title` attr; powers glossary auto-tooltips
+    - content.footnote.tooltips # hover-preview footnotes (used by comparison.md)
     - content.action.edit
+    - content.action.view       # "view source" link next to "edit" on every page
 
 nav:
   - Home: index.md
   - Quickstart: quickstart.md
+  - Tutorials:
+      - Overview: tutorials/index.md
+  - How-to:
+      - Overview: how-to/index.md
   - Principles: principles.md
   - Concepts:
       - Architecture: concepts/architecture.md
@@ -65,10 +89,13 @@ nav:
   - Reference:
       - CLI: reference/cli.md
       - Config: reference/config.md
+      - .loupe layout: reference/loupe-directory.md
       - Verification: reference/verification.md
+      - Versioning: reference/versioning.md
       - Decisions: reference/decisions.md
       - Glossary: reference/glossary.md
       - Data handling: reference/data-handling.md
+      - Threat model of Loupe: reference/loupe-threat-model.md
       - Evaluation: reference/evaluation.md
       - Schemas:
           - Overview: reference/schemas/index.md
@@ -77,10 +104,12 @@ nav:
           - RunRecord: reference/schemas/run-record.md
           - ProjectContext: reference/schemas/project-context.md
           - Capability results: reference/schemas/capabilities.md
+  - Roadmap: roadmap.md
   - About: about.md
   - Comparison: comparison.md
   - Contributing: contributing.md
   - Changelog: changelog.md
+  - Tags: tags.md
 
 markdown_extensions:
   - admonition
@@ -106,6 +135,12 @@ markdown_extensions:
       base_path:
         - .
       check_paths: true
+      # Inject the glossary abbreviation file into every page so any
+      # term documented in includes/abbreviations.md renders as a
+      # hover-tooltip wherever it appears in prose. Single source of
+      # truth: edit includes/abbreviations.md when adding a term.
+      auto_append:
+        - includes/abbreviations.md
   - pymdownx.smartsymbols
   - pymdownx.caret
   - pymdownx.mark
@@ -127,6 +162,7 @@ markdown_extensions:
 plugins:
   - search:
       separator: '[\s\-\.]+'
+  - tags                    # the [TAGS] placeholder in docs/tags.md becomes a tag-browser index (file auto-detected)
   - callouts                # Convert GitHub-style > [!NOTE] alerts to Material admonitions
   - git-revision-date-localized:
       enable_creation_date: true
@@ -161,8 +197,21 @@ plugins:
             members_order: source
             heading_level: 3
 
+extra_css:
+  - stylesheets/extra.css
+
 extra:
   generator: false
+  # `mike` writes versioned doc copies to the gh-pages branch
+  # (`mike deploy <version> latest --update-aliases --push`). The Material
+  # theme renders a version-picker dropdown in the header once at least
+  # one version is deployed. Until the first `mike deploy` runs, the
+  # picker is hidden; the live site keeps serving from the current
+  # actions/deploy-pages flow with no observable change.
+  version:
+    provider: mike
+    default: latest
+    alias: true
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/fadilabib/loupe

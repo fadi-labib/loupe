@@ -3,6 +3,7 @@
 Creates a minimal layout that:
 - Parses cleanly via ProjectContext.from_markdown (all required sections present)
 - Round-trips through LoupeConfig validation
+- Round-trips through KnowledgeGraph.load (so the very first lens run can read it)
 - Has agent_writable_paths set to the v1 default set
 - Includes runs/ and decisions/ subdirectories so the very first run doesn't
   have to mkdir them on the fly
@@ -12,9 +13,11 @@ The agent never auto-fills these — they're human-owned by Layer 1 design.
 """
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from pathlib import Path
 
 import typer
+from loupe_core.artifacts.knowledge import KnowledgeGraph
 
 _DEFAULT_CONTEXT = """\
 ---
@@ -53,7 +56,7 @@ _DEFAULT_CONFIG = """\
 schema_version: 1
 
 models:
-  default: anthropic/claude-opus-4-7
+  default: anthropic:claude-opus-4-7
 
 limits:
   per_run_max_usd: 2.50
@@ -88,6 +91,14 @@ lenses:
 """
 
 
+_KNOWLEDGE_HEADER = (
+    "# .loupe/knowledge.yaml\n"
+    "# Persistent knowledge graph populated across runs.\n"
+    "# Lenses promote high-confidence Facts here; humans curate the rest.\n"
+    "# Safe to delete to reset; the next run rebuilds an empty graph.\n"
+)
+
+
 def init_command() -> None:
     """Initialise .loupe/ in the current directory."""
     cwd = Path.cwd()
@@ -98,6 +109,7 @@ def init_command() -> None:
     loupe.mkdir()
     (loupe / "context.md").write_text(_DEFAULT_CONTEXT)
     (loupe / "config.yaml").write_text(_DEFAULT_CONFIG)
+    _write_empty_knowledge(loupe / "knowledge.yaml")
     (loupe / "runs").mkdir()
     (loupe / "decisions").mkdir()
     typer.echo(f"Initialised {loupe}.")
@@ -105,3 +117,11 @@ def init_command() -> None:
         "Edit .loupe/context.md to describe your product, then run "
         "`loupe ci` or `loupe chat`."
     )
+
+
+def _write_empty_knowledge(path: Path) -> None:
+    """Write a header-commented empty knowledge graph that round-trips through KnowledgeGraph.load."""
+    kg = KnowledgeGraph(last_updated=datetime.now(UTC).replace(tzinfo=None))
+    kg.save(path)
+    body = path.read_text()
+    path.write_text(_KNOWLEDGE_HEADER + body)

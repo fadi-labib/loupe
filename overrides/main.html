@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{#-
+  Announce banner. Sticks at the top of every page until the user dismisses
+  it (Material handles dismiss state in localStorage when
+  `features: announce.dismiss` is enabled in mkdocs.yml).
+
+  Change the message in this block when the pre-alpha status shifts; the
+  link points at the changelog so visitors can read the current state.
+-#}
+{% block announce %}
+  <strong>Pre-alpha.</strong>
+  The ThreatLens agent is scaffolded; live-LLM wiring is the next milestone.
+  See the
+  <a href="{{ 'changelog/' | url }}">changelog</a>
+  for status, or the
+  <a href="{{ 'roadmap/' | url }}">roadmap</a>
+  for what's coming.
+{% endblock %}

@@ -1,6 +1,49 @@
-# Loupe in one page
+---
+hide:
+  - toc
+---
 
-A guided tour of how Loupe is organised for someone who has heard "AI agent for security" before and wants the actual mental model.
+# Loupe
+
+<p class="hero-tagline">Auditor-credible AI lenses for code review.</p>
+
+A guided tour of how Loupe is organised for someone who has heard "AI agent for security" before and wants the actual mental model. If you'd rather jump in, the four cards below are the most common entry points.
+
+<div class="grid cards" markdown>
+
+-   :material-rocket-launch:{ .lg .middle } &nbsp; **Get started**
+
+    ---
+
+    Install Loupe, scaffold `.loupe/`, run your first analysis on a PR diff.
+
+    [:octicons-arrow-right-24: Quickstart](quickstart.md)
+
+-   :material-eye-outline:{ .lg .middle } &nbsp; **Mental model**
+
+    ---
+
+    The clinic metaphor and how lenses, capabilities, and backends fit.
+
+    [:octicons-arrow-right-24: Architecture](concepts/architecture.md)
+
+-   :material-shield-check:{ .lg .middle } &nbsp; **Verify the claims**
+
+    ---
+
+    For each principle Loupe commits to, the mechanical recipe an auditor runs to confirm it.
+
+    [:octicons-arrow-right-24: Verification](reference/verification.md)
+
+-   :material-compare-horizontal:{ .lg .middle } &nbsp; **Compare**
+
+    ---
+
+    Where Loupe sits next to StrideGPT, IriusRisk, Snyk, Threat Dragon, and more.
+
+    [:octicons-arrow-right-24: Comparison](comparison.md)
+
+</div>
 
 ## The clinic analogy
 

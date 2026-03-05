@@ -41,7 +41,7 @@ def test_verify_exits_zero_after_two_ci_runs(tmp_path, monkeypatch):
     loupe = _init_project(tmp_path)
     (loupe / "config.yaml").write_text(
         "schema_version: 1\n"
-        "models:\n  default: anthropic/claude-opus-4-7\n"
+        "models:\n  default: anthropic:claude-opus-4-7\n"
         "limits:\n"
         "  per_run_max_usd: 1.0\n  per_run_max_tokens_in: 100000\n  per_run_max_steps: 5\n"
         "agent_writable_paths: [.loupe/runs/**]\n"
@@ -62,7 +62,7 @@ def test_verify_detects_broken_chain(tmp_path, monkeypatch):
     loupe = _init_project(tmp_path)
     (loupe / "config.yaml").write_text(
         "schema_version: 1\n"
-        "models:\n  default: anthropic/claude-opus-4-7\n"
+        "models:\n  default: anthropic:claude-opus-4-7\n"
         "limits:\n"
         "  per_run_max_usd: 1.0\n  per_run_max_tokens_in: 100000\n  per_run_max_steps: 5\n"
         "agent_writable_paths: [.loupe/runs/**]\n"

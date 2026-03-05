@@ -10,7 +10,7 @@ FIXTURES = Path(__file__).parent / "fixtures"
 def test_loads_valid_config():
     cfg = load_config(FIXTURES / "valid_config.yaml")
     assert cfg.schema_version == 1
-    assert cfg.models.default == "anthropic/claude-opus-4-7"
+    assert cfg.models.default == "anthropic:claude-opus-4-7"
     assert cfg.limits.per_run_max_usd == 2.50
     assert ".loupe/threats.yaml" in cfg.agent_writable_paths
     assert cfg.lenses["threatlens"].enabled is True

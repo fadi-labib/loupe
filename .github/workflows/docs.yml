@@ -47,6 +47,12 @@ jobs:
         # installs every workspace member in editable mode.
         run: uv sync --all-packages --group docs
 
+      - name: Check D-NN cross-references
+        # Fail the build if a decision identifier is referenced from docs or
+        # code but missing from docs/reference/decisions.md (or vice versa).
+        # Repo-local script; no untrusted inputs.
+        run: uv run python scripts/check_decision_xrefs.py
+
       - name: Build site
         run: uv run mkdocs build --strict
 

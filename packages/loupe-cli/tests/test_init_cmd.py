@@ -12,8 +12,24 @@ def test_init_creates_loupe_dir(tmp_path, monkeypatch):
     assert (tmp_path / ".loupe").is_dir()
     assert (tmp_path / ".loupe" / "context.md").exists()
     assert (tmp_path / ".loupe" / "config.yaml").exists()
+    assert (tmp_path / ".loupe" / "knowledge.yaml").exists()
     assert (tmp_path / ".loupe" / "runs").is_dir()
     assert (tmp_path / ".loupe" / "decisions").is_dir()
+
+
+def test_init_knowledge_loads(tmp_path, monkeypatch):
+    """The scaffolded knowledge.yaml must round-trip through KnowledgeGraph.load."""
+    monkeypatch.chdir(tmp_path)
+    result = runner.invoke(app, ["init"])
+    assert result.exit_code == 0
+    from loupe_core.artifacts.knowledge import KnowledgeGraph
+    kg = KnowledgeGraph.load(tmp_path / ".loupe" / "knowledge.yaml")
+    assert kg.schema_version == 1
+    assert kg.assets == []
+    assert kg.elements == []
+    assert kg.decisions == []
+    text = (tmp_path / ".loupe" / "knowledge.yaml").read_text()
+    assert text.startswith("# .loupe/knowledge.yaml"), "expected leading banner comment"
 
 
 def test_init_refuses_if_already_initialized(tmp_path, monkeypatch):
