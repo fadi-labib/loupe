@@ -258,6 +258,25 @@ Implementation timing: methodology recorded now; the `benchmarks/tier1-mongoose/
 
 ---
 
+## D-20: docs publishing via MkDocs Material + GitHub Pages { #d-20 }
+
+The candidates were raw GitHub Pages on `/docs/` (zero build, but no search and no nav), Sphinx (Python's reference choice, RST-oriented, heavy setup), Docusaurus (React-based, polished but pulls in a Node toolchain), and MkDocs Material (Python-native, Markdown-first, used by FastAPI, Pydantic, Typer, ruff, uv).
+
+MkDocs Material won. With it, four supporting choices fell into place:
+
+- **mkdocstrings (with the Python handler)** renders the artefact and capability schema pages directly from the Pydantic models. The pages shrink to a one-line `:::` directive; drift between docs and code goes to zero. Same trick OPA and others use; the Pydantic source is authoritative.
+- **`pymdownx.snippets` with `check_paths: true`** lets a doc include real source ranges (e.g., `--8<-- "packages/.../path_boundary.py"`). A missing target fails the build the same way a broken link does.
+- **`git-revision-date-localized` plus Material's social-card plugin** put a "Last update" footer on every page and generate per-page OG previews. Both fight the staleness-and-trust signals an auditor would otherwise have to take on faith.
+- **`mkdocs-callouts`** converts GitHub-style `> [!WARNING]` and `> [!NOTE]` alerts to Material admonitions, so the same source renders as styled callouts in both readers without a Material-specific syntax leaking into the .md files.
+
+Voice and link health are gated separately by Vale (four custom rules under `.vale/styles/Loupe/` enforcing the post-humanizer-pass voice) and lychee (link integrity). Both run on every PR; the pre-commit hook covers the docs-build and ruff checks locally so contributors fail fast.
+
+Deploy uses `actions/deploy-pages@v4` (OIDC-based, no `gh-pages` branch). When the project tags v0.1, `mike` will write versioned doc copies to a `gh-pages` branch and the deploy workflow switches its upload source; the change is bounded. Until then, single-version publishing is enough.
+
+The path not taken: a hand-written static HTML site or a JS-heavy generator (Docusaurus, Nextra). The maintenance burden of a custom theme or a JS toolchain pays off only when the doc site is a primary marketing surface. Loupe's docs are technical reference; Material's defaults are already polished enough.
+
+---
+
 ## Open decisions
 
 Deferred until a specific trigger:
