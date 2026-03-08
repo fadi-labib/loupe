@@ -148,14 +148,31 @@
   margin-top: 2.25rem;
   margin-bottom: 0.875rem;
   letter-spacing: -0.02em;
-  /* Subtle accent line under H2 — visual rhythm between sections without
-     adding a full divider rule */
   padding-bottom: 0.3rem;
-  border-bottom: 1px solid rgba(15, 30, 61, 0.06);
+  /* Gradient underline replaces the flat border — adds visual rhythm
+     without dominating the page. Cyan → indigo mirrors the BRAND.md
+     left-accent-line gradient on the personal-website case studies. */
+  border-bottom: none;
+  background-image: linear-gradient(
+    to right,
+    var(--loupe-indigo-600) 0%,
+    var(--loupe-indigo-600) 1.5rem,
+    rgba(15, 30, 61, 0.06) 1.5rem,
+    rgba(15, 30, 61, 0.06) 100%
+  );
+  background-repeat: no-repeat;
+  background-position: bottom left;
+  background-size: 100% 1px;
 }
 
 [data-md-color-scheme="slate"] .md-typeset h2 {
-  border-bottom-color: rgba(147, 197, 253, 0.08);
+  background-image: linear-gradient(
+    to right,
+    var(--loupe-navy-300) 0%,
+    var(--loupe-navy-300) 1.5rem,
+    rgba(147, 197, 253, 0.08) 1.5rem,
+    rgba(147, 197, 253, 0.08) 100%
+  );
 }
 
 .md-typeset h3 {
@@ -227,9 +244,80 @@
 }
 
 /* --------------------------------------------------------------------------
-   Hero tagline — used on the homepage immediately below the H1
+   Hero section — wraps the homepage H1 + tagline. Adds a subtle dot grid
+   background (mirrors the personal-website .hero-section animation) and
+   gives the H1 a gradient text fill. Class is applied with <div markdown>.
    -------------------------------------------------------------------------- */
 
+.md-typeset .hero-section {
+  position: relative;
+  padding: 2.5rem 0 2rem;
+  margin: -1rem -1rem 1.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.md-typeset .hero-section::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image:
+    radial-gradient(circle at 0.5rem 0.5rem, rgba(79, 70, 229, 0.12) 1px, transparent 1.5px);
+  background-size: 24px 24px;
+  mask-image: radial-gradient(ellipse at 30% 40%, black, transparent 75%);
+  -webkit-mask-image: radial-gradient(ellipse at 30% 40%, black, transparent 75%);
+}
+
+[data-md-color-scheme="slate"] .md-typeset .hero-section::before {
+  background-image:
+    radial-gradient(circle at 0.5rem 0.5rem, rgba(147, 197, 253, 0.14) 1px, transparent 1.5px);
+}
+
+/* Subtle ambient indigo glow under the hero — like the personal-website orbs */
+.md-typeset .hero-section::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  width: 24rem;
+  height: 24rem;
+  top: -8rem;
+  right: -6rem;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(79, 70, 229, 0.06), transparent 70%);
+  pointer-events: none;
+}
+
+[data-md-color-scheme="slate"] .md-typeset .hero-section::after {
+  background: radial-gradient(circle, rgba(147, 197, 253, 0.08), transparent 70%);
+}
+
+/* Gradient-text fill for the homepage H1 only — targets H1 directly
+   inside .hero-section. Subtle navy → indigo (light) / white → navy-300
+   (dark). The :has() selector is supported in all evergreen browsers
+   as of 2024; older browsers see the solid colour from the H1 rule. */
+.md-typeset .hero-section > h1,
+.md-typeset h1:has(+ .hero-tagline) {
+  background: linear-gradient(135deg, var(--loupe-navy-950) 0%, var(--loupe-indigo-600) 80%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  font-size: 2.5rem;
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+}
+
+[data-md-color-scheme="slate"] .md-typeset .hero-section > h1,
+[data-md-color-scheme="slate"] .md-typeset h1:has(+ .hero-tagline) {
+  background: linear-gradient(135deg, #FFFFFF 0%, var(--loupe-navy-300) 80%);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+/* Hero tagline — used immediately below the hero H1 */
 .md-typeset .hero-tagline {
   font-size: clamp(1.05rem, 1.3vw, 1.25rem);
   line-height: 1.5;
@@ -385,34 +473,56 @@
 }
 
 /* --------------------------------------------------------------------------
-   Grid cards (homepage launchpad) — brand-style hover lift
+   Grid cards (homepage launchpad, principles index, 404 page) —
+   brand-style hover lift with subtle glass-morphism elevation.
    -------------------------------------------------------------------------- */
 
 .md-typeset .grid.cards > ul > li,
 .md-typeset .grid > .card {
   border-radius: 0.75rem;
   border: 1px solid rgba(15, 30, 61, 0.08);
-  background: rgba(255, 255, 255, 0.85);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 251, 255, 0.92));
+  box-shadow: 0 4px 12px rgba(15, 30, 61, 0.04);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
 }
 
 [data-md-color-scheme="slate"] .md-typeset .grid.cards > ul > li,
 [data-md-color-scheme="slate"] .md-typeset .grid > .card {
-  background: rgba(21, 40, 73, 0.4);
+  background: linear-gradient(180deg, rgba(21, 40, 73, 0.55), rgba(15, 30, 61, 0.4));
   border-color: rgba(147, 197, 253, 0.12);
+  box-shadow: none;
 }
 
 .md-typeset .grid.cards > ul > li:hover,
 .md-typeset .grid > .card:hover {
   transform: translateY(-4px);
-  border-color: rgba(79, 70, 229, 0.3);
-  box-shadow: 0 12px 30px rgba(79, 70, 229, 0.12);
+  border-color: rgba(79, 70, 229, 0.28);
+  box-shadow: 0 14px 32px rgba(79, 70, 229, 0.14);
 }
 
 [data-md-color-scheme="slate"] .md-typeset .grid.cards > ul > li:hover,
 [data-md-color-scheme="slate"] .md-typeset .grid > .card:hover {
-  border-color: rgba(147, 197, 253, 0.3);
-  box-shadow: 0 12px 30px rgba(7, 17, 31, 0.6);
+  border-color: rgba(147, 197, 253, 0.28);
+  box-shadow: 0 14px 32px rgba(7, 17, 31, 0.6);
+}
+
+/* Card icons — give the leading :material-* a faint indigo background ring
+   so cards feel like discrete UI elements, not just rich list items. */
+.md-typeset .grid.cards > ul > li > p:first-child .twemoji,
+.md-typeset .grid.cards > ul > li > p:first-child .md-icon {
+  color: var(--md-accent-fg-color);
+}
+
+/* Principles cards — tighter spacing so 11 cards on one page don't drag */
+.md-typeset .grid.cards.principles-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+  gap: 0.75rem;
+}
+
+.md-typeset .grid.cards.principles-grid > ul > li {
+  padding: 0.9rem 1rem;
 }
 
 /* --------------------------------------------------------------------------

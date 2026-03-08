@@ -10,19 +10,107 @@ Eleven things we will not compromise on. They are ordered into logical groups: w
 
 ## Summary
 
-| # | Group | Principle | One-line summary |
-|---|---|---|---|
-| 1 | Substance | [Evidence, not theatre](#principle-1) | Auditor-verifiable outputs only; no green-tick PDFs nobody reads |
-| 2 | Substance | [Standard formats](#principle-2) | CycloneDX, OpenVEX, STRIDE, JSON-RPC. Never invent a format that already exists |
-| 3 | Independence | [Multi-LLM by default](#principle-3) | Anthropic, OpenAI, Google, Ollama, switched via env var |
-| 4 | Independence | [No tool lock-in](#principle-4) | Capabilities are categories; backends are brands |
-| 5 | Enforcement | [Enforcement is structural, not advisory](#principle-5) | Constraints live in code paths, not in prompts |
-| 6 | Enforcement | [Defence in depth](#principle-6) | Multiple enforcement layers, no single one load-bearing |
-| 7 | Human boundary | [Humans stay in the decision seat](#principle-7) | Agent drafts; humans decide. No `--auto-confirm` |
-| 8 | Engineering | [Cost discipline](#principle-8) | Cache, blackboard, and dispatch are baked into the architecture |
-| 9 | Engineering | [Tests are hermetic](#principle-9) | No live LLM calls, no network, no API keys in CI |
-| 10 | Engineering | [Design for current cases, not imagined ones](#principle-10) | YAGNI applied to plugin contracts and abstractions |
-| 11 | Identity | [Naming reflects activity, not regulation](#principle-11) | ThreatLens, not "CRA Agent" |
+<span class="section-label">Substance</span>
+
+<div class="grid cards principles-grid" markdown>
+
+-   :material-shield-check:{ .lg .middle } &nbsp; **[1 · Evidence, not theatre](#principle-1)**
+
+    ---
+
+    Auditor-verifiable outputs only; no green-tick PDFs nobody reads.
+
+-   :material-format-list-checks:{ .lg .middle } &nbsp; **[2 · Standard formats](#principle-2)**
+
+    ---
+
+    CycloneDX, OpenVEX, STRIDE, JSON-RPC. Never invent a format that already exists.
+
+</div>
+
+<span class="section-label">Independence</span>
+
+<div class="grid cards principles-grid" markdown>
+
+-   :material-swap-horizontal:{ .lg .middle } &nbsp; **[3 · Multi-LLM by default](#principle-3)**
+
+    ---
+
+    Anthropic, OpenAI, Google, Ollama — switched via env var.
+
+-   :material-puzzle-outline:{ .lg .middle } &nbsp; **[4 · No tool lock-in](#principle-4)**
+
+    ---
+
+    Capabilities are categories; backends are brands.
+
+</div>
+
+<span class="section-label">Enforcement</span>
+
+<div class="grid cards principles-grid" markdown>
+
+-   :material-lock-outline:{ .lg .middle } &nbsp; **[5 · Enforcement is structural, not advisory](#principle-5)**
+
+    ---
+
+    Constraints live in code paths, not in prompts.
+
+-   :material-shield-lock-outline:{ .lg .middle } &nbsp; **[6 · Defence in depth](#principle-6)**
+
+    ---
+
+    Multiple enforcement layers; no single one load-bearing.
+
+</div>
+
+<span class="section-label">Human boundary</span>
+
+<div class="grid cards principles-grid" markdown>
+
+-   :material-account-heart-outline:{ .lg .middle } &nbsp; **[7 · Humans stay in the decision seat](#principle-7)**
+
+    ---
+
+    Agent drafts; humans decide. No `--auto-confirm`.
+
+</div>
+
+<span class="section-label">Engineering</span>
+
+<div class="grid cards principles-grid" markdown>
+
+-   :material-cash-multiple:{ .lg .middle } &nbsp; **[8 · Cost discipline](#principle-8)**
+
+    ---
+
+    Cache, blackboard, and dispatch are baked into the architecture.
+
+-   :material-test-tube:{ .lg .middle } &nbsp; **[9 · Tests are hermetic](#principle-9)**
+
+    ---
+
+    No live LLM calls, no network, no API keys in CI.
+
+-   :material-pencil-ruler-outline:{ .lg .middle } &nbsp; **[10 · Design for current cases, not imagined ones](#principle-10)**
+
+    ---
+
+    YAGNI applied to plugin contracts and abstractions.
+
+</div>
+
+<span class="section-label">Identity</span>
+
+<div class="grid cards principles-grid" markdown>
+
+-   :material-tag-outline:{ .lg .middle } &nbsp; **[11 · Naming reflects activity, not regulation](#principle-11)**
+
+    ---
+
+    ThreatLens, not "CRA Agent".
+
+</div>
 
 ---
 

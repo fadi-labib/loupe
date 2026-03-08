@@ -56,6 +56,43 @@ Until v1.0:
 - Schema breaking changes require a `schema_version` bump regardless of the host package version.
 - We will not break the `runs/*.json` hash chain compatibility under any circumstance. Verifying an old run record on a new Loupe must keep working forever; that is the audit guarantee.
 
+## Docs site versioning (via `mike`)
+
+The docs site uses [`mike`](https://github.com/jimporter/mike) for versioned deploys. Every push to `main` writes the built site to the `gh-pages` branch under a `dev/` directory with the `latest` alias pointing at it. The version picker in the top-right of the docs only renders once at least one version has been deployed.
+
+**Deploy commands** (the CI workflow does these automatically — `dev` aliased to `latest` on every push to main):
+
+```bash
+# Deploy the current branch as `dev`, alias to `latest`
+uv run mike deploy --push --update-aliases dev latest
+
+# Make `/latest/` the default redirect at the site root
+uv run mike set-default --push latest
+```
+
+**When v0.1 ships**, the release process cuts the version directory and shifts the `latest` alias:
+
+```bash
+uv run mike deploy --push --update-aliases 0.1 latest
+uv run mike set-default --push latest
+# `dev` remains in the picker as a separate selectable version
+```
+
+**Local preview** of a versioned build (without pushing):
+
+```bash
+uv run mike deploy dev latest      # writes to local gh-pages branch
+uv run mike serve                  # serves http://localhost:8000/
+```
+
+**Deleting a version** (e.g., a botched deploy):
+
+```bash
+uv run mike delete --push 0.1
+```
+
+The GitHub Pages source must be set to **"Deploy from a branch"** with branch `gh-pages` (root). This is a one-time manual step in repo Settings → Pages and is incompatible with the older "GitHub Actions" source that uses `actions/upload-pages-artifact`.
+
 ## Cross-references
 
 - [CHANGELOG.md](../changelog.md) — what changed in each release.

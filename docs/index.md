@@ -3,9 +3,13 @@ hide:
   - toc
 ---
 
+<div class="hero-section" markdown>
+
 # Loupe
 
 <p class="hero-tagline">Auditor-credible AI lenses for code review.</p>
+
+</div>
 
 A guided tour of how Loupe is organised for someone who has heard "AI agent for security" before and wants the actual mental model. If you'd rather jump in, the four cards below are the most common entry points.
 

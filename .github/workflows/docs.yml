@@ -1,8 +1,23 @@
-# Build the MkDocs site and deploy to GitHub Pages.
+# Build the MkDocs site and deploy versioned docs to GitHub Pages via mike.
 #
-# Security note: this workflow uses no untrusted inputs from github.event.*;
-# the only template substitution is ${{ steps.deployment.outputs.page_url }},
-# which is produced by the deploy-pages action itself.
+# Versioning model:
+#   - `mike deploy --update-aliases <version> latest` writes the built site to
+#     the `gh-pages` branch under a directory named <version> and updates the
+#     `latest` alias to point at it.
+#   - On every push to main we deploy as `dev` aliased to `latest`. This is
+#     the working-state version visitors see at the root URL.
+#   - When a v0.1 tag is cut, the release process runs:
+#       mike deploy --push --update-aliases 0.1 latest
+#       mike set-default --push latest
+#     and `dev` becomes a separate selectable version in the picker.
+#
+# IMPORTANT MANUAL STEP (one-time, in GitHub repo Settings → Pages):
+#   - Source: "Deploy from a branch"
+#   - Branch: gh-pages, folder: / (root)
+# The current default in many new repos is "GitHub Actions" with artifact
+# upload — mike needs the branch-based source instead.
+#
+# Security note: no template substitution from github.event.* inputs.
 
 name: docs
 
@@ -15,22 +30,28 @@ on:
       - 'pyproject.toml'
       - 'packages/**/*.py'
       - '.github/workflows/docs.yml'
+      - 'overrides/**'
+      - 'includes/**'
+      - 'scripts/**'
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write     # mike commits to the gh-pages branch
+  pages: write        # GitHub Pages reads from gh-pages once Settings → Pages
+  id-token: write     # is set to "Deploy from a branch"
 
 concurrency:
-  group: pages
+  group: docs-deploy
   cancel-in-progress: false
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # mike needs git history on the gh-pages branch to push updates.
+          fetch-depth: 0
 
       - name: Install uv
         uses: astral-sh/setup-uv@v4
@@ -41,10 +62,10 @@ jobs:
         run: uv python install 3.13
 
       - name: Install docs dependencies
-        # The docs group pins mkdocs, mkdocs-material, mkdocs-callouts, and
-        # mkdocstrings[python]. mkdocstrings needs the workspace packages
-        # importable so it can render the Pydantic models; --all-packages
-        # installs every workspace member in editable mode.
+        # The docs group pins mkdocs, mkdocs-material, mkdocs-callouts,
+        # mkdocstrings[python], and mike. mkdocstrings needs the workspace
+        # packages importable so it can render the Pydantic models;
+        # --all-packages installs every workspace member in editable mode.
         run: uv sync --all-packages --group docs
 
       - name: Check D-NN cross-references
@@ -53,21 +74,25 @@ jobs:
         # Repo-local script; no untrusted inputs.
         run: uv run python scripts/check_decision_xrefs.py
 
-      - name: Build site
+      - name: Verify strict build
+        # Catches broken links, missing snippets, drift between docs and
+        # mkdocstrings-targeted Python code, before deploy commits to gh-pages.
         run: uv run mkdocs build --strict
 
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: site
+      - name: Configure git identity for mike
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Deploy dev → latest via mike
+        # `dev` is the rolling version that always reflects main. The `latest`
+        # alias points at it until a release tag overwrites the alias. The
+        # version picker dropdown only appears after the first deploy, so
+        # this step is what makes the picker visible.
+        run: uv run mike deploy --push --update-aliases dev latest
+
+      - name: Set default version
+        # Make the bare URL (https://fadilabib.github.io/loupe/) redirect to
+        # /latest/ so first-time visitors land on the rolling docs.
+        # Idempotent — safe to run on every workflow invocation.
+        run: uv run mike set-default --push latest
