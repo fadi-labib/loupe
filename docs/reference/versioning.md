@@ -85,6 +85,8 @@ uv run mike deploy dev latest      # writes to local gh-pages branch
 uv run mike serve                  # serves http://localhost:8000/
 ```
 
+**During `mkdocs serve`**, the Material theme tries to fetch `versions.json` to populate the picker. Before mike has ever deployed there is no such file, which would show as repeated 404 warnings in the dev-server log. To suppress them, an empty `docs/versions.json` (`[]`) ships in-repo: the theme finds it, sees zero versions, and hides the picker. Once mike actually deploys (CI on push to `main`, or `mike deploy` locally), mike's real `versions.json` is written to the `gh-pages` branch root and the picker renders with real entries. The in-repo stub never reaches the gh-pages root — it only sits inside each per-version directory, where the theme doesn't look.
+
 **Deleting a version** (e.g., a botched deploy):
 
 ```bash
