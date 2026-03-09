@@ -77,3 +77,45 @@ def test_non_threat_findings_ignored():
     )
     ctx.record_finding("threatlens", "metric:total_calls", {"value": 3, "severity": "critical"})
     assert _gate_exit_code(ctx, _cfg(fail_on=["critical"])) == 0
+
+
+def _cfg_with_warn(*, fail_on: list[str], warn_on: list[str]) -> LoupeConfig:
+    return LoupeConfig(ci=CIConfig(fail_on=fail_on, warn_on=warn_on))
+
+
+def test_warn_only_threat_returns_zero():
+    """Severity in warn_on but not in fail_on → exit 0 with a warning surfaced."""
+    ctx = _ctx([{"id": "T-001", "severity": "medium"}])
+    cfg = _cfg_with_warn(fail_on=["critical", "high"], warn_on=["medium"])
+    assert _gate_exit_code(ctx, cfg) == 0
+
+
+def test_warn_and_fail_threats_exits_one():
+    """Mix of warn and fail severities: warnings print, exit code follows fail_on."""
+    ctx = _ctx([
+        {"id": "T-001", "severity": "medium"},
+        {"id": "T-002", "severity": "critical"},
+    ])
+    cfg = _cfg_with_warn(fail_on=["critical"], warn_on=["medium"])
+    assert _gate_exit_code(ctx, cfg) == 1
+
+
+def test_severity_in_both_lists_takes_fail_precedence():
+    """If a severity appears in both fail_on and warn_on, fail wins (no double-count)."""
+    ctx = _ctx([{"id": "T-001", "severity": "high"}])
+    cfg = _cfg_with_warn(fail_on=["high"], warn_on=["high"])
+    assert _gate_exit_code(ctx, cfg) == 1
+
+
+def test_empty_fail_and_warn_returns_zero_silently():
+    """Pure report-only mode: no gate output, no exit-code change."""
+    ctx = _ctx([{"id": "T-001", "severity": "critical"}])
+    cfg = _cfg_with_warn(fail_on=[], warn_on=[])
+    assert _gate_exit_code(ctx, cfg) == 0
+
+
+def test_warn_only_config_returns_zero_even_at_critical():
+    """A pure warn_on=[critical] config should never exit non-zero — warn doesn't gate."""
+    ctx = _ctx([{"id": "T-001", "severity": "critical"}])
+    cfg = _cfg_with_warn(fail_on=[], warn_on=["critical"])
+    assert _gate_exit_code(ctx, cfg) == 0

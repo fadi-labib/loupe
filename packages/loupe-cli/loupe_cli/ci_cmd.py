@@ -117,40 +117,57 @@ def ci_command(
 
 
 def _gate_exit_code(ctx: RunContext, cfg: LoupeConfig) -> int:
-    """Return 1 if any proposed threat has a severity listed in `ci.fail_on`.
+    """Compute exit code from cfg.ci.fail_on / warn_on against ctx findings.
 
     Reads from `ctx.findings["threatlens"]` so the gate fires on the same
     in-memory data the lens wrote during this run — no need to round-trip
     through threats.yaml on disk. The GitHub Action wrapper applies the
-    same rule against the on-disk file for sanity at the workflow step
-    level; both must agree, and tests in test_ci_real.py + test_entrypoint.py
-    pin the contract on each side.
+    same fail_on rule against the on-disk file for sanity at the workflow
+    step level; both must agree, and tests in test_ci_real.py and
+    test_entrypoint.py pin the contract on each side.
 
-    Returns 0 when `ci.fail_on` is empty (report-only mode) or when no
-    proposed threat matches a listed severity.
+    Behaviour:
+    - Threats whose severity is in `fail_on` print a "Gate failure" block
+      and the function returns 1.
+    - Threats whose severity is in `warn_on` (but NOT in `fail_on` — fail
+      takes precedence on overlap) print a "Warning" block but do not
+      change the exit code.
+    - Empty fail_on AND empty warn_on means report-only mode; the function
+      returns 0 silently.
     """
     fail_severities = set(cfg.ci.fail_on)
-    if not fail_severities:
-        return 0
+    warn_severities = set(cfg.ci.warn_on) - fail_severities
 
-    triggered: list[tuple[str, str]] = []
+    fail_triggered: list[tuple[str, str]] = []
+    warn_triggered: list[tuple[str, str]] = []
     for key, value in ctx.findings.get("threatlens", {}).items():
         if not key.startswith("threat:"):
             continue
         severity = value.get("severity")
+        threat_id = value.get("id", key.removeprefix("threat:"))
         if severity in fail_severities:
-            threat_id = value.get("id", key.removeprefix("threat:"))
-            triggered.append((threat_id, severity))
+            fail_triggered.append((threat_id, severity))
+        elif severity in warn_severities:
+            warn_triggered.append((threat_id, severity))
 
-    if not triggered:
+    if warn_triggered:
+        typer.echo(
+            f"Warning: {len(warn_triggered)} threat(s) at warn_on severities "
+            f"({', '.join(sorted(warn_severities))}):",
+            err=True,
+        )
+        for threat_id, severity in warn_triggered:
+            typer.echo(f"  - {threat_id}: {severity}", err=True)
+
+    if not fail_triggered:
         return 0
 
     typer.echo(
-        f"Gate failure: {len(triggered)} threat(s) at fail_on severities "
+        f"Gate failure: {len(fail_triggered)} threat(s) at fail_on severities "
         f"({', '.join(sorted(fail_severities))}):",
         err=True,
     )
-    for threat_id, severity in triggered:
+    for threat_id, severity in fail_triggered:
         typer.echo(f"  - {threat_id}: {severity}", err=True)
     return 1
 
