@@ -18,6 +18,7 @@ from loupe_core.lens_api import LensCapabilities, McpTool, McpWorkflow
 from loupe_core.run_context import LensRunPlan, RelevanceScore, RunContext
 
 from loupe_threatlens.agent import DEFAULT_MODEL, AgentDeps, build_agent
+from loupe_threatlens.mcp_tools import register_threatlens_mcp_tools
 from loupe_threatlens.user_prompt import build_user_prompt
 
 _CODE_EXTS = (
@@ -54,16 +55,33 @@ class ThreatLens:
     )
 
     def build_agent(self, deps_type: type) -> None:
-        # Phase 6 (Task 6.3) returns a configured PydanticAI Agent.
+        # The PydanticAI agent is built lazily inside `run()` so we don't
+        # construct a model client when only `is_relevant()` is needed.
         return None
 
     def mcp_tools(self) -> list[McpTool]:
-        # Phase 9 (Task 9.3) returns the granular MCP tool list.
+        # The declarative McpTool list is intentionally empty at v1.
+        # ThreatLens contributes tools via `register_to_mcp` below — see
+        # the docstring on `register_to_mcp` and on
+        # `loupe_core.mcp_server.build_mcp_server` for why we bypass the
+        # mcp_tools dance for now.
         return []
 
     def mcp_workflows(self) -> list[McpWorkflow]:
-        # Phase 9 returns workflow definitions.
         return []
+
+    def register_to_mcp(self, server: object, loupe_dir: Path) -> None:
+        """Add ThreatLens-specific tools to a FastMCP server instance.
+
+        Called by `loupe_core.mcp_server.build_mcp_server` when the
+        operator launches `loupe mcp`. The `server` argument is a
+        `mcp.server.fastmcp.FastMCP` instance; we use `object` in the
+        type hint here so this module doesn't take a hard import on
+        `mcp` (lens packages shouldn't dictate the platform's choice
+        of MCP framework — they share the choice that loupe-core makes
+        per D-21).
+        """
+        register_threatlens_mcp_tools(server, loupe_dir)
 
     def is_relevant(self, ctx: RunContext) -> RelevanceScore:
         """Pure-Python relevance heuristic. No LLM call.

@@ -16,11 +16,17 @@ from __future__ import annotations
 from pathlib import Path
 
 import typer
+from loupe_core.lens_registry import discover_lenses
 from loupe_core.mcp_server import build_mcp_server
 
 
 def mcp_command(loupe_dir: Path) -> int:
     """Build and run the MCP server bound to ``loupe_dir``.
+
+    Discovers installed lenses so each can contribute domain-specific
+    tools to the same server (e.g., ThreatLens adds
+    ``threatlens.query_by_stride``). Lens registration runs at server-
+    build time, before the first MCP request arrives.
 
     Returns the exit code. Under normal operation the server runs until
     the client disconnects (closes stdin); we return 0 in that case.
@@ -35,7 +41,8 @@ def mcp_command(loupe_dir: Path) -> int:
         )
         return 2
 
-    server = build_mcp_server(loupe_dir)
+    lenses = discover_lenses()
+    server = build_mcp_server(loupe_dir, lenses=lenses)
     # FastMCP.run() defaults to stdio transport — exactly what MCP clients
     # spawn-and-pipe expect. Errors during run propagate to the caller; a
     # clean client disconnect returns normally.
