@@ -7,10 +7,12 @@ End-to-end:
 4. Bootstrap RunContext from the diff + context.md + knowledge.yaml
 5. Build the run plan (relevance filter + topo sort + dep validity)
 6. If plan is empty: log + exit 0 (this is a normal outcome, not a failure)
-7. Otherwise: dispatch lenses in order; each lens's tools enforce Layer 1
-8. Write runs/<id>.json with the hash chain
-9. Exit with the gate-determined status (currently always 0; gate logic
-   per config.yaml's ci.fail_on will be wired in a follow-up)
+7. Bootstrap capabilities (SBOM, CVE, secret-detect, static-analysis) once
+   per run, populating typed slots on ctx for every lens to read.
+8. Dispatch lenses in order; each lens's tools enforce Layer 1.
+9. Write runs/<id>.json with the hash chain.
+10. Exit with the gate-determined status (currently always 0; gate logic
+    per config.yaml's ci.fail_on will be wired in a follow-up).
 """
 from __future__ import annotations
 
@@ -27,6 +29,9 @@ from loupe_core.artifacts.run_record import (
     load_run_records,
     save_run_record,
 )
+from loupe_core.capabilities.bootstrap import bootstrap_capabilities
+from loupe_core.capabilities.errors import CapabilityError
+from loupe_core.capabilities.registry import CapabilityRegistry
 from loupe_core.config import LoupeConfig, load_config
 from loupe_core.coordinator import build_run_plan
 from loupe_core.dispatcher import dispatch_plan
@@ -76,12 +81,49 @@ def ci_command(
         _write_run_record(ctx, loupe, considered=lenses, cfg=cfg)
         return 0
 
+    # Run the SBOM / CVE / secret / static capabilities ONCE before any
+    # lens executes. The typed results land on ctx.sbom, ctx.cve_findings,
+    # ctx.secrets, ctx.static_findings — every lens reads the same cached
+    # values off the shared blackboard. Cost-discipline lever (D-10 §2).
+    planned_lenses = _planned_lenses(lenses, ctx)
+    if any(getattr(l.capabilities, "requires_capabilities", []) for l in planned_lenses):
+        registry = CapabilityRegistry.discover()
+        try:
+            asyncio.run(bootstrap_capabilities(
+                ctx=ctx,
+                lenses=planned_lenses,
+                config=cfg,
+                registry=registry,
+                repo_path=cwd,
+            ))
+        except CapabilityError as exc:
+            # Surface the specific capability error so the operator can
+            # fix config.yaml or install the missing backend, then continue
+            # with whatever capability slots got populated. The lens layer
+            # treats `None`-valued slots as "capability did not run" and
+            # carries on rather than failing the whole CI invocation.
+            typer.echo(
+                f"warning: capability bootstrap failed — {exc}. "
+                f"Lenses will see partial capability results.",
+                err=True,
+            )
+
     asyncio.run(dispatch_plan(ctx, lenses, boundary, loupe))
     _write_run_record(ctx, loupe, considered=lenses, cfg=cfg)
 
     typer.echo(f"Loupe CI complete. Run: {run_id}.")
     typer.echo(f"Lenses run: {[p.lens_name for p in ctx.plan]}")
     return 0
+
+
+def _planned_lenses(lenses: list[Lens], ctx: RunContext) -> list[Lens]:
+    """Filter discovered lenses to those actually in the run plan.
+
+    The capability bootstrap should only run for lenses that will execute —
+    a docs-only PR with no relevant lens shouldn't trigger Syft + Grype.
+    """
+    planned_names = {p.lens_name for p in ctx.plan}
+    return [l for l in lenses if l.capabilities.name in planned_names]
 
 
 def _write_run_record(
