@@ -9,6 +9,10 @@ dependencies = [
     "pyyaml>=6.0",
     "ruamel.yaml>=0.18",
     "httpx>=0.27",
+    # MCP server (third frontend, per D-09). Uses the official Anthropic
+    # `mcp` SDK's high-level FastMCP API; not the third-party `fastmcp`
+    # package — see D-21 for the rationale.
+    "mcp>=1.0",
 ]
 
 [project.entry-points."loupe.capabilities"]

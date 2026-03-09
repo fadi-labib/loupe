@@ -7,6 +7,7 @@ from loupe_cli.chat_cmd import chat_command
 from loupe_cli.ci_cmd import ci_command
 from loupe_cli.discovery_cmd import cap_list_command, lens_list_command
 from loupe_cli.init_cmd import init_command
+from loupe_cli.mcp_cmd import mcp_command
 from loupe_cli.scan_cmd import scan_command
 from loupe_cli.verify_cmd import verify_command
 
@@ -80,6 +81,17 @@ def scan_cmd(
     or doing an architectural review.
     """
     raise typer.Exit(code=scan_command(paths, config))
+
+
+@app.command("mcp")
+def mcp_cmd(
+    loupe_dir: Path = typer.Option(
+        Path(".loupe"), "--loupe-dir",
+        help="Path to the .loupe/ directory the MCP server serves from.",
+    ),
+) -> None:
+    """Run the Loupe MCP server over stdio (third frontend per D-09)."""
+    raise typer.Exit(code=mcp_command(loupe_dir))
 
 
 @lens_app.command("list")

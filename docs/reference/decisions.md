@@ -283,6 +283,24 @@ The path not taken: a hand-written static HTML site or a JS-heavy generator (Doc
 
 ---
 
+## D-21: MCP server uses the official `mcp` SDK, not third-party `fastmcp` { #d-21 }
+
+Three options for building the Loupe MCP server (Phase 9):
+
+1. **`mcp.server.lowlevel.Server`** — the official Anthropic SDK's raw handler API. You wire `list_tools` / `call_tool` / `read_resource` yourself and hand-author every JSON Schema.
+2. **`mcp.server.fastmcp.FastMCP`** — the high-level decorator API ALSO shipped inside the official `mcp` SDK. Auto-generates JSON Schema from Python type hints; same protocol guarantees as the lowlevel API.
+3. **`fastmcp`** — the third-party package by jlowin (`pypi.org/project/fastmcp`). Decorator-based with a near-identical surface to option 2, but maintained outside Anthropic.
+
+We chose option 2. The reasoning:
+
+The official `mcp` SDK has been the spec-blessed reference implementation since 2024 and the `mcp.server.fastmcp` sub-module gives us the same decorator ergonomics as the third-party package without taking a bus-factor risk on a parallel maintainer. The third-party `fastmcp` arrived in our environment transitively — nothing we declared — and that's an audit-credibility smell for a project whose first principle is "evidence, not theatre" (you do not want an unexplained dependency carrying a security-adjacent server). Adding `mcp>=1.0` to `loupe-core`'s `dependencies` and importing from `mcp.server.fastmcp` makes the choice explicit.
+
+The `*_impl` functions in `loupe_core/mcp_server.py` are deliberately decoupled from the FastMCP wiring. They take a `Path` to `.loupe/` and return plain `dict` / `list[dict]`. If the MCP spec or our framework choice changes, only the registration layer in `build_mcp_server` moves; the data-access layer survives untouched. This mirrors the capability-layer split between Protocol and backend (D-18) and the lens-vs-platform split (D-04).
+
+Trade-offs accepted: the lowlevel API would let us emit hand-authored JSON Schema with richer constraints than Python type hints can express (e.g., regex `pattern` on `threat_id`). For the v1 read-only surface this isn't worth the boilerplate; if we add write tools later that need stricter input validation, we can drop to the lowlevel API for those specific tools while keeping the high-level decorator for the read ones — `FastMCP` and `Server` interoperate at the same protocol layer.
+
+---
+
 ## Open decisions
 
 Deferred until a specific trigger:
