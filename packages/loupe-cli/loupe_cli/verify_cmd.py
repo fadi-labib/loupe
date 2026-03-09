@@ -4,14 +4,14 @@ Runs every verification check the platform supports against the current
 .loupe/ and exits 0 only if all pass. Designed to be installable as both
 a pre-commit hook and a required CI status check.
 
-Currently checks:
-- Run-record hash chain integrity (prev_run_hash + self_hash consistency)
+Default checks (every run):
+- Run-record hash chain integrity
+- Artefact schema consistency (threats.yaml, mitigations.yaml)
+- Threats-to-mitigations cross-reference integrity
 
-Coming in future commits (documented but not yet wired):
-- Authorship of protected paths (context.md, decisions/, config.yaml
-  must not be touched by an agent-identity commit)
-- Schema consistency (every artefact parses with its Pydantic model)
-- Threats <-> mitigations cross-reference integrity
+Strict-only checks (`--strict`):
+- Authorship of protected paths (context.md, decisions/, config.yaml,
+  knowledge.yaml must not be touched by an agent-identity commit)
 """
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ import typer
 from loupe_core.enforcement.verify import verify_repo
 
 
-def verify_command() -> int:
+def verify_command(strict: bool = False) -> int:
     cwd = Path.cwd()
     if not (cwd / ".loupe").exists():
         typer.echo(
@@ -31,9 +31,10 @@ def verify_command() -> int:
         )
         return 2
 
-    failures = verify_repo(cwd)
+    failures = verify_repo(cwd, strict=strict)
     if not failures:
-        typer.echo("loupe verify: OK")
+        scope = "OK (strict)" if strict else "OK"
+        typer.echo(f"loupe verify: {scope}")
         return 0
     for f in failures:
         suffix = f" (run {f.run_id})" if f.run_id else ""

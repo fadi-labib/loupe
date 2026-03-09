@@ -113,7 +113,46 @@ def ci_command(
 
     typer.echo(f"Loupe CI complete. Run: {run_id}.")
     typer.echo(f"Lenses run: {[p.lens_name for p in ctx.plan]}")
-    return 0
+    return _gate_exit_code(ctx, cfg)
+
+
+def _gate_exit_code(ctx: RunContext, cfg: LoupeConfig) -> int:
+    """Return 1 if any proposed threat has a severity listed in `ci.fail_on`.
+
+    Reads from `ctx.findings["threatlens"]` so the gate fires on the same
+    in-memory data the lens wrote during this run — no need to round-trip
+    through threats.yaml on disk. The GitHub Action wrapper applies the
+    same rule against the on-disk file for sanity at the workflow step
+    level; both must agree, and tests in test_ci_real.py + test_entrypoint.py
+    pin the contract on each side.
+
+    Returns 0 when `ci.fail_on` is empty (report-only mode) or when no
+    proposed threat matches a listed severity.
+    """
+    fail_severities = set(cfg.ci.fail_on)
+    if not fail_severities:
+        return 0
+
+    triggered: list[tuple[str, str]] = []
+    for key, value in ctx.findings.get("threatlens", {}).items():
+        if not key.startswith("threat:"):
+            continue
+        severity = value.get("severity")
+        if severity in fail_severities:
+            threat_id = value.get("id", key.removeprefix("threat:"))
+            triggered.append((threat_id, severity))
+
+    if not triggered:
+        return 0
+
+    typer.echo(
+        f"Gate failure: {len(triggered)} threat(s) at fail_on severities "
+        f"({', '.join(sorted(fail_severities))}):",
+        err=True,
+    )
+    for threat_id, severity in triggered:
+        typer.echo(f"  - {threat_id}: {severity}", err=True)
+    return 1
 
 
 def _planned_lenses(lenses: list[Lens], ctx: RunContext) -> list[Lens]:

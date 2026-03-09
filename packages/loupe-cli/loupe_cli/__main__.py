@@ -5,11 +5,20 @@ from loupe_core import __version__
 
 from loupe_cli.chat_cmd import chat_command
 from loupe_cli.ci_cmd import ci_command
+from loupe_cli.discovery_cmd import cap_list_command, lens_list_command
 from loupe_cli.init_cmd import init_command
 from loupe_cli.scan_cmd import scan_command
 from loupe_cli.verify_cmd import verify_command
 
 app = typer.Typer(no_args_is_help=True, add_completion=False)
+
+# `loupe lens ...` and `loupe cap ...` are noun-then-verb subcommand groups
+# (mirroring kubectl, gh, etc.). Today each group has one verb (`list`); the
+# structure leaves room for `lens info <name>` / `cap doctor` / etc.
+lens_app = typer.Typer(no_args_is_help=True, help="Inspect installed lenses.")
+cap_app = typer.Typer(no_args_is_help=True, help="Inspect installed capability backends.")
+app.add_typer(lens_app, name="lens")
+app.add_typer(cap_app, name="cap")
 
 
 @app.callback(invoke_without_command=True)
@@ -40,9 +49,14 @@ def ci_cmd(
 
 
 @app.command("verify")
-def verify_cmd() -> None:
-    """Verify Loupe state — hash chain, schemas, authorship."""
-    raise typer.Exit(code=verify_command())
+def verify_cmd(
+    strict: bool = typer.Option(
+        False, "--strict",
+        help="Run extended checks (protected-path authorship via git).",
+    ),
+) -> None:
+    """Verify Loupe state — hash chain, schemas, cross-references, +authorship under --strict."""
+    raise typer.Exit(code=verify_command(strict=strict))
 
 
 @app.command("chat")
@@ -66,6 +80,18 @@ def scan_cmd(
     or doing an architectural review.
     """
     raise typer.Exit(code=scan_command(paths, config))
+
+
+@lens_app.command("list")
+def lens_list_cmd() -> None:
+    """List installed lenses (loupe.lenses entry-point group)."""
+    raise typer.Exit(code=lens_list_command())
+
+
+@cap_app.command("list")
+def cap_list_cmd() -> None:
+    """List installed capability backends (loupe.capabilities entry-point group)."""
+    raise typer.Exit(code=cap_list_command())
 
 
 if __name__ == "__main__":

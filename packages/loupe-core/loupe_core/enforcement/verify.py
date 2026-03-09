@@ -1,24 +1,56 @@
 """Layer 3 enforcement — `loupe verify` implementation.
 
 Independent of the CLI; can be invoked from any context (pre-commit hook,
-CI step, programmatic use) to validate the integrity of .loupe/.
+CI step, programmatic use) to validate the integrity of `.loupe/`.
 
-Currently checks:
+Default checks (every run of `loupe verify`):
 - Run-record hash chain: every record's prev_run_hash must equal the
   previous record's self_hash, and every record's self_hash must equal
   the SHA-256 of its own content (excluding self_hash).
+- Artefact schema consistency: every YAML/JSON artefact under `.loupe/`
+  must parse with its Pydantic model.
+- Threats-to-mitigations cross-reference integrity: every mitigation_id
+  named on a Threat must exist in `mitigations.yaml`, and every
+  threats_addressed entry on a Mitigation must exist in `threats.yaml`.
 
-Future checks (documented in the spec but not yet wired here):
-- Authorship of protected paths (D-08 Layer 2 / D-15 verify)
-- Artefact schema consistency
-- threats <-> mitigations cross-reference integrity
+Strict checks (`loupe verify --strict` only):
+- Authorship: protected paths (`context.md`, `decisions/**`,
+  `config.yaml`, `knowledge.yaml`) must have their most recent git
+  commit authored by a human identity. Strict checks need git or
+  filesystem access beyond `.loupe/`, so opt-in keeps the default fast.
 """
 from __future__ import annotations
 
+import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
+from loupe_core.artifacts.mitigation import MitigationsFile
 from loupe_core.artifacts.run_record import load_run_records
+from loupe_core.artifacts.threat import ThreatsFile
+
+# Paths protected by Layer 1 (`agent_writable_paths` excludes them) plus
+# the artefacts agents may draft but humans review per [D-08]. The strict
+# authorship check ensures no agent identity authored the most recent
+# commit to these paths.
+_HUMAN_OWNED = (
+    "context.md",
+    "config.yaml",
+    "knowledge.yaml",
+)
+_HUMAN_OWNED_DIRS = (
+    "decisions",
+)
+
+# A commit author is treated as a bot/agent identity when ANY of these
+# match. Conservative — better to false-positive (require manual review)
+# than to silently accept an agent-authored commit on a protected path.
+_AGENT_AUTHOR_PATTERNS = (
+    "@bots.local",
+    "bot+",
+    "[bot]",
+    "loupe-",
+)
 
 
 @dataclass
@@ -26,6 +58,11 @@ class VerifyFailure:
     kind: str
     detail: str
     run_id: str | None = None
+
+
+# ---------------------------------------------------------------------------
+# Hash-chain check (was the only check pre-Phase-7.3)
+# ---------------------------------------------------------------------------
 
 
 def check_run_record_chain(runs_dir: Path) -> list[VerifyFailure]:
@@ -50,9 +87,183 @@ def check_run_record_chain(runs_dir: Path) -> list[VerifyFailure]:
     return failures
 
 
-def verify_repo(repo_root: Path) -> list[VerifyFailure]:
-    """Top-level entry point — runs every check and returns combined failures."""
+# ---------------------------------------------------------------------------
+# Schema consistency
+# ---------------------------------------------------------------------------
+
+
+def check_artefact_schemas(loupe_dir: Path) -> list[VerifyFailure]:
+    """Every artefact present on disk must parse with its Pydantic model.
+
+    Run records are already covered by the chain check (their schema is
+    validated implicitly during load). This check focuses on the two
+    machine-readable artefacts ThreatLens owns: threats.yaml and
+    mitigations.yaml. SBOM and VEX use their own standard validators
+    (CycloneDX, OpenVEX); we don't re-implement those here.
+    """
+    failures: list[VerifyFailure] = []
+    threats_path = loupe_dir / "threats.yaml"
+    if threats_path.exists():
+        try:
+            ThreatsFile.load(threats_path)
+        except Exception as exc:
+            failures.append(VerifyFailure(
+                kind="schema_invalid",
+                detail=f"threats.yaml does not parse as ThreatsFile: {exc}",
+            ))
+    mitigations_path = loupe_dir / "mitigations.yaml"
+    if mitigations_path.exists():
+        try:
+            MitigationsFile.load(mitigations_path)
+        except Exception as exc:
+            failures.append(VerifyFailure(
+                kind="schema_invalid",
+                detail=f"mitigations.yaml does not parse as MitigationsFile: {exc}",
+            ))
+    return failures
+
+
+# ---------------------------------------------------------------------------
+# Threats <-> mitigations cross-reference integrity
+# ---------------------------------------------------------------------------
+
+
+def check_threats_mitigations_cross_refs(loupe_dir: Path) -> list[VerifyFailure]:
+    """Bidirectional referential integrity between threats and mitigations.
+
+    - Every mitigation_id referenced from a Threat must exist in
+      mitigations.yaml.
+    - Every threat_id referenced from a Mitigation's threats_addressed
+      must exist in threats.yaml.
+
+    Files are loaded lazily: if either doesn't exist on disk, we skip
+    silently (the schema check has already complained if the file is
+    present but malformed).
+    """
+    threats_path = loupe_dir / "threats.yaml"
+    mitigations_path = loupe_dir / "mitigations.yaml"
+    if not threats_path.exists() or not mitigations_path.exists():
+        return []
+
+    try:
+        threats = ThreatsFile.load(threats_path)
+        mitigations = MitigationsFile.load(mitigations_path)
+    except Exception:
+        # Schema check will surface the load error; don't double-report.
+        return []
+
+    threat_ids = {t.id for t in threats.threats}
+    mitigation_ids = {m.id for m in mitigations.mitigations}
+
+    failures: list[VerifyFailure] = []
+
+    for threat in threats.threats:
+        for mid in threat.mitigation_ids:
+            if mid not in mitigation_ids:
+                failures.append(VerifyFailure(
+                    kind="dangling_mitigation_ref",
+                    detail=(
+                        f"threat {threat.id} references mitigation '{mid}', "
+                        f"but no such ID exists in mitigations.yaml"
+                    ),
+                ))
+
+    for mitigation in mitigations.mitigations:
+        for tid in mitigation.threats_addressed:
+            if tid not in threat_ids:
+                failures.append(VerifyFailure(
+                    kind="dangling_threat_ref",
+                    detail=(
+                        f"mitigation {mitigation.id} addresses threat '{tid}', "
+                        f"but no such ID exists in threats.yaml"
+                    ),
+                ))
+
+    return failures
+
+
+# ---------------------------------------------------------------------------
+# Strict-only: authorship of protected paths
+# ---------------------------------------------------------------------------
+
+
+def check_protected_path_authorship(repo_root: Path) -> list[VerifyFailure]:
+    """Strict-only. Most-recent git commit to any protected path must be human.
+
+    Uses `git log -1 --format=%ae|%an` to read the latest authorship of
+    each protected path. If git itself isn't available or the file has
+    never been committed, the check is skipped (no failure).
+    """
+    failures: list[VerifyFailure] = []
+    loupe = repo_root / ".loupe"
+
+    protected_files: list[Path] = []
+    for name in _HUMAN_OWNED:
+        path = loupe / name
+        if path.exists():
+            protected_files.append(path)
+    for dirname in _HUMAN_OWNED_DIRS:
+        directory = loupe / dirname
+        if directory.exists():
+            protected_files.extend(p for p in directory.glob("**/*") if p.is_file())
+
+    for path in protected_files:
+        identity = _last_commit_identity(path, repo_root=repo_root)
+        if identity is None:
+            continue  # file never committed or git unavailable — silent skip
+        if _looks_like_agent(identity):
+            rel = path.relative_to(repo_root)
+            failures.append(VerifyFailure(
+                kind="protected_path_agent_author",
+                detail=(
+                    f"protected path '{rel}' was last touched by an "
+                    f"agent-identity commit ({identity}). A human must "
+                    f"author changes to this file."
+                ),
+            ))
+    return failures
+
+
+def _last_commit_identity(path: Path, *, repo_root: Path) -> str | None:
+    try:
+        result = subprocess.run(
+            ["git", "log", "-1", "--format=%ae|%an", "--", str(path)],
+            cwd=repo_root,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+    except (FileNotFoundError, OSError):
+        return None
+    if result.returncode != 0:
+        return None
+    line = result.stdout.strip()
+    return line or None
+
+
+def _looks_like_agent(identity: str) -> bool:
+    haystack = identity.lower()
+    return any(p in haystack for p in _AGENT_AUTHOR_PATTERNS)
+
+
+# ---------------------------------------------------------------------------
+# Top-level entry point
+# ---------------------------------------------------------------------------
+
+
+def verify_repo(repo_root: Path, *, strict: bool = False) -> list[VerifyFailure]:
+    """Run every Layer 3 check; return combined failures.
+
+    Default checks run on every invocation. The strict-only set (today:
+    protected-path authorship) runs when `--strict` is passed to the
+    CLI. Strict checks tend to need git or filesystem access beyond the
+    `.loupe/` directory, so opt-in keeps the default fast and pure.
+    """
     loupe = repo_root / ".loupe"
     failures: list[VerifyFailure] = []
     failures.extend(check_run_record_chain(loupe / "runs"))
+    failures.extend(check_artefact_schemas(loupe))
+    failures.extend(check_threats_mitigations_cross_refs(loupe))
+    if strict:
+        failures.extend(check_protected_path_authorship(repo_root))
     return failures
