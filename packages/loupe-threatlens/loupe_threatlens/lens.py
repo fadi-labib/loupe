@@ -18,6 +18,7 @@ from loupe_core.lens_api import LensCapabilities, McpTool, McpWorkflow
 from loupe_core.run_context import LensRunPlan, RelevanceScore, RunContext
 
 from loupe_threatlens.agent import DEFAULT_MODEL, AgentDeps, build_agent
+from loupe_threatlens.user_prompt import build_user_prompt
 
 _CODE_EXTS = (
     ".py", ".ts", ".tsx", ".js", ".jsx", ".go", ".rs",
@@ -88,10 +89,12 @@ class ThreatLens:
     ) -> None:
         """Invoke the PydanticAI agent for one threat-modelling pass.
 
-        The agent uses `propose_threat` (a tool from tools.py) to add
-        threats to threats.yaml via the Layer-1-enforced write path. The
-        agent's free-text return value is discarded; structured outputs
-        are the artefacts written through the tool surface.
+        Assembles a structured user prompt from `RunContext` — diff,
+        project context, SBOM components, CVE findings, known
+        architectural elements — and runs the agent against it. The
+        agent emits threats via `propose_threat` tool calls; the free-text
+        return value is discarded. Structured artefacts written through
+        the Layer-1-enforced tool surface are the only product.
         """
         model_id = os.environ.get("THREATLENS_MODEL", DEFAULT_MODEL)
         agent = build_agent(model_id)
@@ -101,8 +104,5 @@ class ThreatLens:
             loupe_dir=loupe_dir,
             model_id=model_id,
         )
-        prompt = plan_entry.sub_prompt or (
-            "Analyse the provided diff and project context for STRIDE threats. "
-            "Use the propose_threat tool for each threat you identify."
-        )
+        prompt = build_user_prompt(ctx, plan_entry)
         await agent.run(prompt, deps=deps)
