@@ -99,14 +99,28 @@ def latest_run_impl(loupe_dir: Path) -> dict[str, Any] | None:
 # ---------------------------------------------------------------------------
 
 
-def build_mcp_server(loupe_dir: Path) -> FastMCP:
+def build_mcp_server(
+    loupe_dir: Path,
+    *,
+    lenses: list[Any] | None = None,
+) -> FastMCP:
     """Construct the FastMCP server bound to a specific ``.loupe/`` directory.
 
-    Each registered tool closes over ``loupe_dir`` so the server can be
+    Each core tool closes over ``loupe_dir`` so the server can be
     instantiated once at process start and serve many requests against
     the same project. To serve a different project, build a second
     server — the closure binding is intentional and prevents one tool
     call from accidentally reading another project's artefacts.
+
+    When ``lenses`` is provided, each lens with a ``register_to_mcp``
+    method gets a chance to add its own domain-specific tools to the
+    same server. ThreatLens uses this to contribute
+    ``threatlens_query_by_stride`` / ``threatlens_query_by_severity`` /
+    ``threatlens_summary``. The Lens protocol's ``mcp_tools`` /
+    ``mcp_workflows`` declarative fields are kept for forward use but
+    are not yet consumed — direct decorator registration is simpler at
+    v1 and matches the abstraction level lenses already accept when
+    building their PydanticAI agent.
     """
     mcp = FastMCP(
         name="loupe",
@@ -148,5 +162,12 @@ def build_mcp_server(loupe_dir: Path) -> FastMCP:
     def latest_run() -> dict[str, Any] | None:
         """Get the most recent run record. Returns None if no runs exist yet."""
         return latest_run_impl(loupe_dir)
+
+    # Lens-contributed tools — each lens with a `register_to_mcp` method
+    # adds its own domain-specific tools to the same server instance.
+    for lens in lenses or []:
+        register = getattr(lens, "register_to_mcp", None)
+        if register is not None:
+            register(mcp, loupe_dir)
 
     return mcp

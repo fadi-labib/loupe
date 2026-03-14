@@ -21,6 +21,7 @@ grype = "loupe_core.capabilities.backends.grype_cve:GrypeCveBackend"
 gitleaks = "loupe_core.capabilities.backends.gitleaks_secret:GitleaksSecretBackend"
 trufflehog = "loupe_core.capabilities.backends.trufflehog_secret:TruffleHogSecretBackend"
 semgrep = "loupe_core.capabilities.backends.semgrep_static:SemgrepStaticBackend"
+codeql = "loupe_core.capabilities.backends.codeql_static:CodeQLStaticBackend"
 
 [build-system]
 requires = ["hatchling"]
