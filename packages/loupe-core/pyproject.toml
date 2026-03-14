@@ -22,6 +22,9 @@ gitleaks = "loupe_core.capabilities.backends.gitleaks_secret:GitleaksSecretBacke
 trufflehog = "loupe_core.capabilities.backends.trufflehog_secret:TruffleHogSecretBackend"
 semgrep = "loupe_core.capabilities.backends.semgrep_static:SemgrepStaticBackend"
 codeql = "loupe_core.capabilities.backends.codeql_static:CodeQLStaticBackend"
+bandit = "loupe_core.capabilities.backends.bandit_static:BanditStaticBackend"
+osv-scanner = "loupe_core.capabilities.backends.osv_scanner_cve:OsvScannerCveBackend"
+detect-secrets = "loupe_core.capabilities.backends.detect_secrets:DetectSecretsBackend"
 
 [build-system]
 requires = ["hatchling"]
