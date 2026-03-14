@@ -69,6 +69,27 @@ class ProposedPatch(BaseModel):
     rationale: str
 
 
+class LensUsage(BaseModel):
+    """Per-lens token / cost record captured after the agent run completes.
+
+    Lenses record one entry per invocation. The coordinator and the
+    run-record writer aggregate these across lenses to populate the
+    workspace-level totals in `RunRecord` (models_used, total_tokens_in,
+    total_tokens_out, cost_usd_estimate, cache_hit_rate).
+
+    `cache_read_tokens` are counted SEPARATELY from `input_tokens`
+    because Anthropic prompt caching charges them at ~10% — the
+    cache_hit_rate metric exists precisely to surface the discount.
+    """
+
+    model_id: str
+    input_tokens: int = 0           # paid at full input rate
+    output_tokens: int = 0          # paid at full output rate
+    cache_read_tokens: int = 0      # paid at ~10% input rate (cache hits)
+    cache_write_tokens: int = 0     # paid at ~125% input rate (writing to cache)
+    cost_usd_estimate: float = 0.0  # populated from a pricing table on record
+
+
 class RunContext(BaseModel):
     # Immutable for the run
     run_id: str
@@ -98,6 +119,11 @@ class RunContext(BaseModel):
     facts: list[Fact] = Field(default_factory=list)
     pending_decisions: list[PendingDecision] = Field(default_factory=list)
     proposed_patches: list[ProposedPatch] = Field(default_factory=list)
+    # Per-lens token usage, populated after each lens's agent run completes.
+    # Aggregated into RunRecord by ci_cmd._write_run_record so the cost-
+    # discipline principle (§8) has on-disk evidence per run, not just in
+    # the test cassette.
+    lens_usage: dict[str, LensUsage] = Field(default_factory=dict)
 
     def record_finding(self, lens: str, key: str, value: Any) -> None:
         self.findings.setdefault(lens, {})[key] = value

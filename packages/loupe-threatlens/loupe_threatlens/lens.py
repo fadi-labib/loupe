@@ -15,7 +15,8 @@ from pathlib import Path
 
 from loupe_core.enforcement.path_boundary import PathBoundary
 from loupe_core.lens_api import LensCapabilities, McpTool, McpWorkflow
-from loupe_core.run_context import LensRunPlan, RelevanceScore, RunContext
+from loupe_core.pricing import estimate_cost_usd
+from loupe_core.run_context import LensRunPlan, LensUsage, RelevanceScore, RunContext
 
 from loupe_threatlens.agent import DEFAULT_MODEL, AgentDeps, build_agent
 from loupe_threatlens.mcp_tools import register_threatlens_mcp_tools
@@ -123,4 +124,23 @@ class ThreatLens:
             model_id=model_id,
         )
         prompt = build_user_prompt(ctx, plan_entry)
-        await agent.run(prompt, deps=deps)
+        result = await agent.run(prompt, deps=deps)
+
+        # Capture token usage so the run record can carry real numbers
+        # rather than the placeholder zeros [principle §8 — cost discipline].
+        # PydanticAI exposes usage as a method on AgentRunResult (older
+        # versions used a property); handle both by calling when callable.
+        # Inner attributes are guarded with getattr so providers that emit
+        # fewer fields don't raise.
+        usage_attr = getattr(result, "usage", None)
+        usage = usage_attr() if callable(usage_attr) else usage_attr
+        if usage is not None:
+            entry = LensUsage(
+                model_id=model_id,
+                input_tokens=int(getattr(usage, "input_tokens", 0) or 0),
+                output_tokens=int(getattr(usage, "output_tokens", 0) or 0),
+                cache_read_tokens=int(getattr(usage, "cache_read_tokens", 0) or 0),
+                cache_write_tokens=int(getattr(usage, "cache_write_tokens", 0) or 0),
+            )
+            entry.cost_usd_estimate = estimate_cost_usd(entry)
+            ctx.lens_usage[self.capabilities.name] = entry

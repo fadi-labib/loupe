@@ -119,3 +119,16 @@ async def test_threatlens_proposes_threats_on_diff(tmp_path, monkeypatch):
         f"Expected ThreatLens to propose at least one threat for an obvious "
         f"E (Elevation of Privilege) diff, got findings: {ctx.findings}"
     )
+
+    # ctx.lens_usage must populate with non-zero tokens — the cost-discipline
+    # data flow [principle §8] depends on it. If this fails the most likely
+    # cause is that the lens.run() function lost the usage-capture block.
+    assert "threatlens" in ctx.lens_usage, (
+        "lens.run() didn't record token usage on RunContext"
+    )
+    usage = ctx.lens_usage["threatlens"]
+    assert usage.model_id == "anthropic:claude-haiku-4-5"
+    assert usage.input_tokens > 0, "expected non-zero input tokens from a real run"
+    assert usage.output_tokens > 0, "expected non-zero output tokens from a real run"
+    # Cost estimate uses the pricing table; Haiku 4.5 is registered there.
+    assert usage.cost_usd_estimate > 0.0, "expected a non-zero cost estimate"

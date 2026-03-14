@@ -38,6 +38,7 @@ from loupe_core.dispatcher import dispatch_plan
 from loupe_core.enforcement.path_boundary import PathBoundary
 from loupe_core.lens_api import Lens
 from loupe_core.lens_registry import discover_lenses
+from loupe_core.pricing import cache_hit_rate as _cache_hit_rate
 from loupe_core.run_context import BootstrapInputs, RunContext
 
 
@@ -210,6 +211,27 @@ def _write_run_record(
             reason=score.reason,
         ))
 
+    # Aggregate per-lens usage into workspace-level totals for the run
+    # record. Cache reads count toward total_tokens_in because they ARE
+    # input the model saw — just paid at the discounted rate. The
+    # cache_hit_rate field reports the discount separately.
+    models_used = {name: u.model_id for name, u in ctx.lens_usage.items()}
+    total_in = sum(
+        u.input_tokens + u.cache_read_tokens + u.cache_write_tokens
+        for u in ctx.lens_usage.values()
+    )
+    total_out = sum(u.output_tokens for u in ctx.lens_usage.values())
+    cost_total = round(sum(u.cost_usd_estimate for u in ctx.lens_usage.values()), 6)
+    # Aggregate cache hit rate: total cache reads / total input across all lenses.
+    # None when no lens ran (or no token data captured) to distinguish "zero
+    # cache hits" (0.0) from "no LLM call happened" (None).
+    cache_read = sum(u.cache_read_tokens for u in ctx.lens_usage.values())
+    cache_denom = sum(
+        u.input_tokens + u.cache_read_tokens + u.cache_write_tokens
+        for u in ctx.lens_usage.values()
+    )
+    cache_hit = round(cache_read / cache_denom, 4) if cache_denom else None
+
     record = RunRecord(
         run_id=ctx.run_id,
         timestamp=ctx.started_at,
@@ -222,12 +244,15 @@ def _write_run_record(
         context_md_hash=hashlib.sha256(context_bytes).hexdigest(),
         lenses_considered=considered_records,
         lenses_run=[p.lens_name for p in ctx.plan],
-        models_used={},
-        total_tokens_in=0,
-        total_tokens_out=0,
-        cost_usd_estimate=0.0,
-        cache_hit_rate=None,
-        artifacts_changed=[],
+        models_used=models_used,
+        total_tokens_in=total_in,
+        total_tokens_out=total_out,
+        cost_usd_estimate=cost_total,
+        cache_hit_rate=cache_hit,
+        artifacts_changed=sorted(set().union(*(
+            set(threat_keys) for lens_findings in ctx.findings.values()
+            for threat_keys in [list(lens_findings.keys())]
+        )) | {p.location for p in ctx.proposed_patches}),
         proposed_patches=[p.location for p in ctx.proposed_patches],
         pending_decisions=[d.id for d in ctx.pending_decisions],
         prev_run_hash=prev_hash,
