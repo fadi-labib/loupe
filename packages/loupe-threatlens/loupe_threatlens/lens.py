@@ -71,7 +71,13 @@ class ThreatLens:
     def mcp_workflows(self) -> list[McpWorkflow]:
         return []
 
-    def register_to_mcp(self, server: object, loupe_dir: Path) -> None:
+    def register_to_mcp(
+        self,
+        server: object,
+        loupe_dir: Path,
+        *,
+        boundary: PathBoundary | None = None,
+    ) -> None:
         """Add ThreatLens-specific tools to a FastMCP server instance.
 
         Called by `loupe_core.mcp_server.build_mcp_server` when the
@@ -81,8 +87,12 @@ class ThreatLens:
         `mcp` (lens packages shouldn't dictate the platform's choice
         of MCP framework — they share the choice that loupe-core makes
         per D-21).
+
+        When ``boundary`` is provided the lens also registers write
+        tools (propose_threat / propose_mitigation). With ``boundary``
+        absent the surface is read-only.
         """
-        register_threatlens_mcp_tools(server, loupe_dir)
+        register_threatlens_mcp_tools(server, loupe_dir, boundary=boundary)
 
     def is_relevant(self, ctx: RunContext) -> RelevanceScore:
         """Pure-Python relevance heuristic. No LLM call.

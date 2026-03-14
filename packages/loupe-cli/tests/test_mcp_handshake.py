@@ -33,6 +33,17 @@ from loupe_core.artifacts.types import (
 )
 
 
+_INIT_CONFIG = """\
+schema_version: 1
+agent_writable_paths:
+  - .loupe/threats.yaml
+  - .loupe/mitigations.yaml
+lenses:
+  threatlens:
+    enabled: true
+"""
+
+
 def _loupe_executable() -> str:
     """Locate the installed `loupe` script.
 
@@ -46,7 +57,14 @@ def _loupe_executable() -> str:
     return found
 
 
-def _make_loupe_dir(root: Path) -> Path:
+def _make_loupe_dir(root: Path, *, write_config: bool = False) -> Path:
+    """Build a minimal .loupe/ for the handshake tests.
+
+    When ``write_config=True``, also writes a config.yaml that lists
+    threats.yaml + mitigations.yaml as agent-writable. With a config
+    present, `loupe mcp` constructs a PathBoundary at startup and the
+    write tools register.
+    """
     loupe = root / ".loupe"
     loupe.mkdir()
     (loupe / "runs").mkdir()
@@ -62,6 +80,17 @@ def _make_loupe_dir(root: Path) -> Path:
             rationale="Test data.", proposed_by="test",
         ),
     ]).save(loupe / "threats.yaml")
+    if write_config:
+        # Use absolute paths in agent_writable_paths so the boundary
+        # matches the in-test loupe location. Operators editing config
+        # by hand normally use relative paths against the repo root;
+        # we sidestep that resolution here.
+        absolute_config = _INIT_CONFIG.replace(
+            ".loupe/threats.yaml", str(loupe / "threats.yaml"),
+        ).replace(
+            ".loupe/mitigations.yaml", str(loupe / "mitigations.yaml"),
+        )
+        (loupe / "config.yaml").write_text(absolute_config)
     return loupe
 
 
@@ -170,3 +199,61 @@ async def test_mcp_call_threatlens_summary(tmp_path: Path):
             # E-category threat.
             assert "high" in blob.lower()
             assert "total" in blob.lower()
+
+
+@pytest.mark.asyncio
+async def test_mcp_write_tools_registered_when_config_present(tmp_path: Path):
+    """`loupe mcp` registers write tools when config.yaml lists agent_writable_paths.
+
+    Without a config the surface stays read-only; with one, the
+    threatlens_propose_threat and threatlens_propose_mitigation tools
+    appear in tools/list.
+    """
+    loupe_path = _make_loupe_dir(tmp_path, write_config=True)
+    params = StdioServerParameters(
+        command=_loupe_executable(),
+        args=["mcp", "--loupe-dir", str(loupe_path)],
+    )
+
+    async with stdio_client(params) as (read, write):
+        async with ClientSession(read, write) as session:
+            await session.initialize()
+            tools = await session.list_tools()
+            tool_names = {t.name for t in tools.tools}
+            assert "threatlens_propose_threat" in tool_names
+            assert "threatlens_propose_mitigation" in tool_names
+
+
+@pytest.mark.asyncio
+async def test_mcp_propose_threat_writes_to_threats_yaml(tmp_path: Path):
+    """Calling propose_threat over MCP appends to threats.yaml via Layer 1."""
+    loupe_path = _make_loupe_dir(tmp_path, write_config=True)
+    params = StdioServerParameters(
+        command=_loupe_executable(),
+        args=["mcp", "--loupe-dir", str(loupe_path)],
+    )
+
+    async with stdio_client(params) as (read, write):
+        async with ClientSession(read, write) as session:
+            await session.initialize()
+            result = await session.call_tool(
+                "threatlens_propose_threat",
+                arguments={
+                    "element_id": "E-001",
+                    "stride_category": "T",
+                    "title": "MCP-proposed tampering risk",
+                    "description": "An external MCP client proposed this threat.",
+                    "severity": "high",
+                    "rationale": "Test rationale.",
+                },
+            )
+            blob = "".join(getattr(c, "text", "") for c in result.content)
+            # The response carries the assigned threat_id; the fixture
+            # already has T-001, so this one should be T-002.
+            assert "T-002" in blob
+
+    # And the threat actually landed on disk via the PathBoundary write.
+    threats = ThreatsFile.load(loupe_path / "threats.yaml").threats
+    assert len(threats) == 2
+    assert threats[1].title == "MCP-proposed tampering risk"
+    assert threats[1].proposed_by == "mcp/client"

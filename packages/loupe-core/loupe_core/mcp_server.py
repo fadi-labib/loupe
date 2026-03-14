@@ -103,6 +103,7 @@ def build_mcp_server(
     loupe_dir: Path,
     *,
     lenses: list[Any] | None = None,
+    boundary: Any | None = None,
 ) -> FastMCP:
     """Construct the FastMCP server bound to a specific ``.loupe/`` directory.
 
@@ -165,9 +166,11 @@ def build_mcp_server(
 
     # Lens-contributed tools — each lens with a `register_to_mcp` method
     # adds its own domain-specific tools to the same server instance.
+    # When a `boundary` is supplied, lenses also register write tools;
+    # without one, the surface stays strictly read-only.
     for lens in lenses or []:
         register = getattr(lens, "register_to_mcp", None)
         if register is not None:
-            register(mcp, loupe_dir)
+            register(mcp, loupe_dir, boundary=boundary)
 
     return mcp

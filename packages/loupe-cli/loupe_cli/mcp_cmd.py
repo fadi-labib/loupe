@@ -16,6 +16,8 @@ from __future__ import annotations
 from pathlib import Path
 
 import typer
+from loupe_core.config import load_config
+from loupe_core.enforcement.path_boundary import PathBoundary
 from loupe_core.lens_registry import discover_lenses
 from loupe_core.mcp_server import build_mcp_server
 
@@ -42,7 +44,23 @@ def mcp_command(loupe_dir: Path) -> int:
         return 2
 
     lenses = discover_lenses()
-    server = build_mcp_server(loupe_dir, lenses=lenses)
+    # Load the operator's config so the same agent_writable_paths allow-list
+    # that gates loupe ci also gates MCP write tools. A missing config_yaml
+    # falls back to a no-write surface — strictly read-only, which is the
+    # safer default if config is broken.
+    config_path = loupe_dir / "config.yaml"
+    boundary: PathBoundary | None = None
+    if config_path.exists():
+        try:
+            cfg = load_config(config_path)
+            boundary = PathBoundary(writable_globs=cfg.agent_writable_paths)
+        except Exception as exc:  # pragma: no cover — defensive
+            typer.echo(
+                f"warning: could not load {config_path} ({exc}); "
+                f"MCP write tools disabled.",
+                err=True,
+            )
+    server = build_mcp_server(loupe_dir, lenses=lenses, boundary=boundary)
     # FastMCP.run() defaults to stdio transport — exactly what MCP clients
     # spawn-and-pipe expect. Errors during run propagate to the caller; a
     # clean client disconnect returns normally.
