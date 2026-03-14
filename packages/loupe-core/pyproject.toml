@@ -17,6 +17,7 @@ dependencies = [
 
 [project.entry-points."loupe.capabilities"]
 syft = "loupe_core.capabilities.backends.syft_sbom:SyftSbomBackend"
+cdxgen = "loupe_core.capabilities.backends.cdxgen_sbom:CdxgenSbomBackend"
 grype = "loupe_core.capabilities.backends.grype_cve:GrypeCveBackend"
 gitleaks = "loupe_core.capabilities.backends.gitleaks_secret:GitleaksSecretBackend"
 trufflehog = "loupe_core.capabilities.backends.trufflehog_secret:TruffleHogSecretBackend"
