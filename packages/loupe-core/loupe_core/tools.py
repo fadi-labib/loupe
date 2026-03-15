@@ -9,6 +9,27 @@ class BoundaryViolation(PermissionError):
     """Raised when an agent tool attempts to write outside the allow-list."""
 
 
+def _validate_relative_target(target_path: str) -> None:
+    """Reject path traversal, absolute paths, NUL bytes, and empty strings.
+
+    `propose_patch` joins `target_path` under `.loupe/.proposed/`; without these
+    checks a `target_path` of `".."` (or similar) would resolve outside the
+    proposal directory, breaking Layer 1 containment.
+    """
+    if not target_path:
+        raise ValueError("target_path may not be empty")
+    if "\x00" in target_path:
+        raise ValueError(f"target_path contains NUL byte: {target_path!r}")
+    if Path(target_path).is_absolute():
+        raise ValueError(
+            f"target_path must be relative, got absolute: {target_path!r}"
+        )
+    if ".." in Path(target_path).parts:
+        raise ValueError(
+            f"target_path contains path traversal '..': {target_path!r}"
+        )
+
+
 def write_agent_artifact(boundary: PathBoundary, path: Path, content: str) -> str:
     if not boundary.is_agent_writable(str(path)):
         raise BoundaryViolation(
@@ -33,6 +54,7 @@ def propose_patch(
     Writes a draft into .loupe/.proposed/ and returns its path. Rejects
     targets that are agent-writable (use write_agent_artifact for those).
     """
+    _validate_relative_target(target_path)
     if boundary.is_agent_writable(target_path):
         raise BoundaryViolation(
             f"Path '{target_path}' is agent-writable; "
