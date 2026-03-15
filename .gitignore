@@ -30,6 +30,9 @@ uv.lock
 .DS_Store
 site/
 
+# Local agent / IDE session state (worktrees, plans, settings). Never commit.
+.claude/
+
 # Private design artefacts kept locally only.
 # These were scrubbed from git history; do not re-commit. See docs/contributing.md.
 /docs/plans/
