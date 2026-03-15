@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 from loupe_core.enforcement.path_boundary import PathBoundary
@@ -36,8 +37,34 @@ def write_agent_artifact(boundary: PathBoundary, path: Path, content: str) -> st
             f"Path '{path}' is not in agent_writable_paths. "
             f"Use propose_patch() for human-owned files."
         )
+    # Refuse to follow any symlink — at the target itself or anywhere in its
+    # ancestry. A pre-planted symlink would otherwise redirect the write
+    # outside the Layer 1 boundary (TOCTOU breach).
+    if path.is_symlink():
+        raise BoundaryViolation(
+            f"refused to follow symlink at target {str(path)!r}"
+        )
+    for parent in path.parents:
+        if parent.is_symlink():
+            raise BoundaryViolation(
+                f"refused to follow symlinked parent {str(parent)!r} of {str(path)!r}"
+            )
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(content)
+    # O_NOFOLLOW + O_CREAT + O_TRUNC: if the target is replaced with a symlink
+    # between the check above and the open, the open fails with ELOOP rather
+    # than silently following.
+    flags = os.O_WRONLY | os.O_CREAT | os.O_TRUNC | os.O_NOFOLLOW
+    try:
+        fd = os.open(path, flags, 0o644)
+    except OSError as e:
+        # ELOOP from O_NOFOLLOW indicates a TOCTOU race with a symlink.
+        raise BoundaryViolation(
+            f"refused to follow symlink at target {str(path)!r}"
+        ) from e
+    try:
+        os.write(fd, content.encode("utf-8"))
+    finally:
+        os.close(fd)
     return str(path)
 
 
