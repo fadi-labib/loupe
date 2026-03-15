@@ -213,7 +213,7 @@ The payoff: `uv run pytest` works in zero seconds with no API keys, on every CI 
 
 The rule of three says design an abstraction when you have three instances. Designing for hypothetical needs is invariably wrong, expensive, and locked in.
 
-Loupe has one lens today (ThreatLens) and a credible expectation of more (SafetyLens, PrivacyLens, AIRiskLens). That is enough to justify a minimal plugin seam — one base class, one entry-point group, six required methods — but not enough to design the *complete* plugin contract.
+Loupe has one lens today (ThreatLens) and a credible expectation of more (SafetyLens, PrivacyLens, AIRiskLens). That is enough to justify a minimal plugin seam (one base class, one entry-point group, six required methods) but not enough to design the *complete* plugin contract.
 
 We redesign the contract when the second lens lands. That redesign is bounded (one big PR, not a rearchitecture). The same discipline applies to artefact schemas, capability protocols, and CLI flags: extend when there is a concrete second instance, not before.
 
@@ -229,4 +229,4 @@ The platform is "Loupe" (an inspection instrument), not "ComplianceMate." Lenses
 
 This is partly marketing (fake-compliance branding repels both engineers and auditors), but mostly engineering. Naming after the regulation locks the code's identity to the regulation's lifecycle. Regulations change: CRA will get amended, ISO 26262 has gone through five revisions. Activities change much more slowly.
 
-When naming a new component, ask whether the name will still make sense after the current regulatory landscape has shifted.
+When naming a new component, ask whether the name will still make sense after the current regulations have shifted.

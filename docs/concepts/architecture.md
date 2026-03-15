@@ -74,7 +74,7 @@ sequenceDiagram
 
 `is_relevant()` is pure Python and decides whether the lens runs at all. The SBOM and CVE scans run once per invocation regardless of how many lenses ask for the results. Writes to `.loupe/` go through `write_agent_artifact()`, which enforces the path allow-list from `config.yaml`. Anything outside the allow-list goes to `.loupe/.proposed/` for human review.
 
-The interactive (`loupe chat`) and MCP (`loupe mcp`) flows are designed to be the same sequence with different shells: chat inserts a `[y/N/edit/skip]` prompt before each artefact write under a TTY guard; MCP wraps the same operations as `loupe.tools.*` and `loupe.workflows.*` over JSON-RPC. Neither is implemented yet. `loupe chat` is currently a placeholder that prints a "not yet implemented" message and exits; the MCP command is not registered.
+The interactive (`loupe chat`) and MCP (`loupe mcp`) flows are the same sequence with different shells. `loupe mcp` is shipped (stdio transport, read tools plus `propose_threat` / `propose_mitigation` write tools) and exposes operations as JSON-RPC tools and workflows. `loupe chat` is still a placeholder: the TTY guard is wired but the conversational `[y/N/edit/skip]` pipeline is not.
 
 ## Keeping the diagrams honest
 

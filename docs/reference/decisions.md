@@ -10,6 +10,10 @@ A record of the major decisions made during the design of Loupe v1. Each has a p
 
 The principles that emerged from these decisions are at [`principles.md`](../principles.md).
 
+## Index
+
+[D-01](#d-01) Scope · [D-02](#d-02) CI + interactive · [D-03](#d-03) PydanticAI · [D-04](#d-04) Plugin architecture · [D-05](#d-05) Name = Loupe · [D-06](#d-06) Ten artefacts · [D-07](#d-07) Blackboard + knowledge graph · [D-08](#d-08) Four-layer write boundary · [D-09](#d-09) MCP · [D-10](#d-10) Three cost levers · [D-11](#d-11) Lens contract · [D-12](#d-12) Hash chain · [D-13](#d-13) VCR · [D-14](#d-14) Deferred signing · [D-15](#d-15) `loupe scan` · [D-16](#d-16) StrideGPT lineage · [D-17](#d-17) Apache 2.0 · [D-18](#d-18) Capability abstraction · [D-19](#d-19) Benchmark tiers · [D-20](#d-20) MkDocs Material · [Open decisions](#open-decisions)
+
 ---
 
 ## D-01: scope is diff-aware threat modelling plus CRA evidence { #d-01 }
@@ -60,13 +64,14 @@ Calling the core "ThreatLens" was wrong once the plugin architecture was central
 
 ---
 
-## D-06: nine artefacts in `.loupe/`, markdown plus YAML pattern { #d-06 }
+## D-06: ten artefacts in `.loupe/`, markdown plus YAML pattern { #d-06 }
 
-Nine files live in `.loupe/`, paired markdown (human-readable) and YAML/JSON (machine-readable) where the concept is "living":
+Ten files live in `.loupe/`, paired markdown (human-readable) and YAML/JSON (machine-readable) where the concept is "living":
 
 | File | Purpose | Writer |
 |---|---|---|
 | `context.md` | Human-authored project brief (anti-hallucination anchor) | Human (agent proposes patches) |
+| `knowledge.yaml` | Persistent cross-run knowledge graph (assets, elements, decisions, cross-refs) | Loupe-core (lens-promoted facts) |
 | `threat-model.md` | Narrative threat model for auditors | Agent (ThreatLens) |
 | `threats.yaml` | Machine-readable threat index | Agent (ThreatLens) |
 | `mitigations.yaml` | Machine-readable mitigation index | Agent (ThreatLens) |
@@ -215,7 +220,7 @@ Trade-off: no commercial support contract. Acceptable for a local-first project 
 
 The candidates were hardcoded tools (Syft directly in `loupe_core/sbom.py`, each future SBOM/CVE/secret tool similarly), per-tool pluggability (introduce `SbomBackend` but keep CVE/secrets/static-analysis hardcoded), or a generalised capability abstraction.
 
-The generalised abstraction won, and it has shipped: `loupe-core/loupe_core/capabilities/` contains the protocol definitions, the registry, the composition modes, and the bundled Syft and Grype backends. A Capability is a typed Protocol describing one functional operation (`SbomCapability`, `CveCapability`, `SecretDetectionCapability`, `StaticAnalysisCapability`). Backends register through Python entry points under a single `loupe.capabilities` group; the class's `name` attribute declares which capability it satisfies. Composition modes (`single`, `fallback`, `union`, `consensus`, `pipeline`) let the operator configure how multiple backends interact. Lenses declare `requires_capabilities`; before the lens runs, `bootstrap_capabilities()` populates typed slots (`ctx.sbom`, `ctx.cve_findings`, `ctx.secrets`, `ctx.static_findings`) that every lens reads from the shared blackboard. The wiring of `bootstrap_capabilities()` into the live `ci_cmd.py` flow remains; that lands alongside the ThreatLens agent going live. Full design in [`../concepts/capabilities.md`](../concepts/capabilities.md).
+The generalised abstraction won, and it has shipped: `loupe-core/loupe_core/capabilities/` contains the protocol definitions, the registry, the composition modes, and the bundled Syft and Grype backends. A Capability is a typed Protocol describing one functional operation (`SbomCapability`, `CveCapability`, `SecretDetectionCapability`, `StaticAnalysisCapability`). Backends register through Python entry points under a single `loupe.capabilities` group; the class's `name` attribute declares which capability it satisfies. Composition modes (`single`, `fallback`, `union`, `consensus`, `pipeline`) let the operator configure how multiple backends interact. Lenses declare `requires_capabilities`; before the lens runs, `bootstrap_capabilities()` populates typed slots (`ctx.sbom`, `ctx.cve_findings`, `ctx.secrets`, `ctx.static_findings`) that every lens reads from the shared blackboard. `bootstrap_capabilities()` is wired into `ci_cmd.py` since commit 1e8405b; the slots populate before lens dispatch on real runs. Full design in [`../concepts/capabilities.md`](../concepts/capabilities.md).
 
 Parity with the LLM-provider value matters: [principles.md §3](../principles.md#principle-3) commits us to no LLM-vendor lock-in via PydanticAI, and the original v1 spec accidentally re-introduced lock-in at the tool layer. Capabilities extend the same pattern down a layer. Cross-lens reuse matters too: ThreatLens needs SBOM, CVE matching, secret detection; SafetyLens will need static analysis and dependency-graph analysis; PrivacyLens will need PII detection. Without capabilities each lens re-implements its own tool wrappers.
 

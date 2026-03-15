@@ -14,10 +14,10 @@ Every command Loupe currently registers, with its flags, exit codes, and what it
 loupe <command> [OPTIONS]
 ```
 
-The five commands registered today: `init`, `ci`, `verify`, `chat`, `scan`.
+The six top-level commands today: `init`, `ci`, `verify`, `chat`, `scan`, `mcp`. Two command groups provide discovery: `loupe lens list` and `loupe cap list`.
 
 > [!NOTE]
-> Two more commands are designed but not yet registered: `mcp` (Model Context Protocol server) and discovery subcommands (`lens list`, `cap list`). See [Commands not yet registered](#commands-not-yet-registered) at the bottom.
+> A handful of flags remain designed but not yet implemented (`loupe ci --verbose`, `loupe verify --strict`, `loupe scan --budget-usd <N>`). See [Flags not yet wired](#flags-not-yet-wired) at the bottom.
 
 ## `loupe init`
 
@@ -85,16 +85,16 @@ loupe verify
 
 No flags today.
 
-Today it checks one thing: hash-chain integrity across `.loupe/runs/*.json`. Each record's `self_hash` must match the SHA-256 of its content (excluding the `self_hash` field), and `prev_run_hash` must match the previous record's `self_hash`.
+Today's checks (all wired in `loupe_core/enforcement/verify.py`):
 
-Exit codes: `0` if the chain validates; non-zero on the first tamper signal.
+1. **Hash-chain integrity** across `.loupe/runs/*.json`. Each record's `self_hash` must match the SHA-256 of its content (excluding the `self_hash` field), and `prev_run_hash` must match the previous record's `self_hash`.
+2. **Artefact schema consistency**: every `threats.yaml` / `mitigations.yaml` parses with its Pydantic model.
+3. **Threats-to-mitigations cross-references**: every `mitigation_ids` entry on a threat resolves to a real mitigation, and every `threats_addressed` on a mitigation resolves to a real threat.
+4. **Protected-path authorship** (strict mode): `context.md`, `decisions/*.md`, `config.yaml` must not have been last touched by an agent-identity author.
 
-Future checks (documented in `verify_cmd.py` as planned, not yet implemented):
+Exit codes: `0` if all checks pass; non-zero on the first failure.
 
-- Authorship of protected paths (`context.md`, `decisions/`, `config.yaml` must not be touched by an agent identity).
-- Schema consistency: every artefact parses with its Pydantic model.
-- Threats-to-mitigations cross-reference integrity.
-- A `--strict` flag that runs additional checks beyond the default set.
+A `--strict` flag that runs the authorship check (and any future additional checks) is designed but not yet wired as a flag — today the strict logic is reachable via the library API.
 
 ## `loupe chat`
 
@@ -136,27 +136,37 @@ Behaviour:
 
 Exit codes: same scheme as `loupe ci`.
 
-## Commands not yet registered
+## Flags not yet wired
 
-The following are part of the CLI design but not in `__main__.py`:
+A small set of flags are part of the design but not yet implemented:
 
-| Command | Status | Source of truth in the meantime |
+| Flag | Status | Source of truth in the meantime |
 |---|---|---|
-| `loupe mcp` | MCP server, designed | Concept page; no implementation |
-| `loupe lens list` | Discovery, designed | `python -c 'from importlib.metadata import entry_points; print(list(entry_points(group="loupe.lenses")))'` |
-| `loupe cap list` | Discovery, designed | Same incantation with `loupe.capabilities` |
 | `loupe ci --verbose` | Plan tracing, designed | None |
-| `loupe verify --strict` | Wider verification set, designed | None |
+| `loupe verify --strict` | Surfaces the authorship-check failures as exit-code failures rather than library-API return values | Library API: `loupe_core.enforcement.verify.verify_repo(repo, strict=True)` |
 | `loupe scan --budget-usd <N>` | Cost cap for full-repo runs, designed in D-15 | None |
 
 ## Environment variables
+
+### CLI env vars
 
 | Variable | Used by | Purpose |
 |---|---|---|
 | `THREATLENS_MODEL` | `loupe-threatlens` | LLM provider+model identifier (see provider-specific examples below) |
 | `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `GOOGLE_API_KEY` | The configured LLM provider | Auth for the LLM call. Never read by Loupe itself; only by PydanticAI's transport |
 | `AI_GATEWAY_API_KEY` | The Vercel AI Gateway provider option | Optional |
-| `INPUT_PR`, `INPUT_CONFIG`, `INPUT_COMMENT_MODE`, `GITHUB_TOKEN`, `GITHUB_REPOSITORY`, `GITHUB_WORKSPACE`, `GITHUB_OUTPUT`, `GITHUB_API_URL` | `loupe-action` entrypoint | See [`data-handling.md`](data-handling.md) and `action.yml` |
+
+### Action env vars
+
+Set automatically by `action.yml` when invoked through the GitHub Action; you do not set these by hand.
+
+| Variable | Purpose |
+|---|---|
+| `INPUT_PR`, `INPUT_CONFIG`, `INPUT_COMMENT_MODE` | Action inputs passed via `with:` in the workflow |
+| `GITHUB_TOKEN` | API auth for PR fetch + sticky comment |
+| `GITHUB_REPOSITORY`, `GITHUB_WORKSPACE`, `GITHUB_OUTPUT`, `GITHUB_API_URL` | Standard GitHub-Actions runner env vars |
+
+See [`data-handling.md`](data-handling.md) for what is actually transmitted.
 
 ### Switching LLM providers
 

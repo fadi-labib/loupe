@@ -14,7 +14,7 @@ The platform, capability registry, CLI, GitHub Action, and ThreatLens scaffoldin
 
 ## Next: agent wiring <span class="section-label">In progress</span>
 
-ThreatLens against a live LLM, with VCR cassettes for CI. Once this lands, run records populate the `models_used` / `total_tokens_in` / `cost_usd_estimate` / `cache_hit_rate` / `artifacts_changed` fields with real values, and the threat list is no longer stubbed.
+ThreatLens against a live LLM, with VCR cassettes for CI. The infrastructure to receive that wiring has landed (MCP server, RunRecord cost fields populated from real agent runs, cost-regression test fixture); what remains is the agent's prompt + tool wiring against the live model and the first end-to-end VCR cassette. Once the agent itself goes live, the threat list is no longer stubbed.
 
 ## Capability layer phased plan
 
@@ -29,13 +29,13 @@ Tracked under [D-18](reference/decisions.md#d-18). Each phase produces working, 
 | v1.x-E | Static-analysis capability + Semgrep backend | ~3 days |
 | v1.x-F | Composition modes `union` / `consensus` / `pipeline` (the `single` and `fallback` modes ship in v1.x-A; richer modes come once there are ≥2 backends per capability to compose) | ~1 week |
 
-Total estimated v1.x effort: roughly four to five weeks distributed across releases.
+Total estimated v1.x effort: roughly four to five weeks spread across releases.
 
-## Frontends not yet shipped <span class="section-label">Designed</span>
+## Frontends still in flight
 
-- `loupe chat` — interactive REPL with `[y/N/edit/skip]` confirmation prompts on protected paths. The TTY guard is in place; the conversational pipeline is not.
-- `loupe mcp` — Model Context Protocol server exposing `loupe.tools.*` and `loupe.workflows.*`. Designed in [D-09](reference/decisions.md#d-09); not yet registered as a command.
-- GitLab / Gitea / Bitbucket adapters — the GitHub Action exists; other VCS hosts are scoped for follow-ups.
+- `loupe chat` (Designed) — interactive REPL with `[y/N/edit/skip]` confirmation prompts on protected paths. The TTY guard is in place; the conversational pipeline is not.
+- `loupe mcp` (Shipped) — Model Context Protocol server. Listed here as a reminder that the HTTP+SSE remote transport is still designed-not-wired; stdio works today. See [D-09](reference/decisions.md#d-09) and [D-21](reference/decisions.md#d-21).
+- GitLab / Gitea / Bitbucket adapters (Designed) — the GitHub Action exists; other VCS hosts are scoped for follow-ups.
 
 ## Lenses beyond ThreatLens <span class="section-label">Anticipated</span>
 

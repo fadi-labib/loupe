@@ -4,9 +4,13 @@ Loupe is a workspace of four packages plus a set of independently-versioned sche
 
 The release-process steps (tag, build, publish, doc-site versioning via `mike`) live in [`CHANGELOG.md`](../changelog.md#release-process). This page is the *policy* document.
 
-## SemVer applies once v0.1 ships
+## SemVer tiers
 
-Before v0.1: anything can change. After v0.1: each surface follows [SemVer 2.0](https://semver.org/) with the contract spelled out below. Pre-1.0 still follows SemVer; we just acknowledge that the public surface is not yet stable enough to guarantee no breaking changes between minors.
+Three tiers:
+
+- **Pre-0.1 (today):** anything can change without warning. No SemVer guarantee.
+- **0.1 through 0.x:** [SemVer 2.0](https://semver.org/) applies, with the pre-1.0 caveat that breaking changes may land in a minor release. Any such break is flagged `### Breaking` in CHANGELOG with a migration path.
+- **1.0 onwards:** strict SemVer. Breaking changes only at major bumps.
 
 ## The six versioned surfaces
 
@@ -85,7 +89,13 @@ uv run mike deploy dev latest      # writes to local gh-pages branch
 uv run mike serve                  # serves http://localhost:8000/
 ```
 
-**During `mkdocs serve`**, the Material theme tries to fetch `versions.json` to populate the picker. Before mike has ever deployed there is no such file, which would show as repeated 404 warnings in the dev-server log. To suppress them, an empty `docs/versions.json` (`[]`) ships in-repo: the theme finds it, sees zero versions, and hides the picker. Once mike actually deploys (CI on push to `main`, or `mike deploy` locally), mike's real `versions.json` is written to the `gh-pages` branch root and the picker renders with real entries. The in-repo stub never reaches the gh-pages root — it only sits inside each per-version directory, where the theme doesn't look.
+> [!NOTE]
+> **About the in-repo `versions.json` stub:**
+>
+> - The Material theme fetches `versions.json` to populate the version picker.
+> - Before `mike` has ever deployed, no such file exists; the dev server would log repeated 404 warnings.
+> - To silence them, an empty `docs/versions.json` (`[]`) ships in-repo. The picker sees zero versions and hides itself.
+> - Once `mike` deploys (CI on push to `main`, or `mike deploy` locally), the real `versions.json` lives at the `gh-pages` branch root and the picker renders real entries. The in-repo stub only sits inside each per-version directory, where the theme doesn't look.
 
 **Deleting a version** (e.g., a botched deploy):
 

@@ -47,7 +47,7 @@ These are the tools that share Loupe's basic premise: use LLMs to do threat mode
 
 **What it is:** Open-source LLM-based threat-modelling tool by Matthew Adams (mrwadams/stride-gpt). Streamlit web UI. User pastes an application description; LLM generates STRIDE threats and attack trees.
 
-**LLM support:** OpenAI, Anthropic, Google AI, Mistral, Groq, plus local hosting via Ollama and LM Studio Server[^stridegpt]. (Note: my first draft incorrectly said "single-LLM (OpenAI)" StrideGPT is in fact multi-LLM and has been for some time.)
+**LLM support:** OpenAI, Anthropic, Google AI, Mistral, Groq, plus local hosting via Ollama and LM Studio Server[^stridegpt]. (Note: my first draft incorrectly said "single-LLM (OpenAI)", but StrideGPT is in fact multi-LLM and has been for some time.)
 
 **Where it overlaps with ThreatLens:** Same core method (STRIDE), same LLM-driven approach.
 
@@ -95,7 +95,7 @@ These are the tools that share Loupe's basic premise: use LLMs to do threat mode
 **Where they differ:**
 - Both are diagram-first; ThreatLens is code-first.
 - Both produce reports; ThreatLens produces structured artefacts.
-- I don't have detail on their deployment model, in-repo behaviour, or enforcement story these may be research-style demos rather than productised platforms.
+- I don't have detail on their deployment model, in-repo behaviour, or enforcement story; these may be research-style demos rather than productised platforms.
 
 **Honest read:** Diagram-first is a legitimately different UX. If your team prefers visual threat modelling and you can describe your architecture as a diagram, these are worth investigating.
 
@@ -118,7 +118,7 @@ These are the tools that share Loupe's basic premise: use LLMs to do threat mode
 **This is the most directly comparable tool on the CRA-evidence side.** Concordance focuses on the *evidence-from-toolchain* angle that Loupe's `runs/*.json` + artefact set is heading toward.
 
 **Where they differ:**
-- Concordance is multi-protocol it ingests data from many engineering tools and maps them to CRA requirements. Loupe is single-domain it produces threat-modelling evidence specifically.
+- Concordance is multi-protocol: it ingests data from many engineering tools and maps them to CRA requirements. Loupe is single-domain: it produces threat-modelling evidence specifically.
 - Concordance is SaaS; Loupe is local-first.
 - Concordance covers all 21 Annex I requirements; Loupe primarily addresses risk-assessment (§1), secure-by-design (§§1b/1c), SBOM (§2), and vulnerability handling. Other Annex I requirements (technical documentation completeness, user information, declaration of conformity) are out of Loupe's scope.
 
@@ -306,7 +306,7 @@ To save you and us time:
 - **You're shipping consumer software with no regulatory exposure.** The artefact set is overkill. Use a simpler threat-modelling tool, or skip formal threat modelling.
 - **Your team explicitly forbids AI involvement in security decisions.** Loupe's default workflow assumes AI-drafted, human-approved. If that's not OK, use Threat Dragon or similar.
 - **You want a turnkey SaaS with role-based access, SSO, and a polished UI.** Loupe is local-first and pre-alpha. Use IriusRisk.
-- **You only need vulnerability scanning.** Use Snyk / Trivy / GHAS they're better at that specific job.
+- **You only need vulnerability scanning.** Use Snyk / Trivy / GHAS; they're better at that specific job.
 - **You're looking for a generic AI assistant.** Use Claude Code, Cursor, or Aider.
 
 ## When Loupe is the right choice

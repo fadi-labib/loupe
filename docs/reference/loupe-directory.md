@@ -38,7 +38,7 @@ The agent cannot edit `context.md` directly. It can only `propose_patch` into `.
 
 The cross-run knowledge graph. Scaffolded as empty (`schema_version: 1`, empty lists) on `loupe init`. Lens runs that produce high-confidence Facts (corroborated by a human decision or two independent runs) promote them into this file's `assets`, `elements`, `decisions`, and `cross_references` sections. Safe to delete to reset; the next run starts from an empty graph.
 
-Schema: `KnowledgeGraph` in `packages/loupe-core/loupe_core/artifacts/knowledge.py`. Asset IDs match `A-NNN`, element IDs `E-NNN`, decision IDs `D-YYYY-MM-DD-<slug>`, fact IDs `F-NNN`.
+Schema: [KnowledgeGraph](schemas/knowledge.md). Asset IDs match `A-NNN`, element IDs `E-NNN`, decision IDs `D-YYYY-MM-DD-<slug>`, fact IDs `F-NNN`.
 
 ### `threat-model.md` — narrative for auditors
 
@@ -62,7 +62,7 @@ Per-CVE impact statements in OpenVEX 0.2 format. ThreatLens generates statements
 
 ### `decisions/D-YYYY-MM-DD-<slug>.md` — human-authored risk acceptances
 
-ADR-style records for risks the team has explicitly chosen to accept, defer, or accept-with-mitigation. ID format `D-YYYY-MM-DD-<short-slug>`. Authored by humans and signed by a human identity; the agent can only *draft* into `.proposed/decisions/` for review. Cross-referenced by `Decision` entries in `knowledge.yaml`.
+ADR-style records for risks the team has explicitly chosen to accept, defer, or accept-with-mitigation. ID format `D-YYYY-MM-DD-<slug>` (matching the filename pattern in the tree above). Authored by humans and signed by a human identity; the agent can only *draft* into `.proposed/decisions/` for review. Cross-referenced by `Decision` entries in `knowledge.yaml`.
 
 ### `runs/<timestamp>-<id>.json` — hash-chained audit trail
 

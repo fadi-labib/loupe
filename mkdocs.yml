@@ -114,6 +114,7 @@ nav:
           - Mitigation: reference/schemas/mitigation.md
           - RunRecord: reference/schemas/run-record.md
           - ProjectContext: reference/schemas/project-context.md
+          - KnowledgeGraph: reference/schemas/knowledge.md
           - Capability results: reference/schemas/capabilities.md
   - Roadmap: roadmap.md
   - About: about.md

@@ -25,7 +25,6 @@ from loupe_core.enforcement.verify import (
     verify_repo,
 )
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -120,27 +119,31 @@ def test_xref_check_skips_if_files_absent(tmp_path):
 
 
 def test_xref_check_catches_dangling_mitigation_id_on_threat(tmp_path):
+    # The dangling ID must be valid `M-NNN` format (enforced at parse time);
+    # the Layer 3 check separately confirms the referenced mitigation exists.
     loupe = _make_loupe_dir(tmp_path)
-    ThreatsFile(threats=[_threat(mitigation_ids=["M-DOES-NOT-EXIST"])]).save(
+    ThreatsFile(threats=[_threat(mitigation_ids=["M-999"])]).save(
         loupe / "threats.yaml"
     )
     MitigationsFile(mitigations=[_mitigation()]).save(loupe / "mitigations.yaml")
     failures = check_threats_mitigations_cross_refs(loupe)
     assert len(failures) == 1
     assert failures[0].kind == "dangling_mitigation_ref"
-    assert "M-DOES-NOT-EXIST" in failures[0].detail
+    assert "M-999" in failures[0].detail
 
 
 def test_xref_check_catches_dangling_threat_id_on_mitigation(tmp_path):
+    # The dangling ID must be valid `T-NNN` format (enforced at parse time);
+    # the Layer 3 check separately confirms the referenced threat exists.
     loupe = _make_loupe_dir(tmp_path)
     ThreatsFile(threats=[_threat()]).save(loupe / "threats.yaml")
     MitigationsFile(
-        mitigations=[_mitigation(threats_addressed=["T-GHOST"])]
+        mitigations=[_mitigation(threats_addressed=["T-999"])]
     ).save(loupe / "mitigations.yaml")
     failures = check_threats_mitigations_cross_refs(loupe)
     assert len(failures) == 1
     assert failures[0].kind == "dangling_threat_ref"
-    assert "T-GHOST" in failures[0].detail
+    assert "T-999" in failures[0].detail
 
 
 # ---------------------------------------------------------------------------

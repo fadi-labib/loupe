@@ -2,14 +2,12 @@ from __future__ import annotations
 
 from datetime import date
 from pathlib import Path
-from typing import Annotated, Literal
+from typing import Literal
 
-from pydantic import BaseModel, Field, StringConstraints
+from pydantic import BaseModel, Field
 from ruamel.yaml import YAML
 
-from loupe_core.artifacts.types import MitigationStatus
-
-MitigationId = Annotated[str, StringConstraints(pattern=r"^M-\d{3,}$")]
+from loupe_core.artifacts.types import MitigationId, MitigationStatus, ThreatId
 
 _yaml = YAML()
 _yaml.default_flow_style = False
@@ -37,8 +35,8 @@ class Mitigation(BaseModel):
     id: MitigationId = Field(description="Stable ID, format `M-NNN`.")
     title: str = Field(min_length=1, max_length=200, description="Short label.")
     description: str = Field(min_length=1, description="What this mitigation does.")
-    threats_addressed: list[str] = Field(
-        default_factory=list, description="Threat IDs this addresses."
+    threats_addressed: list[ThreatId] = Field(
+        default_factory=list, description="Threat IDs this addresses (validated as `T-NNN`)."
     )
     status: MitigationStatus = Field(description="Lifecycle state.")
     evidence: list[Evidence] = Field(

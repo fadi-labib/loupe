@@ -11,7 +11,7 @@ hide:
 
 </div>
 
-A guided tour of how Loupe is organised for someone who has heard "AI agent for security" before and wants the actual mental model. If you'd rather jump in, the four cards below are the most common entry points.
+Loupe organised for someone who already knows what an "AI agent for security" is and wants the mental model. If you'd rather jump in, the four cards below are the most common entry points.
 
 <div class="grid cards" markdown>
 
@@ -94,89 +94,7 @@ flowchart TB
 
 Each layer is replaceable without disturbing the others. Swap `syft` for `trivy` and lenses do not notice. Add `AutoCyberLens` for TARA and the platform does not change. Change the GitHub Action wrapper for a GitLab one and the core stays the same.
 
-## Loupe, the clinic
-
-The platform receives the patient, builds the chart, pages the specialists, orders the shared tests, enforces the write boundary, and files the audit record. It is domain-agnostic: nothing in `loupe-core` knows about STRIDE, ISO 26262, GDPR, or NIST AI RMF.
-
-What it actually does:
-
-| Job | Where it lives |
-|---|---|
-| Parse the diff | `loupe_core/diff.py` |
-| Build the chart (`RunContext`) | `loupe_core/run_context.py` |
-| Discover lenses | `loupe_core/lens_registry.py` (Python entry points) |
-| Triage (call `is_relevant()` on each lens) | `loupe_core/coordinator.py` |
-| Run shared tests once | `loupe_core/capabilities/bootstrap.py` |
-| Enforce write boundaries | `loupe_core/enforcement/path_boundary.py` |
-| Cache-friendly prompt assembly | `loupe_core/prompt_builder.py` |
-| Hash-chained run records | `loupe_core/artifacts/run_record.py` |
-
-Lenses, capabilities, and backends do not import each other. The clinic threads them together.
-
-## Lenses, the specialists
-
-A lens is a Python package that registers via the `loupe.lenses` entry-point group. It contributes:
-
-- A PydanticAI agent specialised for one domain
-- Pydantic-typed artefacts the lens owns (paths declared in `artifact_paths`)
-- MCP tools and workflows other agents can call
-- A pure-Python `is_relevant(ctx) -> RelevanceScore` heuristic for cheap triage
-- A list of capabilities it needs (`requires_capabilities=["sbom", "cve"]`)
-
-That is the entire contract. v1 ships ThreatLens. SafetyLens, PrivacyLens, and AIRiskLens are anticipated; each lands as its own pip package without forking the platform.
-
-A specialist doctor does not see every patient. The coordinator asks each enabled lens `is_relevant(ctx)` (cheap, no LLM call) and skips lenses below threshold. A docs-only PR runs zero LLM calls. A single-dependency change runs one lens.
-
-## Capabilities, the diagnostic tests
-
-A specialist does not operate the MRI machine. They order an MRI. The lab runs it. Any specialist who needs the result reads the same scan.
-
-In Loupe, capabilities are tool categories (the verb). Backends are the brands. A lens declares "I need an SBOM"; the capability registry resolves to the backend the operator configured.
-
-```yaml
-# .loupe/config.yaml
-capabilities:
-  sbom:
-    mode: single
-    backends: [syft]
-  cve:
-    mode: fallback
-    backends: [grype, osv-scanner]
-  secret_detect:
-    mode: union
-    backends: [trufflehog, gitleaks]
-  static_analysis:
-    mode: consensus
-    consensus_threshold: 2
-    backends: [semgrep, codeql, bandit]
-```
-
-An auditor reads this and knows the team's posture: single SBOM, CVE fallback for resilience, belt-and-braces secret detection, consensus-based SAST for false-positive control. The configuration is the evidence.
-
-When a lens declares `requires_capabilities=["sbom"]`, the platform runs `syft` once and stores the typed `SbomResult` on `ctx.sbom`. Every lens that asks for SBOM reads the same cached value. No re-cost regardless of how many lenses share an input.
-
-The five composition modes:
-
-| Mode | What it does | When to use |
-|---|---|---|
-| `single` | First backend wins | One tool is enough |
-| `fallback` | Try in order until one succeeds | Resilience against the first tool failing |
-| `union` | Run all, merge findings | Belt and braces (different tools catch different things) |
-| `consensus` | Keep findings ≥N backends agree on | False-positive control |
-| `pipeline` | Output of N feeds N+1 | SBOM → CVE is the canonical case |
-
-## Backends, the machines
-
-A backend is the actual subprocess call. Anchore's Syft. Anchore's Grype. TruffleHog. Semgrep. Each backend implements a typed Protocol (`SbomCapability`, `CveCapability`, etc.) and registers via the `loupe.capabilities` entry-point group. Bundled defaults ship inside `loupe-core`; third-party backends arrive as their own pip packages.
-
-```toml
-# packages/loupe-core/pyproject.toml
-[project.entry-points."loupe.capabilities"]
-syft  = "loupe_core.capabilities.backends.syft_sbom:SyftSbomBackend"
-grype = "loupe_core.capabilities.backends.grype_cve:GrypeCveBackend"
-```
-
-`loupe-core` never imports a backend by name. The registry holds the (capability, backend) index and the operator's `config.yaml` decides what runs.
+For the depth tour of each layer, jump to [Architecture](concepts/architecture.md) (what the core does, how the diagrams stay honest) and [Capabilities](concepts/capabilities.md) (tool-agnostic operations, composition modes, backend registration).
 
 ## A walked-through example
 
@@ -196,7 +114,7 @@ If you later install SafetyLens, step 4 does not change. Syft already ran. Safet
 
 The agent has two write tools: `write_agent_artifact` (path must be in the allow-list) and `propose_patch` (writes to `.loupe/.proposed/` for human review). There is no general "write any file" tool. There is no Bash tool. Protected files (`context.md`, `decisions/*.md`, `config.yaml`) are not in the allow-list; the agent can propose patches but cannot commit them.
 
-The platform is designed so that `loupe chat`, once implemented, prompts `[y/N/edit/skip]` with default-N before each protected-path proposal. There is no `--auto-confirm` flag, no environment variable that lowers the bar, and no way to scriptwrap the prompt away. Today the chat command is a placeholder; the same principle holds for the CI flow, which restricts the agent to its allow-list paths.
+In the CI flow today, the agent is restricted to its allow-list paths. When `loupe chat` lands it will prompt `[y/N/edit/skip]` with default-N before each protected-path proposal: no `--auto-confirm` flag, no environment variable that lowers the bar, no way to script-wrap the prompt away.
 
 ## Where to go next
 

@@ -2,15 +2,18 @@ from __future__ import annotations
 
 from datetime import date
 from pathlib import Path
-from typing import Annotated
 
-from pydantic import BaseModel, Field, StringConstraints
+from pydantic import BaseModel, Field
 from ruamel.yaml import YAML
 
-from loupe_core.artifacts.types import Severity, StrideCategory, ThreatStatus
-
-ThreatId = Annotated[str, StringConstraints(pattern=r"^T-\d{3,}$")]
-ElementId = Annotated[str, StringConstraints(pattern=r"^E-\d{3,}$")]
+from loupe_core.artifacts.types import (
+    ElementId,
+    MitigationId,
+    Severity,
+    StrideCategory,
+    ThreatId,
+    ThreatStatus,
+)
 
 _yaml = YAML()
 _yaml.default_flow_style = False
@@ -32,8 +35,9 @@ class Threat(BaseModel):
     description: str = Field(min_length=1, description="Full prose description.")
     severity: Severity = Field(description="Severity rating; feeds CI gating.")
     status: ThreatStatus = Field(description="Lifecycle state; humans transition past `proposed`.")
-    mitigation_ids: list[str] = Field(
-        default_factory=list, description="Mitigation IDs that address this threat."
+    mitigation_ids: list[MitigationId] = Field(
+        default_factory=list,
+        description="Mitigation IDs that address this threat (validated as `M-NNN`).",
     )
     cwe_refs: list[str] = Field(
         default_factory=list, description="CWE identifiers, e.g., `CWE-79`."

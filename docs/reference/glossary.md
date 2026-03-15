@@ -5,7 +5,7 @@ Terms you'll encounter across the codebase and docs. Alphabetical. Each entry ca
 ---
 
 **Artifact**{: #term-artifact }
-: A structured file Loupe maintains in `.loupe/`. Each artifact has a Pydantic schema and (where it's machine-readable) a YAML/JSON round-trip. The nine artifacts are: `context.md`, `threat-model.md`, `threats.yaml`, `mitigations.yaml`, `sbom.cdx.json`, `vex.json`, `decisions/*.md`, `runs/*.json`, `config.yaml`. See [`decisions.md` D-06](decisions.md#d-06).
+: A structured file Loupe maintains in `.loupe/`. Each artifact has a Pydantic schema and (where it's machine-readable) a YAML/JSON round-trip. The ten artifacts are: `context.md`, `knowledge.yaml`, `threat-model.md`, `threats.yaml`, `mitigations.yaml`, `sbom.cdx.json`, `vex.json`, `decisions/*.md`, `runs/*.json`, `config.yaml`. See [`decisions.md` D-06](decisions.md#d-06).
 
 **Audit trail**{: #term-audit-trail }
 : The chronological record of every Loupe run. Implemented as `runs/*.json` files with a SHA-256 hash chain (each record references the previous one's `self_hash`). Tampering with history breaks the chain and is detected by `loupe verify`.
@@ -29,7 +29,15 @@ Terms you'll encounter across the codebase and docs. Alphabetical. Each entry ca
 : The runtime facade in `loupe_core/capabilities/registry.py` that discovers backends at startup and resolves `(capability_name, backend_name)` pairs to concrete instances. `bootstrap_capabilities()` invokes them and populates the typed `RunContext` slots (`ctx.sbom`, `ctx.cve_findings`, `ctx.secrets`, `ctx.static_findings`).
 
 **Composition mode**{: #term-composition-mode }
-: How the registry combines multiple backends for the same capability: `single` (use the first available), `fallback` (try in order on failure), `union` (run all and merge findings), `consensus` (only emit findings agreed by ≥N backends), `pipeline` (chain output of one into the next). Configured per-capability in `config.yaml`. The composition mode is part of the project's audit posture; a regulator can read it.
+: How the registry combines multiple backends for the same capability. Configured per-capability in `config.yaml`. Five modes:
+
+    - `single`: use the first available backend.
+    - `fallback`: try in order, failover to the next on failure.
+    - `union`: run all and merge findings.
+    - `consensus`: only emit findings ≥N backends agree on.
+    - `pipeline`: chain output of one into the next.
+
+    The composition mode is part of the project's audit posture; a regulator can read it.
 
 **CodeDiff**{: #term-code-diff }
 : The parsed representation of a unified diff: base SHA, head SHA, changed paths, added/removed line counts, and the raw unified-diff text. Produced by `parse_unified_diff()` once per `RunContext.bootstrap()`.
@@ -55,6 +63,9 @@ Terms you'll encounter across the codebase and docs. Alphabetical. Each entry ca
 **Dispatcher**{: #term-dispatcher }
 : The runtime in `loupe_core/dispatcher.py` that executes a `LensRunPlan`. Calls each lens's `run()` method in order, sharing the same `RunContext` across all calls.
 
+**Element**{: #term-element }
+: A discrete system component referenced in threat modelling, with a stable `E-NNN` ID. The Loupe-self threat model uses `E-LOUPE-001` through `E-LOUPE-007` for things like "the Loupe CLI process" or "the LLM provider HTTPS API". Threats and mitigations cross-reference elements by ID. Elements live in `knowledge.yaml` once promoted from a `Fact`.
+
 **Evidence-grade**{: #term-evidence-grade }
 : Loupe's quality bar. Artefacts that an external auditor could verify with their own tooling, without trusting Loupe. Standard formats (CycloneDX, OpenVEX), stable IDs, hash chains, Git as the audit substrate. See [`principles.md` §1](../principles.md#principle-1).
 
@@ -73,9 +84,6 @@ Terms you'll encounter across the codebase and docs. Alphabetical. Each entry ca
 **Hash chain**{: #term-hash-chain }
 : The cryptographic linking of run records, each storing a SHA-256 hash of the previous one. Tamper-evident audit trail. Implemented in `loupe_core/artifacts/run_record.py`.
 
-**Hook**{: #term-hook }
-: (Claude Agent SDK concept; not used in Loupe.) We considered the Claude Agent SDK's `PreToolUse` hooks for enforcement but went with PydanticAI instead; our Layer 1 enforcement lives in tool function bodies, not hooks.
-
 **Intent keyword**{: #term-intent-keyword }
 : A string in a lens's `capabilities.handles_intent_keywords` list, used by the coordinator to route natural-language user requests to the right lens in interactive mode.
 
@@ -92,7 +100,7 @@ Terms you'll encounter across the codebase and docs. Alphabetical. Each entry ca
 : (Designed, not yet enforced at runtime.) Branch-namespace enforcement at the CI runner. The commitment is that a fine-grained GitHub App token only allows pushes to `loupe/proposal-*` branches and that CODEOWNERS gates `.loupe/context.md`, `.loupe/decisions/**`, and `.loupe/config.yaml`. Today the Action uses the standard `GITHUB_TOKEN` and the branch restriction is a commitment rather than a runtime constraint.
 
 **Layer 3**{: #term-layer-3 }
-: (Partial.) `loupe verify`. Designed to ship as a pre-commit hook + required CI check. Today checks one thing: run-record hash-chain integrity. Authorship of protected paths, artefact schema consistency, and threats-to-mitigations cross-references are documented in `verify_cmd.py` as planned checks that have not yet landed.
+: (Shipped.) `loupe verify`. Runs four checks: hash-chain integrity, artefact schema consistency, threats-to-mitigations cross-references, and protected-path authorship (in strict mode). Reachable as a pre-commit hook and as a required CI check. The `--strict` CLI flag for the authorship check is the remaining wiring; the logic itself ships via `verify_repo(..., strict=True)` in the library.
 
 **Layer 4**{: #term-layer-4 }
 : (Designed.) Interactive UX gate. Once `loupe chat` is implemented, every protected-path proposal will render as a unified diff with a `[y/N/edit/skip]` prompt, default-N, with no `--auto-confirm` flag. The chat command is currently a placeholder.
@@ -148,6 +156,9 @@ Terms you'll encounter across the codebase and docs. Alphabetical. Each entry ca
 **Scope**{: #term-scope }
 : `RunContext.scope: Literal["diff", "full", "scoped"]`. Set during bootstrap based on which CLI command invoked Loupe. Controls whether the coordinator filters lenses by relevance or runs all of them.
 
+**Schema version**{: #term-schema-version }
+: An integer field on every machine-readable artefact (`schema_version: 1` on `threats.yaml`, `runs/*.json`, `knowledge.yaml`, etc.). Bumped independently from the host package version: a `loupe-core` v0.4 release may read both schema v1 and v2 files transparently. Migration rules live in [`versioning.md`](versioning.md#why-artefact-schemas-version-independently).
+
 **Stable prefix**{: #term-stable-prefix }
 : The portion of an LLM prompt that's identical across all lens calls in one run. Cache-pinned via Anthropic's `cache_control: {type: "ephemeral"}` marker. The first cost lever of three.
 
@@ -162,6 +173,9 @@ Terms you'll encounter across the codebase and docs. Alphabetical. Each entry ca
 
 **ThreatLens**{: #term-threatlens }
 : Loupe's v1 lens. STRIDE-based threat modelling. Maintains `threats.yaml`, `mitigations.yaml`, `threat-model.md`, drafts `vex.json` entries, references `sbom.cdx.json`.
+
+**Trust boundary**{: #term-trust-boundary }
+: The line in a system diagram across which trust assumptions change. Data crossing a trust boundary must be validated. Threat modelling identifies threats *at* trust boundaries (e.g., diff input from a malicious PR contributor crosses into Loupe's prompt-builder; the boundary is where prompt-injection mitigations apply). Used throughout the [Loupe threat model](loupe-threat-model.md).
 
 **VCR**{: #term-vcr }
 : `pytest-vcr`. Records HTTP fixtures once (with an API key) and replays forever (without one). Loupe tests use VCR for any LLM-involving integration test. Cassettes are committed to the repo.

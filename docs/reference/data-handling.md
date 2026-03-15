@@ -19,7 +19,7 @@ Run records under `.loupe/runs/` store hashes of inputs, not verbatim prompts. T
 
 | Endpoint | When | What's sent | Code |
 |---|---|---|---|
-| LLM provider HTTPS API | Each LLM call during a lens run | The assembled prompt (system + user); tool schemas; per-call context | `packages/loupe-threatlens/loupe_threatlens/agent.py` (PydanticAI Agent) |
+| LLM provider HTTPS API | Each LLM call during a lens run | The assembled prompt: system + user (the user portion includes the diff body, SBOM-delta summary, and knowledge-graph slice; see § [What goes into an LLM prompt](#what-goes-into-an-llm-prompt)); tool schemas | `packages/loupe-threatlens/loupe_threatlens/agent.py` (PydanticAI Agent) |
 | `api.github.com/repos/.../pulls/<n>` | Once per Action invocation | Auth header; nothing in the request body | `packages/loupe-action/loupe_action/pr_fetcher.py` |
 | `api.github.com/repos/.../pulls/<n>` (Accept: diff) | Once per Action invocation | Auth header | same |
 | `api.github.com/repos/.../issues/<n>/comments` | List, then POST or PATCH | The sticky-comment Markdown body | `packages/loupe-action/loupe_action/comment_poster.py` |
@@ -109,7 +109,7 @@ What is deliberately not stored:
 ```
 Your repo (local working tree)
         │
-        │  loupe ci / loupe scan (loupe chat and loupe mcp not yet shipped)
+        │  loupe ci / loupe scan / loupe mcp  (loupe chat still a placeholder)
         │
         ▼
 .loupe/  (in-repo, version-controlled)
@@ -142,15 +142,13 @@ The GitHub Action runs the same `loupe ci` pipeline inside an ephemeral runner. 
 
 There is no Loupe-managed CI state. Everything Loupe needs between runs lives in your repo's `.loupe/`.
 
-## MCP server data flow (designed, not implemented)
+## MCP server data flow
 
-When `loupe mcp` is implemented, the design is:
+`loupe mcp` is implemented in `packages/loupe-core/loupe_core/mcp_server.py` (see [D-21](decisions.md#d-21) for the framework choice). Behaviour:
 
 - Listens on stdio by default (local clients like Claude Code attach via subprocess). No network port opened.
-- Optionally listens on HTTP+SSE for remote clients, requiring authentication; refuses anonymous access.
-- Exposes the same tools as the CLI. Every read goes through the path boundary; every write goes through `write_agent_artifact` or `propose_patch`. Layer 1 enforcement applies identically.
-
-The MCP command is not yet registered; this section is a forward-looking commitment, not a current capability.
+- HTTP+SSE for remote clients is designed but not yet wired; remote transport would require authentication and refuse anonymous access.
+- Exposes read tools (list threats, query by STRIDE, threat-model summary) and a small write surface (`propose_threat`, `propose_mitigation`) gated by the same Layer 1 path boundary. Every read goes through the boundary; every write goes through `write_agent_artifact` or `propose_patch`.
 
 ## VCR-cassette hygiene
 

@@ -1,8 +1,15 @@
-"""Common enum types used across Loupe artifacts."""
+"""Common enum types and stable-ID aliases used across Loupe artifacts."""
 from __future__ import annotations
 
 from enum import StrEnum
 from functools import total_ordering
+from typing import Annotated
+
+from pydantic import StringConstraints
+
+ThreatId = Annotated[str, StringConstraints(pattern=r"^T-\d{3,}$")]
+MitigationId = Annotated[str, StringConstraints(pattern=r"^M-\d{3,}$")]
+ElementId = Annotated[str, StringConstraints(pattern=r"^E-\d{3,}$")]
 
 
 @total_ordering

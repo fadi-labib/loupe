@@ -1,7 +1,15 @@
 # How-to
 
-Task-focused recipes. Each page is a short, self-contained answer to a specific question — *how do I swap LLM provider?*, *how do I write a new lens?*, *how do I run Loupe offline?*
+Task-focused recipes. Each page is a short, self-contained answer to a specific question.
 
-This section is populated as recipes are written. While it's empty, the closest substitutes are the [Quickstart](../quickstart.md) for a guided first run and [Contributing](../contributing.md) for development tasks.
+> [!NOTE]
+> **Pre-alpha:** this section is populated as recipes are written. The [Quickstart](../quickstart.md) and [Contributing](../contributing.md) pages cover the most-asked starter questions in the meantime.
+
+Planned recipes:
+
+- **Swap LLM provider** — switching between Anthropic, OpenAI, Google, and the Vercel AI Gateway via `THREATLENS_MODEL`.
+- **Write a new lens** — minimum shape for a `<Domain>Lens` package, entry-point registration, `is_relevant()` heuristic.
+- **Run Loupe offline** — local Ollama plus offline-capable SBOM and CVE backends.
+- **Add a custom capability backend** — register a third-party backend under the `loupe.capabilities` entry-point group.
 
 If you're new to Loupe, start at the [Quickstart](../quickstart.md), not here.

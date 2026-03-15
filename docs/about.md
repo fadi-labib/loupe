@@ -30,7 +30,7 @@ A **lens** is a domain plugin (the noun): ThreatLens for security, SafetyLens fo
 
 A **capability** is a tool-agnostic operation plugin (the verb): `SbomCapability`, `CveCapability`, `SecretDetectionCapability`, `StaticAnalysisCapability`. A capability does one job and is fulfilled by a backend (Syft, Trivy, gitleaks, Semgrep, others). Multiple backends per capability can compose through modes like `union` or `consensus`. Lenses declare which capabilities they need; the platform resolves backends from `config.yaml`.
 
-The result is no tool lock-in alongside no LLM lock-in. A team can run Loupe on Syft or Trivy, with one CVE scanner or three, with belt-and-braces secret detection or a single fast scanner, all through configuration.
+No tool lock-in, no LLM lock-in. A team can run Loupe on Syft or Trivy, with one CVE scanner or three, with belt-and-braces secret detection or a single fast scanner, all through configuration.
 
 v1 ships the ThreatLens scaffolding. Once its PydanticAI agent is wired to a live LLM, it will look for STRIDE-shaped threats, maintain a threat-model narrative and machine-readable threat and mitigation indexes, and generate per-CVE VEX statements. The artefact shapes are defined and the pipeline is scaffolded; the LLM-driven content generation is the next milestone. The outputs are designed to feed CRA Annex I conformity evidence.
 
@@ -56,7 +56,7 @@ The artefact set in `.loupe/` was designed against the EU CRA Annex I conformity
 | §2(c) Vulnerability handling | `vex.json` (OpenVEX) |
 | Audit trail of conformity-assessment activities | `runs/*.json` (hash-chained) |
 
-You can hand these files to an auditor, or to a CRA submission platform such as Concordance that ingests engineering data into a submission package.
+You can hand these files to an auditor, or to a CRA submission platform that ingests engineering data into a conformity package.
 
 ## Trade-offs worth stating
 
@@ -84,5 +84,3 @@ The name comes from the engineering activity (close inspection through the right
 ## See also
 
 The eleven principles that guide every decision: [`principles.md`](principles.md). The decision log itself: [`reference/decisions.md`](reference/decisions.md).
-
-The published documentation site is at <https://fadilabib.github.io/loupe/> (with search, social previews, and the full nav). The README in the repo root is the entry point for browsing on github.com.

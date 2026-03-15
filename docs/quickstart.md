@@ -11,7 +11,7 @@ This walks through installing Loupe, scaffolding the `.loupe/` directory in your
 ## Before you begin
 
 > [!WARNING]
-> **Pre-alpha.** The platform, capability registry, CLI, and GitHub Action all exist. The PydanticAI agent inside ThreatLens is scaffolded but not yet wired to a live LLM. `loupe ci` will currently run the full pipeline (parse diff, run capabilities, build run record) and emit a stub threats file, not real STRIDE analysis.
+> **Pre-alpha.** The platform, capability registry, CLI, and GitHub Action all exist. Wiring the PydanticAI agent inside ThreatLens to a live LLM is in progress (see [Roadmap](roadmap.md#next-agent-wiring)). `loupe ci` will currently run the full pipeline (parse diff, run capabilities, build run record) and emit a stub threats file, not real STRIDE analysis.
 
 If you are evaluating Loupe for production use, wait for the agent wiring to land. If you are exploring the architecture, run the steps below.
 
@@ -90,10 +90,10 @@ What happens today:
 3. Selected lenses run in topological order. ThreatLens runs its scaffolded pipeline; the LLM step is stubbed.
 4. A run record gets written to `.loupe/runs/<id>.json` with a SHA-256 hash chain pointing at the previous run.
 
-What will happen once the agent wiring lands:
+What will happen once the agent wiring lands (additional steps slotted into the same pipeline):
 
-5. The capability bootstrap pass runs the configured SBOM and CVE backends once before any lens executes. Typed results land on `ctx.sbom` and `ctx.cve_findings` for every lens to read.
-6. ThreatLens's PydanticAI agent gets called with the diff, the SBOM, the CVE list, and `context.md` as a stable-prefix prompt, then proposes threats through `propose_threat` tool calls.
+1. A capability bootstrap pass runs the configured SBOM and CVE backends once before any lens executes. Typed results land on `ctx.sbom` and `ctx.cve_findings` for every lens to read.
+2. ThreatLens's PydanticAI agent gets called with the diff, the SBOM, the CVE list, and `context.md` as a stable-prefix prompt, then proposes threats through `propose_threat` tool calls.
 
 Output ends with the lens names that ran and the path of the new run record.
 

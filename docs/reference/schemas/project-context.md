@@ -4,9 +4,15 @@ The parsed representation of `.loupe/context.md`. Rendered from the Pydantic sou
 
 Each list field (`assets`, `users`, `threat_actors`, `out_of_scope`) holds `BulletItem` values. A bullet like `- Customer: places orders` parses into `BulletItem(label="Customer", note="places orders")`; a bullet without a colon has `note=None`. `str(item)` re-renders the bullet for prompt assembly.
 
+The YAML frontmatter at the top of the file is parsed into a `ProjectContextFrontmatter` model (`schema_version`, `last_human_edit`, `maintained_by`); all three fields are optional with safe defaults. If the file has no frontmatter, the model parses as defaults.
+
 ## ProjectContext
 
 ::: loupe_core.artifacts.context.ProjectContext
+
+## ProjectContextFrontmatter
+
+::: loupe_core.artifacts.context.ProjectContextFrontmatter
 
 ## BulletItem
 

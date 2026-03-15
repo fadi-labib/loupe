@@ -29,8 +29,8 @@ The claim: every artefact Loupe writes is verifiable with external tooling.
 
 | What to verify | Kind | How |
 |---|---|---|
-| SBOM is real CycloneDX 1.6 | Command | `cyclonedx validate --input-file .loupe/sbom.cdx.json` (run against any Loupe-produced SBOM) |
-| VEX statements are real OpenVEX 0.2 | Command | `openvex validate .loupe/vex.json` (uses the openvex-go CLI) |
+| SBOM is real CycloneDX 1.6 | Command | `cyclonedx-cli validate --input-file .loupe/sbom.cdx.json` (install via `pip install cyclonedx-cli`) |
+| VEX statements are real OpenVEX 0.2 | Command | `vexctl validate .loupe/vex.json` (the openvex-go CLI binary) |
 | Threats have stable IDs | File | `grep -E '^- id: T-' .loupe/threats.yaml`; every entry has a `T-NNN` line |
 | Run records form a hash chain | Command | `loupe verify` |
 | Audit trail is git-resident | Command | `git log -- .loupe/` shows commit-by-commit who touched what |
@@ -100,8 +100,8 @@ The claim: four enforcement layers, no single one load-bearing.
 | Layer | Status | How to verify |
 |---|---|---|
 | Layer 1 (tool surface) | Shipped | See §5 above |
-| Layer 2 (branch namespace) | Designed, not enforced | The Action uses the default `GITHUB_TOKEN`; the fine-grained PAT design lives in `action.yml`'s comments. See [`data-handling.md` § CI data flow](data-handling.md#ci-data-flow) |
-| Layer 3 (`loupe verify`) | Partial | `loupe verify` checks the hash chain today. Authorship, schema, and cross-reference checks are documented in `verify_cmd.py` as planned. |
+| Layer 2 (branch namespace) | Designed, not enforced | The Action uses the default `GITHUB_TOKEN`; the fine-grained PAT scope is recorded in [`decisions.md` D-08](decisions.md#d-08) and as a header comment in `packages/loupe-action/action.yml`. See also [`data-handling.md` § CI data flow](data-handling.md#ci-data-flow). |
+| Layer 3 (`loupe verify`) | Shipped | `loupe verify` checks hash-chain integrity, artefact schema consistency, and threats-to-mitigations cross-references on every run. The protected-path authorship check is reachable through `verify_repo(..., strict=True)` in the library; the `--strict` CLI flag is the remaining wiring. |
 | Layer 4 (interactive UX gate) | Designed | `loupe chat` is a placeholder. The `[y/N/edit/skip]` prompt logic is not yet wired |
 
 To prove the hash-chain detector works, deliberately corrupt a record:
@@ -187,6 +187,6 @@ If any of those fail, the run record was tampered with.
 
 ## What this page deliberately does not promise
 
-- That `loupe verify` is exhaustive today. It is not; only the hash-chain check is wired. The other Layer 3 checks are documented as planned in `verify_cmd.py` and tracked in the changelog.
+- That `loupe verify` is exhaustive today. The four planned checks are wired (chain, schema, cross-references, authorship under strict mode), but the strict-mode authorship surface is library-only until the `--strict` CLI flag lands. New Layer 3 checks added later will not change the exit-code contract; they extend the failure list.
 - That an auditor can verify quality of LLM analysis without an LLM. They cannot; LLM output reasoning is a separate question from artefact integrity. Loupe's claim is that the *evidence pack is genuine*, not that the analysis is correct.
 - That every standard validator listed above is currently installed in CI. Some auditors will want to run them themselves; others will trust the format. The point of standards is that either path works.

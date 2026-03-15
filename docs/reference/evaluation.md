@@ -27,7 +27,7 @@ The core idea is borrowed from recent LLM-security research (2024–2025 ACM/IEE
 4. Run Loupe against that version (synthesised as a diff against an earlier clean commit, or as a `loupe scan`).
 5. Score what Loupe produced against the published CVE advisory.
 
-The crucial property: the CVE advisories are **externally audited**. NVD, the project maintainers, and security researchers have collectively agreed these are real vulnerabilities with specific root causes. There's no risk of Loupe grading its own homework the ground truth is independently established.
+The key property: the CVE advisories are **externally audited**. NVD, the project maintainers, and security researchers have collectively agreed these are real vulnerabilities with specific root causes. There's no risk of Loupe grading its own homework; the ground truth is independently established.
 
 ---
 

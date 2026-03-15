@@ -1,9 +1,13 @@
 from __future__ import annotations
 
 import re
+from datetime import date
 from pathlib import Path
 
 from pydantic import BaseModel, Field
+from ruamel.yaml import YAML
+
+_yaml_safe = YAML(typ="safe")
 
 _REQUIRED_SECTIONS = [
     "Product description",
@@ -36,15 +40,39 @@ class BulletItem(BaseModel):
         return f"{self.label}: {self.note}" if self.note else self.label
 
 
+class ProjectContextFrontmatter(BaseModel):
+    """YAML frontmatter at the top of `.loupe/context.md`.
+
+    Human-curated metadata about the brief itself. Optional; an absent or
+    empty frontmatter block parses as the default values below.
+    """
+
+    schema_version: int = Field(
+        default=1, description="Migration marker for the frontmatter shape."
+    )
+    last_human_edit: date | None = Field(
+        default=None,
+        description="ISO date of the most recent human edit to the file.",
+    )
+    maintained_by: str | None = Field(
+        default=None,
+        description="Email or team identifier of the maintainer.",
+    )
+
+
 class ProjectContext(BaseModel):
     """Parsed representation of `.loupe/context.md`, the human-authored product brief.
 
     Anti-hallucination anchor: every run reads it so the LLM knows what the product
     actually does. The agent cannot edit it directly; it can only propose patches.
-    `from_markdown(path)` parses the Markdown file and raises `ContextMdError` on
-    a missing required section.
+    `from_markdown(path)` parses the Markdown file (frontmatter + body) and raises
+    `ContextMdError` on a missing required section.
     """
 
+    frontmatter: ProjectContextFrontmatter = Field(
+        default_factory=ProjectContextFrontmatter,
+        description="Parsed YAML frontmatter; defaults used when absent.",
+    )
     product_description: str = Field(description="Two or three sentences describing the product.")
     assets: list[BulletItem] = Field(description="Critical assets (data, keys, signing material).")
     users: list[BulletItem] = Field(description="User types and what each can do.")
@@ -55,12 +83,14 @@ class ProjectContext(BaseModel):
     @classmethod
     def from_markdown(cls, path: Path) -> ProjectContext:
         text = path.read_text()
-        body = _strip_frontmatter(text)
+        frontmatter_data, body = _split_frontmatter(text)
+        frontmatter = ProjectContextFrontmatter.model_validate(frontmatter_data)
         sections = _split_sections(body)
         for required in _REQUIRED_SECTIONS:
             if required not in sections:
                 raise ContextMdError(f"context.md missing required section: '{required}'")
         return cls(
+            frontmatter=frontmatter,
             product_description=sections["Product description"].strip(),
             assets=_parse_bullets(sections["Critical assets"]),
             users=_parse_bullets(sections["Users and roles"]),
@@ -70,11 +100,16 @@ class ProjectContext(BaseModel):
         )
 
 
-def _strip_frontmatter(text: str) -> str:
-    if text.startswith("---"):
-        _, _frontmatter, body = text.split("---", 2)
-        return body
-    return text
+def _split_frontmatter(text: str) -> tuple[dict, str]:
+    """Return ``(frontmatter dict, body)``. Empty dict if frontmatter is absent or malformed."""
+    if not text.startswith("---"):
+        return {}, text
+    try:
+        _, frontmatter_text, body = text.split("---", 2)
+    except ValueError:
+        return {}, text
+    parsed = _yaml_safe.load(frontmatter_text) or {}
+    return parsed, body
 
 
 def _split_sections(body: str) -> dict[str, str]:

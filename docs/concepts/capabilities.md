@@ -7,7 +7,7 @@ tags:
 # Capabilities: tool-agnostic functional building blocks
 
 > [!NOTE]
-> **Status:** D-18 has shipped in the codebase. `loupe-core/loupe_core/capabilities/` holds the protocol definitions, the registry, the composition modes, and the bundled Syft + Grype backends; the `loupe.capabilities` entry-point group is wired in `loupe-core/pyproject.toml`. **What remains:** `ci_cmd.py` does not yet call `bootstrap_capabilities()`, so the typed `ctx.sbom` and `ctx.cve_findings` fields are populated inside tests but not yet during a real run. That wiring lands with the ThreatLens agent.
+> **Status:** D-18 has shipped end-to-end. `loupe-core/loupe_core/capabilities/` holds the protocol definitions, the registry, the composition modes, and the bundled Syft + Grype backends; the `loupe.capabilities` entry-point group is wired in `loupe-core/pyproject.toml`; `loupe ci` calls `bootstrap_capabilities()` so the typed `ctx.sbom` and `ctx.cve_findings` slots are populated on real runs. The remaining work is the ThreatLens agent consuming those slots against a live LLM.
 
 ## Why two extension points
 
@@ -15,7 +15,7 @@ Loupe has two distinct pluggable layers. Lenses are domain-specific agents (the 
 
 Capabilities are tool-agnostic operations (the verb): generate an SBOM, match CVEs against an SBOM, find secrets in code, run static analysis with a rule pack. A capability produces an input or verifies a fact; lenses consume those outputs.
 
-The original v1 spec conflated the two: `loupe_core/sbom.py` called `syft` directly with no abstraction. That introduced vendor lock-in at the tool layer (same lock-in the principles forbid for LLMs), made cross-tool composition impossible (no way to express "run TruffleHog and gitleaks and merge"), forced each lens to re-implement its own tool wrappers, and made the agent's behaviour depend on which tool the operator had installed.
+The original v1 spec conflated the two: `loupe_core/sbom.py` called `syft` directly with no abstraction. That introduced vendor lock-in at the tool layer (the same lock-in the principles forbid for LLMs) and made cross-tool composition impossible (no way to express "run TruffleHog and gitleaks and merge"). The downstream effect was that each lens re-implemented its own tool wrappers, and the agent's behaviour depended on which tool the operator had installed.
 
 The fix is a second extension point sitting alongside lenses.
 
@@ -27,7 +27,7 @@ The fix is a second extension point sitting alongside lenses.
 
 A **Capability** is a typed Protocol describing a single, focused operation. A **CapabilityBackend** is a concrete implementation of that Protocol (e.g., `SyftSbomBackend` implements the `SbomCapability` Protocol). Backends register via Python entry points under the single `loupe.capabilities` group; the `name` attribute on each backend class declares which capability it implements.
 
-Loupe's core ships the Protocol definitions in `loupe_core/capabilities/protocols/` plus two bundled default backends (Syft for `sbom`, Grype for `cve`) under `loupe_core/capabilities/backends/`. Third-party backends live in their own pip-installable packages and register under the same `loupe.capabilities` entry-point group; the core never imports a backend by name.
+Loupe's core ships the Protocol definitions in `loupe_core/capabilities/protocols/` plus a set of bundled default backends under `loupe_core/capabilities/backends/`: Syft and cdxgen for `sbom`, Grype and osv-scanner for `cve`, gitleaks / TruffleHog / detect-secrets for `secret_detect`, Semgrep / CodeQL / Bandit for `static_analysis`. Third-party backends live in their own pip-installable packages and register under the same `loupe.capabilities` entry-point group; the core never imports a backend by name.
 
 ### Mental model
 
@@ -209,7 +209,7 @@ capabilities:
     backends: [trufflehog, gitleaks]      # union of findings, deduped by (file, line, hash)
 ```
 
-**The reason this matters:** TruffleHog finds high-entropy strings; gitleaks finds pattern-matched API keys; neither is a strict superset. Running both and merging is the responsible default.
+TruffleHog finds high-entropy strings; gitleaks finds pattern-matched API keys; neither is a strict superset. Running both and merging is the responsible default.
 
 ### `consensus`
 
@@ -377,18 +377,24 @@ capabilities:
     backends: [osv]                          # cheap, fast, sufficient for lookups
 ```
 
-This config says: "any SBOM tool will do, but I want two CVE scanners agreeing; I want both secret scanners running because false negatives in secrets are catastrophic; I want two static analysers to corroborate before I treat a finding as real." That's a credible audit posture and it's expressible as configuration, not code.
+This config says: "any SBOM tool will do, but I want two CVE scanners agreeing; I want both secret scanners running because false negatives in secrets are catastrophic; I want two static analysers to corroborate before I treat a finding as real."
 
 ---
 
 ## Default backends (what ships with loupe-core v1.x)
 
-To keep `loupe-core` light, core ships **zero** capability backends by default. The standard install adds two recommended bundles:
+`loupe-core` v1.x bundles **ten** capability backends, registered via the `loupe.capabilities` entry-point group in `loupe-core/pyproject.toml`:
 
-- **`loupe-capabilities-essential`** (a meta-package) installs `loupe-cap-sbom-syft`, `loupe-cap-cve-grype`, `loupe-cap-secret-gitleaks`. Covers ThreatLens's `requires_capabilities` with sane defaults.
-- **`loupe-capabilities-full`** adds Trivy, TruffleHog, Semgrep, CodeQL CLI bindings, scancode, OSV. Bigger install footprint, richer composition options.
+| Capability | Bundled backends |
+|---|---|
+| `sbom` | `syft`, `cdxgen` |
+| `cve` | `grype`, `osv-scanner` |
+| `secret_detect` | `gitleaks`, `trufflehog`, `detect-secrets` |
+| `static_analysis` | `semgrep`, `codeql`, `bandit` |
 
-A bare `pip install loupe-cli loupe-threatlens` installs neither ThreatLens will run, but its `requires_capabilities` will fail at coordinator time with a clear "install `loupe-capabilities-essential` (or equivalent)" message.
+Each backend's `is_available()` method checks whether the underlying tool is reachable on the system; the registry only invokes backends that say yes. So `pip install loupe-cli loupe-threatlens` gives you a working pipeline as soon as the operator-side tools (Syft, Grype, etc.) are on `PATH`; missing tools are reported through the coordinator's dependency check, not at import time.
+
+Future split-out: if the bundled set ever grows large enough to bloat `loupe-core`'s install, the heavier backends can move to optional `loupe-cap-*` packages without changing the lens-facing API. The entry-point group is the contract; whether a backend ships inside core or as a separate pip package is an install-size optimisation, not a design boundary.
 
 ---
 
@@ -404,7 +410,7 @@ This is genuinely more architecture than the v1 spec. The trade-offs:
 | Capability backends can ship independently (third parties can publish) | Versioning + compatibility across capability protocols is a real concern |
 | The current `sbom.py` mistake (hardcoded Syft) doesn't repeat for CVE / secret / static analysis | Phase 6's planned timeline grows |
 
-The net argument: **paying this complexity once means we never pay it again per tool category.** Adding a new backend later is a pip-install, not a code change.
+Adding a new backend later is a pip-install, not a code change.
 
 ---
 
@@ -418,7 +424,7 @@ The phased sequencing for the capability layer (Phase v1.x-A through v1.x-F) liv
 
 Worth stating explicitly so the design stays focused:
 
-- **Not a generic plugin framework.** Capabilities are typed, schema-checked, narrowly-scoped. We will not let arbitrary code mount "any tool" every backend must conform to a published Protocol.
+- **Not a generic plugin framework.** Capabilities are typed, schema-checked, narrowly-scoped. We will not let arbitrary code mount "any tool"; every backend must conform to a published Protocol.
 - **Not a marketplace.** Anyone can publish a capability backend on PyPI; Loupe doesn't curate. But installation is a deliberate `pip install` by the operator (see [principles.md §1](../principles.md#principle-1) on transparency).
 - **Not a substitute for lenses.** A capability does *one* thing. A lens *reasons* about a domain using one or more capabilities. The agent and therefore the LLM lives in the lens, not the capability.
 - **Not an abstraction over LLM providers.** PydanticAI already handles that. Capabilities are about *non-LLM* tools (scanners, generators, validators).

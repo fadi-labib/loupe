@@ -13,6 +13,7 @@ Every artefact Loupe writes is a Pydantic model. This section is the human-reada
 | [Mitigation](mitigation.md) | One mitigation that addresses ≥1 threats | `.loupe/mitigations.yaml` | `artifacts/mitigation.py` |
 | [RunRecord](run-record.md) | Tamper-evident audit entry per Loupe run | `.loupe/runs/<id>.json` | `artifacts/run_record.py` |
 | [ProjectContext](project-context.md) | The human-authored product brief | `.loupe/context.md` | `artifacts/context.py` |
+| [KnowledgeGraph](knowledge.md) | Cross-run knowledge graph (assets, elements, decisions, cross-refs) | `.loupe/knowledge.yaml` | `artifacts/knowledge.py` |
 | [LoupeConfig](../config.md) | Operator settings (separate full reference) | `.loupe/config.yaml` | `core/config.py` |
 | [Capability results](capabilities.md) | Typed outputs of SBOM, CVE, secret, SAST backends | not on disk; lives on `RunContext` | `capabilities/protocols/` |
 

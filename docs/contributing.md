@@ -69,7 +69,7 @@ uv run pytest -v                    # verbose
 uv run pytest -k threat             # tests matching 'threat'
 ```
 
-Tests must pass with no API keys present. Any test that talks to an LLM does so via VCR cassettes (recorded once, replayed forever see [`principles.md` §9](principles.md#principle-9)).
+Tests must pass with no API keys present. Any test that talks to an LLM does so via VCR cassettes (recorded once, replayed forever; see [`principles.md` §9](principles.md#principle-9)).
 
 ## Code style
 
@@ -82,7 +82,7 @@ uv run mypy packages/loupe-core/    # type-check
 Configured in the root `pyproject.toml`:
 - Line length 100
 - Target Python 3.13
-- Ruff rules: `E`, `F`, `I`, `B`, `UP`, `ANN` (with `ANN101`/`ANN102` ignored no `self`/`cls` annotations needed)
+- Ruff rules: `E`, `F`, `I`, `B`, `UP`, `ANN` (with `ANN101`/`ANN102` ignored: no `self`/`cls` annotations needed)
 - mypy `strict = true`
 
 ## What CI runs on every PR
@@ -157,7 +157,7 @@ Artefacts are Pydantic models with a YAML or JSON round-trip:
 
 1. Define an input model (Pydantic) in the lens's `tools.py`.
 2. Define a result model (Pydantic).
-3. Implement the tool function. It MUST use `write_agent_artifact` (or `propose_patch`) to mutate state never write directly.
+3. Implement the tool function. It MUST use `write_agent_artifact` (or `propose_patch`) to mutate state; never write directly.
 4. Add a unit test that exercises the tool without an LLM.
 5. Register the tool with the lens's PydanticAI agent via `@agent.tool`.
 
@@ -210,12 +210,12 @@ Once your package is installed alongside `loupe-cli`, the entry-point group `lou
 
 The Action lives in `packages/loupe-action/`:
 
-- `action.yml` the composite-action manifest GitHub reads.
-- `loupe_action/inputs.py` typed env-var validation.
-- `loupe_action/pr_fetcher.py` fetch PR base/head SHA + unified diff via the API.
-- `loupe_action/formatter.py` render run record + threats as Markdown.
-- `loupe_action/comment_poster.py` sticky comment (find-or-create).
-- `loupe_action/entrypoint.py` top-level `run(env, client, cwd)` orchestrator.
+- `action.yml`: the composite-action manifest GitHub reads.
+- `loupe_action/inputs.py`: typed env-var validation.
+- `loupe_action/pr_fetcher.py`: fetch PR base/head SHA + unified diff via the API.
+- `loupe_action/formatter.py`: render run record + threats as Markdown.
+- `loupe_action/comment_poster.py`: sticky comment (find-or-create).
+- `loupe_action/entrypoint.py`: top-level `run(env, client, cwd)` orchestrator.
 
 `run(...)` takes its environment, HTTP client, and working directory as
 parameters so tests can drive it end-to-end with `httpx.MockTransport` +
@@ -275,10 +275,10 @@ Never use `--no-verify` or `Co-Authored-By` lines.
 
 ## Filing issues / proposing changes
 
-(Not yet set up this is a pre-alpha private repo.)
+(Not yet set up; this is a pre-alpha private repo.)
 
 When the repo opens:
 
 1. Read [`about.md`](about.md), [`principles.md`](principles.md), and [`reference/decisions.md`](reference/decisions.md) before opening a PR with a structural change.
 2. For a bug fix or small feature: open a PR with a failing test in the same commit as the description, and the fix in a follow-up commit.
-3. For a new lens: open a discussion issue first to discuss the lens API surface adding a second instance is the moment we expect to refine the plugin contract (D-04).
+3. For a new lens: open a discussion issue first to discuss the lens API surface; adding a second instance is the moment we expect to refine the plugin contract (D-04).

@@ -165,7 +165,7 @@ An attacker with write access to the PR forges a Loupe sticky comment to make a 
 
 **Status:** Partial
 **Addresses:** `T-LOUPE-004`
-**Evidence:** Backends are Python classes invoking subprocesses with `subprocess.run(args=[...], shell=False)`. No shell-string interpolation. The remaining risk — a parser bug in Syft / Grype — is delegated to those projects' security teams (Anchore CVE feeds). Operators wanting stronger isolation should run Loupe in a containerised CI step.
+**Evidence:** Backends are Python classes invoking subprocesses with `subprocess.run(args=[...], shell=False)`. No shell-string interpolation. One remaining risk, a parser bug in Syft / Grype, is delegated to those projects' security teams (Anchore CVE feeds). Operators wanting stronger isolation should run Loupe in a containerised CI step.
 
 ### M-LOUPE-007 — `runs/*.json` field allow-list
 
