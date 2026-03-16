@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from datetime import datetime
 from pathlib import Path
 from typing import Literal
@@ -71,7 +72,11 @@ def save_run_record(runs_dir: Path, record: RunRecord) -> RunRecord:
     # matches chain order; no need for hash-chain traversal at load time.
     filename = record.timestamp.strftime("%Y-%m-%dT%H-%M-%S-%fZ") + f"-{record.run_id}.json"
     out = runs_dir / filename
-    out.write_text(json.dumps(record.model_dump(mode="json"), indent=2, sort_keys=True))
+    # Atomic write: a crash mid-write must not leave a truncated JSON file at
+    # the destination — that would break the entire hash chain.
+    tmp = out.with_suffix(out.suffix + ".tmp")
+    tmp.write_text(json.dumps(record.model_dump(mode="json"), indent=2, sort_keys=True))
+    os.replace(tmp, out)
     return record
 
 

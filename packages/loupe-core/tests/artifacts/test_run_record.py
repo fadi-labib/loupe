@@ -1,5 +1,6 @@
 from datetime import datetime
 
+import pytest
 from loupe_core.artifacts.run_record import (
     LensConsidered,
     RunRecord,
@@ -47,3 +48,22 @@ def test_chain_is_built(tmp_path):
     assert len(records) == 2
     assert records[0].prev_run_hash is None
     assert records[1].prev_run_hash == r1.self_hash
+
+
+def test_save_is_atomic_on_crash(tmp_path, monkeypatch):
+    """A crash mid-write must not leave a partial file at the destination.
+
+    Without atomic write (tmp + os.replace), a truncated JSON file breaks
+    the entire hash chain that ``loupe verify`` walks.
+    """
+    def boom(src, dst):
+        raise OSError("simulated crash during rename")
+
+    monkeypatch.setattr("loupe_core.artifacts.run_record.os.replace", boom)
+
+    with pytest.raises(OSError, match="simulated crash"):
+        save_run_record(tmp_path, _record("run-crash", prev=None))
+
+    # No visible JSON at the destination — only (possibly) a leftover .tmp.
+    visible = list(tmp_path.glob("*.json"))
+    assert visible == [], f"partial file leaked: {visible}"
