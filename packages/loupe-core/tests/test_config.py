@@ -65,3 +65,20 @@ def test_sbom_accepts_fallback_mode():
         "capabilities": {"sbom": {"mode": "fallback", "backends": ["syft", "cdxgen"]}},
     })
     assert cfg.capabilities["sbom"].mode == "fallback"
+
+
+def test_unknown_capability_name_rejected_at_validation():
+    with pytest.raises(ValueError, match="unknown capability.*'imaginary'"):
+        LoupeConfig.model_validate({
+            "models": {"default": "anthropic:claude-opus-4-7"},
+            "capabilities": {"imaginary": {"mode": "single", "backends": ["whatever"]}},
+        })
+
+
+def test_known_capabilities_accepted():
+    for cap in ["sbom", "cve", "secret_detect", "static_analysis"]:
+        cfg = LoupeConfig.model_validate({
+            "models": {"default": "anthropic:claude-opus-4-7"},
+            "capabilities": {cap: {"mode": "single", "backends": ["any"]}},
+        })
+        assert cap in cfg.capabilities

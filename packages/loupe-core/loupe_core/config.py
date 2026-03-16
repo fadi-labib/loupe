@@ -18,6 +18,15 @@ to dedupe or vote on. Multi-backend merging is therefore meaningless
 for SBOM. Operators must pick `single` or `fallback`.
 """
 
+_KNOWN_CAPABILITIES: frozenset[str] = frozenset(
+    {"sbom", "cve", "secret_detect", "static_analysis"}
+)
+"""Known capability names. Source of truth: ``loupe_core.capabilities.bootstrap._RESULT_TYPES``.
+
+Listed here to avoid an import cycle (config → capabilities → config via
+``RunContext`` typed fields).
+"""
+
 
 class LensModelConfig(BaseModel):
     """Per-lens model selection. Optional override of `ModelsConfig.default`."""
@@ -162,6 +171,11 @@ class LoupeConfig(BaseModel):
     @model_validator(mode="after")
     def _validate_composition_compatibility(self) -> Self:
         for cap_name, activation in self.capabilities.items():
+            if cap_name not in _KNOWN_CAPABILITIES:
+                known = ", ".join(sorted(_KNOWN_CAPABILITIES))
+                raise ValueError(
+                    f"unknown capability {cap_name!r}; known: {known}"
+                )
             if cap_name in _NO_MULTI_BACKEND_MERGE and activation.mode in ("union", "consensus"):
                 raise ValueError(
                     f"capability {cap_name!r}: mode {activation.mode!r} not supported "
