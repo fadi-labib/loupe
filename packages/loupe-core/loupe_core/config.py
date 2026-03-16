@@ -10,6 +10,14 @@ _yaml = YAML()
 
 CompositionModeName = Literal["single", "fallback", "union", "consensus", "pipeline"]
 
+_NO_MULTI_BACKEND_MERGE: frozenset[str] = frozenset({"sbom"})
+"""Capabilities whose result types have no findings-list to merge.
+
+SBOM results are CycloneDXDocument-shaped — there is no `findings` list
+to dedupe or vote on. Multi-backend merging is therefore meaningless
+for SBOM. Operators must pick `single` or `fallback`.
+"""
+
 
 class LensModelConfig(BaseModel):
     """Per-lens model selection. Optional override of `ModelsConfig.default`."""
@@ -150,6 +158,16 @@ class LoupeConfig(BaseModel):
         default_factory=dict,
         description="Per-capability backend selection and composition mode (D-18).",
     )
+
+    @model_validator(mode="after")
+    def _validate_composition_compatibility(self) -> Self:
+        for cap_name, activation in self.capabilities.items():
+            if cap_name in _NO_MULTI_BACKEND_MERGE and activation.mode in ("union", "consensus"):
+                raise ValueError(
+                    f"capability {cap_name!r}: mode {activation.mode!r} not supported "
+                    f"(no merge semantics for {cap_name} results). Use 'single' or 'fallback'."
+                )
+        return self
 
 
 def load_config(path: Path) -> LoupeConfig:

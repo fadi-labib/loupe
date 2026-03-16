@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import pytest
-from loupe_core.config import load_config
+from loupe_core.config import LoupeConfig, load_config
 from pydantic import ValidationError
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -33,3 +33,35 @@ def test_invalid_relevance_threshold_rejected(tmp_path):
     )
     with pytest.raises(ValidationError):
         load_config(bad)
+
+
+def test_sbom_rejects_union_mode():
+    with pytest.raises(ValueError, match="union.*sbom|sbom.*union"):
+        LoupeConfig.model_validate({
+            "models": {"default": "anthropic:claude-opus-4-7"},
+            "capabilities": {"sbom": {"mode": "union", "backends": ["syft", "cdxgen"]}},
+        })
+
+
+def test_sbom_rejects_consensus_mode():
+    with pytest.raises(ValueError, match="consensus.*sbom|sbom.*consensus"):
+        LoupeConfig.model_validate({
+            "models": {"default": "anthropic:claude-opus-4-7"},
+            "capabilities": {"sbom": {"mode": "consensus", "backends": ["syft", "cdxgen"], "consensus_threshold": 2}},
+        })
+
+
+def test_sbom_accepts_single_mode():
+    cfg = LoupeConfig.model_validate({
+        "models": {"default": "anthropic:claude-opus-4-7"},
+        "capabilities": {"sbom": {"mode": "single", "backends": ["syft"]}},
+    })
+    assert cfg.capabilities["sbom"].mode == "single"
+
+
+def test_sbom_accepts_fallback_mode():
+    cfg = LoupeConfig.model_validate({
+        "models": {"default": "anthropic:claude-opus-4-7"},
+        "capabilities": {"sbom": {"mode": "fallback", "backends": ["syft", "cdxgen"]}},
+    })
+    assert cfg.capabilities["sbom"].mode == "fallback"
