@@ -49,7 +49,11 @@ async def compose_run[R: BaseModel](
                 return fallback
             except Exception as exc:  # noqa: BLE001 - we re-raise the last one below
                 last_exc = exc
-        assert last_exc is not None  # FALLBACK with no backends rejected upstream
+        if last_exc is None:
+            raise RuntimeError(
+                "fallback composition reached the post-loop branch with no captured exception "
+                "(should be impossible if backends list is non-empty)"
+            )
         raise last_exc
 
     if mode is CompositionMode.UNION:
