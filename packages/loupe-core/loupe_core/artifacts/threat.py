@@ -6,6 +6,7 @@ from pathlib import Path
 from pydantic import BaseModel, Field
 from ruamel.yaml import YAML
 
+from loupe_core.artifacts._io import atomic_write_yaml
 from loupe_core.artifacts.types import (
     ElementId,
     MitigationId,
@@ -61,10 +62,7 @@ class ThreatsFile(BaseModel):
     threats: list[Threat] = Field(default_factory=list, description="All threats for the project.")
 
     def save(self, path: Path) -> None:
-        path.parent.mkdir(parents=True, exist_ok=True)
-        data = self.model_dump(mode="json")
-        with path.open("w") as f:
-            _yaml.dump(data, f)
+        atomic_write_yaml(path, self.model_dump(mode="json"), yaml=_yaml)
 
     @classmethod
     def load(cls, path: Path) -> ThreatsFile:

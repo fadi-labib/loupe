@@ -7,6 +7,8 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, Field, StringConstraints
 from ruamel.yaml import YAML
 
+from loupe_core.artifacts._io import atomic_write_yaml
+
 AssetId = Annotated[str, StringConstraints(pattern=r"^A-\d{3,}$")]
 ElementId = Annotated[str, StringConstraints(pattern=r"^E-\d{3,}$")]
 DecisionId = Annotated[str, StringConstraints(pattern=r"^D-\d{4}-\d{2}-\d{2}-[a-z0-9-]+$")]
@@ -57,9 +59,7 @@ class KnowledgeGraph(BaseModel):
     cross_references: list[CrossReference] = Field(default_factory=list)
 
     def save(self, path: Path) -> None:
-        path.parent.mkdir(parents=True, exist_ok=True)
-        with path.open("w") as f:
-            _yaml.dump(self.model_dump(mode="json"), f)
+        atomic_write_yaml(path, self.model_dump(mode="json"), yaml=_yaml)
 
     @classmethod
     def load(cls, path: Path) -> KnowledgeGraph:

@@ -7,6 +7,7 @@ from typing import Literal
 from pydantic import BaseModel, Field
 from ruamel.yaml import YAML
 
+from loupe_core.artifacts._io import atomic_write_yaml
 from loupe_core.artifacts.types import MitigationId, MitigationStatus, ThreatId
 
 _yaml = YAML()
@@ -55,9 +56,7 @@ class MitigationsFile(BaseModel):
     )
 
     def save(self, path: Path) -> None:
-        path.parent.mkdir(parents=True, exist_ok=True)
-        with path.open("w") as f:
-            _yaml.dump(self.model_dump(mode="json"), f)
+        atomic_write_yaml(path, self.model_dump(mode="json"), yaml=_yaml)
 
     @classmethod
     def load(cls, path: Path) -> MitigationsFile:
