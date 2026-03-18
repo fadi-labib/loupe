@@ -200,6 +200,77 @@ async def test_entrypoint_skips_comment_when_mode_is_none(tmp_path: Path):
     assert posted == []  # comment_mode=none honoured
 
 
+def test_main_returns_64_for_input_error(monkeypatch):
+    # No GITHUB_TOKEN: parse_inputs raises InputError; main() must map this
+    # to exit 64 (EX_USAGE) rather than letting a traceback escape.
+    monkeypatch.setenv("INPUT_PR", "42")
+    monkeypatch.setenv("INPUT_CONFIG", "config.yaml")
+    monkeypatch.setenv("INPUT_COMMENT_MODE", "sticky")
+    monkeypatch.setenv("GITHUB_REPOSITORY", "acme/widgets")
+    monkeypatch.delenv("GITHUB_TOKEN", raising=False)
+
+    assert entrypoint.main() == 64
+
+
+def test_main_returns_64_when_pr_fetch_404(monkeypatch, tmp_path: Path):
+    # A 404 from the PR-metadata endpoint surfaces as PRFetchError; main()
+    # must catch and return 64 rather than re-raising into the workflow log.
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    _seed_workspace(workspace)
+    output = tmp_path / "gh_output"
+    for k, v in _env(workspace, output).items():
+        monkeypatch.setenv(k, v)
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(404, json={"message": "not found"})
+
+    class _Patched(httpx.AsyncClient):
+        def __init__(self, *args: object, **kwargs: object) -> None:
+            kwargs["transport"] = httpx.MockTransport(handler)
+            super().__init__(*args, **kwargs)  # type: ignore[arg-type]
+
+    with patch("loupe_action.entrypoint.httpx.AsyncClient", _Patched):
+        exit_code = entrypoint.main()
+    assert exit_code == 64
+
+
+def test_main_returns_1_for_unexpected_exception(monkeypatch, tmp_path: Path):
+    # An unexpected RuntimeError (e.g. from inside the lens pipeline) maps
+    # to exit 1, with the traceback printed for debuggability.
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    _seed_workspace(workspace)
+    output = tmp_path / "gh_output"
+    for k, v in _env(workspace, output).items():
+        monkeypatch.setenv(k, v)
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        url = str(request.url)
+        accept = request.headers.get("accept", "")
+        if "/pulls/42" in url and "diff" in accept:
+            return httpx.Response(200, text="diff --git a/x b/x\n+x\n")
+        if "/pulls/42" in url:
+            return httpx.Response(
+                200,
+                json={"base": {"sha": "b" * 40}, "head": {"sha": "h" * 40}},
+            )
+        return httpx.Response(200, json=[])
+
+    class _Patched(httpx.AsyncClient):
+        def __init__(self, *args: object, **kwargs: object) -> None:
+            kwargs["transport"] = httpx.MockTransport(handler)
+            super().__init__(*args, **kwargs)  # type: ignore[arg-type]
+
+    with patch("loupe_action.entrypoint.httpx.AsyncClient", _Patched):
+        with patch(
+            "loupe_action.entrypoint.ci_command",
+            side_effect=RuntimeError("kaboom"),
+        ):
+            exit_code = entrypoint.main()
+    assert exit_code == 1
+
+
 @pytest.mark.asyncio
 async def test_entrypoint_writes_severity_counts_to_outputs(tmp_path: Path):
     workspace = tmp_path / "ws"

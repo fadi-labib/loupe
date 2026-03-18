@@ -25,6 +25,7 @@ from __future__ import annotations
 import asyncio
 import os
 import sys
+import traceback
 from collections import Counter
 from pathlib import Path
 from typing import Any
@@ -37,10 +38,10 @@ from loupe_core.artifacts.types import Severity
 from loupe_core.config import load_config
 from ruamel.yaml import YAML
 
-from loupe_action.comment_poster import StickyCommentPoster
+from loupe_action.comment_poster import GitHubAPIError, StickyCommentPoster
 from loupe_action.formatter import format_pr_comment
-from loupe_action.inputs import ActionInputs, parse_inputs
-from loupe_action.pr_fetcher import PRFetcher
+from loupe_action.inputs import ActionInputs, InputError, parse_inputs
+from loupe_action.pr_fetcher import PRFetcher, PRFetchError
 
 _yaml = YAML()
 
@@ -151,7 +152,20 @@ def main() -> int:
         async with httpx.AsyncClient(timeout=30.0) as client:
             return await run(env=dict(os.environ), client=client, cwd=Path.cwd())
 
-    return asyncio.run(_main())
+    try:
+        return asyncio.run(_main())
+    except (InputError, PRFetchError, GitHubAPIError) as exc:
+        # Known/expected failure modes: report cleanly with the documented
+        # 64 (EX_USAGE) exit code rather than a raw Python traceback.
+        print(f"::error::{exc}", file=sys.stderr)
+        return 64
+    except KeyboardInterrupt:
+        return 130
+    except Exception:
+        # Unexpected: still surface the full traceback for debuggability,
+        # but settle on exit 1 (generic failure) per action.yml.
+        traceback.print_exc()
+        return 1
 
 
 if __name__ == "__main__":
