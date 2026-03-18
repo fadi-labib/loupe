@@ -47,10 +47,12 @@ def test_verify_exits_zero_after_two_ci_runs(tmp_path, monkeypatch):
         "agent_writable_paths: [.loupe/runs/**]\n"
         "lenses:\n  threatlens:\n    enabled: false\n    minimum_relevance: 0.99\n"
     )
-    # Two clean ci runs (no diff → no-relevant-lens path, but each still
-    # writes a run record).
-    runner.invoke(app, ["ci", "--diff", "", "--base-sha", "a", "--head-sha", "b"])
-    runner.invoke(app, ["ci", "--diff", "", "--base-sha", "b", "--head-sha", "c"])
+    # Two clean ci runs (docs-only diff → no-relevant-lens path, but each
+    # still writes a run record). Empty diff is no longer a valid input —
+    # `loupe ci` requires exactly one of --diff/--diff-file with content.
+    docs_diff = "diff --git a/R.md b/R.md\n@@ -1 +1,2 @@\n x\n+y\n"
+    runner.invoke(app, ["ci", "--diff", docs_diff, "--base-sha", "a", "--head-sha", "b"])
+    runner.invoke(app, ["ci", "--diff", docs_diff, "--base-sha", "b", "--head-sha", "c"])
 
     result = runner.invoke(app, ["verify"])
     assert result.exit_code == 0, result.stdout
@@ -68,8 +70,9 @@ def test_verify_detects_broken_chain(tmp_path, monkeypatch):
         "agent_writable_paths: [.loupe/runs/**]\n"
         "lenses:\n  threatlens:\n    enabled: false\n    minimum_relevance: 0.99\n"
     )
-    runner.invoke(app, ["ci", "--diff", "", "--base-sha", "a", "--head-sha", "b"])
-    runner.invoke(app, ["ci", "--diff", "", "--base-sha", "b", "--head-sha", "c"])
+    docs_diff = "diff --git a/R.md b/R.md\n@@ -1 +1,2 @@\n x\n+y\n"
+    runner.invoke(app, ["ci", "--diff", docs_diff, "--base-sha", "a", "--head-sha", "b"])
+    runner.invoke(app, ["ci", "--diff", docs_diff, "--base-sha", "b", "--head-sha", "c"])
 
     # Corrupt the second run record's chain pointer.
     runs = sorted((loupe / "runs").glob("*.json"))

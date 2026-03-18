@@ -116,8 +116,9 @@ def test_ci_run_records_chain(tmp_path, monkeypatch):
 def test_ci_fails_when_loupe_dir_missing(tmp_path, monkeypatch):
     """Without .loupe/ the command should fail with a helpful message, not crash."""
     monkeypatch.chdir(tmp_path)
+    docs_diff = "diff --git a/R.md b/R.md\n@@ -1 +1,2 @@\n x\n+y\n"
     result = runner.invoke(
-        app, ["ci", "--diff", "", "--base-sha", "a", "--head-sha", "b"],
+        app, ["ci", "--diff", docs_diff, "--base-sha", "a", "--head-sha", "b"],
     )
     assert result.exit_code != 0
     combined = (result.stdout or "") + (result.stderr or "")
@@ -136,3 +137,31 @@ def test_ci_diff_file_option(tmp_path, monkeypatch):
         app, ["ci", "--diff-file", str(diff_file), "--base-sha", "a", "--head-sha", "b"],
     )
     assert result.exit_code == 0, result.stdout
+
+
+def test_ci_rejects_both_diff_flags(tmp_path, monkeypatch):
+    """Passing both --diff and --diff-file must exit 64 (sysexits.h EX_USAGE)."""
+    monkeypatch.chdir(tmp_path)
+    _init_project(tmp_path)
+    diff_file = tmp_path / "pr.patch"
+    diff_file.write_text("diff --git a/x b/x\n@@\n+y\n")
+    result = runner.invoke(
+        app,
+        [
+            "ci", "--diff", "diff --git a/x b/x\n@@\n+z\n",
+            "--diff-file", str(diff_file),
+        ],
+    )
+    assert result.exit_code == 64
+    combined = (result.stdout or "") + (result.stderr or "")
+    assert "mutually exclusive" in combined.lower()
+
+
+def test_ci_rejects_when_neither_diff_flag_given(tmp_path, monkeypatch):
+    """Omitting both --diff and --diff-file must exit 64."""
+    monkeypatch.chdir(tmp_path)
+    _init_project(tmp_path)
+    result = runner.invoke(app, ["ci", "--base-sha", "a", "--head-sha", "b"])
+    assert result.exit_code == 64
+    combined = (result.stdout or "") + (result.stderr or "")
+    assert "exactly one" in combined.lower()

@@ -44,13 +44,44 @@ def init_cmd() -> None:
 @app.command("ci")
 def ci_cmd(
     pr: str | None = typer.Option(None, "--pr", help="Pull request number (informational)."),
-    diff: str = typer.Option("", "--diff", help="Unified diff text."),
-    diff_file: Path | None = typer.Option(None, "--diff-file", help="Path to a unified diff."),
-    base_sha: str | None = typer.Option(None, "--base-sha"),
-    head_sha: str | None = typer.Option(None, "--head-sha"),
-    config: Path = typer.Option(Path(".loupe/config.yaml"), "--config"),
+    diff: str = typer.Option(
+        "", "--diff",
+        help="Unified diff text (mutually exclusive with --diff-file).",
+    ),
+    diff_file: Path | None = typer.Option(
+        None, "--diff-file",
+        help="Path to a unified diff (mutually exclusive with --diff).",
+    ),
+    base_sha: str | None = typer.Option(
+        None, "--base-sha", help="Base commit SHA of the diff (informational)."
+    ),
+    head_sha: str | None = typer.Option(
+        None, "--head-sha", help="Head commit SHA of the diff (informational)."
+    ),
+    config: Path = typer.Option(
+        Path(".loupe/config.yaml"), "--config",
+        help="Path to the Loupe config file.",
+    ),
 ) -> None:
-    """Run Loupe in CI mode on a unified diff."""
+    """Run Loupe in CI mode on a unified diff.
+
+    Exactly one of ``--diff`` (raw text) or ``--diff-file`` (path) is
+    required. Passing both, or neither, exits with code 64 (sysexits.h
+    EX_USAGE) — matching the contract documented in
+    ``loupe-action/action.yml``.
+    """
+    if diff and diff_file is not None:
+        typer.echo(
+            "error: --diff and --diff-file are mutually exclusive",
+            err=True,
+        )
+        raise typer.Exit(code=USAGE_ERROR)
+    if not diff and diff_file is None:
+        typer.echo(
+            "error: provide exactly one of --diff or --diff-file",
+            err=True,
+        )
+        raise typer.Exit(code=USAGE_ERROR)
     text = diff_file.read_text() if diff_file is not None else diff
     raise typer.Exit(code=ci_command(text, base_sha, head_sha, config))
 
