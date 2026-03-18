@@ -9,6 +9,7 @@ HTML comment.
 
 from __future__ import annotations
 
+import re
 from collections import Counter
 from collections.abc import Iterable
 
@@ -17,6 +18,23 @@ from loupe_core.artifacts.threat import Threat
 from loupe_core.artifacts.types import Severity, StrideCategory
 
 COMMENT_SENTINEL = "<!-- loupe-action:sticky-comment v1 -->"
+
+_MD_SPECIAL = re.compile(r"([\\*_`\[\]<>])")
+
+
+def markdown_escape(text: str) -> str:
+    """Escape Markdown special characters AND strip HTML-comment end-marker.
+
+    Agent-supplied text (threat titles, descriptions) gets interpolated into
+    the sticky-comment body. An attacker controlling the threat title could
+    otherwise break sticky-comment formatting (``**``, ``[`` ``]``) or — more
+    seriously — close the ``COMMENT_SENTINEL`` HTML-comment marker with
+    ``-->``, which would change what the find-or-create loop matches on.
+
+    The end-marker is stripped rather than escaped because backslash-escaping
+    has no effect inside HTML comments; deletion is the only safe move.
+    """
+    return _MD_SPECIAL.sub(r"\\\1", text).replace("-->", "")
 
 _SEVERITY_ORDER: tuple[Severity, ...] = (
     Severity.CRITICAL,
@@ -83,8 +101,10 @@ def _findings_section(threats: list[Threat]) -> str:
         lines.append("")
         for t in bucket:
             stride = _STRIDE_LABEL.get(t.stride_category, t.stride_category.value)
-            lines.append(f"- **{t.id} — {t.title}**  ({stride})")
-            lines.append(f"  {t.description.splitlines()[0]}")
+            safe_title = markdown_escape(t.title)
+            safe_first_line = markdown_escape(t.description.splitlines()[0])
+            lines.append(f"- **{t.id} — {safe_title}**  ({stride})")
+            lines.append(f"  {safe_first_line}")
             if t.mitigation_ids:
                 lines.append(f"  Mitigations: {', '.join(t.mitigation_ids)}")
         lines.append("")

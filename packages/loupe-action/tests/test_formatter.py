@@ -5,6 +5,7 @@ from datetime import UTC, date, datetime
 from loupe_action.formatter import (
     COMMENT_SENTINEL,
     format_pr_comment,
+    markdown_escape,
 )
 from loupe_core.artifacts.run_record import LensConsidered, RunRecord
 from loupe_core.artifacts.threat import Threat
@@ -121,6 +122,50 @@ def test_comment_lists_proposed_patches_when_present():
     record.proposed_patches = [".proposed/context.md.patch"]
     body = format_pr_comment(record=record, threats=[])
     assert ".proposed/context.md.patch" in body
+
+
+def test_markdown_escape_escapes_emphasis_and_links():
+    out = markdown_escape("API leaks **secrets** in [logs](evil.com)")
+    # Asterisks and brackets must be backslash-escaped so the rendered
+    # comment shows the literal characters rather than bold/link syntax.
+    assert "**secrets**" not in out
+    assert "\\*\\*secrets\\*\\*" in out
+    assert "\\[logs\\]" in out
+
+
+def test_markdown_escape_strips_html_comment_end_marker():
+    # Inside HTML comments, backslash-escaping is meaningless — a `-->`
+    # would close the sticky-comment sentinel, so we delete it outright.
+    out = markdown_escape("evil --> attempt")
+    assert "-->" not in out
+
+
+def test_format_pr_comment_escapes_markdown_in_threat_title():
+    threats = [
+        _threat(
+            "T-001",
+            Severity.HIGH,
+            title="API leaks **secrets** in [logs](evil.com)",
+        )
+    ]
+    body = format_pr_comment(record=_run_record(), threats=threats)
+    # Bold markers must be neutralised so a hostile title doesn't reformat
+    # the comment.
+    assert "**secrets**" not in body
+    # The bracket characters in the title must be escaped (separate from the
+    # severity-header `]` characters that we don't touch).
+    after_title = body.split("API leaks")[1][:80]
+    assert "\\[logs\\]" in after_title
+
+
+def test_format_pr_comment_strips_html_comment_end_marker_from_threat_title():
+    threats = [_threat("T-001", Severity.HIGH, title="evil --> close sentinel")]
+    body = format_pr_comment(record=_run_record(), threats=threats)
+    # The only `-->` allowed in the body is the one inside our own sentinel.
+    title_line = next(
+        line for line in body.splitlines() if "evil" in line and "close" in line
+    )
+    assert "-->" not in title_line
 
 
 def test_severity_counts_in_summary_line():
