@@ -99,3 +99,34 @@ def test_real_entry_points_discover_bundled_backends():
     reg = CapabilityRegistry.discover()
     assert "syft" in reg.list_backends("sbom")
     assert "grype" in reg.list_backends("cve")
+
+
+def test_resolve_attaches_options_to_instances():
+    """Each resolved instance carries the operator-supplied ``options`` mapping."""
+    reg = _make_registry()
+    backends = reg.resolve(
+        capability="sbom",
+        backend_names=["syft", "trivy"],
+        options={"database_path": "/srv/codeql/db"},
+    )
+    for b in backends:
+        assert b.options == {"database_path": "/srv/codeql/db"}
+
+
+def test_resolve_attaches_empty_options_when_unspecified():
+    """When the operator omits ``options``, instances get ``{}`` not ``None``."""
+    reg = _make_registry()
+    backends = reg.resolve(capability="sbom", backend_names=["syft"])
+    assert backends[0].options == {}
+
+
+def test_resolve_options_are_per_instance_not_shared():
+    """Mutating one instance's options must not bleed into siblings."""
+    reg = _make_registry()
+    backends = reg.resolve(
+        capability="sbom",
+        backend_names=["syft", "trivy"],
+        options={"k": "v"},
+    )
+    backends[0].options["k"] = "mutated"
+    assert backends[1].options == {"k": "v"}

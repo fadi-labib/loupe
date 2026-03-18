@@ -52,18 +52,40 @@ def _result(
 # ---------------------------------------------------------------------------
 
 
-def test_locate_database_env_var_wins(tmp_path, monkeypatch):
-    """LOUPE_CODEQL_DB overrides the default discovery path."""
+def test_locate_database_typed_option_wins(tmp_path, monkeypatch):
+    """Typed `database_path` overrides env var and default-path discovery."""
+    import warnings
+
+    typed_db = tmp_path / "typed-db"
+    typed_db.mkdir()
+    env_db = tmp_path / "env-db"
+    env_db.mkdir()
+    repo_db = tmp_path / "repo" / ".codeql-db"
+    repo_db.mkdir(parents=True)
+    monkeypatch.setenv("LOUPE_CODEQL_DB", str(env_db))
+    # The typed option should win, and we should NOT emit DeprecationWarning
+    # because the env var is never consulted.
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", DeprecationWarning)
+        assert _locate_database(
+            tmp_path / "repo", database_path=str(typed_db),
+        ) == typed_db
+
+
+def test_locate_database_env_var_emits_deprecation_warning(tmp_path, monkeypatch):
+    """LOUPE_CODEQL_DB still works but is deprecated."""
     env_db = tmp_path / "explicit-db"
     env_db.mkdir()
     repo_db = tmp_path / "repo" / ".codeql-db"
     repo_db.mkdir(parents=True)
     monkeypatch.setenv("LOUPE_CODEQL_DB", str(env_db))
-    assert _locate_database(tmp_path / "repo") == env_db
+    with pytest.warns(DeprecationWarning, match="LOUPE_CODEQL_DB is deprecated"):
+        result = _locate_database(tmp_path / "repo")
+    assert result == env_db
 
 
 def test_locate_database_falls_back_to_default(tmp_path, monkeypatch):
-    """Without env override, .codeql-db/ in the repo is picked up."""
+    """Without typed option or env override, .codeql-db/ in the repo is picked up."""
     monkeypatch.delenv("LOUPE_CODEQL_DB", raising=False)
     repo_db = tmp_path / ".codeql-db"
     repo_db.mkdir()
@@ -78,7 +100,58 @@ def test_locate_database_returns_none_when_nothing_present(tmp_path, monkeypatch
 def test_locate_database_ignores_env_when_path_missing(tmp_path, monkeypatch):
     """A stale LOUPE_CODEQL_DB pointing at a nonexistent path should not crash."""
     monkeypatch.setenv("LOUPE_CODEQL_DB", str(tmp_path / "does-not-exist"))
-    assert _locate_database(tmp_path) is None
+    with pytest.warns(DeprecationWarning):
+        assert _locate_database(tmp_path) is None
+
+
+def test_locate_database_ignores_typed_option_when_path_missing(tmp_path, monkeypatch):
+    """A stale typed `database_path` falls through to env-var / default."""
+    monkeypatch.delenv("LOUPE_CODEQL_DB", raising=False)
+    assert _locate_database(
+        tmp_path, database_path=str(tmp_path / "does-not-exist"),
+    ) is None
+
+
+@pytest.mark.asyncio
+async def test_backend_reads_database_path_from_options(tmp_path, monkeypatch):
+    """The backend instance's ``options['database_path']`` is honoured and does NOT
+    consult LOUPE_CODEQL_DB (no DeprecationWarning emitted)."""
+    import warnings
+
+    typed_db = tmp_path / "typed-db"
+    typed_db.mkdir()
+    monkeypatch.delenv("LOUPE_CODEQL_DB", raising=False)
+
+    backend = CodeQLStaticBackend()
+    backend.options = {"database_path": str(typed_db)}
+
+    sarif_payload = _sarif(_result(file="src/typed.py", line=99))
+    mock_proc = MagicMock()
+    mock_proc.returncode = 0
+    mock_proc.stdout = ""
+    mock_proc.stderr = ""
+
+    captured_cmd: list[str] = []
+
+    def _fake_run(cmd, **_kwargs):
+        captured_cmd.extend(cmd)
+        for arg in cmd:
+            if isinstance(arg, str) and arg.startswith("--output="):
+                Path(arg.split("=", 1)[1]).write_text(sarif_payload)
+                break
+        return mock_proc
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", DeprecationWarning)
+        with (
+            patch("shutil.which", return_value="/usr/bin/codeql"),
+            patch("subprocess.run", side_effect=_fake_run),
+        ):
+            result = await backend.run(tmp_path)
+
+    # The typed db path should be the one passed to `codeql database analyze`.
+    assert str(typed_db) in captured_cmd
+    assert result.findings[0].file == "src/typed.py"
 
 
 # ---------------------------------------------------------------------------

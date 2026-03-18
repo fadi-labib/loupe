@@ -108,7 +108,11 @@ async def _run_one(
     ctx: RunContext,
     repo_path: Path,
 ) -> Any:
-    backends = registry.resolve(capability=capability, backend_names=activation.backends)
+    backends = registry.resolve(
+        capability=capability,
+        backend_names=activation.backends,
+        options=activation.options,
+    )
     args = _args_for(capability, ctx=ctx, repo_path=repo_path)
     result_type = _RESULT_TYPES.get(capability)
     if result_type is None:

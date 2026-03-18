@@ -15,12 +15,16 @@ already run::
         --source-root=<repo>
 
 before invoking ``loupe ci``. The backend locates the database in one
-of two ways, in order:
+of three ways, in order:
 
-1. ``LOUPE_CODEQL_DB`` environment variable (operator-controlled)
-2. ``<repo>/.codeql-db/`` directory if it exists
+1. ``capabilities.static_analysis.options.database_path`` from
+   ``.loupe/config.yaml`` (preferred — explicit, typed, visible in
+   the audit trail).
+2. ``LOUPE_CODEQL_DB`` environment variable. **Deprecated**:
+   emits ``DeprecationWarning``. Will be removed in a future minor.
+3. ``<repo>/.codeql-db/`` directory if it exists.
 
-When neither is present we raise BackendError with the canonical
+When none is present we raise BackendError with the canonical
 ``codeql database create`` command so the operator can fix the setup
 without grepping docs.
 
@@ -35,6 +39,7 @@ import os
 import shutil
 import subprocess
 import tempfile
+import warnings
 from pathlib import Path
 
 from loupe_core.capabilities.errors import BackendError
@@ -56,10 +61,19 @@ _SARIF_LEVEL_MAP: dict[str, Severity] = {
 
 
 class CodeQLStaticBackend:
-    """CodeQL as a corroboration backend for static_analysis (consensus mode)."""
+    """CodeQL as a corroboration backend for static_analysis (consensus mode).
+
+    The optional ``options`` attribute (set by the registry from
+    ``CapabilityActivation.options``) may carry ``"database_path"`` —
+    the typed replacement for the deprecated ``LOUPE_CODEQL_DB`` env var.
+    """
 
     name = "static_analysis"
     backend_name = "codeql"
+
+    # Populated by ``CapabilityRegistry.resolve`` from the operator's
+    # ``capabilities.static_analysis.options`` mapping. Empty if unset.
+    options: dict[str, str] = {}
 
     async def run(self, repo_path: Path) -> StaticAnalysisResult:
         if shutil.which("codeql") is None:
@@ -71,7 +85,8 @@ class CodeQLStaticBackend:
                 ),
             )
 
-        db_path = _locate_database(repo_path)
+        configured_db = self.options.get("database_path") if self.options else None
+        db_path = _locate_database(repo_path, database_path=configured_db)
         if db_path is None:
             raise BackendError(
                 backend_name=self.backend_name,
@@ -121,10 +136,37 @@ class CodeQLStaticBackend:
         )
 
 
-def _locate_database(repo_path: Path) -> Path | None:
-    """Return the CodeQL database path or None if neither convention applies."""
+def _locate_database(
+    repo_path: Path,
+    *,
+    database_path: str | None = None,
+) -> Path | None:
+    """Return the CodeQL database path or None if no source resolves.
+
+    Resolution order:
+
+    1. ``database_path`` (typed config from ``CapabilityActivation.options``).
+    2. ``LOUPE_CODEQL_DB`` env var (deprecated — emits ``DeprecationWarning``).
+    3. ``<repo_path>/.codeql-db`` convention directory.
+
+    A stale path that points at a non-existent location is treated as
+    "not configured" rather than an error, matching the pre-existing
+    forgiving behaviour for env-var paths.
+    """
+    if database_path:
+        candidate = Path(database_path)
+        if candidate.exists():
+            return candidate
     env_path = os.environ.get("LOUPE_CODEQL_DB")
     if env_path:
+        warnings.warn(
+            "LOUPE_CODEQL_DB is deprecated; configure "
+            "`capabilities.static_analysis.options.database_path` in "
+            ".loupe/config.yaml instead. The env-var fallback will be "
+            "removed in a future minor.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         candidate = Path(env_path)
         if candidate.exists():
             return candidate

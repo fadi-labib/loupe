@@ -49,8 +49,19 @@ class CapabilityRegistry:
     def list_backends(self, capability: str) -> list[str]:
         return sorted(self._backends.get(capability, {}).keys())
 
-    def resolve(self, *, capability: str, backend_names: list[str]) -> list[Any]:
+    def resolve(
+        self,
+        *,
+        capability: str,
+        backend_names: list[str],
+        options: dict[str, str] | None = None,
+    ) -> list[Any]:
         """Return instantiated backends in the order requested.
+
+        ``options`` (from ``CapabilityActivation.options``) is attached to
+        each instance as ``.options`` so backend implementations that opt
+        into typed configuration (e.g., CodeQL's ``database_path``) can
+        read it without consulting environment variables.
 
         Raises:
             NoBackendsConfiguredError: ``backend_names`` is empty.
@@ -73,5 +84,8 @@ class CapabilityRegistry:
             # tell which backend produced a given result.
             if not hasattr(instance, "backend_name") or not instance.backend_name:
                 instance.backend_name = name
+            # Hand the operator's per-capability options to the instance.
+            # Backends that don't care silently ignore the attribute.
+            instance.options = dict(options) if options else {}
             instances.append(instance)
         return instances

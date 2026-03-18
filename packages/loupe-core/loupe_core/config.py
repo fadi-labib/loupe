@@ -114,6 +114,13 @@ class CapabilityActivation(BaseModel):
         default=None, ge=1,
         description="Required when `mode == 'consensus'`. Must be ≥1 and ≤ `len(backends)`.",
     )
+    options: dict[str, str] = Field(
+        default_factory=dict,
+        description=(
+            "Backend-specific options (e.g., codeql `{'database_path': '/path/to/db'}`). "
+            "Keys/values are backend-defined; unknown keys are ignored."
+        ),
+    )
 
     @model_validator(mode="after")
     def _validate_consensus(self) -> Self:
