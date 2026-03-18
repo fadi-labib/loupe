@@ -37,34 +37,92 @@ def write_agent_artifact(boundary: PathBoundary, path: Path, content: str) -> st
             f"Path '{path}' is not in agent_writable_paths. "
             f"Use propose_patch() for human-owned files."
         )
-    # Refuse to follow any symlink — at the target itself or anywhere in its
-    # ancestry. A pre-planted symlink would otherwise redirect the write
-    # outside the Layer 1 boundary (TOCTOU breach).
-    if path.is_symlink():
-        raise BoundaryViolation(
-            f"refused to follow symlink at target {str(path)!r}"
-        )
-    for parent in path.parents:
-        if parent.is_symlink():
-            raise BoundaryViolation(
-                f"refused to follow symlinked parent {str(parent)!r} of {str(path)!r}"
+    # Walk the entire parent chain from the filesystem root using anchored
+    # file descriptors, with O_DIRECTORY | O_NOFOLLOW on every step. This is
+    # the only TOCTOU-safe way to ensure no component is (or is swapped for)
+    # a symlink between check and use: each component is verified atomically
+    # at open time. The previous `path.is_symlink()` + `for parent in
+    # path.parents: parent.is_symlink()` loop was racy — any parent could be
+    # replaced after the check and before the final open. O_NOFOLLOW on the
+    # final open only protects the leaf, not intermediate components.
+    abs_path = Path(os.path.abspath(path))
+    parts = abs_path.parts
+    if not parts:
+        raise BoundaryViolation(f"refused empty path {str(path)!r}")
+    # On POSIX, abs_path.parts[0] is "/"; that's our trusted anchor.
+    anchor = parts[0]
+    parent_components = parts[1:-1]
+    filename = parts[-1]
+    if not filename:
+        raise BoundaryViolation(f"refused trailing-separator path {str(path)!r}")
+
+    # Open the filesystem root with O_NOFOLLOW. `/` itself cannot be a symlink,
+    # so this is the trusted base for the walk.
+    parent_fd = os.open(anchor, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+    try:
+        for component in parent_components:
+            try:
+                child_fd = os.open(
+                    component,
+                    os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW,
+                    dir_fd=parent_fd,
+                )
+            except FileNotFoundError:
+                # The component doesn't exist yet — create it and re-open.
+                try:
+                    os.mkdir(component, mode=0o755, dir_fd=parent_fd)
+                except FileExistsError:
+                    # Someone created it between our open and mkdir; that's
+                    # fine — we'll re-open below and O_NOFOLLOW will catch a
+                    # symlink if one was planted.
+                    pass
+                except OSError as exc:
+                    raise BoundaryViolation(
+                        f"refused to create directory {component!r}: {exc}"
+                    ) from exc
+                try:
+                    child_fd = os.open(
+                        component,
+                        os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW,
+                        dir_fd=parent_fd,
+                    )
+                except OSError as exc:
+                    raise BoundaryViolation(
+                        f"refused to follow symlink at parent component "
+                        f"{component!r} of {str(path)!r}"
+                    ) from exc
+            except OSError as exc:
+                # ELOOP (O_NOFOLLOW caught a symlink) / ENOTDIR / etc.
+                raise BoundaryViolation(
+                    f"refused to follow symlink at parent component "
+                    f"{component!r} of {str(path)!r}"
+                ) from exc
+            os.close(parent_fd)
+            parent_fd = child_fd
+        # Final open of the leaf. O_NOFOLLOW on the leaf still matters —
+        # rejects a pre-planted symlink at the target itself.
+        try:
+            fd = os.open(
+                filename,
+                os.O_WRONLY | os.O_CREAT | os.O_TRUNC | os.O_NOFOLLOW,
+                0o644,
+                dir_fd=parent_fd,
             )
-    path.parent.mkdir(parents=True, exist_ok=True)
-    # O_NOFOLLOW + O_CREAT + O_TRUNC: if the target is replaced with a symlink
-    # between the check above and the open, the open fails with ELOOP rather
-    # than silently following.
-    flags = os.O_WRONLY | os.O_CREAT | os.O_TRUNC | os.O_NOFOLLOW
-    try:
-        fd = os.open(path, flags, 0o644)
-    except OSError as e:
-        # ELOOP from O_NOFOLLOW indicates a TOCTOU race with a symlink.
-        raise BoundaryViolation(
-            f"refused to follow symlink at target {str(path)!r}"
-        ) from e
-    try:
-        os.write(fd, content.encode("utf-8"))
+        except OSError as exc:
+            raise BoundaryViolation(
+                f"refused to follow symlink at target {str(path)!r}"
+            ) from exc
+        # Wrap the fd in a stdio file object so .write() loops internally
+        # until the full buffer is written. Bare os.write() may short-write
+        # under POSIX, which would silently truncate the artifact. closefd=True
+        # gives ownership of the fd to fdopen so the `with` block closes it.
+        with os.fdopen(fd, "w", encoding="utf-8", closefd=True) as f:
+            f.write(content)
     finally:
-        os.close(fd)
+        try:
+            os.close(parent_fd)
+        except OSError:
+            pass
     return str(path)
 
 
