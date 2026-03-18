@@ -10,6 +10,7 @@ StrideGPT's prompt structure (MIT-licensed prior art).
 """
 from __future__ import annotations
 
+import logging
 import os
 from pathlib import Path
 
@@ -18,9 +19,20 @@ from loupe_core.lens_api import LensCapabilities, McpTool, McpWorkflow
 from loupe_core.pricing import estimate_cost_usd
 from loupe_core.run_context import LensRunPlan, LensUsage, RelevanceScore, RunContext
 
-from loupe_threatlens.agent import DEFAULT_MODEL, AgentDeps, build_agent
+from loupe_threatlens.agent import AgentDeps, build_agent
 from loupe_threatlens.mcp_tools import register_threatlens_mcp_tools
 from loupe_threatlens.user_prompt import build_user_prompt
+
+logger = logging.getLogger(__name__)
+
+# Fallback model id used only when `THREATLENS_MODEL` is unset. The
+# project's `models.default` in loupe.yaml is the preferred selector,
+# but `RunContext` does not yet carry the resolved config; until that
+# wiring lands, this constant is the single source of truth for the
+# fallback. Lives here (not in agent.py) because env resolution is a
+# lens-level concern per principle §3 — the agent module is intentionally
+# provider-agnostic.
+_FALLBACK_MODEL_ID = "anthropic:claude-opus-4-7"
 
 _CODE_EXTS = (
     ".py", ".ts", ".tsx", ".js", ".jsx", ".go", ".rs",
@@ -125,7 +137,12 @@ class ThreatLens:
         return value is discarded. Structured artefacts written through
         the Layer-1-enforced tool surface are the only product.
         """
-        model_id = os.environ.get("THREATLENS_MODEL", DEFAULT_MODEL)
+        # Single env-var resolution site for THREATLENS_MODEL. Everything
+        # downstream (agent construction, attribution, usage telemetry)
+        # receives this resolved id explicitly so env mutations between
+        # resolution and use cannot cause drift.
+        model_id = os.environ.get("THREATLENS_MODEL", _FALLBACK_MODEL_ID)
+        logger.info("ThreatLens using model: %s", model_id)
         agent = build_agent(model_id)
         deps = AgentDeps(
             ctx=ctx,

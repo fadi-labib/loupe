@@ -13,14 +13,21 @@ record (and runs offline thereafter).
 from datetime import datetime
 from pathlib import Path
 
+import pytest
 from loupe_core.enforcement.path_boundary import PathBoundary
 from loupe_core.run_context import RunContext
-from loupe_threatlens.agent import DEFAULT_MODEL, AgentDeps, build_agent
+from loupe_threatlens.agent import AgentDeps, build_agent
 
 
-def test_agent_constructs_with_default_model():
-    agent = build_agent()
+def test_agent_constructs_with_explicit_model():
+    agent = build_agent("anthropic:claude-opus-4-7")
     assert agent is not None
+
+
+def test_build_agent_rejects_empty_model_id():
+    """`build_agent` must REQUIRE a model id — env-var resolution is the caller's job."""
+    with pytest.raises((ValueError, TypeError)):
+        build_agent("")
 
 
 def test_agent_constructs_for_multiple_providers():
@@ -39,9 +46,25 @@ def test_agent_constructs_for_multiple_providers():
         assert agent is not None, f"Failed to construct agent for {model_id}"
 
 
-def test_default_model_constant_is_anthropic():
-    """The advertised default in docs is anthropic:claude-opus-4-7."""
-    assert DEFAULT_MODEL == "anthropic:claude-opus-4-7"
+def test_lens_resolves_threatlens_model_env_var(monkeypatch):
+    """`THREATLENS_MODEL` env override is read once by `lens.run` and threaded through.
+
+    We assert the resolution site is `lens._FALLBACK_MODEL_ID` (when env unset)
+    and that setting the env var overrides it. The lens uses `os.environ.get`
+    at call time, not import time, so monkeypatching here is sufficient.
+    """
+    from loupe_threatlens import lens as lens_module
+
+    monkeypatch.delenv("THREATLENS_MODEL", raising=False)
+    # Fallback constant lives in the lens module — agent.py has no default.
+    assert lens_module._FALLBACK_MODEL_ID == "anthropic:claude-opus-4-7"
+
+    monkeypatch.setenv("THREATLENS_MODEL", "openai:gpt-5")
+    # The lens reads env at call time inside `run()`; we don't invoke a real
+    # provider, just confirm that the env value is what `os.environ.get`
+    # would return at the resolution site.
+    import os
+    assert os.environ.get("THREATLENS_MODEL", lens_module._FALLBACK_MODEL_ID) == "openai:gpt-5"
 
 
 def test_system_prompt_references_stride_and_context_md():

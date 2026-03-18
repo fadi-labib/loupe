@@ -1,11 +1,16 @@
 """PydanticAI agent for ThreatLens.
 
 Builds a configured `Agent` instance that:
-- Uses the model named in `THREATLENS_MODEL` env (default: anthropic:claude-opus-4-7)
+- Uses the model identifier resolved by the caller (typically `lens.run`,
+  which reads `THREATLENS_MODEL` once and passes the result here)
 - Loads its system prompt from prompts/system.md
 - Exposes propose_threat as a tool that the model can call
 - Receives an `AgentDeps` carrying the shared RunContext, the Layer-1 boundary,
   the loupe directory, and the model identifier (for proposed_by attribution)
+
+Per principle §3 (multi-LLM by default), this module does NOT hardcode a
+default provider/model. Env-var resolution lives in exactly one place —
+`lens.run` — and the resolved id is passed into `build_agent` explicitly.
 
 The agent itself is built lazily by `build_agent()` so the module imports
 without needing any provider SDK installed — the actual Anthropic / OpenAI /
@@ -13,7 +18,6 @@ etc. client is only instantiated when `agent.run(...)` is called.
 """
 from __future__ import annotations
 
-import os
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -27,8 +31,6 @@ from loupe_threatlens.tools import (
     ProposeThreatResult,
     propose_threat_impl,
 )
-
-DEFAULT_MODEL = "anthropic:claude-opus-4-7"
 
 
 @dataclass
@@ -53,18 +55,23 @@ def _load_system_prompt() -> str:
     return _SYSTEM_PROMPT_PATH.read_text()
 
 
-def build_agent(model_id: str | None = None) -> Agent[AgentDeps, str]:
-    """Construct the ThreatLens PydanticAI agent.
+def build_agent(model_id: str) -> Agent[AgentDeps, str]:
+    """Construct the ThreatLens PydanticAI agent for the given model id.
+
+    `model_id` is REQUIRED — env-var resolution is the caller's job (see
+    `lens.run`). This keeps env reads to a single site and prevents drift
+    when env mutates between resolution and agent construction.
 
     The actual provider SDK call only happens when `agent.run(...)` is invoked;
     this function is safe to call without any API key set.
     """
-    effective_model = model_id or os.environ.get("THREATLENS_MODEL", DEFAULT_MODEL)
+    if not model_id:
+        raise ValueError("build_agent requires a non-empty model_id")
     # `defer_model_check=True` postpones provider API-key validation until
     # the first `agent.run()` call. This lets tests and dry-runs construct
     # an agent without keys set, while still failing loudly at invocation.
     agent: Agent[AgentDeps, str] = Agent(
-        model=effective_model,
+        model=model_id,
         deps_type=AgentDeps,
         system_prompt=_load_system_prompt(),
         model_settings={"temperature": 0.0},
