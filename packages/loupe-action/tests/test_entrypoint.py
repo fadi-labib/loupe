@@ -200,6 +200,49 @@ async def test_entrypoint_skips_comment_when_mode_is_none(tmp_path: Path):
     assert posted == []  # comment_mode=none honoured
 
 
+@pytest.mark.asyncio
+async def test_entrypoint_propagates_ci_exit_64_without_on_disk_gate(tmp_path: Path):
+    # ``loupe ci`` returns 64 for usage/config errors. The action used to
+    # fold that with the on-disk gate via boolean-OR, which (a) could
+    # change the surfaced exit code and (b) re-ran the gate logic even
+    # when ci_command had already reported it couldn't run. Now we trust
+    # ci_exit when it's non-zero and skip the on-disk gate entirely.
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    _seed_workspace(workspace)
+    # Seed a high-severity threat: if the on-disk gate were re-run, it
+    # would return 1, which would mask the real 64.
+    _seed_threats(workspace, ["high"])
+    output = tmp_path / "gh_output"
+    handler = _api_handler(posted_bodies=[])
+
+    with patch("loupe_action.entrypoint.ci_command", return_value=64):
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+            exit_code = await entrypoint.run(
+                env=_env(workspace, output), client=client, cwd=workspace
+            )
+    assert exit_code == 64
+    assert "exit_code=64" in output.read_text()
+
+
+@pytest.mark.asyncio
+async def test_entrypoint_propagates_ci_exit_1_without_on_disk_gate(tmp_path: Path):
+    # When ci_command reports gate failure (1), pass it through directly
+    # rather than OR-folding with the on-disk re-run.
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    _seed_workspace(workspace)
+    output = tmp_path / "gh_output"
+    handler = _api_handler(posted_bodies=[])
+
+    with patch("loupe_action.entrypoint.ci_command", return_value=1):
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+            exit_code = await entrypoint.run(
+                env=_env(workspace, output), client=client, cwd=workspace
+            )
+    assert exit_code == 1
+
+
 def test_main_returns_64_for_input_error(monkeypatch):
     # No GITHUB_TOKEN: parse_inputs raises InputError; main() must map this
     # to exit 64 (EX_USAGE) rather than letting a traceback escape.

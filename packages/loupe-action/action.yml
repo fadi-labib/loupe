@@ -59,7 +59,7 @@ outputs:
     description: 'Self-hash of the run record (links into the audit chain)'
     value: ${{ steps.loupe.outputs.run_hash }}
   exit_code:
-    description: 'Final exit code (0 clean, 1 gate failed, 64 usage error)'
+    description: 'Final exit code (0 clean, 1 gate failed, 64 usage / configuration error)'
     value: ${{ steps.loupe.outputs.exit_code }}
 runs:
   using: 'composite'

@@ -81,9 +81,18 @@ async def run(*, env: dict[str, str], client: httpx.AsyncClient, cwd: Path) -> i
             api_url=inputs.github_api_url,
         ).post(body=body)
 
-    config = load_config(workspace / inputs.config_path)
-    gate_exit = _gate_exit_code(threats=threats, fail_on=config.ci.fail_on)
-    final_exit = ci_exit or gate_exit
+    # Trust the in-memory gate verdict from ``loupe ci``. The on-disk gate
+    # is only used as a sanity check when ``ci_command`` reports clean.
+    # Without this ordering, a pessimistic OR between in-memory and on-disk
+    # verdicts can surface exit codes that ``action.yml`` doesn't document
+    # (e.g. 64 OR 1 → 65) and obscures the user-facing failure reason.
+    if ci_exit == 64:
+        final_exit = 64  # usage/config error — surface directly
+    elif ci_exit != 0:
+        final_exit = ci_exit  # gate failure or other ci-mode failure
+    else:
+        config = load_config(workspace / inputs.config_path)
+        final_exit = _gate_exit_code(threats=threats, fail_on=config.ci.fail_on)
 
     _write_outputs(
         inputs=inputs,
