@@ -21,6 +21,9 @@ from loupe_core.enforcement.path_boundary import PathBoundary
 from loupe_core.lens_registry import discover_lenses
 from loupe_core.mcp_server import build_mcp_server
 
+# BSD sysexits.h EX_USAGE — operator-config / usage errors.
+USAGE_ERROR = 64
+
 
 def mcp_command(loupe_dir: Path) -> int:
     """Build and run the MCP server bound to ``loupe_dir``.
@@ -32,8 +35,8 @@ def mcp_command(loupe_dir: Path) -> int:
 
     Returns the exit code. Under normal operation the server runs until
     the client disconnects (closes stdin); we return 0 in that case.
-    Returns 2 when ``loupe_dir`` doesn't exist, matching the convention
-    used by ``loupe ci`` / ``loupe verify``.
+    Returns 64 (sysexits.h EX_USAGE) when ``loupe_dir`` doesn't exist,
+    matching the convention used by ``loupe ci`` / ``loupe verify``.
     """
     if not loupe_dir.exists():
         typer.echo(
@@ -41,7 +44,7 @@ def mcp_command(loupe_dir: Path) -> int:
             f"--loupe-dir.",
             err=True,
         )
-        return 2
+        return USAGE_ERROR
 
     lenses = discover_lenses()
     # Load the operator's config so the same agent_writable_paths allow-list

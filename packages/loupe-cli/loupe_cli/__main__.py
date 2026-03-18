@@ -11,6 +11,12 @@ from loupe_cli.mcp_cmd import mcp_command
 from loupe_cli.scan_cmd import scan_command
 from loupe_cli.verify_cmd import verify_command
 
+# BSD sysexits.h: usage / operator-config errors land on exit code 64.
+# Mirrors what `loupe-action/action.yml` documents and what `EX_USAGE`
+# means in sysexits(3). Gate failures (cfg.ci.fail_on triggered) keep
+# exit 1 — they're NOT usage errors, they're "policy said fail."
+USAGE_ERROR = 64
+
 app = typer.Typer(no_args_is_help=True, add_completion=False)
 
 # `loupe lens ...` and `loupe cap ...` are noun-then-verb subcommand groups

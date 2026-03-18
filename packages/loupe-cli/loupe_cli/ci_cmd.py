@@ -41,6 +41,10 @@ from loupe_core.lens_registry import discover_lenses
 from loupe_core.pricing import cache_hit_rate as _cache_hit_rate
 from loupe_core.run_context import BootstrapInputs, RunContext
 
+# BSD sysexits.h EX_USAGE — operator-config / usage errors.
+# Gate failures (cfg.ci.fail_on triggered) keep exit 1 by contract.
+USAGE_ERROR = 64
+
 
 def ci_command(
     diff: str,
@@ -56,7 +60,7 @@ def ci_command(
             "Run `loupe init` first.",
             err=True,
         )
-        return 2
+        return USAGE_ERROR
 
     cfg = load_config(config_path)
     boundary = PathBoundary(writable_globs=cfg.agent_writable_paths)

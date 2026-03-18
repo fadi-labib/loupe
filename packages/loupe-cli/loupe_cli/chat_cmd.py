@@ -19,6 +19,9 @@ import sys
 
 import typer
 
+# BSD sysexits.h EX_USAGE — operator-config / usage errors.
+USAGE_ERROR = 64
+
 
 def chat_command() -> int:
     if not sys.stdin.isatty():
@@ -27,7 +30,7 @@ def chat_command() -> int:
             "Use `loupe ci` for headless / scripted contexts.",
             err=True,
         )
-        return 2
+        return USAGE_ERROR
     typer.echo("loupe chat — interactive mode")
     typer.echo("(Full conversational REPL is a v1.x feature; not yet implemented.)")
     return 0

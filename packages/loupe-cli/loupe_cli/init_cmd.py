@@ -19,6 +19,9 @@ from pathlib import Path
 import typer
 from loupe_core.artifacts.knowledge import KnowledgeGraph
 
+# BSD sysexits.h EX_USAGE — operator-config / usage errors.
+USAGE_ERROR = 64
+
 _DEFAULT_CONTEXT = """\
 ---
 schema_version: 1
@@ -105,7 +108,7 @@ def init_command() -> None:
     loupe = cwd / ".loupe"
     if loupe.exists():
         typer.echo(f"Error: {loupe} already exists. Aborting.", err=True)
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=USAGE_ERROR)
     loupe.mkdir()
     (loupe / "context.md").write_text(_DEFAULT_CONTEXT)
     (loupe / "config.yaml").write_text(_DEFAULT_CONFIG)

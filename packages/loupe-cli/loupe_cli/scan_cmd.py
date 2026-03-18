@@ -40,6 +40,9 @@ from loupe_core.lens_api import Lens
 from loupe_core.lens_registry import discover_lenses
 from loupe_core.run_context import BootstrapInputs, RunContext
 
+# BSD sysexits.h EX_USAGE — operator-config / usage errors.
+USAGE_ERROR = 64
+
 
 def scan_command(
     paths: list[str],
@@ -53,7 +56,7 @@ def scan_command(
             "Run `loupe init` first.",
             err=True,
         )
-        return 2
+        return USAGE_ERROR
 
     cfg = load_config(config_path)
     boundary = PathBoundary(writable_globs=cfg.agent_writable_paths)

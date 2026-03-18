@@ -20,6 +20,11 @@ from pathlib import Path
 import typer
 from loupe_core.enforcement.verify import verify_repo
 
+# BSD sysexits.h EX_USAGE — operator-config / usage errors. Verification
+# failures (`return 1` below) keep exit 1: they signal "policy said fail,"
+# not "operator misused the CLI."
+USAGE_ERROR = 64
+
 
 def verify_command(strict: bool = False) -> int:
     cwd = Path.cwd()
@@ -29,7 +34,7 @@ def verify_command(strict: bool = False) -> int:
             "Run `loupe init` first.",
             err=True,
         )
-        return 2
+        return USAGE_ERROR
 
     failures = verify_repo(cwd, strict=strict)
     if not failures:
