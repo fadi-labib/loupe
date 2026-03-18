@@ -70,3 +70,15 @@ def test_init_config_loads(tmp_path, monkeypatch):
     assert cfg.schema_version == 1
     assert "threatlens" in cfg.lenses
     assert ".loupe/threats.yaml" in cfg.agent_writable_paths
+
+
+def test_init_scaffolds_knowledge_in_writable_paths(tmp_path, monkeypatch):
+    """knowledge.yaml MUST be agent-writable from the scaffold — the lens
+    layer promotes facts there on first run; without this entry, the very
+    first lens run hits PathBoundaryViolation."""
+    monkeypatch.chdir(tmp_path)
+    result = runner.invoke(app, ["init"])
+    assert result.exit_code == 0, result.stdout
+    from loupe_core.config import load_config
+    cfg = load_config(tmp_path / ".loupe" / "config.yaml")
+    assert ".loupe/knowledge.yaml" in cfg.agent_writable_paths

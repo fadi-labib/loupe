@@ -85,6 +85,7 @@ agent_writable_paths:
   - .loupe/threat-model.md
   - .loupe/vex.json
   - .loupe/sbom.cdx.json
+  - .loupe/knowledge.yaml
   - .loupe/runs/**
 
 lenses:
