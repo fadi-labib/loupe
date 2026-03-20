@@ -42,9 +42,9 @@ def cap_list_command() -> int:
     with the registered entry-point name and the Python dotted-path.
     """
     registry = CapabilityRegistry.discover()
-    capabilities = sorted(registry._backends.keys())  # noqa: SLF001 — display-only access
+    pairs = registry.list_all()
 
-    if not capabilities:
+    if not pairs:
         typer.echo("No capability backends installed.")
         typer.echo(
             "Install one with: `uv pip install loupe-capabilities-essential` "
@@ -53,11 +53,12 @@ def cap_list_command() -> int:
         )
         return 0
 
-    for capability in capabilities:
-        backends = registry.list_backends(capability)
-        typer.echo(f"\n{capability}")
-        for backend in backends:
-            cls = registry._backends[capability][backend]  # noqa: SLF001
-            dotted = f"{cls.__module__}:{cls.__qualname__}"
-            typer.echo(f"  {backend:<16}{dotted}")
+    current_capability: str | None = None
+    for capability, backend in pairs:
+        if capability != current_capability:
+            typer.echo(f"\n{capability}")
+            current_capability = capability
+        cls = registry.get_backend_class(capability, backend)
+        dotted = f"{cls.__module__}:{cls.__qualname__}"
+        typer.echo(f"  {backend:<16}{dotted}")
     return 0

@@ -49,6 +49,41 @@ class CapabilityRegistry:
     def list_backends(self, capability: str) -> list[str]:
         return sorted(self._backends.get(capability, {}).keys())
 
+    def list_all(self) -> list[tuple[str, str]]:
+        """Return every registered (capability, backend) pair, sorted.
+
+        Public read-only enumeration helper for discovery surfaces (CLI
+        `loupe cap list`, the `verify --strict` install-vs-config check).
+        Returns capability-first ordering: all sbom backends, then all
+        cve backends, etc. Both inner orderings are alphabetical so the
+        output is stable across runs.
+        """
+        pairs: list[tuple[str, str]] = []
+        for capability in sorted(self._backends):
+            for backend in sorted(self._backends[capability]):
+                pairs.append((capability, backend))
+        return pairs
+
+    def get_backend_class(self, capability: str, backend: str) -> type:
+        """Return the registered backend class for display / introspection.
+
+        Read-only counterpart to ``resolve()`` — does NOT instantiate. Used
+        by ``loupe cap list`` to surface the Python dotted path so operators
+        can debug imports without running the backend.
+
+        Raises:
+            CapabilityNotFoundError: capability or backend is unknown.
+        """
+        if capability not in self._backends:
+            raise CapabilityNotFoundError(capability=capability)
+        registered = self._backends[capability]
+        if backend not in registered:
+            raise CapabilityNotFoundError(
+                f"capability '{capability}' has no backend named '{backend}' "
+                f"(registered: {sorted(registered)})"
+            )
+        return registered[backend]
+
     def resolve(
         self,
         *,

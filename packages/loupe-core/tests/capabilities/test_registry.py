@@ -130,3 +130,39 @@ def test_resolve_options_are_per_instance_not_shared():
     )
     backends[0].options["k"] = "mutated"
     assert backends[1].options == {"k": "v"}
+
+
+def test_list_all_returns_every_registered_pair_sorted():
+    """list_all() is the public discovery surface — sorted (capability, backend)."""
+    reg = _make_registry()
+    pairs = reg.list_all()
+    assert pairs == [
+        ("cve", "grype"),
+        ("sbom", "syft"),
+        ("sbom", "trivy"),
+    ]
+
+
+def test_list_all_empty_when_nothing_registered():
+    """An empty registry returns an empty list — never raises."""
+    reg = CapabilityRegistry(backends={})
+    assert reg.list_all() == []
+
+
+def test_get_backend_class_returns_registered_type():
+    reg = _make_registry()
+    assert reg.get_backend_class("sbom", "syft") is FakeSyft
+    assert reg.get_backend_class("cve", "grype") is FakeGrype
+
+
+def test_get_backend_class_raises_on_unknown_capability():
+    reg = _make_registry()
+    with pytest.raises(CapabilityNotFoundError):
+        reg.get_backend_class("quantum_oracles", "x")
+
+
+def test_get_backend_class_raises_on_unknown_backend():
+    reg = _make_registry()
+    with pytest.raises(CapabilityNotFoundError) as exc:
+        reg.get_backend_class("sbom", "snyk")
+    assert "snyk" in str(exc.value)
