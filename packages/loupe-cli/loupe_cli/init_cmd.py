@@ -59,7 +59,12 @@ _DEFAULT_CONFIG = """\
 schema_version: 1
 
 models:
+  # PydanticAI native `provider:model` form. Loupe is multi-LLM by design
+  # (principle §3) — pick whichever provider matches your team's setup.
   default: anthropic:claude-opus-4-7
+  # default: openai:gpt-5
+  # default: google-gla:gemini-2.5-pro
+  # default: ollama:llama-3.3-70b  # local, no API key
 
 limits:
   per_run_max_usd: 2.50
