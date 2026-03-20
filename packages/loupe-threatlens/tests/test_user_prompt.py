@@ -178,8 +178,10 @@ def test_elements_section_falls_back_when_empty():
 
 
 def test_sections_appear_in_canonical_order():
-    """Focus → project → diff → SBOM → CVE → elements. Order matters because
-    the agent reads top-to-bottom and the prompt is cached against this layout."""
+    """Stable prefix (project → diff → SBOM → CVE → elements) precedes the
+    variable suffix (focus / sub_prompt). The focus section is moved to the
+    trailing slot so Anthropic prompt caching can pin a breakpoint at the
+    end of the stable prefix [principle §8 cost discipline, D-10]."""
     ctx = _ctx(
         sbom=SbomResult(
             components=[SbomComponent(name="x", version="1")],
@@ -197,15 +199,50 @@ def test_sections_appear_in_canonical_order():
     )
     out = build_user_prompt(ctx, _plan())
     sections_in_order = [
-        "## Focus for this run",
         "## Project context",
         "## Code changes",
         "## SBOM components",
         "## CVE findings",
         "## Known architectural elements",
+        "## Focus for this run",
     ]
     last_index = -1
     for marker in sections_in_order:
         idx = out.find(marker)
         assert idx > last_index, f"{marker} appeared out of order"
         last_index = idx
+
+
+def test_user_prompt_prefix_stable_across_subprompts():
+    """Two plan entries with different sub_prompts share the same prefix up
+    to the variable-suffix marker. This is the prompt-cache contract: only
+    the trailing focus section may differ when ctx is identical."""
+    ctx = _ctx(
+        sbom=SbomResult(
+            components=[SbomComponent(name="x", version="1")],
+            backend_name="syft",
+        ),
+        cve_findings=CveResult(
+            findings=[
+                CveFinding(
+                    cve_id="CVE-2024-0001", component_name="x", component_version="1",
+                    severity="high", summary="example",
+                ),
+            ],
+            backend_name="grype",
+        ),
+    )
+    plan_a = _plan(sub_prompt="Look for STRIDE-S threats only.")
+    plan_b = _plan(sub_prompt="Look exclusively at info-disclosure paths in refund.py.")
+
+    a = build_user_prompt(ctx, plan_a)
+    b = build_user_prompt(ctx, plan_b)
+
+    marker = "## Focus for this run"
+    pos_a = a.find(marker)
+    pos_b = b.find(marker)
+    assert pos_a > 0 and pos_b > 0, "marker must be present in both outputs"
+    assert pos_a == pos_b, "stable prefix length must be identical"
+    assert a[:pos_a] == b[:pos_b], (
+        "stable prefix content must be byte-identical when only sub_prompt differs"
+    )

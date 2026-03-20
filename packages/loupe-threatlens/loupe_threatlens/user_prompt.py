@@ -53,14 +53,21 @@ _MAX_CHANGED_PATHS_IN_SUMMARY = 8
 def build_user_prompt(ctx: RunContext, plan_entry: LensRunPlan) -> str:
     """Compose the user message for one ThreatLens agent run.
 
-    Sections appear in order of decreasing importance to the agent's
-    reasoning: focus, project context (anti-hallucination anchor), code
-    changes, SBOM, CVE findings, known elements. Empty sections render a
-    short notice rather than disappearing — the agent should know what
-    information is missing so it can flag the gap in its rationale.
+    The prompt is laid out as a STABLE PREFIX followed by a VARIABLE SUFFIX
+    so Anthropic prompt caching can pin a breakpoint at the boundary
+    [principle §8 — cost discipline; D-10]. The stable prefix carries the
+    project context (anti-hallucination anchor), the diff under analysis,
+    SBOM components, CVE findings, and known architectural elements — all
+    of which are identical across plan entries within the same `run()`
+    call. The variable suffix carries the per-plan-entry `sub_prompt`
+    under a `## Focus for this run` header so two plan entries that differ
+    only in `sub_prompt` share an identical prefix byte-for-byte.
+
+    Empty sections render a short notice rather than disappearing so the
+    agent knows what information is missing and can flag the gap.
     """
+    # Stable prefix: identical across plan entries when ctx is unchanged.
     sections: list[str] = [
-        _focus_section(plan_entry),
         _project_section(ctx.project),
         _diff_section(ctx),
     ]
@@ -72,6 +79,10 @@ def build_user_prompt(ctx: RunContext, plan_entry: LensRunPlan) -> str:
         sections.append(_cve_section(ctx.cve_findings))
 
     sections.append(_elements_section(ctx))
+
+    # Variable suffix: per-plan-entry focus / sub_prompt. Goes LAST so the
+    # prefix above can be cached by the model provider.
+    sections.append(_focus_section(plan_entry))
 
     return "\n\n".join(sections)
 
