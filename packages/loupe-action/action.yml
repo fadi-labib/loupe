@@ -19,7 +19,7 @@
 # hash chain) carry the load.
 
 name: 'Loupe'
-description: 'Run Loupe lenses on a pull request and post a sticky threat-model comment'
+description: 'Run Loupe lenses on a pull request and post a sticky threat-model comment (pre-alpha; install from source until v0.1 ships)'
 inputs:
   pr:
     description: 'Pull request number (digits only)'
@@ -96,7 +96,23 @@ runs:
     - name: Install Loupe
       shell: bash
       run: |
-        pip install loupe-action loupe-threatlens
+        # Pre-PyPI: install from source so consumers pin to the commit-SHA
+        # of the action ref. An unpinned `pip install loupe-action` would
+        # mean a single bad PyPI release breaks every consumer at once —
+        # hostile to the run-reproducibility commitment (principle §1).
+        #
+        # Once v0.1 ships to PyPI, switch this step to:
+        #   pip install \
+        #     "loupe-core==${ACTION_VERSION}" \
+        #     "loupe-cli==${ACTION_VERSION}" \
+        #     "loupe-action==${ACTION_VERSION}" \
+        #     "loupe-threatlens==${ACTION_VERSION}"
+        # where ACTION_VERSION is bumped at release time.
+        pip install \
+          "${{ github.action_path }}/../loupe-core" \
+          "${{ github.action_path }}/../loupe-cli" \
+          "${{ github.action_path }}" \
+          "${{ github.action_path }}/../loupe-threatlens"
 
     - name: Run Loupe
       id: loupe
