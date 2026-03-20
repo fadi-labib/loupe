@@ -28,6 +28,13 @@ class GitHubAPIError(RuntimeError):
     """Wraps a non-2xx response from the GitHub API."""
 
 
+# The login identity the GitHub Actions runner publishes comments under
+# when authenticated with the default ``GITHUB_TOKEN``. Filtering on this
+# ensures the sticky-comment poster won't *edit* a stranger's comment that
+# happens to contain the sentinel marker (e.g. a copy-pasted bug repro).
+_BOT_LOGIN = "github-actions[bot]"
+
+
 class StickyCommentPoster:
     def __init__(
         self,
@@ -64,8 +71,15 @@ class StickyCommentPoster:
                     f"GET {url} returned {response.status_code}: {response.text}"
                 )
             for comment in response.json():
-                if comment.get("body", "").startswith(COMMENT_SENTINEL):
-                    return int(comment["id"])
+                if not comment.get("body", "").startswith(COMMENT_SENTINEL):
+                    continue
+                # Identity check: only edit comments authored by the bot
+                # we publish under. A reviewer copy-pasting our sentinel
+                # into their own comment (intentionally or otherwise)
+                # should not cause us to overwrite it.
+                if comment.get("user", {}).get("login") != _BOT_LOGIN:
+                    continue
+                return int(comment["id"])
             url = _next_link(response.headers.get("Link"))
         return None
 
@@ -74,6 +88,12 @@ class StickyCommentPoster:
         response = await self._client.patch(
             url, content=json.dumps({"body": body}), headers=self._headers()
         )
+        if response.status_code == 404:
+            # The sticky comment we previously created has been deleted
+            # (manually by a reviewer, or by branch-protection cleanup).
+            # Recover by creating a fresh comment rather than failing the
+            # whole run for a transient state.
+            return await self._create(body=body)
         if response.status_code != 200:
             raise GitHubAPIError(
                 f"PATCH {url} returned {response.status_code}: {response.text}"

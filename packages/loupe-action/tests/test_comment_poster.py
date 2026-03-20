@@ -58,9 +58,21 @@ async def test_edits_existing_sticky_comment_in_place():
             return httpx.Response(
                 200,
                 json=[
-                    {"id": 100, "body": "unrelated user comment"},
-                    {"id": 101, "body": f"{COMMENT_SENTINEL}\n## old"},
-                    {"id": 102, "body": "another comment"},
+                    {
+                        "id": 100,
+                        "body": "unrelated user comment",
+                        "user": {"login": "alice"},
+                    },
+                    {
+                        "id": 101,
+                        "body": f"{COMMENT_SENTINEL}\n## old",
+                        "user": {"login": "github-actions[bot]"},
+                    },
+                    {
+                        "id": 102,
+                        "body": "another comment",
+                        "user": {"login": "bob"},
+                    },
                 ],
             )
         if request.method == "PATCH" and "comments/101" in str(request.url):
@@ -123,7 +135,7 @@ async def test_handles_paginated_comment_listing():
         if request.method == "GET" and "page=2" not in str(request.url):
             return httpx.Response(
                 200,
-                json=[{"id": 1, "body": "unrelated"}],
+                json=[{"id": 1, "body": "unrelated", "user": {"login": "alice"}}],
                 headers={
                     "Link": f'<{request.url}&page=2>; rel="next"'
                 },
@@ -131,7 +143,13 @@ async def test_handles_paginated_comment_listing():
         if request.method == "GET" and "page=2" in str(request.url):
             return httpx.Response(
                 200,
-                json=[{"id": 99, "body": f"{COMMENT_SENTINEL}\nfound"}],
+                json=[
+                    {
+                        "id": 99,
+                        "body": f"{COMMENT_SENTINEL}\nfound",
+                        "user": {"login": "github-actions[bot]"},
+                    }
+                ],
             )
         if request.method == "PATCH" and "/99" in str(request.url):
             return httpx.Response(200, json={"id": 99})
@@ -140,3 +158,67 @@ async def test_handles_paginated_comment_listing():
     async with _async_client(handler) as client:
         await _build_poster(client).post(body=f"{COMMENT_SENTINEL}\nnew\n")
     assert any("page=2" in c for c in calls)
+
+
+@pytest.mark.asyncio
+async def test_ignores_stranger_authored_comment_with_sentinel():
+    # A reviewer pastes our sentinel into their own comment. We must NOT
+    # treat that as our sticky comment and overwrite it. Falling through
+    # to POST means we create a fresh bot-authored comment instead.
+    posted_bodies: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.method == "GET" and "comments" in str(request.url):
+            return httpx.Response(
+                200,
+                json=[
+                    {
+                        "id": 555,
+                        "body": f"{COMMENT_SENTINEL}\nI pasted this!",
+                        "user": {"login": "curious-reviewer"},
+                    },
+                ],
+            )
+        if request.method == "POST" and "comments" in str(request.url):
+            posted_bodies.append(request.content.decode())
+            return httpx.Response(201, json={"id": 9999})
+        if request.method == "PATCH":
+            raise AssertionError("must not PATCH a stranger's comment")
+        raise AssertionError(f"unexpected: {request.method} {request.url}")
+
+    async with _async_client(handler) as client:
+        await _build_poster(client).post(body=f"{COMMENT_SENTINEL}\nfresh\n")
+    assert len(posted_bodies) == 1
+    assert "fresh" in posted_bodies[0]
+
+
+@pytest.mark.asyncio
+async def test_patch_404_falls_back_to_create():
+    # The previously-stickied comment got deleted between the GET that
+    # found it and the PATCH that tried to edit it. Don't fail the run —
+    # create a fresh sticky comment instead.
+    posted_bodies: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.method == "GET" and "comments" in str(request.url):
+            return httpx.Response(
+                200,
+                json=[
+                    {
+                        "id": 101,
+                        "body": f"{COMMENT_SENTINEL}\nold",
+                        "user": {"login": "github-actions[bot]"},
+                    }
+                ],
+            )
+        if request.method == "PATCH" and "comments/101" in str(request.url):
+            return httpx.Response(404, json={"message": "Not Found"})
+        if request.method == "POST" and "comments" in str(request.url):
+            posted_bodies.append(request.content.decode())
+            return httpx.Response(201, json={"id": 202})
+        raise AssertionError(f"unexpected: {request.method} {request.url}")
+
+    async with _async_client(handler) as client:
+        await _build_poster(client).post(body=f"{COMMENT_SENTINEL}\nrecovered\n")
+    assert len(posted_bodies) == 1
+    assert "recovered" in posted_bodies[0]
