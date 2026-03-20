@@ -20,6 +20,7 @@ from loupe_core.config import load_config
 from loupe_core.enforcement.path_boundary import PathBoundary
 from loupe_core.lens_registry import discover_lenses
 from loupe_core.mcp_server import build_mcp_server
+from pydantic import ValidationError
 
 # BSD sysexits.h EX_USAGE — operator-config / usage errors.
 USAGE_ERROR = 64
@@ -57,7 +58,13 @@ def mcp_command(loupe_dir: Path) -> int:
         try:
             cfg = load_config(config_path)
             boundary = PathBoundary(writable_globs=cfg.agent_writable_paths)
-        except Exception as exc:  # pragma: no cover — defensive
+        except (ValidationError, OSError) as exc:
+            # Narrow catch: schema-validation failures (pydantic) or I/O
+            # errors (file vanished, permission denied, encoding glitch).
+            # Project has no dedicated `ConfigError` yet; widen this tuple
+            # if one is introduced. Everything else (programming bugs,
+            # KeyboardInterrupt, etc.) propagates so we don't silently
+            # mask real defects behind a "MCP write tools disabled" line.
             typer.echo(
                 f"warning: could not load {config_path} ({exc}); "
                 f"MCP write tools disabled.",
@@ -65,7 +72,16 @@ def mcp_command(loupe_dir: Path) -> int:
             )
     server = build_mcp_server(loupe_dir, lenses=lenses, boundary=boundary)
     # FastMCP.run() defaults to stdio transport — exactly what MCP clients
-    # spawn-and-pipe expect. Errors during run propagate to the caller; a
-    # clean client disconnect returns normally.
-    server.run()
+    # spawn-and-pipe expect. KeyboardInterrupt during stdio read is a
+    # clean shutdown (Ctrl-C from a TTY-attached client); other unexpected
+    # exceptions surface a one-line summary and exit 1 so MCP clients see
+    # a real error code instead of a raw traceback.
+    try:
+        server.run()
+    except KeyboardInterrupt:
+        typer.echo("loupe mcp: clean shutdown", err=True)
+        return 0
+    except Exception as exc:
+        typer.echo(f"loupe mcp: {exc}", err=True)
+        return 1
     return 0
