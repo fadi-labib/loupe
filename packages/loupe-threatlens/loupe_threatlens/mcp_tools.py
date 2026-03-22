@@ -130,9 +130,15 @@ def register_threatlens_mcp_tools(
 
     @server.tool()
     def threatlens_query_by_severity(
-        severity: Literal["critical", "high", "medium", "low", "informational"],
+        severity: Literal["critical", "high", "medium", "low"],
     ) -> list[dict[str, Any]]:
-        """Filter threats by severity level."""
+        """Filter threats by severity level.
+
+        Accepted values match the `Severity` enum in `loupe_core.artifacts.types`
+        exactly: `critical`, `high`, `medium`, `low`. No `informational`
+        tier exists in the artefact schema, so the tool no longer advertises
+        one — passing it would never match a stored threat.
+        """
         return query_threats_by_severity_impl(loupe_dir, severity)
 
     @server.tool()

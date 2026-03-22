@@ -150,3 +150,62 @@ def test_lens_register_to_mcp_dispatches_to_helper(loupe_dir: Path):
     # Successful registration means the lens-level plumbing works
     # end-to-end with the official mcp SDK. Same as above: any failure
     # in the inner decorator chain would raise.
+
+
+# ---------------------------------------------------------------------------
+# Severity literal — must match the Severity enum exactly
+# ---------------------------------------------------------------------------
+
+
+def test_query_by_severity_tool_advertises_only_real_severities(loupe_dir: Path):
+    """The MCP tool's severity literal must match the `Severity` enum exactly.
+
+    Previously the schema advertised `"informational"` which has no
+    corresponding `Severity` enum member, so any caller passing it would
+    never match a stored threat. The Literal is now `low | medium | high
+    | critical` to mirror the artefact schema.
+    """
+    from mcp.server.fastmcp import FastMCP
+
+    server = FastMCP(name="test")
+    register_threatlens_mcp_tools(server, loupe_dir)
+    tool = server._tool_manager.get_tool("threatlens_query_by_severity")
+    assert tool is not None
+    severity_schema = tool.parameters["properties"]["severity"]
+    enum_values = set(severity_schema.get("enum", []))
+    assert enum_values == {"low", "medium", "high", "critical"}, (
+        f"unexpected severity enum advertised by MCP tool: {enum_values}"
+    )
+    assert "informational" not in enum_values
+
+
+@pytest.mark.asyncio
+async def test_query_by_severity_accepts_all_valid_values(loupe_dir: Path):
+    """Each of the four valid severities can be passed without validation error."""
+    from mcp.server.fastmcp import FastMCP
+
+    server = FastMCP(name="test")
+    register_threatlens_mcp_tools(server, loupe_dir)
+    for sev in ("low", "medium", "high", "critical"):
+        # No threats file yet — the impl just returns [] but the call
+        # path validates the input against the Literal first.
+        await server._tool_manager.call_tool(
+            "threatlens_query_by_severity", {"severity": sev},
+        )
+
+
+@pytest.mark.asyncio
+async def test_query_by_severity_rejects_informational(loupe_dir: Path):
+    """The removed `informational` value must now fail input validation."""
+    from mcp.server.fastmcp import FastMCP
+    from mcp.server.fastmcp.exceptions import ToolError
+
+    server = FastMCP(name="test")
+    register_threatlens_mcp_tools(server, loupe_dir)
+    with pytest.raises((ToolError, ValueError, TypeError, Exception)) as excinfo:
+        await server._tool_manager.call_tool(
+            "threatlens_query_by_severity", {"severity": "informational"},
+        )
+    # The error message should make it clear that "informational" was rejected.
+    msg = str(excinfo.value).lower()
+    assert "informational" in msg or "literal" in msg or "validation" in msg
