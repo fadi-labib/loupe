@@ -97,23 +97,23 @@ class ProposeThreatResult(BaseModel):
     status: Literal["written"]
 
 
-def propose_threat_impl(
-    ctx: RunContext,
-    boundary: PathBoundary,
+def _append_threat(
     loupe_dir: Path,
+    boundary: PathBoundary,
     input: ProposeThreatInput,
     *,
-    model_id: str,
-) -> ProposeThreatResult:
-    """Add a new threat to threats.yaml.
+    proposed_by: str,
+) -> Threat:
+    """Load threats.yaml, append a new Threat built from `input`, write back.
 
-    Reads the existing file (if any), assigns the next sequential ID,
-    appends the new threat, writes back through the Layer-1 path boundary,
-    and records the finding in the RunContext blackboard.
+    Centralises the load/append/serialise/Layer-1-write path shared by the
+    agent's `propose_threat_impl` and the MCP-level `write_threat_directly`.
+    Returns the freshly-constructed Threat (with assigned ID + today's
+    `last_reviewed` date) so callers can record findings or echo it back
+    over the wire without re-reading the file.
     """
     threats_path = loupe_dir / "threats.yaml"
     file = ThreatsFile.load(threats_path) if threats_path.exists() else ThreatsFile()
-
     next_id = _next_threat_id([t.id for t in file.threats])
     threat = Threat(
         id=next_id,
@@ -129,19 +129,36 @@ def propose_threat_impl(
         last_reviewed=date.today(),
         review_due=None,
         rationale=input.rationale,
-        proposed_by=f"threatlens/{model_id}",
+        proposed_by=proposed_by,
     )
     file.threats.append(threat)
-
     # Serialise via ruamel and write through Layer 1 (path-boundary-checked).
     buf = io.StringIO()
     _yaml.dump(file.model_dump(mode="json"), buf)
     write_agent_artifact(boundary, threats_path, buf.getvalue())
+    return threat
 
+
+def propose_threat_impl(
+    ctx: RunContext,
+    boundary: PathBoundary,
+    loupe_dir: Path,
+    input: ProposeThreatInput,
+    *,
+    model_id: str,
+) -> ProposeThreatResult:
+    """Add a new threat to threats.yaml.
+
+    Reads the existing file (if any), assigns the next sequential ID,
+    appends the new threat, writes back through the Layer-1 path boundary,
+    and records the finding in the RunContext blackboard.
+    """
+    threat = _append_threat(
+        loupe_dir, boundary, input, proposed_by=f"threatlens/{model_id}",
+    )
     # Record in blackboard so later lenses / coordinator can see what was added.
-    ctx.record_finding("threatlens", f"threat:{next_id}", threat.model_dump(mode="json"))
-
-    return ProposeThreatResult(threat_id=next_id, status="written")
+    ctx.record_finding("threatlens", f"threat:{threat.id}", threat.model_dump(mode="json"))
+    return ProposeThreatResult(threat_id=threat.id, status="written")
 
 
 def _next_threat_id(existing: list[str]) -> str:
@@ -178,30 +195,8 @@ def write_threat_directly(
     Returns the assigned T-NNN id. Caller is responsible for any
     blackboard / record-finding work they care about.
     """
-    threats_path = loupe_dir / "threats.yaml"
-    file = ThreatsFile.load(threats_path) if threats_path.exists() else ThreatsFile()
-    next_id = _next_threat_id([t.id for t in file.threats])
-    threat = Threat(
-        id=next_id,
-        element_id=input.element_id,
-        stride_category=StrideCategory(input.stride_category),
-        title=input.title,
-        description=input.description,
-        severity=Severity(input.severity),
-        status=ThreatStatus.PROPOSED,
-        mitigation_ids=list(input.mitigation_ids),
-        cwe_refs=list(input.cwe_refs),
-        introduced_in_pr=None,
-        last_reviewed=date.today(),
-        review_due=None,
-        rationale=input.rationale,
-        proposed_by=proposed_by,
-    )
-    file.threats.append(threat)
-    buf = io.StringIO()
-    _yaml.dump(file.model_dump(mode="json"), buf)
-    write_agent_artifact(boundary, threats_path, buf.getvalue())
-    return next_id
+    threat = _append_threat(loupe_dir, boundary, input, proposed_by=proposed_by)
+    return threat.id
 
 
 class ProposeMitigationInput(BaseModel):
