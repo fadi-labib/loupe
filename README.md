@@ -4,13 +4,15 @@ Loupe is a Python platform that runs domain-specialised AI agents (lenses) again
 
 A *loupe* is the precision lens jewellers and watchmakers use to inspect detail others miss. Each Loupe lens does the same to a codebase: ThreatLens looks for security threats, SafetyLens (future) for functional-safety hazards, PrivacyLens (future) for data-protection issues. Same instrument, different lens.
 
-**Status:** pre-alpha. The platform, capability registry, CLI, GitHub Action, and ThreatLens scaffolding are in place. The PydanticAI agent inside ThreatLens is not yet wired to a live LLM; that's the next milestone.
+**Status:** pre-alpha. The platform, capability registry, CLI, GitHub Action, and ThreatLens lens are wired end-to-end. ThreatLens calls a live LLM through PydanticAI (a VCR cassette test fixture is committed, recorded against the configured provider). `loupe mcp` exposes read tools (`list_threats`, `query_by_severity`, `latest_run`) and write tools (`propose_threat`, `propose_mitigation`) over stdio. Run records today carry real token and cost data populated by the lens. Ten capability backends ship bundled (Syft, cdxgen, Grype, osv-scanner, gitleaks, TruffleHog, detect-secrets, Semgrep, CodeQL, Bandit), composing through `single` / `fallback` / `union` / `consensus` / `pipeline` modes.
+
+Still in flight: the `loupe chat` REPL (TTY guard wired, conversational pipeline pending), Layer 2 fine-grained-PAT branch namespace enforcement, and the HTTP+SSE remote MCP transport.
 
 ## What it does for you
 
-Three frontends are designed, one is shipping. `loupe ci` runs on every PR via the GitHub Action and posts a sticky comment with severity-grouped findings; this is implemented and the agent wiring is the next milestone. `loupe chat` (interactive REPL) and `loupe mcp` (Model Context Protocol server) are designed in this repo but not yet implemented; `loupe chat` currently prints a placeholder, and `loupe mcp` is not registered as a command yet.
+Three frontends, all functional. `loupe ci` runs on every PR via the GitHub Action and posts a sticky comment with severity-grouped findings. `loupe mcp` runs an MCP server over stdio with both read tools (queries against `.loupe/`) and Layer-1-gated write tools (proposes new threats and mitigations). `loupe chat` (interactive REPL) is the next frontend: the TTY guard is wired but the conversational pipeline is not.
 
-Outputs live in `.loupe/` as Git-tracked plain files. The artefact set is designed as: threats, mitigations, a CycloneDX SBOM, OpenVEX statements, hash-chained run records, and an ADR-style decision log. Today the platform writes the run records and the scaffolding for the rest; the LLM-driven generation of mitigation, SBOM, and VEX artefacts is gated on the ThreatLens agent going live. There is no SaaS, no telemetry, no Loupe-hosted backend.
+Outputs live in `.loupe/` as Git-tracked plain files: threats, mitigations, a CycloneDX SBOM, OpenVEX statements, hash-chained run records, and an ADR-style decision log. The LLM-driven artefacts (threats, mitigations) are produced by ThreatLens against your configured provider; the SBOM and CVE artefacts come from the bundled capability backends. There is no SaaS, no telemetry, no Loupe-hosted backend.
 
 You pick the LLM. PydanticAI gives you Anthropic, OpenAI, Google, Mistral, Groq, Cohere, Ollama, and Bedrock through one env var. You pick the tools. SBOM, CVE, secret detection, and static analysis are pluggable Capability Protocols with composition modes (`single`, `fallback`, `union`, `consensus`, `pipeline`).
 
