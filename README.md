@@ -48,12 +48,30 @@ uv run loupe ci --diff-file <(git diff main...)
 In a GitHub workflow:
 
 ```yaml
-- uses: loupe-action@v1
-  with:
-    pr: ${{ github.event.pull_request.number }}
-  env:
-    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+# .github/workflows/loupe.yml
+on:
+  pull_request:
+
+jobs:
+  loupe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Pre-alpha: the Action lives at packages/loupe-action/action.yml inside
+      # this repo. GitHub's `uses:` resolution does not currently support
+      # sub-paths cleanly, so the cleanest workaround is to vendor the action
+      # ref directly or wait for the v0.1 tag at the repo root. Once v0.1
+      # publishes, switch to: `uses: fadilabib/loupe-action@v0.1`.
+      - uses: fadilabib/loupe@main
+        with:
+          pr: ${{ github.event.pull_request.number }}
+          comment_mode: sticky  # or 'new' or 'none'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 ```
+
+The Action publishes seven outputs (`findings_count`, `findings_critical`, `findings_high`, `findings_medium`, `findings_low`, `run_id`, `run_hash`, `exit_code`); see [`packages/loupe-action/action.yml`](packages/loupe-action/action.yml) for the schema. Exit code `0` is clean, `1` is a gate failure (severity threshold tripped), `64` is a usage or configuration error (BSD `sysexits.h` `EX_USAGE`).
 
 ## Where to go next
 
