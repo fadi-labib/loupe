@@ -159,15 +159,35 @@ class ThreatLens:
         # versions used a property); handle both by calling when callable.
         # Inner attributes are guarded with getattr so providers that emit
         # fewer fields don't raise.
+        #
+        # We warn loudly (not silently zero) when usage is missing or all-zero
+        # because a future PydanticAI field rename would otherwise produce a
+        # silent cost-tracking blackout. The warning is the early-detection
+        # signal that the §8 telemetry shape needs updating.
         usage_attr = getattr(result, "usage", None)
         usage = usage_attr() if callable(usage_attr) else usage_attr
-        if usage is not None:
-            entry = LensUsage(
-                model_id=model_id,
-                input_tokens=int(getattr(usage, "input_tokens", 0) or 0),
-                output_tokens=int(getattr(usage, "output_tokens", 0) or 0),
-                cache_read_tokens=int(getattr(usage, "cache_read_tokens", 0) or 0),
-                cache_write_tokens=int(getattr(usage, "cache_write_tokens", 0) or 0),
+        if usage is None:
+            logger.warning(
+                "ThreatLens lens.run: result.usage() returned None — "
+                "telemetry will be empty; PydanticAI usage shape may have changed"
             )
-            entry.cost_usd_estimate = estimate_cost_usd(entry)
-            ctx.lens_usage[self.capabilities.name] = entry
+            return
+        in_tok = int(getattr(usage, "input_tokens", 0) or 0)
+        out_tok = int(getattr(usage, "output_tokens", 0) or 0)
+        cache_read = int(getattr(usage, "cache_read_tokens", 0) or 0)
+        cache_write = int(getattr(usage, "cache_write_tokens", 0) or 0)
+        if in_tok == 0 and out_tok == 0 and cache_read == 0 and cache_write == 0:
+            logger.warning(
+                "ThreatLens lens.run: all token counts are zero — "
+                "PydanticAI usage shape may have changed (looked for "
+                "input_tokens / output_tokens / cache_read_tokens / cache_write_tokens)"
+            )
+        entry = LensUsage(
+            model_id=model_id,
+            input_tokens=in_tok,
+            output_tokens=out_tok,
+            cache_read_tokens=cache_read,
+            cache_write_tokens=cache_write,
+        )
+        entry.cost_usd_estimate = estimate_cost_usd(entry)
+        ctx.lens_usage[self.capabilities.name] = entry
