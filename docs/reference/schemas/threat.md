@@ -38,6 +38,6 @@ threats:
 
 ## Cross-references
 
-- Mitigation IDs in `mitigation_ids` are typed as `MitigationId` and validated at parse time against the `M-NNN` pattern. Whether the referenced mitigation actually exists is checked separately at cross-reference time by `loupe verify` (Layer 3, planned).
+- Mitigation IDs in `mitigation_ids` are typed as `MitigationId` and validated at parse time against the `M-NNN` pattern. Whether the referenced mitigation actually exists is checked separately at cross-reference time by `loupe verify` (one of the four Layer 3 checks).
 - Element IDs in `element_id` are typed as `ElementId` (`E-NNN`); existence in `knowledge.yaml` is also a cross-reference-time check, not a parse-time one.
 - `last_reviewed` and `review_due` are surfaced in the run record's `artifacts_changed` summary.

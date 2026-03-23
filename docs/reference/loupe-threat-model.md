@@ -181,9 +181,9 @@ An attacker with write access to the PR forges a Loupe sticky comment to make a 
 
 ### M-LOUPE-009 — Stable IDs + cross-reference checks in `loupe verify`
 
-**Status:** Partial
+**Status:** Implemented
 **Addresses:** `T-LOUPE-006`
-**Evidence:** Every threat carries `T-NNN`, every mitigation `M-NNN`; reviewers can grep for either. The cross-reference check (every `mitigation_ids` entry in `threats.yaml` must exist in `mitigations.yaml`) is documented as a planned `loupe verify` Layer 3 check.
+**Evidence:** Every threat carries `T-NNN`, every mitigation `M-NNN`; reviewers can grep for either. The cross-reference check (every `mitigation_ids` entry in `threats.yaml` must resolve to a real mitigation, and every `threats_addressed` on a mitigation must resolve to a real threat) is wired in `loupe verify` as one of the four Layer 3 checks.
 
 ### M-LOUPE-010 — Per-run cost limits in config
 
@@ -205,7 +205,7 @@ An attacker with write access to the PR forges a Loupe sticky comment to make a 
 
 ## Cross-references
 
-- Every `T-LOUPE-NNN` referenced in `mitigation_ids` must exist in this file. Every `M-LOUPE-NNN` referenced in `addresses` must exist in this file. (Same invariant Loupe enforces for customer-PR threat models; the planned `loupe verify` Layer 3 check will validate this once it lands.)
+- Every `T-LOUPE-NNN` referenced in `mitigation_ids` must exist in this file. Every `M-LOUPE-NNN` referenced in `addresses` must exist in this file. (Same invariant Loupe enforces for customer-PR threat models — the cross-reference check runs as one of the four Layer 3 checks in `loupe verify`.)
 - The platform mitigations call back to the principles (`§1`, `§5`, etc.) — if a principle changes, the mitigation evidence may need to change too.
 
 ## Status, freshness, and replacement plan

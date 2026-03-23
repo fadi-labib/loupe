@@ -40,6 +40,6 @@ mitigations:
 
 ## Cross-references
 
-- Threat IDs in `threats_addressed` are typed as `ThreatId` and validated at parse time against the `T-NNN` pattern. Whether the referenced threat actually exists in `threats.yaml` is checked separately at cross-reference time by `loupe verify` (Layer 3, planned).
+- Threat IDs in `threats_addressed` are typed as `ThreatId` and validated at parse time against the `T-NNN` pattern. Whether the referenced threat actually exists in `threats.yaml` is checked separately at cross-reference time by `loupe verify` (one of the four Layer 3 checks).
 - `evidence[].location` is treated as a hint; the validator does not check the path exists.
 - A mitigation with `status: verified` and a null `verified_by` is allowed but is a code smell; future `loupe verify` checks may warn on this.

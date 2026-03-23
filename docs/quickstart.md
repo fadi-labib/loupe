@@ -105,7 +105,7 @@ The run record is the canonical artefact. It captures inputs (diff hash, context
 loupe verify
 ```
 
-Today the command checks one thing: the hash-chain integrity across `.loupe/runs/*.json`. It exits non-zero on the first tamper signal. Authorship of protected paths, schema consistency of each artefact, and threats-to-mitigations cross-reference integrity are documented as Layer 3 checks but not yet implemented; they land in subsequent commits.
+The command runs the four Layer 3 checks: hash-chain integrity across `.loupe/runs/*.json`, artefact schema consistency for each `threats.yaml` / `mitigations.yaml`, threats-to-mitigations cross-reference integrity, and (when invoked with `--strict`) protected-path authorship. It exits non-zero on the first failure.
 
 The threats themselves are in `.loupe/threats.yaml` once ThreatLens emits any. Each threat has a stable ID (`T-NNN`), a STRIDE category, severity, status, links to the diff lines that introduced it, and a list of mitigation IDs.
 
@@ -189,6 +189,6 @@ When the agent wiring lands, expect three to five threats on a typical small PR,
 
 `.loupe/runs/<latest>.json` records every failure mode. If a capability backend fails (Syft not installed, Grype database missing), the run record marks it as `backend_error` and the lens that requested the capability is skipped. If a lens's tool call hits the path boundary, the run record marks it as `enforcement_error` and the lens is aborted but the run as a whole continues.
 
-Richer flags (`loupe ci --verbose` for plan tracing, `loupe verify --strict` for a wider set of consistency checks) are documented in the CLI design but not yet implemented. Today's `loupe ci` and `loupe verify` only carry the flags shown earlier in this page.
+A richer `loupe ci --verbose` flag for plan tracing is documented in the CLI design but not yet implemented. Today's `loupe ci` carries only the flags shown earlier in this page.
 
 For anything beyond that, [`contributing.md`](contributing.md) describes how to file an issue and how to reproduce locally.

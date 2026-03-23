@@ -101,7 +101,7 @@ The claim: four enforcement layers, no single one load-bearing.
 |---|---|---|
 | Layer 1 (tool surface) | Shipped | See §5 above |
 | Layer 2 (branch namespace) | Designed, not enforced | The Action uses the default `GITHUB_TOKEN`; the fine-grained PAT scope is recorded in [`decisions.md` D-08](decisions.md#d-08) and as a header comment in `packages/loupe-action/action.yml`. See also [`data-handling.md` § CI data flow](data-handling.md#ci-data-flow). |
-| Layer 3 (`loupe verify`) | Shipped | `loupe verify` checks hash-chain integrity, artefact schema consistency, and threats-to-mitigations cross-references on every run. The protected-path authorship check is reachable through `verify_repo(..., strict=True)` in the library; the `--strict` CLI flag is the remaining wiring. |
+| Layer 3 (`loupe verify`) | Shipped | `loupe verify` checks (1) hash-chain integrity, (2) artefact schema consistency, (3) threats-to-mitigations cross-references on every run, and (4) protected-path authorship under `--strict` (also reachable as `verify_repo(..., strict=True)` from the library). |
 | Layer 4 (interactive UX gate) | Designed | `loupe chat` is a placeholder. The `[y/N/edit/skip]` prompt logic is not yet wired |
 
 To prove the hash-chain detector works, deliberately corrupt a record:
@@ -187,6 +187,6 @@ If any of those fail, the run record was tampered with.
 
 ## What this page deliberately does not promise
 
-- That `loupe verify` is exhaustive today. The four planned checks are wired (chain, schema, cross-references, authorship under strict mode), but the strict-mode authorship surface is library-only until the `--strict` CLI flag lands. New Layer 3 checks added later will not change the exit-code contract; they extend the failure list.
+- That `loupe verify` is exhaustive today. The four planned checks are wired (chain, schema, cross-references, authorship under strict mode). New Layer 3 checks added later will not change the exit-code contract; they extend the failure list.
 - That an auditor can verify quality of LLM analysis without an LLM. They cannot; LLM output reasoning is a separate question from artefact integrity. Loupe's claim is that the *evidence pack is genuine*, not that the analysis is correct.
 - That every standard validator listed above is currently installed in CI. Some auditors will want to run them themselves; others will trust the format. The point of standards is that either path works.

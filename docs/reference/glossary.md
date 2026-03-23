@@ -100,7 +100,7 @@ Terms you'll encounter across the codebase and docs. Alphabetical. Each entry ca
 : (Designed, not yet enforced at runtime.) Branch-namespace enforcement at the CI runner. The commitment is that a fine-grained GitHub App token only allows pushes to `loupe/proposal-*` branches and that CODEOWNERS gates `.loupe/context.md`, `.loupe/decisions/**`, and `.loupe/config.yaml`. Today the Action uses the standard `GITHUB_TOKEN` and the branch restriction is a commitment rather than a runtime constraint.
 
 **Layer 3**{: #term-layer-3 }
-: (Shipped.) `loupe verify`. Runs four checks: hash-chain integrity, artefact schema consistency, threats-to-mitigations cross-references, and protected-path authorship (in strict mode). Reachable as a pre-commit hook and as a required CI check. The `--strict` CLI flag for the authorship check is the remaining wiring; the logic itself ships via `verify_repo(..., strict=True)` in the library.
+: (Shipped.) `loupe verify`. Runs four checks: hash-chain integrity, artefact schema consistency, threats-to-mitigations cross-references, and protected-path authorship (when invoked with `--strict`, or via `verify_repo(..., strict=True)` from the library). Reachable as a pre-commit hook and as a required CI check.
 
 **Layer 4**{: #term-layer-4 }
 : (Designed.) Interactive UX gate. Once `loupe chat` is implemented, every protected-path proposal will render as a unified diff with a `[y/N/edit/skip]` prompt, default-N, with no `--auto-confirm` flag. The chat command is currently a placeholder.
