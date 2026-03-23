@@ -177,7 +177,18 @@ capabilities:
     backends: [semgrep, codeql, bandit]
 ```
 
-Discovery subcommands (`loupe lens list`, `loupe cap list`) are designed but not yet registered. For now, the source of truth for what is installed is the entry-points: `python -c 'from importlib.metadata import entry_points; print(list(entry_points(group=\"loupe.lenses\")))'` and the same for `loupe.capabilities`.
+Discovery subcommands:
+
+```bash
+loupe lens list   # show every registered lens
+loupe cap list    # show every registered capability + backend pair
+```
+
+For programmatic introspection, you can still use:
+
+```bash
+python -c 'from importlib.metadata import entry_points; print(list(entry_points(group="loupe.lenses")))'
+```
 
 ## What to expect, what not to expect
 

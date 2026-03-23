@@ -204,7 +204,7 @@ Register via Python entry points in your `pyproject.toml`:
 myname = "loupe_myname.lens:MyLens"
 ```
 
-Once your package is installed alongside `loupe-cli`, the entry-point group `loupe.lenses` will surface it. A `loupe lens list` discovery subcommand is part of the CLI design but not yet registered.
+Once your package is installed alongside `loupe-cli`, the entry-point group `loupe.lenses` will surface it. Verify your registration with `loupe lens list`.
 
 ### Working on the GitHub Action
 
