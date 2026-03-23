@@ -15,7 +15,7 @@ flowchart TB
     subgraph frontends["Three frontends, one shipping"]
         ci["loupe ci (shipping)"]
         chat["loupe chat (placeholder)"]
-        mcp["loupe mcp (not registered)"]
+        mcp["loupe mcp (shipped)"]
     end
 
     core["loupe-core<br/>Coordinator · RunContext · enforcement · prompt builder · run records"]
