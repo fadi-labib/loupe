@@ -18,12 +18,31 @@ You pick the LLM. PydanticAI gives you Anthropic, OpenAI, Google, Mistral, Groq,
 
 ## Quick example
 
+**Install (pre-alpha; pre-PyPI):**
+
+```bash
+git clone https://github.com/fadilabib/loupe.git
+cd loupe
+uv sync --all-packages
+```
+
+This installs the four workspace packages (`loupe-core`, `loupe-cli`, `loupe-threatlens`, `loupe-action`) in editable mode. Invoke the CLI through `uv run loupe …`.
+
+Once v0.1 is tagged and published, the install will simplify to:
+
 ```bash
 pip install loupe-cli loupe-threatlens
+```
+
+The PyPI publishing process is documented in [`CHANGELOG.md`](CHANGELOG.md#release-process).
+
+**First run:**
+
+```bash
 cd your-repo
-loupe init
+uv run loupe init
 $EDITOR .loupe/context.md       # describe your product, assets, threat actors
-loupe ci --diff-file <(git diff main...)
+uv run loupe ci --diff-file <(git diff main...)
 ```
 
 In a GitHub workflow:
