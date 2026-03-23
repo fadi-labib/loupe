@@ -17,7 +17,7 @@ loupe <command> [OPTIONS]
 The six top-level commands today: `init`, `ci`, `verify`, `chat`, `scan`, `mcp`. Two command groups provide discovery: `loupe lens list` and `loupe cap list`.
 
 > [!NOTE]
-> A handful of flags remain designed but not yet implemented (`loupe ci --verbose`, `loupe verify --strict`, `loupe scan --budget-usd <N>`). See [Flags not yet wired](#flags-not-yet-wired) at the bottom.
+> A handful of flags remain designed but not yet implemented (`loupe ci --verbose`, `loupe scan --budget-usd <N>`). See [Flags not yet wired](#flags-not-yet-wired) at the bottom.
 
 ## `loupe init`
 
@@ -80,10 +80,14 @@ Exit codes:
 Verify Loupe state integrity.
 
 ```
-loupe verify
+loupe verify [--strict]
 ```
 
-No flags today.
+Flags:
+
+| Flag | Default | What it does |
+|---|---|---|
+| `--strict` | (off) | Run additional protected-path authorship checks (`context.md`, `decisions/*.md`, `config.yaml` must not have been last touched by an agent identity). |
 
 Today's checks (all wired in `loupe_core/enforcement/verify.py`):
 
@@ -94,7 +98,7 @@ Today's checks (all wired in `loupe_core/enforcement/verify.py`):
 
 Exit codes: `0` if all checks pass; non-zero on the first failure.
 
-A `--strict` flag that runs the authorship check (and any future additional checks) is designed but not yet wired as a flag — today the strict logic is reachable via the library API.
+Without `--strict`, the three default checks (hash chain, artefact schemas, threats↔mitigations cross-references) run. With `--strict`, the additional protected-path authorship check also runs.
 
 ## `loupe chat`
 
@@ -143,7 +147,6 @@ A small set of flags are part of the design but not yet implemented:
 | Flag | Status | Source of truth in the meantime |
 |---|---|---|
 | `loupe ci --verbose` | Plan tracing, designed | None |
-| `loupe verify --strict` | Surfaces the authorship-check failures as exit-code failures rather than library-API return values | Library API: `loupe_core.enforcement.verify.verify_repo(repo, strict=True)` |
 | `loupe scan --budget-usd <N>` | Cost cap for full-repo runs, designed in D-15 | None |
 
 ## Environment variables
