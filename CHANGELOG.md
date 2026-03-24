@@ -12,21 +12,65 @@ The pre-alpha working set, in flight toward v0.1.
 - Nine artefact schemas (Pydantic models with YAML/JSON round-trip): `Threat`, `Mitigation`, `KnowledgeGraph`, `ProjectContext`, `LoupeConfig`, `RunRecord` (hash-chained), plus supporting types.
 - Layer 1 enforcement: `PathBoundary`, `write_agent_artifact`, `propose_patch`, `BoundaryViolation`.
 - `RunContext` within-run blackboard with namespaced findings + facts; `RunContext.bootstrap()` parses the diff and loads `context.md` and `knowledge.yaml`.
-- Capability registry (D-18): `SbomCapability`, `CveCapability`, `SecretDetectionCapability`, `StaticAnalysisCapability` Protocols; composition modes (`single`, `fallback`, `union`, `consensus`, `pipeline`); bundled Syft and Grype backends.
-- ThreatLens lens scaffolding: STRIDE-methodology system prompt, PydanticAI agent skeleton, `propose_threat` tool through Layer 1.
-- CLI commands `loupe init`, `loupe ci`, `loupe verify`, `loupe chat` (placeholder), `loupe scan`.
-- GitHub Action wrapper: typed input validation, PR diff fetcher, Markdown sticky-comment poster, six outputs (`findings_count`, per-severity counts, `run_id`, `run_hash`, `exit_code`).
+- Capability registry (D-18): `SbomCapability`, `CveCapability`, `SecretDetectionCapability`, `StaticAnalysisCapability` Protocols; composition modes (`single`, `fallback`, `union`, `consensus`, `pipeline`); `bootstrap_capabilities()` wired into `loupe ci`.
+- Ten bundled capability backends: Syft and cdxgen (SBOM); Grype and osv-scanner (CVE); gitleaks, TruffleHog, and detect-secrets (secret detection); Semgrep, CodeQL, and Bandit (static analysis). Every capability now has at least two backends, so composition modes are usable out of the box.
+- ThreatLens lens: STRIDE-methodology system prompt, PydanticAI agent wired to a live LLM, agent prompt includes diff, project context, SBOM delta, CVE list, and architectural elements; `propose_threat` tool through Layer 1.
+- CLI commands `loupe init`, `loupe ci`, `loupe verify`, `loupe chat` (TTY-guarded placeholder), `loupe scan`, `loupe mcp`, `loupe lens list`, `loupe cap list`.
+- `loupe mcp` MCP server with stdio transport, using the official `mcp` SDK's FastMCP API (D-21).
+- MCP read tools: `list_threats`, `query_by_severity`, `latest_run`, plus ThreatLens summary tool.
+- MCP write tools: `propose_threat`, `propose_mitigation`, both gated through Layer 1.
+- `loupe ci` severity gates: `ci.fail_on` (exit non-zero) and `ci.warn_on` (annotate but pass).
+- `loupe verify` checks beyond the hash chain: artefact schema consistency, threats↔mitigations cross-references, and protected-path authorship (in strict mode). Four Layer-3 checks now ship.
+- `loupe verify --strict` CLI flag.
+- `RunRecord` token and cost fields populated from real agent runs.
+- Pricing module (`loupe_core.pricing`) with a seven-model price table.
+- Cost-regression test fixture replaying the live ThreatLens VCR cassette.
+- `ProjectContext` frontmatter parsing for `schema_version`, `last_human_edit`, and `maintained_by`.
+- Typed `ThreatId` / `MitigationId` / `ElementId` aliases; cross-reference fields validate at parse time.
+- `init` template scaffolds three commented multi-LLM alternative provider lines.
+- GitHub Action wrapper: typed input validation, PR diff fetcher with 5xx and rate-limited 403 retry, Markdown sticky-comment poster filtered by bot identity (PATCH-404 falls back to create), eight outputs (`findings_count`, per-severity counts, `run_id`, `run_hash`, `exit_code`). LLM-generated Markdown is escaped in sticky comments.
 - Two-tier evaluation methodology (D-19): Cesanta Mongoose (Tier 1) and Eclipse Mosquitto (Tier 2). Methodology recorded; scenario catalogue and scoring code pending.
+- CI workflow: pytest + ruff + mypy on every push and PR.
+- D-21 decision: MCP server uses the official `mcp` SDK's FastMCP API, not the third-party `fastmcp` package.
+
+### Changed
+
+- CLI usage-error exit code unified to 64 (BSD `sysexits.h` `EX_USAGE`).
+- `loupe mcp` error handling narrowed: no silent config-error swallow.
+- ThreatLens prompt structure: `sub_prompt` moved to the trailing slot so the stable prefix stays cache-pinned.
+- ThreatLens emits a warning on missing or zero LLM usage telemetry rather than silently zeroing it.
+- `init` template scaffolds three commented multi-LLM alternative provider lines so configuration is one uncomment away.
+- CodeQL database path now flows through `CapabilityActivation.options` instead of an env var (env var deprecated).
+
+### Fixed
+
+- Layer 1 hardening: path-traversal, absolute-path, and NUL rejection in `propose_patch`; symlink rejection (parent chain via `dir_fd` + `O_NOFOLLOW`) in `write_agent_artifact`; atomic save (`tmp` + `os.replace`) for `RunRecord` to protect the hash chain.
+- SBOM `union` and `consensus` modes rejected at config-validation (no longer silently empty).
+- Unknown capability names rejected at config-validation.
+- `loupe ci`: `--diff` and `--diff-file` mutual exclusion now enforced.
+- Default `agent_writable_paths` now includes `.loupe/knowledge.yaml`, unblocking the first lens run.
+- Stripped-under-O assertion in fallback composition replaced with an explicit raise.
+- `loupe-action`: Markdown in agent-generated content is escaped in the sticky comment.
+- `loupe-action`: PR fetcher retries on 5xx and rate-limited 403.
+- `loupe-action`: sticky-comment poster filters by bot identity; PATCH-404 falls back to create.
+- `loupe-action`: trusts the `loupe ci` gate verdict and surfaces usage errors as exit 64.
+- `loupe-action`: top-level error mapping (64 for known usage errors, 1 for unknown).
+- ThreatLens: single env-var resolution for `THREATLENS_MODEL` (no hard-coded default in `agent.py`).
+- ThreatLens MCP query tool no longer references the nonexistent `informational` severity.
+- `loupe-action`: `pip install` pinned in `action.yml` (source install pre-PyPI; pinned post-v0.1).
+
+### Refactored
+
+- `loupe_core.atomic_write_yaml` shared helper for all artefact saves.
+- ThreatLens: `_append_threat` extracted to deduplicate the two write paths.
+- CLI discovery uses public `CapabilityRegistry.list_all()`.
 
 ### Designed, not yet shipped
 
-- ThreatLens PydanticAI agent wired to a live LLM provider.
-- `bootstrap_capabilities()` invocation inside `loupe ci` (today the wiring exists but is not called by the CLI flow).
-- `loupe chat` conversational REPL (the command exists as a placeholder with a TTY guard).
-- `loupe mcp` command and the MCP server implementation.
-- Layer 2 branch-namespace enforcement with a fine-grained GitHub App token.
-- `loupe verify` checks beyond hash-chain integrity (authorship, schema, cross-reference).
-- Discovery subcommands (`loupe lens list`, `loupe cap list`).
+- `loupe chat` conversational REPL pipeline (the TTY guard is wired; the REPL itself prints a placeholder).
+- Layer 2 branch-namespace enforcement with a fine-grained GitHub App token (design recorded in `packages/loupe-action/action.yml` and D-08; runtime enforcement pending).
+- HTTP+SSE remote MCP transport (stdio ships today).
+- `--verbose` and `--budget-usd` CLI flags.
 
 ## Versioning policy
 
