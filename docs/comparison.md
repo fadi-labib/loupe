@@ -31,8 +31,15 @@ One consequence of the capability architecture (see [`concepts/capabilities.md`]
 | **Threagile / pytm** | Threat-modelling-as-code (OSS, not AI) | "As-code" predecessors; share DNA |
 | **Snyk** | SCA + SAST (commercial) | Complementary vuln scanning, not threat modelling |
 | **Trivy** | Vuln scanner (OSS) | Complementary; could substitute Loupe's Syft+Grype back-end |
+| **cdxgen** | SBOM generator (OSS) | **Bundled** as a registered `sbom` backend complementary to syft |
+| **osv-scanner** | CVE matcher against OSV.dev DB (OSS, Google) | **Bundled** as a registered `cve` backend complementary to grype |
+| **gitleaks** | Secret scanner (OSS) | **Bundled** as a registered `secret_detect` backend |
+| **TruffleHog** | High-entropy + verifier-based secret scanner (OSS) | **Bundled** as a registered `secret_detect` backend |
+| **detect-secrets** | Pattern-based secret scanner (Yelp, OSS) | **Bundled** as a registered `secret_detect` backend |
 | **Wiz** | Cloud security posture | Different layer entirely |
-| **Semgrep** | Static analysis | Complementary; a future lens could call Semgrep |
+| **Semgrep** | Static analysis | **Bundled** as a registered `static_analysis` backend |
+| **CodeQL** | Query-based static analysis (GitHub, OSS) | **Bundled** as a registered `static_analysis` backend |
+| **Bandit** | Python-specific SAST (PyCQA, OSS) | **Bundled** as a registered `static_analysis` backend |
 | **GHAS (CodeQL, Dependabot)** | Defect detection | Complementary |
 | **Claude Code / Cursor / Aider** | Generic AI coding assistants | Complementary via MCP |
 | **Renovate / Dependabot** | Dep update automation | Orthogonal |
@@ -228,6 +235,62 @@ Windows-only. Now includes AI-assisted threat detection (added in v4.2). Same li
 - Trivy has no threat-modelling concept; Loupe is *built* around threat modelling.
 
 **Possible future integration**: A `loupe-trivy-adapter` lens could replace Syft+Grype with Trivy as the scanning back-end. The lens API is designed to support this kind of substitution.
+
+---
+
+## cdxgen
+
+**What it does**: Open-source CycloneDX SBOM generator from the OWASP CycloneDX project. Strong coverage of language ecosystems Syft is weaker on (notably JVM build graphs and some scripting-language manifests).
+
+**Relationship to Loupe**: Bundled as a registered `sbom` capability backend. Operators who want belt-and-braces SBOM coverage can set `capabilities.sbom.mode: union` and list `[syft, cdxgen]` so both run and findings are deduped by purl.
+
+---
+
+## osv-scanner
+
+**What it does**: Google's open-source CVE matcher. Reads SBOMs or lockfiles and checks them against the OSV.dev database. Different vulnerability source from Grype (which leans on the NVD-derived Anchore feed).
+
+**Relationship to Loupe**: Bundled as a registered `cve` capability backend. A common composition is `capabilities.cve.mode: union, backends: [grype, osv-scanner]` so that CVEs missed by either DB are caught by the other.
+
+---
+
+## gitleaks
+
+**What it does**: Open-source secret scanner. Pattern-matched detection of common credential shapes (AWS keys, GitHub tokens, private keys) across git history.
+
+**Relationship to Loupe**: Bundled as a registered `secret_detect` capability backend. Pairs well with TruffleHog under `mode: union` — gitleaks catches pattern-matched keys; TruffleHog catches high-entropy strings and verifies live credentials.
+
+---
+
+## TruffleHog
+
+**What it does**: Open-source secret scanner from Truffle Security. Combines high-entropy detection with credential-verifier plugins that actually attempt to use a found secret to confirm it's live.
+
+**Relationship to Loupe**: Bundled as a registered `secret_detect` capability backend. The verification step makes it complementary to pattern-matching scanners — TruffleHog distinguishes "looks like a token" from "is an active token."
+
+---
+
+## detect-secrets
+
+**What it does**: Open-source pattern-based secret scanner from Yelp. Built around an auditable baseline file so previously-acknowledged findings don't re-fire; widely used inside pre-commit hooks.
+
+**Relationship to Loupe**: Bundled as a registered `secret_detect` capability backend. Useful as a third corroborating scanner under `mode: consensus` for teams that want at least two of three tools to agree before treating a secret-detection finding as real.
+
+---
+
+## CodeQL
+
+**What it does**: GitHub's open-source query-based static analysis engine. Treats code as a database queryable in QL; strong on data-flow and taint analysis across many languages.
+
+**Relationship to Loupe**: Bundled as a registered `static_analysis` capability backend. Heavier and slower than Semgrep — best deployed under `mode: consensus` alongside Semgrep so the corroboration filters CodeQL's slower runtime against Semgrep's faster pattern matches.
+
+---
+
+## Bandit
+
+**What it does**: Open-source Python-specific SAST from the PyCQA project. AST-based detection of Python anti-patterns and security smells (subprocess shell-injection, weak crypto, hard-coded passwords).
+
+**Relationship to Loupe**: Bundled as a registered `static_analysis` capability backend. The narrow Python focus makes it a useful third opinion in consensus mode for Python-heavy projects; on non-Python repos the backend's `is_available()` keeps it dormant.
 
 ---
 
