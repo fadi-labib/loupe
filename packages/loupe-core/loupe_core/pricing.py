@@ -19,6 +19,7 @@ from __future__ import annotations
 
 from loupe_core.run_context import LensUsage
 
+# --8<-- [start:price_table]
 # Per-million-token rates. Mapping: provider:model → (input_usd_per_mtok, output_usd_per_mtok).
 _PRICING_PER_MILLION: dict[str, tuple[float, float]] = {
     # Anthropic Claude family (2026-05-15 pricing)
@@ -32,6 +33,7 @@ _PRICING_PER_MILLION: dict[str, tuple[float, float]] = {
     "google-gla:gemini-2.5-pro": (1.25, 10.00),
     "google-gla:gemini-2.5-flash": (0.30, 2.50),
 }
+# --8<-- [end:price_table]
 
 _CACHE_READ_DISCOUNT = 0.10   # cache reads pay 10% of the input rate
 _CACHE_WRITE_PREMIUM = 1.25   # cache writes pay 125% of the input rate (one-time)
