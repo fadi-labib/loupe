@@ -12,7 +12,7 @@ The principles that emerged from these decisions are at [`principles.md`](../pri
 
 ## Index
 
-[D-01](#d-01) Scope · [D-02](#d-02) CI + interactive · [D-03](#d-03) PydanticAI · [D-04](#d-04) Plugin architecture · [D-05](#d-05) Name = Loupe · [D-06](#d-06) Ten artefacts · [D-07](#d-07) Blackboard + knowledge graph · [D-08](#d-08) Four-layer write boundary · [D-09](#d-09) MCP · [D-10](#d-10) Three cost levers · [D-11](#d-11) Lens contract · [D-12](#d-12) Hash chain · [D-13](#d-13) VCR · [D-14](#d-14) Deferred signing · [D-15](#d-15) `loupe scan` · [D-16](#d-16) StrideGPT lineage · [D-17](#d-17) Apache 2.0 · [D-18](#d-18) Capability abstraction · [D-19](#d-19) Benchmark tiers · [D-20](#d-20) MkDocs Material · [Open decisions](#open-decisions)
+[D-01](#d-01) Scope · [D-02](#d-02) CI + interactive · [D-03](#d-03) PydanticAI · [D-04](#d-04) Plugin architecture · [D-05](#d-05) Name = Loupe · [D-06](#d-06) Ten artefacts · [D-07](#d-07) Blackboard + knowledge graph · [D-08](#d-08) Four-layer write boundary · [D-09](#d-09) MCP · [D-10](#d-10) Three cost levers · [D-11](#d-11) Lens contract · [D-12](#d-12) Hash chain · [D-13](#d-13) VCR · [D-14](#d-14) Deferred signing · [D-15](#d-15) `loupe scan` · [D-16](#d-16) StrideGPT lineage · [D-17](#d-17) Apache 2.0 · [D-18](#d-18) Capability abstraction · [D-19](#d-19) Benchmark tiers · [D-20](#d-20) MkDocs Material · [D-21](#d-21) MCP SDK choice · [Open decisions](#open-decisions)
 
 ---
 

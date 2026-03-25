@@ -140,7 +140,7 @@ In the CI flow today, the agent is restricted to its allow-list paths. When `lou
 
     ---
 
-    D-01 through D-19. What was considered, what was chosen, why.
+    D-01 through D-21. What was considered, what was chosen, why.
 
     [→ Decisions](reference/decisions.md)
 
