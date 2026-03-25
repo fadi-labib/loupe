@@ -27,7 +27,16 @@ The fix is a second extension point sitting alongside lenses.
 
 A **Capability** is a typed Protocol describing a single, focused operation. A **CapabilityBackend** is a concrete implementation of that Protocol (e.g., `SyftSbomBackend` implements the `SbomCapability` Protocol). Backends register via Python entry points under the single `loupe.capabilities` group; the `name` attribute on each backend class declares which capability it implements.
 
-Loupe's core ships the Protocol definitions in `loupe_core/capabilities/protocols/` plus a set of bundled default backends under `loupe_core/capabilities/backends/`: Syft and cdxgen for `sbom`, Grype and osv-scanner for `cve`, gitleaks / TruffleHog / detect-secrets for `secret_detect`, Semgrep / CodeQL / Bandit for `static_analysis`. Third-party backends live in their own pip-installable packages and register under the same `loupe.capabilities` entry-point group; the core never imports a backend by name.
+Loupe's core ships the Protocol definitions in `loupe_core/capabilities/protocols/` plus 10 bundled default backends under `loupe_core/capabilities/backends/`:
+
+| Capability | Bundled backends |
+|---|---|
+| `sbom` | `syft`, `cdxgen` |
+| `cve` | `grype`, `osv-scanner` |
+| `secret_detect` | `gitleaks`, `trufflehog`, `detect-secrets` |
+| `static_analysis` | `semgrep`, `codeql`, `bandit` |
+
+Third-party backends live in their own pip-installable packages and register under the same `loupe.capabilities` entry-point group; the core never imports a backend by name.
 
 ### Mental model
 
@@ -46,24 +55,26 @@ flowchart TB
 
     subgraph sbom_backends["SBOM backends"]
         b_syft["syft (bundled)"]
-        b_trivy["trivy"]
-        b_gh["github-api"]
+        b_cdxgen["cdxgen (bundled)"]
+        b_trivy["trivy (third-party)"]
     end
 
     subgraph cve_backends["CVE backends"]
         b_grype["grype (bundled)"]
-        b_osv["osv-scanner"]
+        b_osv["osv-scanner (bundled)"]
+        b_trivy_cve["trivy (third-party)"]
     end
 
     subgraph sd_backends["Secret-detect backends"]
-        b_th["trufflehog"]
-        b_gl["gitleaks"]
+        b_th["trufflehog (bundled)"]
+        b_gl["gitleaks (bundled)"]
+        b_ds["detect-secrets (bundled)"]
     end
 
     subgraph sast_backends["SAST backends"]
-        b_sem["semgrep"]
-        b_cq["codeql"]
-        b_ba["bandit"]
+        b_sem["semgrep (bundled)"]
+        b_cq["codeql (bundled)"]
+        b_ba["bandit (bundled)"]
     end
 
     sbom -.->|"`loupe.capabilities`<br/>entry points"| sbom_backends
@@ -73,10 +84,12 @@ flowchart TB
 
     classDef coreNode fill:#fef3c7,stroke:#a16207,stroke-width:2px
     classDef protoNode fill:#f3e8ff,stroke:#7e22ce,stroke-width:2px
-    classDef backendNode fill:#ffe4e6,stroke:#be123c,stroke-width:1px
+    classDef bundledNode fill:#dcfce7,stroke:#15803d,stroke-width:1px
+    classDef thirdPartyNode fill:#ffe4e6,stroke:#be123c,stroke-width:1px
     class registry coreNode
     class sbom,cve,sd,sast protoNode
-    class b_syft,b_trivy,b_gh,b_grype,b_osv,b_th,b_gl,b_sem,b_cq,b_ba backendNode
+    class b_syft,b_cdxgen,b_grype,b_osv,b_th,b_gl,b_ds,b_sem,b_cq,b_ba bundledNode
+    class b_trivy,b_trivy_cve thirdPartyNode
 ```
 
 The core holds typed Protocols. Each Protocol is satisfied by one or more backends, which register through the single `loupe.capabilities` entry-point group. Lenses request a capability category (`sbom`, `cve`, `secret_detect`, `static_analysis`); the registry resolves to the operator-configured backend list, runs each backend, and combines results via the composition mode declared in `config.yaml`.
@@ -283,8 +296,11 @@ The lens does not know which backend(s) produced the results. That's the point.
 
 The coordinator's existing relevance + dependency logic gains one new check: **does the project have backends installed for every capability the selected lenses require?**
 
+> [!NOTE]
+> The snippet below is illustrative. The real `build_run_plan(ctx, lenses, config)` lives in `loupe_core/coordinator.py`; the capability-satisfiability filter shown here is sketched against the registry available via `bootstrap_capabilities()`.
+
 ```python
-def build_run_plan(ctx, lenses, capabilities, config) -> list[LensRunPlan]:
+def build_run_plan(ctx, lenses, config) -> list[LensRunPlan]:
     # ... existing relevance + dependency logic ...
 
     # NEW: drop lenses whose required capabilities aren't satisfiable
