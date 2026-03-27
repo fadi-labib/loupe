@@ -20,6 +20,7 @@ Two-layer design:
 """
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 from typing import Any
 
@@ -29,11 +30,14 @@ from typing import Any
 # one is governed by the MCP spec maintainers — see D-21 in the
 # decisions log for the rationale.
 from mcp.server.fastmcp import FastMCP
+from pydantic import ValidationError
 
 from loupe_core.artifacts.knowledge import KnowledgeGraph
 from loupe_core.artifacts.mitigation import MitigationsFile
-from loupe_core.artifacts.run_record import load_run_records
+from loupe_core.artifacts.run_record import RunRecord
 from loupe_core.artifacts.threat import ThreatsFile
+
+_LOG = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Tool implementations — pure, no MCP dependency.
@@ -84,14 +88,30 @@ def list_elements_impl(loupe_dir: Path) -> list[dict[str, Any]]:
 
 
 def latest_run_impl(loupe_dir: Path) -> dict[str, Any] | None:
-    """Return the most recent run record, or ``None`` when no runs exist."""
+    """Return the most recent run record, or ``None`` when no runs exist.
+
+    Malformed run-record files (truncated writes, hand-edits, schema drift)
+    are SKIPPED with a warning rather than raising. This is the read-only
+    MCP path — its job is to surface state to clients, not to enforce
+    integrity. The hash-chain check in `loupe verify` is where corruption
+    must surface as a failure; here it would just deny every other client
+    access to any run information.
+    """
     runs_dir = loupe_dir / "runs"
     if not runs_dir.exists():
         return None
-    records = load_run_records(runs_dir)
-    if not records:
-        return None
-    return records[-1].model_dump(mode="json")
+
+    # Files are named with microsecond-precision timestamps, so a lexical
+    # sort matches chronological order — iterate newest-first and return
+    # the first record that parses.
+    for path in sorted(runs_dir.glob("*.json"), reverse=True):
+        try:
+            record = RunRecord.model_validate_json(path.read_text())
+        except (ValueError, ValidationError) as exc:
+            _LOG.warning("Skipping malformed run-record file %s: %s", path.name, exc)
+            continue
+        return record.model_dump(mode="json")
+    return None
 
 
 # ---------------------------------------------------------------------------

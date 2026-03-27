@@ -187,6 +187,49 @@ def test_latest_run_returns_most_recent(loupe_dir: Path):
     assert out["run_id"] == "run-3"
 
 
+def test_latest_run_skips_malformed_run_record(loupe_dir: Path):
+    """A run-record file that fails JSON or Pydantic validation must not crash
+    latest_run. Skip it and return the most-recent VALID record.
+
+    Operationally: an interrupted write or a hand-edited file could leave
+    a corrupt JSON in `.loupe/runs/`. The MCP `latest_run` tool is read-only
+    and must degrade gracefully — a crash here would surface to clients as an
+    unrecoverable tool error.
+    """
+    runs_dir = loupe_dir / "runs"
+    record = RunRecord(
+        run_id="run-valid",
+        timestamp=datetime(2026, 5, 15, 10, 0),
+        mode="ci", invoked_by="test", trigger="manual",
+        base_sha="a", head_sha="b",
+        diff_hash="0" * 64, context_md_hash="1" * 64,
+        lenses_considered=[LensConsidered(name="threatlens", score=0.9, reason="r")],
+        lenses_run=["threatlens"],
+        models_used={}, total_tokens_in=0, total_tokens_out=0,
+        cost_usd_estimate=0.0, cache_hit_rate=None,
+        artifacts_changed=[], proposed_patches=[], pending_decisions=[],
+        prev_run_hash=None, self_hash="",
+    )
+    save_run_record(runs_dir, record)
+
+    # Write a corrupt file with a LATER lexical-sort timestamp so it would
+    # otherwise be picked as "latest". The valid record must still win.
+    corrupt = runs_dir / "2026-05-15T11-00-00-000000Z-run-corrupt.json"
+    corrupt.write_text("this is not json {{{")
+
+    out = latest_run_impl(loupe_dir)
+    assert out is not None
+    assert out["run_id"] == "run-valid"
+
+
+def test_latest_run_returns_none_when_only_malformed_records(loupe_dir: Path):
+    """If every record on disk is corrupt, latest_run returns None instead of crashing."""
+    runs_dir = loupe_dir / "runs"
+    (runs_dir / "2026-05-15T10-00-00-000000Z-run-bad1.json").write_text("not json")
+    (runs_dir / "2026-05-15T11-00-00-000000Z-run-bad2.json").write_text("{\"incomplete\": true}")
+    assert latest_run_impl(loupe_dir) is None
+
+
 # ---------------------------------------------------------------------------
 # Server construction
 # ---------------------------------------------------------------------------
