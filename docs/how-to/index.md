@@ -5,7 +5,11 @@ Task-focused recipes. Each page is a short, self-contained answer to a specific 
 > [!NOTE]
 > **Pre-alpha:** this section is populated as recipes are written. The [Quickstart](../quickstart.md) and [Contributing](../contributing.md) pages cover the most-asked starter questions in the meantime.
 
-Planned recipes:
+## Recipes
+
+- [Run the MCP server](run-mcp-server.md) — operate `loupe mcp`, attach a Claude Code / Cursor client, understand the read and write tool surface.
+
+## Planned recipes
 
 - **Swap LLM provider** — switching between Anthropic, OpenAI, Google, and the Vercel AI Gateway via `THREATLENS_MODEL`.
 - **Write a new lens** — minimum shape for a `<Domain>Lens` package, entry-point registration, `is_relevant()` heuristic.

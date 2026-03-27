@@ -93,12 +93,14 @@ nav:
       - Overview: tutorials/index.md
   - How-to:
       - Overview: how-to/index.md
+      - Run the MCP server: how-to/run-mcp-server.md
   - Principles: principles.md
   - Concepts:
       - Architecture: concepts/architecture.md
       - Capabilities: concepts/capabilities.md
   - Reference:
       - CLI: reference/cli.md
+      - MCP tools: reference/mcp-tools.md
       - Config: reference/config.md
       - .loupe layout: reference/loupe-directory.md
       - Verification: reference/verification.md
@@ -106,6 +108,7 @@ nav:
       - Decisions: reference/decisions.md
       - Glossary: reference/glossary.md
       - Data handling: reference/data-handling.md
+      - Pricing: reference/pricing.md
       - Threat model of Loupe: reference/loupe-threat-model.md
       - Evaluation: reference/evaluation.md
       - Schemas:
