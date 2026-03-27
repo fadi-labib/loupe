@@ -1,5 +1,6 @@
 from datetime import datetime
 
+import pytest
 from loupe_core.config import LensActivation, LoupeConfig
 from loupe_core.coordinator import build_run_plan
 from loupe_core.lens_api import LensCapabilities
@@ -92,6 +93,31 @@ def test_dependent_lens_dropped_if_dependency_disabled():
     )
     plan = build_run_plan(ctx, [lens_a, lens_b], cfg)
     assert plan == [], "Expected empty plan: A requires B, but B is disabled"
+
+
+def test_coordinator_rejects_dependency_cycle():
+    """Two lenses each declaring depends_on the other must raise a descriptive
+    error, not silently produce a plan that violates ordering or deadlock.
+
+    The cycle is detectable at plan-build time; the coordinator must refuse
+    to schedule rather than running lenses in an order that violates a
+    declared `requires_lenses` edge.
+    """
+    ctx = _ctx(["x.py"])
+    lens_a = _MakeLens("a", 0.9, depends_on=["b"])
+    lens_b = _MakeLens("b", 0.9, depends_on=["a"])
+    cfg = _cfg({"a": 0.3, "b": 0.3})
+    with pytest.raises(ValueError, match="cycle"):
+        build_run_plan(ctx, [lens_a, lens_b], cfg)
+
+
+def test_coordinator_rejects_self_dependency_cycle():
+    """A lens depending on itself is a degenerate cycle and must also be rejected."""
+    ctx = _ctx(["x.py"])
+    lens_a = _MakeLens("a", 0.9, depends_on=["a"])
+    cfg = _cfg({"a": 0.3})
+    with pytest.raises(ValueError, match="cycle"):
+        build_run_plan(ctx, [lens_a], cfg)
 
 
 def test_is_relevant_called_once_per_lens():

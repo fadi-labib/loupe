@@ -85,18 +85,34 @@ def _drop_unmet_dependents(
 def _topo_sort(
     selected: dict[str, tuple[Lens, RelevanceScore]],
 ) -> list[tuple[Lens, RelevanceScore]]:
+    """DFS-based topological sort with cycle detection.
+
+    Uses a three-state coloring (unvisited / on-current-path / done) to
+    distinguish a cross-edge to an already-completed node from a back-edge
+    into the current DFS path. A back-edge is a cycle — and shipping a plan
+    that violates a declared `requires_lenses` edge would silently run a
+    dependent lens before its predecessor, so we refuse to schedule.
+    """
     visited: set[str] = set()
+    on_path: set[str] = set()
     result: list[tuple[Lens, RelevanceScore]] = []
 
-    def visit(name: str) -> None:
+    def visit(name: str, path: list[str]) -> None:
         if name in visited or name not in selected:
             return
-        visited.add(name)
+        if name in on_path:
+            cycle = path[path.index(name):] + [name]
+            raise ValueError(
+                f"Lens dependency cycle detected: {' -> '.join(cycle)}"
+            )
+        on_path.add(name)
         lens, _ = selected[name]
         for dep in lens.capabilities.requires_lenses:
-            visit(dep)
+            visit(dep, path + [name])
+        on_path.discard(name)
+        visited.add(name)
         result.append(selected[name])
 
     for name in selected:
-        visit(name)
+        visit(name, [])
     return result
