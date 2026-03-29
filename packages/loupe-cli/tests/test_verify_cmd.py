@@ -6,8 +6,10 @@ exit codes, output formatting, the .loupe/ presence check.
 """
 import json
 import shutil
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
+import pytest
 from loupe_cli.__main__ import app
 from typer.testing import CliRunner
 
@@ -15,6 +17,49 @@ runner = CliRunner()
 FIXTURES = (
     Path(__file__).parent.parent.parent / "loupe-core" / "tests" / "artifacts" / "fixtures"
 )
+
+
+class _FrozenClock:
+    """A ``datetime`` stand-in that yields successive frozen timestamps.
+
+    Two ``loupe ci`` invocations back-to-back must produce distinct
+    run-record filenames; the filenames are timestamp-derived, so we
+    inject a clock that advances by a known delta between calls instead
+    of trusting wall-clock microsecond resolution.
+    """
+
+    def __init__(self, start: datetime, step: timedelta) -> None:
+        self._now = start
+        self._step = step
+
+    def now(self, tz: object = None) -> datetime:  # noqa: ARG002 — match datetime API
+        current = self._now
+        self._now = self._now + self._step
+        return current
+
+
+@pytest.fixture
+def frozen_ci_clock(monkeypatch: pytest.MonkeyPatch) -> _FrozenClock:
+    """Freeze the clock used by ``ci_cmd.datetime.now`` to a deterministic sequence.
+
+    The CLI's ci command stamps each run with ``datetime.now(UTC)`` and
+    derives the run-record filename from that timestamp. Using the real
+    clock makes ordering tests brittle (two writes within the same
+    microsecond would collide). Injecting a controlled sequence keeps
+    the test focussed on chain semantics, not on wall-clock luck.
+    """
+    clock = _FrozenClock(
+        start=datetime(2026, 5, 15, 12, 0, 0, tzinfo=UTC),
+        step=timedelta(seconds=1),
+    )
+
+    class _FrozenDatetime(datetime):
+        @classmethod
+        def now(cls, tz: object = None) -> datetime:  # noqa: ARG003 — match API
+            return clock.now(tz)
+
+    monkeypatch.setattr("loupe_cli.ci_cmd.datetime", _FrozenDatetime)
+    return clock
 
 
 def _init_project(tmp_path: Path) -> Path:
@@ -35,7 +80,7 @@ def test_verify_exits_zero_on_clean_repo(tmp_path, monkeypatch):
     assert "ok" in result.stdout.lower()
 
 
-def test_verify_exits_zero_after_two_ci_runs(tmp_path, monkeypatch):
+def test_verify_exits_zero_after_two_ci_runs(tmp_path, monkeypatch, frozen_ci_clock):
     """Run two ci invocations, then verify — chain should be intact."""
     monkeypatch.chdir(tmp_path)
     loupe = _init_project(tmp_path)
@@ -58,7 +103,7 @@ def test_verify_exits_zero_after_two_ci_runs(tmp_path, monkeypatch):
     assert result.exit_code == 0, result.stdout
 
 
-def test_verify_detects_broken_chain(tmp_path, monkeypatch):
+def test_verify_detects_broken_chain(tmp_path, monkeypatch, frozen_ci_clock):
     """Tamper with a run record's prev_run_hash — verify must catch it."""
     monkeypatch.chdir(tmp_path)
     loupe = _init_project(tmp_path)

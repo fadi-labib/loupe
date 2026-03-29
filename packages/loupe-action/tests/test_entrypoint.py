@@ -10,6 +10,12 @@ import pytest
 from loupe_action import entrypoint
 from loupe_action.formatter import COMMENT_SENTINEL
 
+# Fixed timestamp for run-record fixtures. The action's behaviour under test
+# is gating + comment-posting, not chronology, so the wall clock is irrelevant
+# here. Freezing avoids `datetime.now()` quirks (DST, clock skew, leap seconds)
+# leaking into otherwise-deterministic tests.
+_FIXED_RUN_TIMESTAMP = datetime(2026, 5, 15, 12, 0, tzinfo=UTC).isoformat()
+
 
 def _env(workspace: Path, output: Path) -> dict[str, str]:
     return {
@@ -34,7 +40,7 @@ def _seed_workspace(workspace: Path) -> None:
     )
     record = {
         "run_id": "run-fixture",
-        "timestamp": datetime.now(UTC).isoformat(),
+        "timestamp": _FIXED_RUN_TIMESTAMP,
         "mode": "ci",
         "invoked_by": "loupe-action",
         "trigger": "github_pr",
