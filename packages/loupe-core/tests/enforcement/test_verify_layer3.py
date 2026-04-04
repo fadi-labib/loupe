@@ -11,6 +11,25 @@ import subprocess
 from datetime import date
 from pathlib import Path
 
+from loupe_core.artifacts.mitigation import Evidence, Mitigation, MitigationsFile
+from loupe_core.artifacts.threat import Threat, ThreatsFile
+from loupe_core.artifacts.types import (
+    MitigationStatus,
+    Severity,
+    StrideCategory,
+    ThreatStatus,
+)
+from loupe_core.enforcement.verify import (
+    check_artefact_schemas,
+    check_protected_path_authorship,
+    check_threats_mitigations_cross_refs,
+    verify_repo,
+)
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
 
 def _git_isolated_env(repo: Path) -> dict[str, str]:
     """Build a `git` env that ignores the operator's global / system config.
@@ -37,25 +56,6 @@ def _git_isolated_env(repo: Path) -> dict[str, str]:
     env["HOME"] = str(fake_home)
     env["XDG_CONFIG_HOME"] = str(fake_home / ".config")
     return env
-
-from loupe_core.artifacts.mitigation import Evidence, Mitigation, MitigationsFile
-from loupe_core.artifacts.threat import Threat, ThreatsFile
-from loupe_core.artifacts.types import (
-    MitigationStatus,
-    Severity,
-    StrideCategory,
-    ThreatStatus,
-)
-from loupe_core.enforcement.verify import (
-    check_artefact_schemas,
-    check_protected_path_authorship,
-    check_threats_mitigations_cross_refs,
-    verify_repo,
-)
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
 
 
 def _make_loupe_dir(tmp_path: Path) -> Path:

@@ -33,7 +33,10 @@ async def dispatch_plan(
         try:
             await lens.run(ctx, plan_entry, boundary, loupe_dir)
         except Exception as exc:  # noqa: BLE001 — deliberate broad catch for isolation
-            _LOG.exception("Lens %r raised; continuing with remaining lenses.", plan_entry.lens_name)
+            _LOG.exception(
+                "Lens %r raised; continuing with remaining lenses.",
+                plan_entry.lens_name,
+            )
             ctx.record_finding(
                 plan_entry.lens_name,
                 "lens_error",
