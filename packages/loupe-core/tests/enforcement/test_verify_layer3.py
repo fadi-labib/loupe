@@ -6,9 +6,37 @@ existing coverage in test_verify.py.
 """
 from __future__ import annotations
 
+import os
 import subprocess
 from datetime import date
 from pathlib import Path
+
+
+def _git_isolated_env(repo: Path) -> dict[str, str]:
+    """Build a `git` env that ignores the operator's global / system config.
+
+    Layer-3 authorship checks read author identity from `git log`. If the
+    operator's `~/.gitconfig` sets `commit.gpgsign=true`, an `includeIf` block,
+    a global `user.email`, or a non-empty `core.hooksPath`, those side-channels
+    leak into our test commits and produce mysterious failures only on certain
+    workstations. Isolate `git` from every external config source.
+
+    `GIT_CONFIG_GLOBAL=/dev/null` and `GIT_CONFIG_SYSTEM=/dev/null` cover
+    explicit config files; redirecting `HOME` and `XDG_CONFIG_HOME` under
+    the temp tree neutralises any path-aware include resolution.
+    """
+    env = os.environ.copy()
+    env["GIT_CONFIG_GLOBAL"] = "/dev/null"
+    env["GIT_CONFIG_SYSTEM"] = "/dev/null"
+    # Deterministic timestamps make the authorship checks read the same
+    # commit metadata everywhere this test runs.
+    env["GIT_AUTHOR_DATE"] = "2026-05-15T12:00:00+00:00"
+    env["GIT_COMMITTER_DATE"] = "2026-05-15T12:00:00+00:00"
+    fake_home = repo / "_test_home"
+    fake_home.mkdir(parents=True, exist_ok=True)
+    env["HOME"] = str(fake_home)
+    env["XDG_CONFIG_HOME"] = str(fake_home / ".config")
+    return env
 
 from loupe_core.artifacts.mitigation import Evidence, Mitigation, MitigationsFile
 from loupe_core.artifacts.threat import Threat, ThreatsFile
@@ -152,19 +180,32 @@ def test_xref_check_catches_dangling_threat_id_on_mitigation(tmp_path):
 
 
 def _init_git_repo(tmp_path: Path, author_name: str, author_email: str) -> None:
-    """Initialise a throwaway git repo for authorship tests."""
-    subprocess.run(["git", "init", "-q"], cwd=tmp_path, check=True)
-    subprocess.run(["git", "config", "user.email", author_email], cwd=tmp_path, check=True)
-    subprocess.run(["git", "config", "user.name", author_name], cwd=tmp_path, check=True)
+    """Initialise a throwaway git repo for authorship tests, isolated from operator config."""
+    env = _git_isolated_env(tmp_path)
+    subprocess.run(["git", "init", "-q"], cwd=tmp_path, check=True, env=env)
+    subprocess.run(
+        ["git", "config", "user.email", author_email], cwd=tmp_path, check=True, env=env,
+    )
+    subprocess.run(
+        ["git", "config", "user.name", author_name], cwd=tmp_path, check=True, env=env,
+    )
+    # GPG signing is the most common operator-config leak: a global
+    # `commit.gpgsign=true` would force `git commit` to attempt signing
+    # even with `--no-gpg-sign` if signingkey is missing in some configs.
+    # Override at the repo level too.
+    subprocess.run(
+        ["git", "config", "commit.gpgsign", "false"], cwd=tmp_path, check=True, env=env,
+    )
 
 
 def _commit_file(repo: Path, rel_path: str, content: str, message: str) -> None:
     (repo / rel_path).parent.mkdir(parents=True, exist_ok=True)
     (repo / rel_path).write_text(content)
-    subprocess.run(["git", "add", rel_path], cwd=repo, check=True)
+    env = _git_isolated_env(repo)
+    subprocess.run(["git", "add", rel_path], cwd=repo, check=True, env=env)
     subprocess.run(
         ["git", "commit", "-q", "-m", message, "--no-gpg-sign"],
-        cwd=repo, check=True,
+        cwd=repo, check=True, env=env,
     )
 
 
