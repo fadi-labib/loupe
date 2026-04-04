@@ -15,12 +15,16 @@ exclude_path = [
 exclude = [
   # Anchors that depend on a JS-rendered ToC; lychee can't see them.
   "^https?://.+#",
-  # Placeholder repo URL used in templates; safe to leave dangling.
-  "https://github.com/fadilabib/loupe",
+  # Placeholder repo paths used in CHANGELOG `[Unreleased]` compare links and
+  # similar templates. Narrow to placeholder fragments only so real repo URLs
+  # still get verified.
+  'https://github.com/fadilabib/loupe/<placeholder>',
 ]
 
-# Treat redirects as success.
-accept = [200, 206, 301, 302, 303, 307, 308, 999]
+# Treat redirects as success. 429 = rate-limited (GitHub anonymous quota);
+# 999 = LinkedIn / similar anti-bot responses. Neither implies the link is
+# actually broken, so don't fail CI on them.
+accept = [200, 206, 301, 302, 303, 307, 308, 429, 999]
 
 # Reasonable network budgets.
 timeout = 20
