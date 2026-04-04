@@ -36,9 +36,10 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write     # mike commits to the gh-pages branch
-  pages: write        # GitHub Pages reads from gh-pages once Settings → Pages
-  id-token: write     # is set to "Deploy from a branch"
+  # mike pushes to gh-pages over plain git; that's the only write we need.
+  # `pages: write` only matters when using actions/deploy-pages (artifact
+  # flow), and `id-token: write` is for OIDC — neither applies here.
+  contents: write
 
 concurrency:
   group: docs-deploy
@@ -54,7 +55,9 @@ jobs:
           fetch-depth: 0
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v4
+        # Pin to a v4.x minor so unattended major-version surprises don't
+        # break the docs deploy. Bump deliberately when v5 lands.
+        uses: astral-sh/setup-uv@v4.1
         with:
           enable-cache: true
 
