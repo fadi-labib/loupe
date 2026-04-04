@@ -13,6 +13,8 @@ import pytest
 from loupe_cli.__main__ import app
 from typer.testing import CliRunner
 
+from .conftest import minimal_config_yaml
+
 runner = CliRunner()
 FIXTURES = (
     Path(__file__).parent.parent.parent / "loupe-core" / "tests" / "artifacts" / "fixtures"
@@ -85,12 +87,11 @@ def test_verify_exits_zero_after_two_ci_runs(tmp_path, monkeypatch, frozen_ci_cl
     monkeypatch.chdir(tmp_path)
     loupe = _init_project(tmp_path)
     (loupe / "config.yaml").write_text(
-        "schema_version: 1\n"
-        "models:\n  default: anthropic:claude-opus-4-7\n"
-        "limits:\n"
-        "  per_run_max_usd: 1.0\n  per_run_max_tokens_in: 100000\n  per_run_max_steps: 5\n"
-        "agent_writable_paths: [.loupe/runs/**]\n"
-        "lenses:\n  threatlens:\n    enabled: false\n    minimum_relevance: 0.99\n"
+        minimal_config_yaml(
+            agent_writable_paths=[".loupe/runs/**"],
+            threatlens_enabled=False,
+            threatlens_min_relevance=0.99,
+        )
     )
     # Two clean ci runs (docs-only diff → no-relevant-lens path, but each
     # still writes a run record). Empty diff is no longer a valid input —
@@ -108,12 +109,11 @@ def test_verify_detects_broken_chain(tmp_path, monkeypatch, frozen_ci_clock):
     monkeypatch.chdir(tmp_path)
     loupe = _init_project(tmp_path)
     (loupe / "config.yaml").write_text(
-        "schema_version: 1\n"
-        "models:\n  default: anthropic:claude-opus-4-7\n"
-        "limits:\n"
-        "  per_run_max_usd: 1.0\n  per_run_max_tokens_in: 100000\n  per_run_max_steps: 5\n"
-        "agent_writable_paths: [.loupe/runs/**]\n"
-        "lenses:\n  threatlens:\n    enabled: false\n    minimum_relevance: 0.99\n"
+        minimal_config_yaml(
+            agent_writable_paths=[".loupe/runs/**"],
+            threatlens_enabled=False,
+            threatlens_min_relevance=0.99,
+        )
     )
     docs_diff = "diff --git a/R.md b/R.md\n@@ -1 +1,2 @@\n x\n+y\n"
     runner.invoke(app, ["ci", "--diff", docs_diff, "--base-sha", "a", "--head-sha", "b"])

@@ -2,23 +2,16 @@
 import shutil
 from pathlib import Path
 
-import pytest
 from loupe_cli.__main__ import app
 from loupe_core.artifacts.run_record import load_run_records
 from typer.testing import CliRunner
+
+from .conftest import minimal_config_yaml
 
 runner = CliRunner()
 FIXTURES = (
     Path(__file__).parent.parent.parent / "loupe-core" / "tests" / "artifacts" / "fixtures"
 )
-
-
-@pytest.fixture(autouse=True)
-def stub_dispatch(monkeypatch):
-    """Same isolation pattern as test_ci_real.py — mock the lens dispatch."""
-    async def _noop(ctx, lenses, boundary, loupe_dir):  # noqa: ANN001
-        return None
-    monkeypatch.setattr("loupe_cli.scan_cmd.dispatch_plan", _noop)
 
 
 def _init_project(tmp_path: Path) -> Path:
@@ -27,14 +20,9 @@ def _init_project(tmp_path: Path) -> Path:
     loupe = tmp_path / ".loupe"
     loupe.mkdir()
     shutil.copy(FIXTURES / "valid_context.md", loupe / "context.md")
+    # Impossible-for-diff-mode threshold — only scan mode can include this lens.
     (loupe / "config.yaml").write_text(
-        "schema_version: 1\n"
-        "models:\n  default: anthropic:claude-opus-4-7\n"
-        "limits:\n"
-        "  per_run_max_usd: 1.0\n  per_run_max_tokens_in: 100000\n  per_run_max_steps: 5\n"
-        "agent_writable_paths: [.loupe/threats.yaml, .loupe/runs/**]\n"
-        # Impossible-for-diff-mode threshold — only scan mode can include this lens.
-        "lenses:\n  threatlens:\n    enabled: true\n    minimum_relevance: 0.99\n"
+        minimal_config_yaml(threatlens_min_relevance=0.99)
     )
     (loupe / "runs").mkdir()
     return loupe

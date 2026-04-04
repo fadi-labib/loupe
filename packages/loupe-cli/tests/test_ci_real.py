@@ -8,10 +8,11 @@ writing, exit codes.
 import shutil
 from pathlib import Path
 
-import pytest
 from loupe_cli.__main__ import app
 from loupe_core.artifacts.run_record import load_run_records
 from typer.testing import CliRunner
+
+from .conftest import minimal_config_yaml
 
 runner = CliRunner()
 FIXTURES = (
@@ -19,34 +20,12 @@ FIXTURES = (
 )
 
 
-@pytest.fixture(autouse=True)
-def stub_dispatch(monkeypatch):
-    """CLI tests don't exercise the lens internals — mock dispatch_plan to a no-op.
-
-    The lens's actual agent invocation is covered by VCR-based integration tests
-    in the loupe-threatlens package. Here we test the CLI's coordination logic:
-    bootstrap, plan-building, run-record writing.
-    """
-    async def _noop(ctx, lenses, boundary, loupe_dir):  # noqa: ANN001
-        return None
-    monkeypatch.setattr("loupe_cli.ci_cmd.dispatch_plan", _noop)
-
-
 def _init_project(tmp_path: Path) -> Path:
     """Create a .loupe/ with valid context + minimal config."""
     loupe = tmp_path / ".loupe"
     loupe.mkdir()
     shutil.copy(FIXTURES / "valid_context.md", loupe / "context.md")
-    (loupe / "config.yaml").write_text(
-        "schema_version: 1\n"
-        "models:\n  default: anthropic:claude-opus-4-7\n"
-        "limits:\n"
-        "  per_run_max_usd: 1.0\n"
-        "  per_run_max_tokens_in: 100000\n"
-        "  per_run_max_steps: 5\n"
-        "agent_writable_paths: [.loupe/threats.yaml, .loupe/runs/**]\n"
-        "lenses:\n  threatlens:\n    enabled: true\n    minimum_relevance: 0.3\n"
-    )
+    (loupe / "config.yaml").write_text(minimal_config_yaml())
     (loupe / "runs").mkdir()
     return loupe
 
