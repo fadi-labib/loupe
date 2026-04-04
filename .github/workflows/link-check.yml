@@ -29,10 +29,13 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Restore lychee cache
+        # Key on lychee.toml hash so the cache is reused across commits and
+        # only invalidates when the config itself changes. Keying on
+        # github.sha forced a cold cache on every run.
         uses: actions/cache@v4
         with:
           path: .lycheecache
-          key: cache-lychee-${{ github.sha }}
+          key: cache-lychee-${{ hashFiles('lychee.toml') }}
           restore-keys: cache-lychee-
 
       - name: Run lychee
