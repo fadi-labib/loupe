@@ -22,6 +22,10 @@ swap:
   state-of-the-art: leading|modern
   in the realm of: in
   in the landscape of: in
-  in today's: today,
+  # Flag-only — the prior swap ("today,") replaced "in today's <noun>" with
+  # "today, <noun>", which dropped the head noun's possessive context and
+  # produced nonsensical rewrites. Empty swap keeps the smell-test signal
+  # without offering a broken auto-rewrite.
+  in today's: ""
   it is worth noting that: ""
   it should be noted that: ""
