@@ -7,6 +7,9 @@
 # CI runs the same checks as standalone workflows; this file is for the
 # fast-feedback loop on the developer's machine.
 
+default_language_version:
+  python: python3.13
+
 repos:
   - repo: local
     hooks:
@@ -33,3 +36,14 @@ repos:
         language: system
         pass_filenames: false
         types_or: [python, pyi]
+
+  - repo: local
+    hooks:
+      - id: mypy
+        name: mypy (loupe-core strict)
+        entry: uv run mypy
+        language: system
+        types: [python]
+        files: ^packages/loupe-core/loupe_core/
+        pass_filenames: false
+        args: [packages/loupe-core/loupe_core/]
