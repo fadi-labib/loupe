@@ -5,9 +5,10 @@ description = "Loupe platform core — coordinator, run context, enforcement, MC
 requires-python = ">=3.13"
 dependencies = [
     "pydantic>=2.9",
-    # pydantic-ai is pre-1.0 and breaking changes between 0.x minors are
-    # common; cap the upper bound so unattended upgrades don't break us.
-    "pydantic-ai>=0.1,<0.3",
+    # pydantic-ai 1.x is current; cap below 2.0 so a future major release
+    # doesn't break us silently. The codebase uses 1.x APIs (tool registration
+    # via `_function_toolset`, etc.) — anything lower than 1.0 would break.
+    "pydantic-ai>=1.0,<2",
     "pyyaml>=6.0",
     "ruamel.yaml>=0.18",
     "httpx>=0.27",
