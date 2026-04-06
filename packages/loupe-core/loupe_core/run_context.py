@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal
 
@@ -55,6 +55,23 @@ class LensRunPlan(BaseModel):
     relevance: RelevanceScore
     depends_on: list[str] = Field(default_factory=list)
     sub_prompt: str = ""
+
+
+class Finding(BaseModel):
+    """A lens-emitted blackboard entry with provenance.
+
+    `posted_by` and `timestamp` mirror the provenance fields on `Fact` so
+    the run-record + gate logic can audit who wrote what and when. The
+    actual payload is intentionally typed as `dict[str, Any]` because
+    lenses emit heterogeneous shapes (threats, metrics, error records,
+    arbitrary key/value blobs) and we don't want to lose information at
+    the boundary; downstream readers can validate against their own
+    schemas.
+    """
+
+    posted_by: str = Field(min_length=1)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    payload: dict[str, Any] = Field(default_factory=dict)
 
 
 class Fact(BaseModel):
@@ -126,8 +143,12 @@ class RunContext(BaseModel):
     secrets: SecretDetectionResult | None = None
     static_findings: StaticAnalysisResult | None = None
 
-    # Mutable blackboard
-    findings: dict[str, dict[str, Any]] = Field(default_factory=dict)
+    # Mutable blackboard. Each finding carries `posted_by` + `timestamp`
+    # provenance alongside its payload (see `Finding`). Readers go through
+    # `lookup()` which returns the payload dict directly for backward
+    # compatibility with existing call sites; iterate over
+    # `ctx.findings[lens].items()` (key, Finding) when you need provenance.
+    findings: dict[str, dict[str, Finding]] = Field(default_factory=dict)
     facts: list[Fact] = Field(default_factory=list)
     pending_decisions: list[PendingDecision] = Field(default_factory=list)
     proposed_patches: list[ProposedPatch] = Field(default_factory=list)
@@ -138,10 +159,33 @@ class RunContext(BaseModel):
     lens_usage: dict[str, LensUsage] = Field(default_factory=dict)
 
     def record_finding(self, lens: str, key: str, value: Any) -> None:
-        self.findings.setdefault(lens, {})[key] = value
+        """Record a finding from `lens` under `key` with provenance.
+
+        `value` may be a dict (the common case — preserved as-is on the
+        Finding's `payload`), or any scalar / list (wrapped as
+        `{"value": <scalar>}` so the payload shape stays uniform). Readers
+        that go through `lookup()` get the original `value` back.
+        """
+        if isinstance(value, dict):
+            payload: dict[str, Any] = value
+        else:
+            payload = {"value": value}
+        finding = Finding(posted_by=lens, payload=payload)
+        self.findings.setdefault(lens, {})[key] = finding
 
     def lookup(self, lens: str, key: str, default: Any = None) -> Any:
-        return self.findings.get(lens, {}).get(key, default)
+        """Return the payload originally passed to `record_finding`.
+
+        Scalars that were wrapped in `{"value": ...}` on write are
+        unwrapped here so the caller sees what they recorded.
+        """
+        finding = self.findings.get(lens, {}).get(key)
+        if finding is None:
+            return default
+        payload = finding.payload
+        if set(payload.keys()) == {"value"}:
+            return payload["value"]
+        return payload
 
     def post_fact(self, fact: Fact) -> None:
         self.facts.append(fact)

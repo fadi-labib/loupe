@@ -8,9 +8,8 @@ typos at the call site cannot silently swap version strings.
 from __future__ import annotations
 
 import pytest
-from pydantic import ValidationError
-
 from loupe_core.run_context import SBOMDelta, UpgradedPackage
+from pydantic import ValidationError
 
 
 def test_upgraded_package_named_fields() -> None:

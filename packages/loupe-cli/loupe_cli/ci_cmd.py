@@ -38,7 +38,6 @@ from loupe_core.dispatcher import dispatch_plan
 from loupe_core.enforcement.path_boundary import PathBoundary
 from loupe_core.lens_api import Lens
 from loupe_core.lens_registry import discover_lenses
-from loupe_core.pricing import cache_hit_rate as _cache_hit_rate
 from loupe_core.run_context import BootstrapInputs, RunContext
 
 # BSD sysexits.h EX_USAGE — operator-config / usage errors.
@@ -145,11 +144,12 @@ def _gate_exit_code(ctx: RunContext, cfg: LoupeConfig) -> int:
 
     fail_triggered: list[tuple[str, str]] = []
     warn_triggered: list[tuple[str, str]] = []
-    for key, value in ctx.findings.get("threatlens", {}).items():
+    for key, finding in ctx.findings.get("threatlens", {}).items():
         if not key.startswith("threat:"):
             continue
-        severity = value.get("severity")
-        threat_id = value.get("id", key.removeprefix("threat:"))
+        payload = finding.payload
+        severity = payload.get("severity")
+        threat_id = payload.get("id", key.removeprefix("threat:"))
         if severity in fail_severities:
             fail_triggered.append((threat_id, severity))
         elif severity in warn_severities:

@@ -1,6 +1,6 @@
-from datetime import datetime
+from datetime import UTC, datetime
 
-from loupe_core.run_context import CodeDiff, Fact, RunContext
+from loupe_core.run_context import CodeDiff, Fact, Finding, RunContext
 
 
 def _new_ctx() -> RunContext:
@@ -34,6 +34,28 @@ def test_findings_are_namespaced():
     ctx.record_finding("safetylens", "k", 2)
     assert ctx.lookup("threatlens", "k") == 1
     assert ctx.lookup("safetylens", "k") == 2
+
+
+def test_finding_carries_provenance():
+    """Every recorded finding should carry posted_by + timestamp so the
+    run record can audit who wrote what and when."""
+    ctx = _new_ctx()
+    ctx.record_finding("threatlens", "threat:T-001", {"severity": "high"})
+
+    finding = ctx.findings["threatlens"]["threat:T-001"]
+    assert isinstance(finding, Finding)
+    assert finding.posted_by == "threatlens"
+    assert finding.payload == {"severity": "high"}
+    # timestamp populated and timezone-aware (UTC)
+    assert finding.timestamp.tzinfo is not None
+    assert finding.timestamp <= datetime.now(UTC)
+
+
+def test_finding_scalar_value_is_unwrapped_on_lookup():
+    """Backward compat: callers that recorded a scalar get the scalar back."""
+    ctx = _new_ctx()
+    ctx.record_finding("safetylens", "count", 7)
+    assert ctx.lookup("safetylens", "count") == 7
 
 
 def test_post_fact_appends():
