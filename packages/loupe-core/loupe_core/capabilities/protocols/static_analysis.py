@@ -13,7 +13,11 @@ class StaticFinding(BaseModel):
 
     rule_id: str = Field(description="Rule identifier from the analyser.")
     file: str = Field(description="Repo-relative path of the violation.")
-    line: int = Field(ge=0, description="1-based line number.")
+    line: int | None = Field(
+        default=None,
+        ge=1,
+        description="1-based line number; None for whole-file or unknown.",
+    )
     severity: Severity = Field(description="Severity assigned by the rule.")
     message: str = Field(description="One-line description from the analyser.")
 

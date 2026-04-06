@@ -87,11 +87,13 @@ def test_parse_multiple_findings():
 
 
 def test_parse_handles_missing_fields():
-    """Gitleaks sometimes omits StartLine for whole-file matches."""
+    """Gitleaks sometimes omits StartLine for whole-file matches; the
+    protocol sentinel for whole-file / unknown is `line=None` (was `0`
+    before Phase 7's 1-based-or-None refactor)."""
     payload = json.dumps([{"File": "x.py", "RuleID": "x", "Secret": "y"}])
     findings = _parse_gitleaks_json(payload)
     assert len(findings) == 1
-    assert findings[0].line == 0
+    assert findings[0].line is None
     assert findings[0].rule_id == "x"
 
 

@@ -120,7 +120,8 @@ def _parse_bandit_json(stdout: str, *, repo_path: Path) -> list[StaticFinding]:
             (entry.get("issue_severity") or "").upper(),
             "informational",
         )
-        line = int(entry.get("line_number", 0) or 0)
+        line_raw = int(entry.get("line_number", 0) or 0)
+        line: int | None = line_raw if line_raw >= 1 else None
 
         findings.append(StaticFinding(
             rule_id=rule_id,

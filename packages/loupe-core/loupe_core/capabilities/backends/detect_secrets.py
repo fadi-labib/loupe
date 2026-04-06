@@ -112,9 +112,10 @@ def _parse_detect_secrets_json(
             # plus a verification hint as the "match" so operators can
             # recognise the class.
             redacted = f"<{detector}{' (verified)' if verified else ''}>"
+            line_raw = int(entry.get("line_number", 0) or 0)
             findings.append(SecretFinding(
                 file=rel,
-                line=int(entry.get("line_number", 0) or 0),
+                line=line_raw if line_raw >= 1 else None,
                 rule_id=rule_id,
                 redacted_match=redacted,
                 severity="critical" if verified else "high",

@@ -122,9 +122,10 @@ def _parse_gitleaks_json(stdout: str) -> list[SecretFinding]:
 
     findings: list[SecretFinding] = []
     for entry in raw:
+        line_raw = int(entry.get("StartLine", 0) or 0)
         findings.append(SecretFinding(
             file=entry.get("File", ""),
-            line=int(entry.get("StartLine", 0) or 0),
+            line=line_raw if line_raw >= 1 else None,
             rule_id=entry.get("RuleID", "unknown"),
             redacted_match=_redact(entry.get("Secret", "")),
             # gitleaks doesn't emit a severity; convention is HIGH for any

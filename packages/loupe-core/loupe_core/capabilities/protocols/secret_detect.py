@@ -12,7 +12,11 @@ class SecretFinding(BaseModel):
     """One leaked-credential candidate."""
 
     file: str = Field(description="Repo-relative path containing the match.")
-    line: int = Field(ge=0, description="1-based line number; 0 for whole-file matches.")
+    line: int | None = Field(
+        default=None,
+        ge=1,
+        description="1-based line number; None for whole-file or unknown.",
+    )
     rule_id: str = Field(description="Backend-specific identifier (e.g., `aws-access-key-id`).")
     redacted_match: str = Field(description="The matched secret, scrubbed for safe display.")
     severity: Severity = Field(default="high", description="Severity; defaults to high.")

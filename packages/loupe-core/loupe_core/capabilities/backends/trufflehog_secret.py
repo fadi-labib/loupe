@@ -126,9 +126,10 @@ def _parse_trufflehog_ndjson(stdout: str) -> list[SecretFinding]:
         # our own redactor over Raw. We NEVER serialise Raw directly.
         redacted = entry.get("Redacted") or _redact(entry.get("Raw", ""))
 
+        line_raw = int(line_no or 0)
         findings.append(SecretFinding(
             file=file_path,
-            line=int(line_no or 0),
+            line=line_raw if line_raw >= 1 else None,
             rule_id=rule_id,
             redacted_match=redacted,
             # Verified findings are higher confidence than mere matches.

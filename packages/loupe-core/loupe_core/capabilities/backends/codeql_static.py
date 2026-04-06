@@ -211,11 +211,12 @@ def _sarif_result_to_finding(result: dict) -> StaticFinding:
     # SARIF locations is a list; we record the first physical location.
     locations = result.get("locations") or []
     file_uri = ""
-    line = 0
+    line: int | None = None
     if locations:
         phys = locations[0].get("physicalLocation") or {}
         file_uri = (phys.get("artifactLocation") or {}).get("uri", "")
-        line = int((phys.get("region") or {}).get("startLine", 0) or 0)
+        start_line = int((phys.get("region") or {}).get("startLine", 0) or 0)
+        line = start_line if start_line >= 1 else None
 
     return StaticFinding(
         rule_id=rule_id,

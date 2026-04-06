@@ -138,7 +138,8 @@ def _parse_semgrep_json(stdout: str, *, repo_path: Path) -> list[StaticFinding]:
             rel = path  # path not under repo_path; leave as-is.
 
         start = entry.get("start") or {}
-        line = int(start.get("line", 0) or 0)
+        start_line = int(start.get("line", 0) or 0)
+        line: int | None = start_line if start_line >= 1 else None
         extra = entry.get("extra") or {}
         message = extra.get("message", "").strip() or "(no message)"
         severity = _SEVERITY_MAP.get(extra.get("severity", "").upper(), "informational")

@@ -193,12 +193,13 @@ def test_parse_sarif_severity_mapping(sarif_level, expected):
 
 
 def test_parse_sarif_handles_missing_locations():
-    """A result without `locations` should still produce a finding with line=0."""
+    """A result without `locations` should produce a finding with line=None
+    (the protocol sentinel for whole-file / unknown location)."""
     bare = {"ruleId": "x", "message": {"text": "y"}, "level": "warning"}
     findings = _parse_sarif(_sarif(bare))
     assert len(findings) == 1
     assert findings[0].file == ""
-    assert findings[0].line == 0
+    assert findings[0].line is None
 
 
 def test_parse_sarif_handles_missing_message():
