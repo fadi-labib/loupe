@@ -37,6 +37,7 @@ osv-scanner v1.9 (verified 2026-05-15):
 """
 from __future__ import annotations
 
+import asyncio
 import json
 import shutil
 import subprocess
@@ -89,7 +90,8 @@ class OsvScannerCveBackend:
             fh.write(sbom.raw_document or "")
 
         try:
-            proc = subprocess.run(
+            proc = await asyncio.to_thread(
+                subprocess.run,
                 [
                     "osv-scanner", "scan", "source",
                     "--sbom", str(sbom_path),

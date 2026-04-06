@@ -28,6 +28,7 @@ Gitleaks' JSON schema as of v8.21 (verified 2026-05-15):
 """
 from __future__ import annotations
 
+import asyncio
 import json
 import shutil
 import subprocess
@@ -73,7 +74,8 @@ class GitleaksSecretBackend:
         # streams the report to stdout so we don't have to manage a temp file.
         # Gitleaks exits 1 when findings are present, which is informational —
         # we treat the run as successful as long as the JSON parses.
-        proc = subprocess.run(
+        proc = await asyncio.to_thread(
+            subprocess.run,
             [
                 "gitleaks", "detect",
                 "--source", str(repo_path),

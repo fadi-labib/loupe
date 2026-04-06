@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import shutil
 import subprocess
@@ -21,7 +22,11 @@ class SyftSbomBackend:
                 backend_name=self.backend_name,
                 message="syft binary not on PATH (install from https://github.com/anchore/syft)",
             )
-        proc = subprocess.run(
+        # Wrap the blocking subprocess.run in to_thread so the event loop
+        # stays responsive — capability bootstrap may fan out multiple
+        # backends concurrently via asyncio.gather.
+        proc = await asyncio.to_thread(
+            subprocess.run,
             ["syft", str(repo_path), "-o", "cyclonedx-json"],
             capture_output=True,
             text=True,

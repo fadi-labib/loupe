@@ -34,6 +34,7 @@ flow consumes. CodeQL writes SARIF; we parse the subset we care about
 """
 from __future__ import annotations
 
+import asyncio
 import json
 import os
 import shutil
@@ -104,7 +105,8 @@ class CodeQLStaticBackend:
             sarif_path = Path(fh.name)
 
         try:
-            proc = subprocess.run(
+            proc = await asyncio.to_thread(
+                subprocess.run,
                 [
                     "codeql", "database", "analyze",
                     str(db_path),

@@ -19,6 +19,7 @@ text that pollutes JSON parsing.
 """
 from __future__ import annotations
 
+import asyncio
 import json
 import shutil
 import subprocess
@@ -52,7 +53,8 @@ class CdxgenSbomBackend:
             out_path = Path(fh.name)
 
         try:
-            proc = subprocess.run(
+            proc = await asyncio.to_thread(
+                subprocess.run,
                 [
                     "cdxgen",
                     "-t", "universal",

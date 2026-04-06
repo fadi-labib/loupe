@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import shutil
 import subprocess
@@ -31,7 +32,8 @@ class GrypeCveBackend:
                 backend_name=self.backend_name,
                 message="grype binary not on PATH (install from https://github.com/anchore/grype)",
             )
-        proc = subprocess.run(
+        proc = await asyncio.to_thread(
+            subprocess.run,
             ["grype", "sbom:-", "-o", "json"],
             input=sbom.raw_document,
             capture_output=True,

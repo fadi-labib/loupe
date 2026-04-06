@@ -38,6 +38,7 @@ JSON output shape (verified against semgrep 1.92, 2026-05-15):
 """
 from __future__ import annotations
 
+import asyncio
 import json
 import shutil
 import subprocess
@@ -83,7 +84,8 @@ class SemgrepStaticBackend:
         # output to stdout. `--metrics=off` keeps Semgrep from phoning home
         # to their telemetry endpoint — required for [principle §1] (no
         # surprise outbound network from a tool an auditor reads).
-        proc = subprocess.run(
+        proc = await asyncio.to_thread(
+            subprocess.run,
             [
                 "semgrep", "scan",
                 "--config=auto",

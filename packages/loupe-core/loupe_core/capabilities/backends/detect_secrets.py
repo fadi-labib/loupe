@@ -29,6 +29,7 @@ keyed by filename. Shape (verified against detect-secrets 1.5, 2026-
 """
 from __future__ import annotations
 
+import asyncio
 import json
 import shutil
 import subprocess
@@ -60,7 +61,8 @@ class DetectSecretsBackend:
 
         # `detect-secrets scan <path>` emits the baseline JSON to stdout.
         # No file is written; we parse it directly.
-        proc = subprocess.run(
+        proc = await asyncio.to_thread(
+            subprocess.run,
             ["detect-secrets", "scan", str(repo_path)],
             capture_output=True,
             text=True,

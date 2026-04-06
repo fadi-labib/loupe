@@ -26,6 +26,7 @@ Bandit JSON output (verified against bandit 1.7, 2026-05-15):
 """
 from __future__ import annotations
 
+import asyncio
 import json
 import shutil
 import subprocess
@@ -69,7 +70,8 @@ class BanditStaticBackend:
         # ``-r`` recurses into the target; ``-f json`` is the structured
         # output mode. We capture stderr for hard errors but ignore the
         # standard bandit summary it prints there during a normal run.
-        proc = subprocess.run(
+        proc = await asyncio.to_thread(
+            subprocess.run,
             [
                 "bandit",
                 "-r", str(repo_path),

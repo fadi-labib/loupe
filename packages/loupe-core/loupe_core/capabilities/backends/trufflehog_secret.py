@@ -24,6 +24,7 @@ invoked with `--json`. Shape (verified against v3.85, 2026-05-15):
 """
 from __future__ import annotations
 
+import asyncio
 import json
 import shutil
 import subprocess
@@ -59,7 +60,8 @@ class TruffleHogSecretBackend:
                 ),
             )
 
-        proc = subprocess.run(
+        proc = await asyncio.to_thread(
+            subprocess.run,
             [
                 "trufflehog", "filesystem", str(repo_path),
                 "--json",
