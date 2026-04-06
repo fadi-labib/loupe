@@ -82,3 +82,35 @@ def test_known_capabilities_accepted():
             "capabilities": {cap: {"mode": "single", "backends": ["any"]}},
         })
         assert cap in cfg.capabilities
+
+
+def test_cheap_for_unknown_task_rejected():
+    """A typo in `cheap_for` would silently disable cheap-routing.
+    Fail fast at load time with a message that lists the known names."""
+    with pytest.raises(ValidationError) as exc_info:
+        LoupeConfig.model_validate({
+            "models": {
+                "default": "anthropic:claude-opus-4-7",
+                "threatlens": {
+                    "primary": "anthropic:claude-opus-4-7",
+                    "cheap_for": ["doc_polishh"],  # typo
+                    "cheap_model": "anthropic:claude-haiku-4-5",
+                },
+            },
+        })
+    assert "unknown task name" in str(exc_info.value)
+
+
+def test_cheap_for_known_task_accepted():
+    cfg = LoupeConfig.model_validate({
+        "models": {
+            "default": "anthropic:claude-opus-4-7",
+            "threatlens": {
+                "primary": "anthropic:claude-opus-4-7",
+                "cheap_for": ["doc_polish", "vex_drafting"],
+                "cheap_model": "anthropic:claude-haiku-4-5",
+            },
+        },
+    })
+    assert cfg.models.threatlens is not None
+    assert cfg.models.threatlens.cheap_for == ["doc_polish", "vex_drafting"]

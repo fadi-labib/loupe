@@ -28,6 +28,23 @@ Listed here to avoid an import cycle (config → capabilities → config via
 """
 
 
+_KNOWN_CHEAP_TASKS: frozenset[str] = frozenset({
+    # Lens-side sub-tasks that may opt into the cheap model. New task
+    # names land here as they are wired in so a typo in config.yaml fails
+    # fast instead of silently disabling the cheap-routing.
+    "doc_polish",     # threatlens: polishing mitigation prose
+    "vex_drafting",   # threatlens: drafting VEX statements for CVEs
+})
+"""Task names recognised by `LensModelConfig.cheap_for`.
+
+Kept intentionally small: a frozenset of strings rather than a `Literal`
+type so adding a new task is a one-line change. Validated at load time
+in `LensModelConfig.model_validator` — unknown names raise so operators
+don't see a config that "loaded fine" but routes every call through
+`primary` because of a typo.
+"""
+
+
 class LensModelConfig(BaseModel):
     """Per-lens model selection. Optional override of `ModelsConfig.default`."""
 
@@ -35,12 +52,28 @@ class LensModelConfig(BaseModel):
     fallback: str | None = Field(default=None, description="Fallback `provider:model` if `primary` fails.")
     cheap_for: list[str] = Field(
         default_factory=list,
-        description="Task names that should use `cheap_model` instead of `primary`.",
+        description=(
+            "Task names that should use `cheap_model` instead of `primary`. "
+            "Validated against `_KNOWN_CHEAP_TASKS` at load time so a typo "
+            "fails fast instead of silently disabling cheap-routing."
+        ),
     )
     cheap_model: str | None = Field(
         default=None,
         description="Cheaper `provider:model` for non-critical sub-tasks listed in `cheap_for`.",
     )
+
+    @model_validator(mode="after")
+    def _validate_cheap_for(self) -> Self:
+        unknown = [t for t in self.cheap_for if t not in _KNOWN_CHEAP_TASKS]
+        if unknown:
+            raise ValueError(
+                f"LensModelConfig.cheap_for contains unknown task name(s): "
+                f"{sorted(unknown)}. Known tasks: {sorted(_KNOWN_CHEAP_TASKS) or '(none yet)'}. "
+                f"Add the task name to `_KNOWN_CHEAP_TASKS` in config.py before listing "
+                f"it in config.yaml."
+            )
+        return self
 
 
 class ModelsConfig(BaseModel):
