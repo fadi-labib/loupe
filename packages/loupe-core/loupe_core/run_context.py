@@ -25,12 +25,24 @@ class CodeDiff(BaseModel):
     raw_unified: str
 
 
+class UpgradedPackage(BaseModel):
+    """A single package whose version changed between two SBOMs.
+
+    Positional tuples (name, before, after) are ambiguous at the call site;
+    the named-field model removes the risk of swapping `before` and `after`.
+    """
+
+    name: str = Field(min_length=1)
+    before: str = Field(min_length=1)
+    after: str = Field(min_length=1)
+
+
 class SBOMDelta(BaseModel):
     before: dict[str, str] = Field(default_factory=dict)
     after: dict[str, str] = Field(default_factory=dict)
     added_packages: list[str] = Field(default_factory=list)
     removed_packages: list[str] = Field(default_factory=list)
-    upgraded_packages: list[tuple[str, str, str]] = Field(default_factory=list)
+    upgraded_packages: list[UpgradedPackage] = Field(default_factory=list)
 
 
 class RelevanceScore(BaseModel):
