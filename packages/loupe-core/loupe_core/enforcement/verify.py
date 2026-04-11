@@ -25,6 +25,9 @@ import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
+from pydantic import ValidationError
+from ruamel.yaml import YAMLError
+
 from loupe_core.artifacts.mitigation import MitigationsFile
 from loupe_core.artifacts.run_record import load_run_records
 from loupe_core.artifacts.threat import ThreatsFile
@@ -148,8 +151,11 @@ def check_threats_mitigations_cross_refs(loupe_dir: Path) -> list[VerifyFailure]
     try:
         threats = ThreatsFile.load(threats_path)
         mitigations = MitigationsFile.load(mitigations_path)
-    except Exception:
-        # Schema check will surface the load error; don't double-report.
+    except (YAMLError, ValidationError):
+        # Schema check (check_artifact_schemas) will surface the load
+        # error; don't double-report. Anything else — IOError, programming
+        # errors — must propagate so the operator sees the real bug
+        # rather than a confusingly empty cross-ref result.
         return []
 
     threat_ids = {t.id for t in threats.threats}

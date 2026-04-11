@@ -146,6 +146,19 @@ def test_xref_check_skips_if_files_absent(tmp_path):
     assert check_threats_mitigations_cross_refs(loupe) == []
 
 
+def test_xref_check_silently_skips_on_corrupt_yaml(tmp_path):
+    """The schema check is responsible for surfacing parse / schema
+    failures; the cross-ref check must not double-report — but it also
+    must not swallow programming errors that happen to look like
+    BaseException. Phase 7 narrowed the broad `except Exception` to
+    `except (YAMLError, ValidationError)`."""
+    loupe = _make_loupe_dir(tmp_path)
+    (loupe / "threats.yaml").write_text("threats: [\n  - id: 'unterminated")
+    MitigationsFile(mitigations=[_mitigation()]).save(loupe / "mitigations.yaml")
+    # Corrupt YAML → cross-ref returns empty (schema check will report it).
+    assert check_threats_mitigations_cross_refs(loupe) == []
+
+
 def test_xref_check_catches_dangling_mitigation_id_on_threat(tmp_path):
     # The dangling ID must be valid `M-NNN` format (enforced at parse time);
     # the Layer 3 check separately confirms the referenced mitigation exists.
