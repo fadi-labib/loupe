@@ -188,9 +188,25 @@ def build_mcp_server(
     # adds its own domain-specific tools to the same server instance.
     # When a `boundary` is supplied, lenses also register write tools;
     # without one, the surface stays strictly read-only.
+    #
+    # Each registration is isolated: one buggy lens must not take down
+    # the core read tools or any sibling lens. A failed registration
+    # logs a warning and the loop continues — the operator still gets
+    # `list_threats`, `latest_run`, etc., even if a third-party lens
+    # crashed during init.
     for lens in lenses or []:
         register = getattr(lens, "register_to_mcp", None)
-        if register is not None:
+        if register is None:
+            continue
+        try:
             register(mcp, loupe_dir, boundary=boundary)
+        except Exception as exc:  # noqa: BLE001 — deliberate broad catch
+            lens_name = getattr(
+                getattr(lens, "capabilities", None), "name", repr(lens),
+            )
+            _LOG.warning(
+                "Lens %s failed to register MCP tools: %s; core tools remain available.",
+                lens_name, exc, exc_info=True,
+            )
 
     return mcp

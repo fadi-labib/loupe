@@ -244,3 +244,37 @@ def test_build_mcp_server_registers_expected_tools(loupe_dir: Path):
     assert server.name == "loupe"
     assert server.instructions is not None
     assert "list_threats" in server.instructions
+
+
+def test_build_mcp_server_isolates_lens_registration_failure(
+    loupe_dir: Path, caplog: pytest.LogCaptureFixture,
+):
+    """A lens whose register_to_mcp raises must not take down the core
+    read tools or sibling lenses."""
+
+    class _BoomLens:
+        class _Caps:
+            name = "boomlens"
+        capabilities = _Caps()
+
+        def register_to_mcp(self, server, loupe_dir, *, boundary):
+            raise RuntimeError("synthetic failure during init")
+
+    class _OkLens:
+        class _Caps:
+            name = "oklens"
+        capabilities = _Caps()
+        registered: bool = False
+
+        def register_to_mcp(self, server, loupe_dir, *, boundary):
+            self.registered = True
+
+    ok = _OkLens()
+    with caplog.at_level("WARNING"):
+        server = build_mcp_server(loupe_dir, lenses=[_BoomLens(), ok])
+    # Core read tool still works (server constructed cleanly).
+    assert server.name == "loupe"
+    # Sibling lens registered despite the earlier failure.
+    assert ok.registered is True
+    # The failure surfaced as a warning so an operator can debug.
+    assert any("boomlens" in r.message for r in caplog.records)
