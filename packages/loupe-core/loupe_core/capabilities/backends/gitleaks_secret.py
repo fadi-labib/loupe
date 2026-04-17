@@ -32,6 +32,7 @@ import asyncio
 import json
 import shutil
 import subprocess
+import tempfile
 from pathlib import Path
 
 from loupe_core.capabilities.errors import BackendError
@@ -70,34 +71,49 @@ class GitleaksSecretBackend:
                 ),
             )
 
-        # `--no-banner` keeps stderr quiet; `--report-format json --report-path -`
-        # streams the report to stdout so we don't have to manage a temp file.
+        # `--no-banner` keeps stderr quiet; we ask gitleaks to write the
+        # JSON report to a tempfile (cross-platform — the previous
+        # `/dev/stdout` arg was Linux-only; macOS would treat it as a
+        # literal filename). The cdxgen backend uses the same pattern.
         # Gitleaks exits 1 when findings are present, which is informational —
         # we treat the run as successful as long as the JSON parses.
-        proc = await asyncio.to_thread(
-            subprocess.run,
-            [
-                "gitleaks", "detect",
-                "--source", str(repo_path),
-                "--no-banner",
-                "--report-format", "json",
-                "--report-path", "/dev/stdout",
-                "--exit-code", "0",   # always exit 0; we read findings from stdout
-            ],
-            capture_output=True,
-            text=True,
-            timeout=120,
-        )
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".gitleaks.json", delete=False,
+        ) as fh:
+            report_path = Path(fh.name)
 
-        # Even with --exit-code 0, a real failure (e.g., not-a-git-repo) returns
-        # non-zero with details on stderr.
-        if proc.returncode not in (0,):
-            raise BackendError(
-                backend_name=self.backend_name,
-                message=proc.stderr.strip() or f"gitleaks exited {proc.returncode}",
+        try:
+            proc = await asyncio.to_thread(
+                subprocess.run,
+                [
+                    "gitleaks", "detect",
+                    "--source", str(repo_path),
+                    "--no-banner",
+                    "--report-format", "json",
+                    "--report-path", str(report_path),
+                    "--exit-code", "0",   # always exit 0; we read findings from the report file
+                ],
+                capture_output=True,
+                text=True,
+                timeout=120,
             )
 
-        findings = _parse_gitleaks_json(proc.stdout)
+            # Even with --exit-code 0, a real failure (e.g., not-a-git-repo) returns
+            # non-zero with details on stderr.
+            if proc.returncode != 0:
+                raise BackendError(
+                    backend_name=self.backend_name,
+                    message=proc.stderr.strip() or f"gitleaks exited {proc.returncode}",
+                )
+
+            report_text = report_path.read_text() if report_path.exists() else "[]"
+        finally:
+            try:
+                report_path.unlink()
+            except OSError:
+                pass
+
+        findings = _parse_gitleaks_json(report_text)
         return SecretDetectionResult(
             findings=findings,
             backend_name=self.backend_name,

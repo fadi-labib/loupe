@@ -108,20 +108,45 @@ def test_parse_malformed_json_raises():
 # ---------------------------------------------------------------------------
 
 
+def _make_gitleaks_subprocess_side_effect(
+    *, report_payload: str, returncode: int = 0, stderr: str = "",
+):
+    """Build a subprocess.run side_effect that mimics gitleaks writing its
+    report to the path passed after ``--report-path``. The backend now
+    reads from a tempfile (Phase 7 cross-platform fix) instead of
+    ``/dev/stdout``; the side_effect performs the disk write the real
+    binary would have done."""
+
+    def _side_effect(cmd, *args, **kwargs):
+        report_path = None
+        for i, tok in enumerate(cmd):
+            if tok == "--report-path" and i + 1 < len(cmd):
+                report_path = Path(cmd[i + 1])
+                break
+        if report_path is not None:
+            report_path.write_text(report_payload)
+        proc = MagicMock()
+        proc.returncode = returncode
+        proc.stdout = ""
+        proc.stderr = stderr
+        return proc
+
+    return _side_effect
+
+
 @pytest.mark.asyncio
 async def test_backend_returns_typed_result(tmp_path: Path):
     payload = json.dumps([{
         "File": "leak.py", "StartLine": 5, "RuleID": "generic-api-key",
         "Secret": "sk-test-XXXXXXX",
     }])
-    mock_proc = MagicMock()
-    mock_proc.returncode = 0
-    mock_proc.stdout = payload
-    mock_proc.stderr = ""
 
     with (
         patch("shutil.which", return_value="/usr/bin/gitleaks"),
-        patch("subprocess.run", return_value=mock_proc),
+        patch(
+            "subprocess.run",
+            side_effect=_make_gitleaks_subprocess_side_effect(report_payload=payload),
+        ),
     ):
         result = await GitleaksSecretBackend().run(tmp_path)
 
@@ -133,15 +158,14 @@ async def test_backend_returns_typed_result(tmp_path: Path):
 
 @pytest.mark.asyncio
 async def test_backend_returns_empty_when_no_findings(tmp_path: Path):
-    """gitleaks emits empty stdout when nothing is found; backend should not crash."""
-    mock_proc = MagicMock()
-    mock_proc.returncode = 0
-    mock_proc.stdout = ""
-    mock_proc.stderr = ""
-
+    """gitleaks emits an empty JSON array when nothing is found; backend
+    should not crash."""
     with (
         patch("shutil.which", return_value="/usr/bin/gitleaks"),
-        patch("subprocess.run", return_value=mock_proc),
+        patch(
+            "subprocess.run",
+            side_effect=_make_gitleaks_subprocess_side_effect(report_payload="[]"),
+        ),
     ):
         result = await GitleaksSecretBackend().run(tmp_path)
 
