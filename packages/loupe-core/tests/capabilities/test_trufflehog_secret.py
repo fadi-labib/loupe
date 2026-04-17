@@ -63,9 +63,25 @@ def test_parse_empty_stdout_returns_empty():
 
 def test_parse_skips_non_json_lines():
     """TruffleHog sometimes prints a banner before NDJSON; tolerated, not error."""
-    payload = "🐷 starting trufflehog v3.85.0\n" + json.dumps(_entry()) + "\n"
+    payload = "starting trufflehog v3.85.0\n" + json.dumps(_entry()) + "\n"
     findings = _parse_trufflehog_ndjson(payload)
     assert len(findings) == 1
+
+
+def test_parse_logs_skipped_line_count(caplog: pytest.LogCaptureFixture):
+    """Skipped (banner / unparseable) lines must surface as a WARNING so
+    silent detection drops are at least observable to the operator."""
+    payload = (
+        "banner line one\n"
+        + "banner line two\n"
+        + "{not valid json\n"
+        + json.dumps(_entry())
+        + "\n"
+    )
+    with caplog.at_level("WARNING"):
+        findings = _parse_trufflehog_ndjson(payload)
+    assert len(findings) == 1
+    assert any("skipped 3" in r.message for r in caplog.records)
 
 
 def test_parse_extracts_file_and_line():

@@ -78,3 +78,22 @@ async def test_syft_backend_raises_when_subprocess_fails():
     ):
         with pytest.raises(BackendError, match="permission denied"):
             await SyftSbomBackend().run(Path("/repo"))
+
+
+@pytest.mark.asyncio
+async def test_syft_backend_wraps_json_decode_error_as_backend_error():
+    """If syft exits 0 but emits non-JSON (e.g., a banner-only run), the
+    backend must surface a typed BackendError, not a raw JSONDecodeError."""
+    garbage = MagicMock(returncode=0, stdout="not valid json {", stderr="")
+    with (
+        patch(
+            "loupe_core.capabilities.backends.syft_sbom.shutil.which",
+            return_value="/usr/bin/syft",
+        ),
+        patch(
+            "loupe_core.capabilities.backends.syft_sbom.subprocess.run",
+            return_value=garbage,
+        ),
+    ):
+        with pytest.raises(BackendError, match="syft output was not valid JSON"):
+            await SyftSbomBackend().run(Path("/repo"))

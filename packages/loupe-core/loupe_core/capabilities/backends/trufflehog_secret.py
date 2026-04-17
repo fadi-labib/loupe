@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 import shutil
 import subprocess
 from pathlib import Path
@@ -35,6 +36,8 @@ from loupe_core.capabilities.protocols import (
     SecretDetectionResult,
     SecretFinding,
 )
+
+_LOG = logging.getLogger(__name__)
 
 
 def _redact(secret: str) -> str:
@@ -89,14 +92,22 @@ class TruffleHogSecretBackend:
 
 
 def _parse_trufflehog_ndjson(stdout: str) -> list[SecretFinding]:
-    """Parse one NDJSON object per line; skip non-JSON banner / empty lines."""
+    """Parse one NDJSON object per line; skip non-JSON banner / empty lines.
+
+    Skipped (unparseable / banner) lines are counted and logged at WARNING
+    so unexpected interleaving doesn't silently swallow detections — the
+    operator can re-run with verbose logging to see what was dropped.
+    """
     findings: list[SecretFinding] = []
+    skipped = 0
     for line in stdout.splitlines():
         line = line.strip()
         if not line or not line.startswith("{"):
             # TruffleHog occasionally writes banner output before the first
             # JSON object; skip anything not shaped like JSON rather than
             # erroring (different from gitleaks' single-document format).
+            if line:
+                skipped += 1
             continue
         try:
             entry = json.loads(line)
@@ -104,6 +115,7 @@ def _parse_trufflehog_ndjson(stdout: str) -> list[SecretFinding]:
             # One bad line shouldn't sink the whole scan; surface via stderr
             # not BackendError because TruffleHog NDJSON output can be
             # interleaved with diagnostic messages we don't recognise.
+            skipped += 1
             continue
 
         file_path = (
@@ -139,4 +151,9 @@ def _parse_trufflehog_ndjson(stdout: str) -> list[SecretFinding]:
             # high otherwise.
             severity="critical" if verified else "high",
         ))
+    if skipped:
+        _LOG.warning(
+            "trufflehog backend: skipped %d unparseable line(s) from NDJSON output",
+            skipped,
+        )
     return findings

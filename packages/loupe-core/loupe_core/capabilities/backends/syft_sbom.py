@@ -35,8 +35,15 @@ class SyftSbomBackend:
         if proc.returncode != 0:
             raise BackendError(backend_name=self.backend_name, message=proc.stderr.strip())
         document = proc.stdout
-        # Validate JSON early — surfaces a clear error instead of a downstream parse fail.
-        parsed = json.loads(document)
+        # Validate JSON early — surfaces a clear BackendError instead of an
+        # opaque JSONDecodeError from a downstream parser.
+        try:
+            parsed = json.loads(document)
+        except json.JSONDecodeError as cause:
+            raise BackendError(
+                backend_name=self.backend_name,
+                message=f"syft output was not valid JSON: {cause}",
+            ) from cause
         components = [
             SbomComponent(
                 name=c["name"],
