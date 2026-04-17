@@ -3,7 +3,7 @@
 Exercises check_run_record_chain in isolation against in-process run records,
 without going through the CLI or filesystem-watcher path.
 """
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 from loupe_core.artifacts.run_record import LensConsidered, RunRecord, save_run_record
@@ -13,7 +13,7 @@ from loupe_core.enforcement.verify import check_run_record_chain
 def _record(run_id: str, prev: str | None) -> RunRecord:
     return RunRecord(
         run_id=run_id,
-        timestamp=datetime(2026, 5, 14, 12, 0, 0, 0),
+        timestamp=datetime(2026, 5, 14, 12, 0, 0, 0, tzinfo=UTC),
         mode="ci",
         invoked_by="bot",
         trigger="t",

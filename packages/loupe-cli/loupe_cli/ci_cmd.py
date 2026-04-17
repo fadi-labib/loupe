@@ -65,7 +65,10 @@ def ci_command(
     boundary = PathBoundary(writable_globs=cfg.agent_writable_paths)
     lenses = discover_lenses()
 
-    started_at = datetime.now(UTC).replace(tzinfo=None)
+    # Timezone-aware UTC: RunRecord.timestamp rejects naive datetimes
+    # because the on-disk filename appends a literal 'Z' that would
+    # otherwise lie about the timezone (Phase 7).
+    started_at = datetime.now(UTC)
     run_id = f"run-{uuid.uuid4().hex[:8]}"
 
     ctx = RunContext.bootstrap(BootstrapInputs(

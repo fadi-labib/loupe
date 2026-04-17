@@ -8,7 +8,7 @@ test_ci_real.py and would over-couple to the dispatcher.
 """
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from unittest.mock import patch
 
@@ -21,7 +21,7 @@ from loupe_core.run_context import LensUsage, RunContext
 
 def _ctx_with_usage(loupe_dir: Path, usages: dict[str, LensUsage]) -> RunContext:
     ctx = RunContext(
-        run_id="run-test", mode="ci", started_at=datetime(2026, 5, 15, 10, 0),
+        run_id="run-test", mode="ci", started_at=datetime(2026, 5, 15, 10, 0, tzinfo=UTC),
         user_intent="aggregation test",
         diff=None, sbom_delta=None,
         project=None, plan=[], knowledge=None,

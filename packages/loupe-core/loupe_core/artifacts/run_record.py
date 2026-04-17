@@ -3,11 +3,11 @@ from __future__ import annotations
 import hashlib
 import json
 import os
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class LensConsidered(BaseModel):
@@ -56,6 +56,24 @@ class RunRecord(BaseModel):
     self_hash: str = Field(
         default="", description="SHA-256 of this record's content excluding `self_hash`."
     )
+
+    @field_validator("timestamp")
+    @classmethod
+    def _timestamp_must_be_utc_aware(cls, v: datetime) -> datetime:
+        """Reject naive datetimes outright.
+
+        The on-disk filename format appends a literal 'Z' suffix, which
+        promises UTC. A naive datetime would slip in whatever the local
+        clock said and lie about the timezone — corrupting the hash chain
+        if two runs from different machines wrote records the auditor
+        later compared. Coerce to UTC explicitly to keep that promise.
+        """
+        if v.tzinfo is None:
+            raise ValueError(
+                "RunRecord.timestamp must be timezone-aware (use datetime.now(UTC) "
+                "or attach tzinfo before constructing the record)."
+            )
+        return v.astimezone(UTC)
 
     def compute_self_hash(self) -> str:
         data = self.model_dump(mode="json", exclude={"self_hash"})

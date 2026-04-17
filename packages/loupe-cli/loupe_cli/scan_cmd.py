@@ -63,7 +63,9 @@ def scan_command(
     lenses = discover_lenses()
 
     scope: Literal["full", "scoped"] = "scoped" if paths else "full"
-    started_at = datetime.now(UTC).replace(tzinfo=None)
+    # Timezone-aware UTC: RunRecord.timestamp rejects naive datetimes
+    # because the on-disk filename appends a literal 'Z' (Phase 7).
+    started_at = datetime.now(UTC)
     run_id = f"run-{uuid.uuid4().hex[:8]}"
     user_intent = (
         f"scan scoped to {paths}" if paths else "full-repo scan"

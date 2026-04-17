@@ -6,7 +6,7 @@ expected tool names under the FastMCP instance.
 """
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 import pytest
@@ -170,7 +170,7 @@ def test_latest_run_returns_most_recent(loupe_dir: Path):
     for i, run_id in enumerate(["run-1", "run-2", "run-3"]):
         record = RunRecord(
             run_id=run_id,
-            timestamp=datetime(2026, 5, 15, 10, i),
+            timestamp=datetime(2026, 5, 15, 10, i, tzinfo=UTC),
             mode="ci", invoked_by="test", trigger="manual",
             base_sha="a", head_sha="b",
             diff_hash="0" * 64, context_md_hash="1" * 64,
@@ -199,7 +199,7 @@ def test_latest_run_skips_malformed_run_record(loupe_dir: Path):
     runs_dir = loupe_dir / "runs"
     record = RunRecord(
         run_id="run-valid",
-        timestamp=datetime(2026, 5, 15, 10, 0),
+        timestamp=datetime(2026, 5, 15, 10, 0, tzinfo=UTC),
         mode="ci", invoked_by="test", trigger="manual",
         base_sha="a", head_sha="b",
         diff_hash="0" * 64, context_md_hash="1" * 64,

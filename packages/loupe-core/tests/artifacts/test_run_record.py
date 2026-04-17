@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 
 import pytest
 from loupe_core.artifacts.run_record import (
@@ -12,7 +12,7 @@ from loupe_core.artifacts.run_record import (
 def _record(run_id: str, prev: str | None) -> RunRecord:
     return RunRecord(
         run_id=run_id,
-        timestamp=datetime(2026, 5, 13, 14, 32),
+        timestamp=datetime(2026, 5, 13, 14, 32, tzinfo=UTC),
         mode="ci",
         invoked_by="loupe-bot",
         trigger="pull_request_opened",
@@ -33,6 +33,53 @@ def _record(run_id: str, prev: str | None) -> RunRecord:
         prev_run_hash=prev,
         self_hash="",  # filled in by save_run_record
     )
+
+
+def test_timestamp_rejects_naive_datetime():
+    """The on-disk filename appends a literal 'Z' suffix that promises
+    UTC. A naive datetime would lie about the timezone; reject at
+    construction so the corrupt filename never lands."""
+    import pytest
+    from pydantic import ValidationError
+
+    with pytest.raises(ValidationError, match="timezone-aware"):
+        _record_with_naive_timestamp()
+
+
+def _record_with_naive_timestamp() -> RunRecord:
+    return RunRecord(
+        run_id="run-naive",
+        timestamp=datetime(2026, 5, 13, 14, 32),  # no tzinfo
+        mode="ci", invoked_by="b", trigger="t",
+        base_sha=None, head_sha=None,
+        diff_hash="0" * 64, context_md_hash="1" * 64,
+        lenses_considered=[], lenses_run=[],
+        models_used={}, total_tokens_in=0, total_tokens_out=0,
+        cost_usd_estimate=0.0, cache_hit_rate=None,
+        artifacts_changed=[], proposed_patches=[], pending_decisions=[],
+        prev_run_hash=None, self_hash="",
+    )
+
+
+def test_timestamp_coerced_to_utc_when_aware():
+    """A tz-aware datetime in a different timezone is coerced to UTC at
+    construction so downstream hash chain stays portable."""
+    from datetime import timedelta, timezone
+    plus_two = timezone(timedelta(hours=2))
+    r = RunRecord(
+        run_id="run-tz",
+        timestamp=datetime(2026, 5, 13, 14, 32, tzinfo=plus_two),
+        mode="ci", invoked_by="b", trigger="t",
+        base_sha=None, head_sha=None,
+        diff_hash="0" * 64, context_md_hash="1" * 64,
+        lenses_considered=[], lenses_run=[],
+        models_used={}, total_tokens_in=0, total_tokens_out=0,
+        cost_usd_estimate=0.0, cache_hit_rate=None,
+        artifacts_changed=[], proposed_patches=[], pending_decisions=[],
+        prev_run_hash=None, self_hash="",
+    )
+    assert r.timestamp.tzinfo == UTC
+    assert r.timestamp.hour == 12  # 14:32 +02:00 -> 12:32 UTC
 
 
 def test_self_hash_deterministic(tmp_path):
