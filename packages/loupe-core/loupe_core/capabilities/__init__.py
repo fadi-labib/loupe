@@ -13,6 +13,7 @@ from loupe_core.capabilities.errors import (
     BackendError,
     CapabilityError,
     CapabilityNotFoundError,
+    EntryPointMalformedError,
     NoBackendsConfiguredError,
 )
 from loupe_core.capabilities.protocols import (
@@ -34,6 +35,7 @@ __all__ = [
     "BackendError",
     "CapabilityError",
     "CapabilityNotFoundError",
+    "EntryPointMalformedError",
     "CveCapability",
     "CveFinding",
     "CveResult",

@@ -6,6 +6,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from loupe_core.capabilities.errors import (
     CapabilityNotFoundError,
+    EntryPointMalformedError,
     NoBackendsConfiguredError,
 )
 from loupe_core.capabilities.protocols import SbomResult
@@ -85,6 +86,30 @@ def test_resolve_raises_when_named_backend_not_registered():
     with pytest.raises(CapabilityNotFoundError) as exc:
         reg.resolve(capability="sbom", backend_names=["snyk"])
     assert "snyk" in str(exc.value)
+
+
+def test_discover_raises_entry_point_malformed_error_for_class_without_name():
+    """An entry-point that loads a class missing the required `name`
+    attribute is a packaging defect — distinct from a missing-backend
+    misconfiguration. The dedicated exception lets callers branch on
+    the failure mode."""
+
+    class MalformedBackend:
+        # no `name` attribute
+        backend_name = "broken"
+
+    ep_broken = MagicMock()
+    ep_broken.name = "broken"
+    ep_broken.load.return_value = MalformedBackend
+
+    def _entry_points_broken(group: str):
+        return [ep_broken]
+
+    with patch("loupe_core.capabilities.registry._entry_points", _entry_points_broken):
+        with pytest.raises(EntryPointMalformedError) as exc:
+            CapabilityRegistry.discover()
+    assert "broken" in str(exc.value)
+    assert "missing required `name`" in str(exc.value)
 
 
 def test_list_backends_returns_empty_for_unknown_capability():

@@ -6,6 +6,7 @@ from typing import Any
 
 from loupe_core.capabilities.errors import (
     CapabilityNotFoundError,
+    EntryPointMalformedError,
     NoBackendsConfiguredError,
 )
 
@@ -40,8 +41,15 @@ class CapabilityRegistry:
             # backends register under the same capability name.
             capability = getattr(cls_ref, "name", None)
             if capability is None:
-                raise CapabilityNotFoundError(
-                    f"entry-point '{ep.name}' loaded a class without a `name` attribute"
+                # A class registered under loupe.capabilities MUST carry a
+                # `name` attribute identifying its capability category
+                # (sbom, cve, ...). That this loaded class lacks one is a
+                # packaging defect — not a missing-backend condition — so
+                # surface a distinct error type. Loadable entry-points
+                # without `name` are bugs, not misconfiguration.
+                raise EntryPointMalformedError(
+                    entry_point_name=ep.name,
+                    reason="loaded class is missing required `name` attribute",
                 )
             backends[capability][ep.name] = cls_ref
         return cls(dict(backends))

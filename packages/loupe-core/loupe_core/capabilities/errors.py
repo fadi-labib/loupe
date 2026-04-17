@@ -20,6 +20,23 @@ class NoBackendsConfiguredError(CapabilityError):
         self.capability = capability
 
 
+class EntryPointMalformedError(CapabilityError):
+    """An entry-point loaded but the resulting class is malformed.
+
+    Distinct from `CapabilityNotFoundError` (where the capability simply
+    is not registered) so error handling can branch: an operator can
+    silence a missing-backend warning per their config, but a malformed
+    entry-point is always a packaging bug that warrants surfacing.
+    """
+
+    def __init__(self, *, entry_point_name: str, reason: str) -> None:
+        super().__init__(
+            f"entry-point '{entry_point_name}' is malformed: {reason}"
+        )
+        self.entry_point_name = entry_point_name
+        self.reason = reason
+
+
 class BackendError(CapabilityError):
     def __init__(self, *, backend_name: str, message: str) -> None:
         super().__init__(f"backend '{backend_name}' failed: {message}")
