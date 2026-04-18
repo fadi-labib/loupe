@@ -6,7 +6,6 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from loupe_core.capabilities.backends.codeql_static import (
     CodeQLStaticBackend,
     _locate_database,

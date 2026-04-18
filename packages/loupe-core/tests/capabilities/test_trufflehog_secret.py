@@ -6,7 +6,6 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from loupe_core.capabilities.backends.trufflehog_secret import (
     TruffleHogSecretBackend,
     _parse_trufflehog_ndjson,

@@ -12,14 +12,12 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from loupe_core.capabilities.backends.gitleaks_secret import (
     GitleaksSecretBackend,
     _parse_gitleaks_json,
     _redact,
 )
 from loupe_core.capabilities.errors import BackendError
-
 
 # ---------------------------------------------------------------------------
 # _redact

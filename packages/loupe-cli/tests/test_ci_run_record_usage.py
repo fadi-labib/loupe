@@ -10,10 +10,8 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
-
 from loupe_core.artifacts.run_record import load_run_records
 from loupe_core.config import LoupeConfig
 from loupe_core.run_context import LensUsage, RunContext

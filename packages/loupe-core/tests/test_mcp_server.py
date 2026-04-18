@@ -10,7 +10,6 @@ from datetime import UTC, date, datetime
 from pathlib import Path
 
 import pytest
-
 from loupe_core.artifacts.knowledge import Element, KnowledgeGraph
 from loupe_core.artifacts.mitigation import Evidence, Mitigation, MitigationsFile
 from loupe_core.artifacts.run_record import (
@@ -34,7 +33,6 @@ from loupe_core.mcp_server import (
     list_mitigations_impl,
     list_threats_impl,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
