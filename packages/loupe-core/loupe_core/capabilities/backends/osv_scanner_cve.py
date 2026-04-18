@@ -44,6 +44,7 @@ import subprocess
 import tempfile
 from pathlib import Path
 
+from loupe_core.capabilities.backends import format_subprocess_failure
 from loupe_core.capabilities.errors import BackendError
 from loupe_core.capabilities.protocols import (
     CveFinding,
@@ -106,8 +107,7 @@ class OsvScannerCveBackend:
             if proc.returncode not in (0, 1):
                 raise BackendError(
                     backend_name=self.backend_name,
-                    message=proc.stderr.strip()
-                            or f"osv-scanner exited {proc.returncode}",
+                    message=format_subprocess_failure(proc),
                 )
             findings = _parse_osv_json(proc.stdout)
         finally:

@@ -35,6 +35,7 @@ import subprocess
 import tempfile
 from pathlib import Path
 
+from loupe_core.capabilities.backends import format_subprocess_failure
 from loupe_core.capabilities.errors import BackendError
 from loupe_core.capabilities.protocols import (
     SecretDetectionResult,
@@ -103,7 +104,7 @@ class GitleaksSecretBackend:
             if proc.returncode != 0:
                 raise BackendError(
                     backend_name=self.backend_name,
-                    message=proc.stderr.strip() or f"gitleaks exited {proc.returncode}",
+                    message=format_subprocess_failure(proc),
                 )
 
             report_text = report_path.read_text() if report_path.exists() else "[]"

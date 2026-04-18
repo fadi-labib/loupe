@@ -6,6 +6,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
+from loupe_core.capabilities.backends import format_subprocess_failure
 from loupe_core.capabilities.errors import BackendError
 from loupe_core.capabilities.protocols import SbomComponent, SbomResult
 
@@ -33,7 +34,10 @@ class SyftSbomBackend:
             timeout=120,
         )
         if proc.returncode != 0:
-            raise BackendError(backend_name=self.backend_name, message=proc.stderr.strip())
+            raise BackendError(
+                backend_name=self.backend_name,
+                message=format_subprocess_failure(proc),
+            )
         document = proc.stdout
         # Validate JSON early — surfaces a clear BackendError instead of an
         # opaque JSONDecodeError from a downstream parser.

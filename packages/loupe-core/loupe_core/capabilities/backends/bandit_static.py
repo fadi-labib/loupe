@@ -32,6 +32,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
+from loupe_core.capabilities.backends import format_subprocess_failure
 from loupe_core.capabilities.errors import BackendError
 from loupe_core.capabilities.protocols import (
     StaticAnalysisResult,
@@ -86,7 +87,7 @@ class BanditStaticBackend:
         if proc.returncode not in (0, 1):
             raise BackendError(
                 backend_name=self.backend_name,
-                message=proc.stderr.strip() or f"bandit exited {proc.returncode}",
+                message=format_subprocess_failure(proc),
             )
 
         findings = _parse_bandit_json(proc.stdout, repo_path=repo_path)

@@ -6,6 +6,7 @@ import shutil
 import subprocess
 from typing import Any
 
+from loupe_core.capabilities.backends import format_subprocess_failure
 from loupe_core.capabilities.errors import BackendError
 from loupe_core.capabilities.protocols import CveFinding, CveResult, SbomResult
 from loupe_core.capabilities.protocols.cve import Severity
@@ -41,7 +42,10 @@ class GrypeCveBackend:
             timeout=300,
         )
         if proc.returncode != 0:
-            raise BackendError(backend_name=self.backend_name, message=proc.stderr.strip())
+            raise BackendError(
+                backend_name=self.backend_name,
+                message=format_subprocess_failure(proc),
+            )
         parsed = json.loads(proc.stdout)
         findings = [self._finding_from_match(m) for m in parsed.get("matches", [])]
         return CveResult(findings=findings, backend_name=self.backend_name)

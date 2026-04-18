@@ -35,6 +35,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
+from loupe_core.capabilities.backends import format_subprocess_failure
 from loupe_core.capabilities.errors import BackendError
 from loupe_core.capabilities.protocols import (
     SecretDetectionResult,
@@ -71,8 +72,7 @@ class DetectSecretsBackend:
         if proc.returncode != 0:
             raise BackendError(
                 backend_name=self.backend_name,
-                message=proc.stderr.strip()
-                        or f"detect-secrets exited {proc.returncode}",
+                message=format_subprocess_failure(proc),
             )
 
         findings = _parse_detect_secrets_json(proc.stdout, repo_path=repo_path)
