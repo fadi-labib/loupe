@@ -1,10 +1,27 @@
+"""Unified-diff parser and the typed `CodeDiff` value-object.
+
+`CodeDiff` previously lived in `run_context.py`, which forced
+`run_context.RunContext.bootstrap` to use a local import to break a
+circular dependency (diff.py imported `CodeDiff` from run_context.py).
+Phase 7 moves the type here — where the parser lives — and re-exports
+it from `run_context.py` for backward compatibility.
+"""
 from __future__ import annotations
 
 import re
 
-from loupe_core.run_context import CodeDiff
+from pydantic import BaseModel
 
 _PATH_RE = re.compile(r"^diff --git a/(.+?) b/.+$")
+
+
+class CodeDiff(BaseModel):
+    base_sha: str
+    head_sha: str
+    changed_paths: list[str]
+    added_lines: int
+    removed_lines: int
+    raw_unified: str
 
 
 def parse_unified_diff(unified: str, *, base_sha: str, head_sha: str) -> CodeDiff:

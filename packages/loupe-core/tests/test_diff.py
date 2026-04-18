@@ -36,3 +36,12 @@ def test_counts_added_removed_lines():
 def test_preserves_raw_unified():
     d = parse_unified_diff(SAMPLE, base_sha="a", head_sha="b")
     assert "refund.py" in d.raw_unified
+
+
+def test_code_diff_is_re_exported_from_run_context():
+    """Phase 7 moved CodeDiff to diff.py but kept the run_context.py
+    re-export so existing imports keep working without a churn churn."""
+    from loupe_core.diff import CodeDiff as CodeDiffFromDiff
+    from loupe_core.run_context import CodeDiff as CodeDiffFromRunCtx
+
+    assert CodeDiffFromDiff is CodeDiffFromRunCtx

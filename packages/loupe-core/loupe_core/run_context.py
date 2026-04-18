@@ -14,15 +14,7 @@ from loupe_core.capabilities.protocols import (
     SecretDetectionResult,
     StaticAnalysisResult,
 )
-
-
-class CodeDiff(BaseModel):
-    base_sha: str
-    head_sha: str
-    changed_paths: list[str]
-    added_lines: int
-    removed_lines: int
-    raw_unified: str
+from loupe_core.diff import CodeDiff, parse_unified_diff
 
 
 class UpgradedPackage(BaseModel):
@@ -192,9 +184,6 @@ class RunContext(BaseModel):
 
     @classmethod
     def bootstrap(cls, inputs: BootstrapInputs) -> RunContext:
-        # Local import avoids a circular dependency (diff.py imports CodeDiff).
-        from loupe_core.diff import parse_unified_diff
-
         project = ProjectContext.from_markdown(inputs.loupe_dir / "context.md")
         knowledge = KnowledgeGraph.load_or_empty(inputs.loupe_dir / "knowledge.yaml")
         diff = (
