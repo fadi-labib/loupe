@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import defaultdict
 from importlib.metadata import EntryPoints, entry_points
 
 from loupe_core.lens_api import Lens
@@ -24,12 +25,26 @@ def discover_lenses() -> list[Lens]:
 
 
 def _check_artifact_path_conflicts(lenses: list[Lens]) -> None:
-    seen: dict[str, str] = {}
+    """Raise if two or more lenses claim ownership of the same artefact path.
+
+    Accumulates ALL conflicts before raising so the operator sees every
+    triple/N-way collision in one error, not just the first pair that trips
+    the check. The previous implementation set `seen[path] = name` AFTER the
+    raise, leaving the side-effect dead and silently masking three-way
+    conflicts (the 2nd lens raised; the 3rd was never compared).
+    """
+    owners: dict[str, list[str]] = defaultdict(list)
     for lens in lenses:
         for path in lens.capabilities.artifact_paths:
-            if path in seen and seen[path] != lens.capabilities.name:
-                raise LensRegistryError(
-                    f"Lens conflict: '{lens.capabilities.name}' and '{seen[path]}' "
-                    f"both claim artifact path '{path}'. Uninstall one."
-                )
-            seen[path] = lens.capabilities.name
+            owners[path].append(lens.capabilities.name)
+    conflicts = {
+        path: names for path, names in owners.items() if len(set(names)) > 1
+    }
+    if conflicts:
+        rendered = "; ".join(
+            f"{path!r} claimed by {sorted(set(names))}"
+            for path, names in sorted(conflicts.items())
+        )
+        raise LensRegistryError(
+            f"artefact-path conflicts: {rendered}. Uninstall all but one."
+        )
