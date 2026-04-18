@@ -6,11 +6,10 @@ across selected lenses, resolves each via the registry, runs each
 backend with its configured composition mode, and populates the
 typed RunContext slots.
 
-The hard-coded sbom-before-cve ordering reflects the only real
-inter-capability dependency today (CVE backends consume the SBOM
-output via pipeline). When a third dependency-bearing capability
-arrives, replace the explicit ordering with a small topological
-sort over a per-capability `depends_on` declaration.
+Inter-capability dependencies are encoded once in `_CAPABILITY_GRAPH`;
+the run order is derived from a topological sort over that dict, and
+the implicit-deps expansion (`requires_capabilities=["cve"]` ⇒ also
+runs sbom) reads from the same source.
 """
 
 from __future__ import annotations
@@ -19,6 +18,7 @@ from pathlib import Path
 from typing import Any, Protocol
 
 from loupe_core.capabilities.composition import CompositionMode, compose_run
+from loupe_core.capabilities.errors import NoBackendsConfiguredError
 from loupe_core.capabilities.protocols import (
     CveResult,
     SbomResult,
@@ -29,16 +29,17 @@ from loupe_core.capabilities.registry import CapabilityRegistry
 from loupe_core.config import CapabilityActivation, LoupeConfig
 from loupe_core.run_context import RunContext
 
-# Order in which capabilities must run if multiple are required. Capabilities
-# later in the list may consume the typed result of earlier ones (e.g.,
-# CVE pipelines feed on SbomResult). Capabilities not in this list run
-# in arbitrary (declaration) order.
-_CAPABILITY_ORDER: list[str] = ["sbom", "cve", "secret_detect", "static_analysis"]
-
-# Implicit dependencies: requesting the key implicitly requests the values.
-# Lets a lens declare `requires_capabilities=["cve"]` and get an SBOM
-# bootstrapped for free, since every CVE backend in practice needs one.
-_IMPLICIT_DEPS: dict[str, list[str]] = {"cve": ["sbom"]}
+# Single source of truth for the capability dependency graph.
+# Each key is a capability; the value lists capabilities that MUST run before
+# it (typically because the dependent consumes the dependency's typed result).
+# Adding a third dep-bearing capability is a one-line edit here — both the
+# implicit-deps expansion and the run-order topo sort derive from this dict.
+_CAPABILITY_GRAPH: dict[str, list[str]] = {
+    "sbom": [],
+    "cve": ["sbom"],  # cve backends consume the SbomResult via pipeline
+    "secret_detect": [],
+    "static_analysis": [],
+}
 
 
 class _LensLike(Protocol):
@@ -62,8 +63,6 @@ async def bootstrap_capabilities(
             # No operator configuration for a capability a lens needs.
             # NoBackendsConfiguredError carries the specific name so the
             # user can fix config.yaml without grepping.
-            from loupe_core.capabilities.errors import NoBackendsConfiguredError
-
             raise NoBackendsConfiguredError(capability=capability)
         result = await _run_one(
             capability=capability,
@@ -79,16 +78,51 @@ def _collect_required(lenses: list[_LensLike]) -> set[str]:
     required: set[str] = set()
     for lens in lenses:
         required.update(lens.capabilities.requires_capabilities)
-    # Pull in implicit dependencies (e.g., cve → sbom)
-    for cap in list(required):
-        required.update(_IMPLICIT_DEPS.get(cap, []))
+    # Pull in implicit dependencies transitively (e.g., cve → sbom). Iterate
+    # to a fixed point so future multi-hop chains (a → b → c) resolve cleanly.
+    pending = set(required)
+    while pending:
+        cap = pending.pop()
+        for dep in _CAPABILITY_GRAPH.get(cap, []):
+            if dep not in required:
+                required.add(dep)
+                pending.add(dep)
     return required
 
 
 def _order_capabilities(required: set[str]) -> list[str]:
-    ordered = [c for c in _CAPABILITY_ORDER if c in required]
-    # Append any custom capability not in the canonical order
-    ordered.extend(sorted(required - set(_CAPABILITY_ORDER)))
+    """Topologically sort `required` so dependencies precede dependents.
+
+    Capabilities not declared in `_CAPABILITY_GRAPH` are treated as having no
+    deps and are appended in lexicographic order for determinism.
+    """
+    ordered: list[str] = []
+    visited: set[str] = set()
+    temp: set[str] = set()
+
+    def visit(node: str) -> None:
+        if node in visited:
+            return
+        if node in temp:
+            raise RuntimeError(
+                f"capability dependency cycle detected involving {node!r}"
+            )
+        temp.add(node)
+        for dep in _CAPABILITY_GRAPH.get(node, []):
+            if dep in required:
+                visit(dep)
+        temp.remove(node)
+        visited.add(node)
+        ordered.append(node)
+
+    # Visit in a deterministic order: known graph nodes first (declaration order),
+    # then any unknown capabilities (sorted) so two runs with the same input
+    # produce the same plan.
+    for node in _CAPABILITY_GRAPH:
+        if node in required:
+            visit(node)
+    for node in sorted(required - set(_CAPABILITY_GRAPH)):
+        visit(node)
     return ordered
 
 
@@ -134,7 +168,7 @@ def _args_for(capability: str, *, ctx: RunContext, repo_path: Path) -> tuple[Any
     if capability == "cve":
         if ctx.sbom is None:
             raise RuntimeError(
-                "cve capability invoked before sbom — _CAPABILITY_ORDER is wrong"
+                "cve capability invoked before sbom — _CAPABILITY_GRAPH is wrong"
             )
         return (ctx.sbom,)
     return (repo_path,)
