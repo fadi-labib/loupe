@@ -10,24 +10,19 @@ integration test in test_mcp_handshake.py.
 """
 from __future__ import annotations
 
-from datetime import date
 from pathlib import Path
 
 import pytest
-
 from loupe_core.artifacts.mitigation import MitigationsFile
 from loupe_core.artifacts.threat import ThreatsFile
-from loupe_core.config import LoupeConfig
 from loupe_core.enforcement.path_boundary import PathBoundary
 from loupe_core.tools import BoundaryViolation
-
 from loupe_threatlens.tools import (
     ProposeMitigationInput,
     ProposeThreatInput,
     write_mitigation_directly,
     write_threat_directly,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -213,9 +208,8 @@ def test_write_mitigation_assigns_sequential_ids(tmp_path: Path):
 
 def test_write_tools_registered_only_when_boundary_supplied(tmp_path: Path):
     """No boundary → read-only surface; with boundary → write tools appear."""
-    from mcp.server.fastmcp import FastMCP
-
     from loupe_threatlens.mcp_tools import register_threatlens_mcp_tools
+    from mcp.server.fastmcp import FastMCP
 
     boundary = _boundary_with(tmp_path / ".loupe", "threats.yaml")
 

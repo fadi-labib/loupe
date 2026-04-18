@@ -115,7 +115,7 @@ def _make_gitleaks_subprocess_side_effect(
     ``/dev/stdout``; the side_effect performs the disk write the real
     binary would have done."""
 
-    def _side_effect(cmd, *args, **kwargs):
+    def _side_effect(cmd: list[str], *args: object, **kwargs: object) -> object:
         report_path = None
         for i, tok in enumerate(cmd):
             if tok == "--report-path" and i + 1 < len(cmd):

@@ -144,7 +144,8 @@ def _cve_section(cves: CveResult) -> str:
             f"- **{f.cve_id}** in `{f.component_name}@{f.component_version}`: {f.summary}"
             for f in visible
         )
-        more = f" _(+{len(items) - _MAX_CVES_PER_SEVERITY} more)_" if len(items) > _MAX_CVES_PER_SEVERITY else ""
+        overflow = len(items) - _MAX_CVES_PER_SEVERITY
+        more = f" _(+{overflow} more)_" if overflow > 0 else ""
         blocks.append(f"### {severity.capitalize()}{more}\n\n{lines}")
     if not blocks:
         return ""

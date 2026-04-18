@@ -8,11 +8,9 @@ surfaces here, not in production.
 from __future__ import annotations
 
 import json
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from loupe_core.capabilities.backends.bandit_static import (
     BanditStaticBackend,
     _parse_bandit_json,
@@ -28,7 +26,6 @@ from loupe_core.capabilities.backends.osv_scanner_cve import (
 from loupe_core.capabilities.errors import BackendError
 from loupe_core.capabilities.protocols import SbomResult
 
-
 # ===========================================================================
 # osv-scanner
 # ===========================================================================
@@ -40,7 +37,7 @@ def _osv_doc(*findings: dict) -> str:
         key = f"{f['name']}@{f['version']}"
         by_pkg.setdefault(key, []).append(f)
     packages = []
-    for key, fs in by_pkg.items():
+    for fs in by_pkg.values():
         f0 = fs[0]
         packages.append({
             "package": {"name": f0["name"], "version": f0["version"],

@@ -129,7 +129,10 @@ def init_command() -> None:
 
 
 def _write_empty_knowledge(path: Path) -> None:
-    """Write a header-commented empty knowledge graph that round-trips through KnowledgeGraph.load."""
+    """Write a header-commented empty knowledge graph.
+
+    The resulting file round-trips through `KnowledgeGraph.load`.
+    """
     kg = KnowledgeGraph(last_updated=datetime.now(UTC).replace(tzinfo=None))
     kg.save(path)
     body = path.read_text()

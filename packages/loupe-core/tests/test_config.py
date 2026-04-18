@@ -47,7 +47,13 @@ def test_sbom_rejects_consensus_mode():
     with pytest.raises(ValueError, match="consensus.*sbom|sbom.*consensus"):
         LoupeConfig.model_validate({
             "models": {"default": "anthropic:claude-opus-4-7"},
-            "capabilities": {"sbom": {"mode": "consensus", "backends": ["syft", "cdxgen"], "consensus_threshold": 2}},
+            "capabilities": {
+                "sbom": {
+                    "mode": "consensus",
+                    "backends": ["syft", "cdxgen"],
+                    "consensus_threshold": 2,
+                },
+            },
         })
 
 

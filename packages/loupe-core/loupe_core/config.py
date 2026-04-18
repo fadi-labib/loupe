@@ -48,8 +48,13 @@ don't see a config that "loaded fine" but routes every call through
 class LensModelConfig(BaseModel):
     """Per-lens model selection. Optional override of `ModelsConfig.default`."""
 
-    primary: str = Field(description="Primary `provider:model` identifier for this lens.")
-    fallback: str | None = Field(default=None, description="Fallback `provider:model` if `primary` fails.")
+    primary: str = Field(
+        description="Primary `provider:model` identifier for this lens.",
+    )
+    fallback: str | None = Field(
+        default=None,
+        description="Fallback `provider:model` if `primary` fails.",
+    )
     cheap_for: list[str] = Field(
         default_factory=list,
         description=(
@@ -79,7 +84,9 @@ class LensModelConfig(BaseModel):
 class ModelsConfig(BaseModel):
     """Project-wide LLM selection. Identifiers use PydanticAI's `provider:model` form."""
 
-    default: str = Field(description="Default `provider:model` (e.g., `anthropic:claude-opus-4-7`).")
+    default: str = Field(
+        description="Default `provider:model` (e.g., `anthropic:claude-opus-4-7`).",
+    )
     threatlens: LensModelConfig | None = Field(
         default=None, description="Per-lens override for ThreatLens; falls back to `default`.",
     )
@@ -104,7 +111,10 @@ class CIConfig(BaseModel):
 
     fail_on: list[str] = Field(
         default_factory=list,
-        description="Severities that fail the build (exit 1). Bare strings: `critical`, `high`, `medium`, `low`. Empty = report-only.",
+        description=(
+            "Severities that fail the build (exit 1). Bare strings: "
+            "`critical`, `high`, `medium`, `low`. Empty = report-only."
+        ),
     )
     warn_on: list[str] = Field(
         default_factory=list,
@@ -137,7 +147,10 @@ class CapabilityActivation(BaseModel):
 
     mode: CompositionModeName = Field(
         default="single",
-        description="How to combine backends: `single`, `fallback`, `union`, `consensus`, `pipeline`.",
+        description=(
+            "How to combine backends: `single`, `fallback`, `union`, "
+            "`consensus`, `pipeline`."
+        ),
     )
     backends: list[str] = Field(
         min_length=1,
@@ -197,7 +210,10 @@ class LoupeConfig(BaseModel):
     )
     agent_writable_paths: list[str] = Field(
         default_factory=list,
-        description="Layer 1 allow-list: glob patterns the agent's `write_agent_artifact` tool may write to.",
+        description=(
+            "Layer 1 allow-list: glob patterns the agent's "
+            "`write_agent_artifact` tool may write to."
+        ),
     )
     lenses: dict[str, LensActivation] = Field(
         default_factory=dict,

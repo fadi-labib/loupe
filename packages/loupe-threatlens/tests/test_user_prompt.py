@@ -5,7 +5,7 @@ message passed to PydanticAI's `Agent.run(...)` contains the diff, the
 project context, the SBOM, CVE findings, and known elements — and that
 empty sections degrade gracefully with explicit "no X provided" notices.
 """
-from datetime import date, datetime
+from datetime import datetime
 
 from loupe_core.artifacts.context import BulletItem, ProjectContext
 from loupe_core.artifacts.knowledge import Element, KnowledgeGraph
@@ -21,7 +21,6 @@ from loupe_core.run_context import (
     RelevanceScore,
     RunContext,
 )
-
 from loupe_threatlens.user_prompt import build_user_prompt
 
 
@@ -39,7 +38,13 @@ def _project() -> ProjectContext:
     )
 
 
-def _diff(raw: str = "diff --git a/src/api/refund.py b/src/api/refund.py\n+def refund(): pass") -> CodeDiff:
+_DEFAULT_RAW_DIFF = (
+    "diff --git a/src/api/refund.py b/src/api/refund.py\n"
+    "+def refund(): pass"
+)
+
+
+def _diff(raw: str = _DEFAULT_RAW_DIFF) -> CodeDiff:
     return CodeDiff(
         base_sha="a", head_sha="b",
         changed_paths=["src/api/refund.py"],

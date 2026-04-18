@@ -6,7 +6,6 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from loupe_core.capabilities.backends.semgrep_static import (
     SemgrepStaticBackend,
     _parse_semgrep_json,

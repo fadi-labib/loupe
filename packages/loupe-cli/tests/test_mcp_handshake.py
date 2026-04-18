@@ -22,16 +22,14 @@ from datetime import date
 from pathlib import Path
 
 import pytest
-from mcp.client.session import ClientSession
-from mcp.client.stdio import StdioServerParameters, stdio_client
-
 from loupe_core.artifacts.threat import Threat, ThreatsFile
 from loupe_core.artifacts.types import (
     Severity,
     StrideCategory,
     ThreatStatus,
 )
-
+from mcp.client.session import ClientSession
+from mcp.client.stdio import StdioServerParameters, stdio_client
 
 _INIT_CONFIG = """\
 schema_version: 1

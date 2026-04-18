@@ -42,6 +42,7 @@ import subprocess
 import tempfile
 import warnings
 from pathlib import Path
+from typing import Any
 
 from loupe_core.capabilities.backends import format_subprocess_failure
 from loupe_core.capabilities.errors import BackendError
@@ -204,7 +205,7 @@ def _parse_sarif(sarif_text: str) -> list[StaticFinding]:
     return findings
 
 
-def _sarif_result_to_finding(result: dict) -> StaticFinding:
+def _sarif_result_to_finding(result: dict[str, Any]) -> StaticFinding:
     rule_id = result.get("ruleId", "unknown")
     message = (result.get("message") or {}).get("text", "").strip() or "(no message)"
     level = result.get("level", "warning").lower()

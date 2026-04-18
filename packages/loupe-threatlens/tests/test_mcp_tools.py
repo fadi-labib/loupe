@@ -7,11 +7,10 @@ instance.
 """
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import date
 from pathlib import Path
 
 import pytest
-
 from loupe_core.artifacts.threat import Threat, ThreatsFile
 from loupe_core.artifacts.types import Severity, StrideCategory, ThreatStatus
 from loupe_threatlens.mcp_tools import (
@@ -20,7 +19,6 @@ from loupe_threatlens.mcp_tools import (
     register_threatlens_mcp_tools,
     threat_model_summary_impl,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -142,8 +140,8 @@ def test_register_threatlens_mcp_tools_adds_three_tools_to_server(loupe_dir: Pat
 
 def test_lens_register_to_mcp_dispatches_to_helper(loupe_dir: Path):
     """ThreatLens.register_to_mcp must forward to the helper without altering args."""
-    from mcp.server.fastmcp import FastMCP
     from loupe_threatlens.lens import ThreatLens
+    from mcp.server.fastmcp import FastMCP
 
     server = FastMCP(name="test")
     ThreatLens().register_to_mcp(server, loupe_dir)

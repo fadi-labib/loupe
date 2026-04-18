@@ -2,10 +2,8 @@
 from __future__ import annotations
 
 import pytest
-
 from loupe_core.pricing import cache_hit_rate, estimate_cost_usd
 from loupe_core.run_context import LensUsage
-
 
 # ---------------------------------------------------------------------------
 # estimate_cost_usd

@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 from datetime import date
 from pathlib import Path
+from typing import Any
 
 from pydantic import BaseModel, Field
 from ruamel.yaml import YAML
@@ -77,7 +78,9 @@ class ProjectContext(BaseModel):
     assets: list[BulletItem] = Field(description="Critical assets (data, keys, signing material).")
     users: list[BulletItem] = Field(description="User types and what each can do.")
     deployment: str = Field(description="Where the product runs; trust-boundary topology.")
-    threat_actors: list[BulletItem] = Field(description="Who you worry about (insider, supply chain).")
+    threat_actors: list[BulletItem] = Field(
+        description="Who you worry about (insider, supply chain).",
+    )
     out_of_scope: list[BulletItem] = Field(description="Threats you deliberately do not address.")
 
     @classmethod
@@ -100,15 +103,20 @@ class ProjectContext(BaseModel):
         )
 
 
-def _split_frontmatter(text: str) -> tuple[dict, str]:
-    """Return ``(frontmatter dict, body)``. Empty dict if frontmatter is absent or malformed."""
+def _split_frontmatter(text: str) -> tuple[dict[str, Any], str]:
+    """Return ``(frontmatter dict, body)``.
+
+    Returns an empty dict if frontmatter is absent or malformed. The dict
+    is intentionally typed `dict[str, Any]` because YAML frontmatter values
+    can be strings, lists, nested mappings, or any combination thereof.
+    """
     if not text.startswith("---"):
         return {}, text
     try:
         _, frontmatter_text, body = text.split("---", 2)
     except ValueError:
         return {}, text
-    parsed = _yaml_safe.load(frontmatter_text) or {}
+    parsed: dict[str, Any] = _yaml_safe.load(frontmatter_text) or {}
     return parsed, body
 
 

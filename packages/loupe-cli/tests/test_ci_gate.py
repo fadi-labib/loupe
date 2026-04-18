@@ -7,10 +7,9 @@ proposes threats, ci returns 1) is the integration concern of
 """
 from datetime import datetime
 
+from loupe_cli.ci_cmd import _gate_exit_code
 from loupe_core.config import CIConfig, LoupeConfig
 from loupe_core.run_context import RunContext
-
-from loupe_cli.ci_cmd import _gate_exit_code
 
 
 def _ctx(threats: list[dict]) -> RunContext:

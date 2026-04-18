@@ -93,7 +93,10 @@ def ci_command(
     # ctx.secrets, ctx.static_findings — every lens reads the same cached
     # values off the shared blackboard. Cost-discipline lever (D-10 §2).
     planned_lenses = _planned_lenses(lenses, ctx)
-    if any(getattr(l.capabilities, "requires_capabilities", []) for l in planned_lenses):
+    if any(
+        getattr(lens.capabilities, "requires_capabilities", [])
+        for lens in planned_lenses
+    ):
         registry = CapabilityRegistry.discover()
         try:
             asyncio.run(bootstrap_capabilities(
@@ -187,7 +190,7 @@ def _planned_lenses(lenses: list[Lens], ctx: RunContext) -> list[Lens]:
     a docs-only PR with no relevant lens shouldn't trigger Syft + Grype.
     """
     planned_names = {p.lens_name for p in ctx.plan}
-    return [l for l in lenses if l.capabilities.name in planned_names]
+    return [lens for lens in lenses if lens.capabilities.name in planned_names]
 
 
 def _write_run_record(

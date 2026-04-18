@@ -6,7 +6,6 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from loupe_core.capabilities.backends.cdxgen_sbom import (
     CdxgenSbomBackend,
     _parse_cyclonedx,
