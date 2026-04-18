@@ -1,7 +1,29 @@
 from __future__ import annotations
 
 import fnmatch
-from pathlib import PurePosixPath
+from pathlib import Path, PurePosixPath
+
+
+def validate_relative_target_path(target_path: str) -> None:
+    """Reject path traversal, absolute paths, NUL bytes, and empty strings.
+
+    Useful anywhere a caller-supplied path is joined under a containment root
+    (e.g., `.loupe/.proposed/`); without these checks a `target_path` of `".."`
+    (or similar) would resolve outside the containment directory, breaking
+    Layer 1 enforcement.
+    """
+    if not target_path:
+        raise ValueError("target_path may not be empty")
+    if "\x00" in target_path:
+        raise ValueError(f"target_path contains NUL byte: {target_path!r}")
+    if Path(target_path).is_absolute():
+        raise ValueError(
+            f"target_path must be relative, got absolute: {target_path!r}"
+        )
+    if ".." in Path(target_path).parts:
+        raise ValueError(
+            f"target_path contains path traversal '..': {target_path!r}"
+        )
 
 
 class PathBoundary:
