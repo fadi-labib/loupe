@@ -12,7 +12,7 @@ A snapshot of where Loupe is heading. This page is editable and expected to drif
 
 The platform, capability registry, CLI, GitHub Action, and ThreatLens scaffolding are in place. The PydanticAI agent inside ThreatLens is not yet wired to a live LLM; that is the immediate next milestone.
 
-## Next: agent wiring <span class="section-label">In progress</span>
+## Next: agent wiring <span class="section-label">In progress</span> { #next-agent-wiring }
 
 ThreatLens against a live LLM, with VCR cassettes for CI. The infrastructure to receive that wiring has landed (MCP server, RunRecord cost fields populated from real agent runs, cost-regression test fixture); what remains is the agent's prompt + tool wiring against the live model and the first end-to-end VCR cassette. Once the agent itself goes live, the threat list is no longer stubbed.
 
