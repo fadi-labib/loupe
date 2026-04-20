@@ -27,7 +27,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from pydantic import ValidationError
-from ruamel.yaml import YAMLError
+from ruamel.yaml.error import YAMLError
 
 from loupe_core.artifacts.mitigation import MitigationsFile
 from loupe_core.artifacts.run_record import load_run_records
