@@ -9,9 +9,15 @@ from loupe_threatlens.tools import ProposeThreatInput, propose_threat_impl
 
 def _ctx() -> RunContext:
     return RunContext(
-        run_id="r", mode="ci", started_at=datetime(2026, 5, 14),
-        user_intent="", diff=None, sbom_delta=None,
-        project=None, plan=[], knowledge=None,
+        run_id="r",
+        mode="ci",
+        started_at=datetime(2026, 5, 14),
+        user_intent="",
+        diff=None,
+        sbom_delta=None,
+        project=None,
+        plan=[],
+        knowledge=None,
     )
 
 
@@ -37,7 +43,9 @@ def test_propose_threat_adds_to_threats_yaml(tmp_path):
     ctx = _ctx()
 
     result = propose_threat_impl(
-        ctx, boundary, loupe_dir,
+        ctx,
+        boundary,
+        loupe_dir,
         _input(),
         model_id="anthropic:claude-opus-4-7",
     )
@@ -102,5 +110,6 @@ def test_propose_threat_id_continues_after_existing_threats(tmp_path):
 def test_propose_threat_with_invalid_severity_rejected(tmp_path):
     """Pydantic should reject inputs with a bad severity literal."""
     from pydantic import ValidationError
+
     with pytest.raises(ValidationError):
         _input(severity="catastrophic")

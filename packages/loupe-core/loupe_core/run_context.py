@@ -104,10 +104,10 @@ class LensUsage(BaseModel):
     """
 
     model_id: str
-    input_tokens: int = 0           # paid at full input rate
-    output_tokens: int = 0          # paid at full output rate
-    cache_read_tokens: int = 0      # paid at ~10% input rate (cache hits)
-    cache_write_tokens: int = 0     # paid at ~125% input rate (writing to cache)
+    input_tokens: int = 0  # paid at full input rate
+    output_tokens: int = 0  # paid at full output rate
+    cache_read_tokens: int = 0  # paid at ~10% input rate (cache hits)
+    cache_write_tokens: int = 0  # paid at ~125% input rate (writing to cache)
     cost_usd_estimate: float = 0.0  # populated from a pricing table on record
 
 

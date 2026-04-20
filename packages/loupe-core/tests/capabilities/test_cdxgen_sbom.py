@@ -1,4 +1,5 @@
 """Tests for the cdxgen SBOM backend."""
+
 from __future__ import annotations
 
 import json
@@ -14,11 +15,13 @@ from loupe_core.capabilities.errors import BackendError
 
 
 def _cdx(components: list[dict]) -> str:
-    return json.dumps({
-        "bomFormat": "CycloneDX",
-        "specVersion": "1.6",
-        "components": components,
-    })
+    return json.dumps(
+        {
+            "bomFormat": "CycloneDX",
+            "specVersion": "1.6",
+            "components": components,
+        }
+    )
 
 
 def _component(
@@ -51,11 +54,12 @@ def test_parse_no_components_returns_empty():
 
 
 def test_parse_basic_components():
-    document = _cdx([
-        _component(name="requests", version="2.31.0"),
-        _component(name="fastapi", version="0.104.0",
-                   purl="pkg:pypi/fastapi@0.104.0"),
-    ])
+    document = _cdx(
+        [
+            _component(name="requests", version="2.31.0"),
+            _component(name="fastapi", version="0.104.0", purl="pkg:pypi/fastapi@0.104.0"),
+        ]
+    )
     components = _parse_cyclonedx(document)
     assert len(components) == 2
     assert {c.name for c in components} == {"requests", "fastapi"}
@@ -63,14 +67,16 @@ def test_parse_basic_components():
 
 
 def test_parse_extracts_licenses():
-    document = _cdx([
-        _component(
-            licenses=[
-                {"license": {"id": "Apache-2.0"}},
-                {"license": {"id": "MIT"}},
-            ],
-        ),
-    ])
+    document = _cdx(
+        [
+            _component(
+                licenses=[
+                    {"license": {"id": "Apache-2.0"}},
+                    {"license": {"id": "MIT"}},
+                ],
+            ),
+        ]
+    )
     components = _parse_cyclonedx(document)
     assert components[0].licenses == ["Apache-2.0", "MIT"]
 

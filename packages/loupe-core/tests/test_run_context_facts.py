@@ -10,8 +10,12 @@ def _new_ctx() -> RunContext:
         started_at=datetime(2026, 5, 13, 14, 32),
         user_intent="analyze diff",
         diff=CodeDiff(
-            base_sha="a", head_sha="b", changed_paths=["src/x.py"],
-            added_lines=10, removed_lines=2, raw_unified="",
+            base_sha="a",
+            head_sha="b",
+            changed_paths=["src/x.py"],
+            added_lines=10,
+            removed_lines=2,
+            raw_unified="",
         ),
         sbom_delta=None,
         project=None,
@@ -61,9 +65,13 @@ def test_finding_scalar_value_is_unwrapped_on_lookup():
 def test_post_fact_appends():
     ctx = _new_ctx()
     f = Fact(
-        id="F-001", posted_by="threatlens",
-        subject="asset:payment_service", predicate="handles_pii", value=True,
-        confidence="high", rationale="contains PAN",
+        id="F-001",
+        posted_by="threatlens",
+        subject="asset:payment_service",
+        predicate="handles_pii",
+        value=True,
+        confidence="high",
+        rationale="contains PAN",
         timestamp=datetime(2026, 5, 13, 14, 32),
     )
     ctx.post_fact(f)

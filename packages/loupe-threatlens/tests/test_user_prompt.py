@@ -5,6 +5,7 @@ message passed to PydanticAI's `Agent.run(...)` contains the diff, the
 project context, the SBOM, CVE findings, and known elements — and that
 empty sections degrade gracefully with explicit "no X provided" notices.
 """
+
 from datetime import datetime
 
 from loupe_core.artifacts.context import BulletItem, ProjectContext
@@ -38,27 +39,30 @@ def _project() -> ProjectContext:
     )
 
 
-_DEFAULT_RAW_DIFF = (
-    "diff --git a/src/api/refund.py b/src/api/refund.py\n"
-    "+def refund(): pass"
-)
+_DEFAULT_RAW_DIFF = "diff --git a/src/api/refund.py b/src/api/refund.py\n+def refund(): pass"
 
 
 def _diff(raw: str = _DEFAULT_RAW_DIFF) -> CodeDiff:
     return CodeDiff(
-        base_sha="a", head_sha="b",
+        base_sha="a",
+        head_sha="b",
         changed_paths=["src/api/refund.py"],
-        added_lines=1, removed_lines=0,
+        added_lines=1,
+        removed_lines=0,
         raw_unified=raw,
     )
 
 
 def _ctx(**overrides) -> RunContext:
     base = dict(
-        run_id="r-1", mode="ci", started_at=datetime(2026, 5, 15),
+        run_id="r-1",
+        mode="ci",
+        started_at=datetime(2026, 5, 15),
         user_intent="test",
         diff=_diff(),
-        sbom_delta=None, project=_project(), plan=[],
+        sbom_delta=None,
+        project=_project(),
+        plan=[],
         knowledge=KnowledgeGraph(last_updated=datetime(2026, 5, 15)),
     )
     base.update(overrides)
@@ -101,13 +105,15 @@ def test_includes_raw_diff_in_fenced_block():
 
 
 def test_renders_sbom_when_present():
-    ctx = _ctx(sbom=SbomResult(
-        components=[
-            SbomComponent(name="requests", version="2.31.0"),
-            SbomComponent(name="fastapi", version="0.104.0"),
-        ],
-        backend_name="syft",
-    ))
+    ctx = _ctx(
+        sbom=SbomResult(
+            components=[
+                SbomComponent(name="requests", version="2.31.0"),
+                SbomComponent(name="fastapi", version="0.104.0"),
+            ],
+            backend_name="syft",
+        )
+    )
     out = build_user_prompt(ctx, _plan())
     assert "requests@2.31.0" in out
     assert "fastapi@0.104.0" in out
@@ -125,21 +131,27 @@ def test_truncates_large_sbom_with_count_note():
 
 
 def test_renders_cve_findings_grouped_by_severity():
-    ctx = _ctx(cve_findings=CveResult(
-        findings=[
-            CveFinding(
-                cve_id="CVE-2024-1234",
-                component_name="requests", component_version="2.31.0",
-                severity="critical", summary="Auth bypass via header injection.",
-            ),
-            CveFinding(
-                cve_id="CVE-2024-5678",
-                component_name="fastapi", component_version="0.104.0",
-                severity="medium", summary="DoS via large multipart upload.",
-            ),
-        ],
-        backend_name="grype",
-    ))
+    ctx = _ctx(
+        cve_findings=CveResult(
+            findings=[
+                CveFinding(
+                    cve_id="CVE-2024-1234",
+                    component_name="requests",
+                    component_version="2.31.0",
+                    severity="critical",
+                    summary="Auth bypass via header injection.",
+                ),
+                CveFinding(
+                    cve_id="CVE-2024-5678",
+                    component_name="fastapi",
+                    component_version="0.104.0",
+                    severity="medium",
+                    summary="DoS via large multipart upload.",
+                ),
+            ],
+            backend_name="grype",
+        )
+    )
     out = build_user_prompt(ctx, _plan())
     assert "CVE-2024-1234" in out
     assert "CVE-2024-5678" in out
@@ -165,7 +177,9 @@ def test_renders_known_elements_with_ids():
         last_updated=datetime(2026, 5, 15),
         elements=[
             Element(
-                id="E-001", name="api-gateway", type="trust_boundary",
+                id="E-001",
+                name="api-gateway",
+                type="trust_boundary",
                 interfaces=["ext:internet", "int:payment_service"],
             ),
         ],
@@ -195,8 +209,11 @@ def test_sections_appear_in_canonical_order():
         cve_findings=CveResult(
             findings=[
                 CveFinding(
-                    cve_id="CVE-2024-0001", component_name="x", component_version="1",
-                    severity="high", summary="example",
+                    cve_id="CVE-2024-0001",
+                    component_name="x",
+                    component_version="1",
+                    severity="high",
+                    summary="example",
                 ),
             ],
             backend_name="grype",
@@ -230,8 +247,11 @@ def test_user_prompt_prefix_stable_across_subprompts():
         cve_findings=CveResult(
             findings=[
                 CveFinding(
-                    cve_id="CVE-2024-0001", component_name="x", component_version="1",
-                    severity="high", summary="example",
+                    cve_id="CVE-2024-0001",
+                    component_name="x",
+                    component_version="1",
+                    severity="high",
+                    summary="example",
                 ),
             ],
             backend_name="grype",

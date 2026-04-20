@@ -30,18 +30,20 @@ def test_evidence_kind_constrained():
 
 
 def test_mitigations_file_yaml_roundtrip(tmp_path):
-    f = MitigationsFile(mitigations=[
-        Mitigation(
-            id="M-001",
-            title="t",
-            description="d",
-            threats_addressed=["T-001"],
-            status=MitigationStatus.PLANNED,
-            evidence=[],
-            verified_by=None,
-            last_verified=None,
-        )
-    ])
+    f = MitigationsFile(
+        mitigations=[
+            Mitigation(
+                id="M-001",
+                title="t",
+                description="d",
+                threats_addressed=["T-001"],
+                status=MitigationStatus.PLANNED,
+                evidence=[],
+                verified_by=None,
+                last_verified=None,
+            )
+        ]
+    )
     p = tmp_path / "mitigations.yaml"
     f.save(p)
     loaded = MitigationsFile.load(p)

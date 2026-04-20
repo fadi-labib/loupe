@@ -6,6 +6,7 @@ test the aggregation directly with a hand-built RunContext rather than
 going end-to-end through `loupe ci` — that path has its own fixture in
 test_ci_real.py and would over-couple to the dispatcher.
 """
+
 from __future__ import annotations
 
 from datetime import UTC, datetime
@@ -19,10 +20,15 @@ from loupe_core.run_context import LensUsage, RunContext
 
 def _ctx_with_usage(loupe_dir: Path, usages: dict[str, LensUsage]) -> RunContext:
     ctx = RunContext(
-        run_id="run-test", mode="ci", started_at=datetime(2026, 5, 15, 10, 0, tzinfo=UTC),
+        run_id="run-test",
+        mode="ci",
+        started_at=datetime(2026, 5, 15, 10, 0, tzinfo=UTC),
         user_intent="aggregation test",
-        diff=None, sbom_delta=None,
-        project=None, plan=[], knowledge=None,
+        diff=None,
+        sbom_delta=None,
+        project=None,
+        plan=[],
+        knowledge=None,
     )
     for lens_name, usage in usages.items():
         ctx.lens_usage[lens_name] = usage
@@ -47,14 +53,19 @@ def loupe_dir(tmp_path: Path) -> Path:
 def test_single_lens_usage_aggregates_to_run_record(loupe_dir: Path):
     from loupe_cli.ci_cmd import _write_run_record
 
-    ctx = _ctx_with_usage(loupe_dir, {
-        "threatlens": LensUsage(
-            model_id="anthropic:claude-haiku-4-5",
-            input_tokens=3000, output_tokens=500,
-            cache_read_tokens=200, cache_write_tokens=100,
-            cost_usd_estimate=0.0042,
-        ),
-    })
+    ctx = _ctx_with_usage(
+        loupe_dir,
+        {
+            "threatlens": LensUsage(
+                model_id="anthropic:claude-haiku-4-5",
+                input_tokens=3000,
+                output_tokens=500,
+                cache_read_tokens=200,
+                cache_write_tokens=100,
+                cost_usd_estimate=0.0042,
+            ),
+        },
+    )
     _write_run_record(ctx, loupe_dir, considered=[], cfg=LoupeConfig())
 
     record = load_run_records(loupe_dir / "runs")[0]
@@ -70,18 +81,23 @@ def test_single_lens_usage_aggregates_to_run_record(loupe_dir: Path):
 def test_multiple_lens_usage_sums(loupe_dir: Path):
     from loupe_cli.ci_cmd import _write_run_record
 
-    ctx = _ctx_with_usage(loupe_dir, {
-        "threatlens": LensUsage(
-            model_id="anthropic:claude-haiku-4-5",
-            input_tokens=1000, output_tokens=200,
-            cost_usd_estimate=0.0016,
-        ),
-        "futurelens": LensUsage(
-            model_id="anthropic:claude-opus-4-7",
-            input_tokens=500, output_tokens=100,
-            cost_usd_estimate=0.0150,
-        ),
-    })
+    ctx = _ctx_with_usage(
+        loupe_dir,
+        {
+            "threatlens": LensUsage(
+                model_id="anthropic:claude-haiku-4-5",
+                input_tokens=1000,
+                output_tokens=200,
+                cost_usd_estimate=0.0016,
+            ),
+            "futurelens": LensUsage(
+                model_id="anthropic:claude-opus-4-7",
+                input_tokens=500,
+                output_tokens=100,
+                cost_usd_estimate=0.0150,
+            ),
+        },
+    )
     _write_run_record(ctx, loupe_dir, considered=[], cfg=LoupeConfig())
 
     record = load_run_records(loupe_dir / "runs")[0]
@@ -114,15 +130,19 @@ def test_cache_hit_rate_distinguishes_zero_from_none(loupe_dir: Path):
     """A lens that ran but had no cache hits → 0.0 (not None)."""
     from loupe_cli.ci_cmd import _write_run_record
 
-    ctx = _ctx_with_usage(loupe_dir, {
-        "threatlens": LensUsage(
-            model_id="anthropic:claude-haiku-4-5",
-            input_tokens=1000, output_tokens=200,
-            cache_read_tokens=0,  # no cache hits
-            cache_write_tokens=0,
-            cost_usd_estimate=0.0016,
-        ),
-    })
+    ctx = _ctx_with_usage(
+        loupe_dir,
+        {
+            "threatlens": LensUsage(
+                model_id="anthropic:claude-haiku-4-5",
+                input_tokens=1000,
+                output_tokens=200,
+                cache_read_tokens=0,  # no cache hits
+                cache_write_tokens=0,
+                cost_usd_estimate=0.0016,
+            ),
+        },
+    )
     _write_run_record(ctx, loupe_dir, considered=[], cfg=LoupeConfig())
 
     record = load_run_records(loupe_dir / "runs")[0]

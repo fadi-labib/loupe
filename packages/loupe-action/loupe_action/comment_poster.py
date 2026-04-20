@@ -61,15 +61,12 @@ class StickyCommentPoster:
 
     async def _find_existing(self) -> int | None:
         url: str | None = (
-            f"{self._api}/repos/{self._owner}/{self._name}/"
-            f"issues/{self._pr}/comments?per_page=100"
+            f"{self._api}/repos/{self._owner}/{self._name}/issues/{self._pr}/comments?per_page=100"
         )
         while url is not None:
             response = await self._client.get(url, headers=self._headers())
             if response.status_code != 200:
-                raise GitHubAPIError(
-                    f"GET {url} returned {response.status_code}: {response.text}"
-                )
+                raise GitHubAPIError(f"GET {url} returned {response.status_code}: {response.text}")
             for comment in response.json():
                 if not comment.get("body", "").startswith(COMMENT_SENTINEL):
                     continue
@@ -95,9 +92,7 @@ class StickyCommentPoster:
             # whole run for a transient state.
             return await self._create(body=body)
         if response.status_code != 200:
-            raise GitHubAPIError(
-                f"PATCH {url} returned {response.status_code}: {response.text}"
-            )
+            raise GitHubAPIError(f"PATCH {url} returned {response.status_code}: {response.text}")
         return comment_id
 
     async def _create(self, *, body: str) -> int:
@@ -106,9 +101,7 @@ class StickyCommentPoster:
             url, content=json.dumps({"body": body}), headers=self._headers()
         )
         if response.status_code != 201:
-            raise GitHubAPIError(
-                f"POST {url} returned {response.status_code}: {response.text}"
-            )
+            raise GitHubAPIError(f"POST {url} returned {response.status_code}: {response.text}")
         payload: dict[str, Any] = response.json()
         return int(payload["id"])
 

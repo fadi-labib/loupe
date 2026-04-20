@@ -1,4 +1,5 @@
 """Tests for the Semgrep static-analysis backend."""
+
 from __future__ import annotations
 
 import json
@@ -74,15 +75,18 @@ def test_parse_keeps_external_path_unchanged(tmp_path: Path):
     assert out[0].file == "/etc/something"
 
 
-@pytest.mark.parametrize("semgrep_severity, expected", [
-    ("ERROR", "high"),
-    ("WARNING", "medium"),
-    ("INFO", "low"),
-    ("INVENTORY", "informational"),
-    ("EXPERIMENT", "informational"),
-    ("UNKNOWN_FUTURE_LEVEL", "informational"),  # graceful fallback
-    ("error", "high"),  # case-insensitive
-])
+@pytest.mark.parametrize(
+    "semgrep_severity, expected",
+    [
+        ("ERROR", "high"),
+        ("WARNING", "medium"),
+        ("INFO", "low"),
+        ("INVENTORY", "informational"),
+        ("EXPERIMENT", "informational"),
+        ("UNKNOWN_FUTURE_LEVEL", "informational"),  # graceful fallback
+        ("error", "high"),  # case-insensitive
+    ],
+)
 def test_parse_severity_mapping(tmp_path: Path, semgrep_severity, expected):
     out = _parse_semgrep_json(
         _document(_result(severity=semgrep_severity)),

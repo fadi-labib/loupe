@@ -4,6 +4,7 @@ A single lens that raises in `run()` must not abort sibling lenses, and the
 failure must surface on the run record (via `ctx.findings`) so the operator
 sees which lens crashed.
 """
+
 from __future__ import annotations
 
 import shutil
@@ -24,15 +25,19 @@ FIXTURES = Path(__file__).parent / "fixtures"
 
 class _OkLens:
     capabilities = LensCapabilities(
-        name="lens_ok", domain="test",
+        name="lens_ok",
+        domain="test",
         artifact_paths=[".loupe/lens_ok.txt"],
     )
 
     def build_agent(self, t):
         return None
 
-    def mcp_tools(self): return []
-    def mcp_workflows(self): return []
+    def mcp_tools(self):
+        return []
+
+    def mcp_workflows(self):
+        return []
 
     def is_relevant(self, ctx):
         return RelevanceScore(score=0.99, reason="always relevant")
@@ -45,15 +50,19 @@ class _OkLens:
 
 class _CrashingLens:
     capabilities = LensCapabilities(
-        name="lens_bad", domain="test",
+        name="lens_bad",
+        domain="test",
         artifact_paths=[".loupe/lens_bad.txt"],
     )
 
     def build_agent(self, t):
         return None
 
-    def mcp_tools(self): return []
-    def mcp_workflows(self): return []
+    def mcp_tools(self):
+        return []
+
+    def mcp_workflows(self):
+        return []
 
     def is_relevant(self, ctx):
         return RelevanceScore(score=0.99, reason="always relevant")
@@ -66,10 +75,15 @@ def _make_ctx(tmp_path: Path) -> tuple[RunContext, Path]:
     loupe_dir = tmp_path / ".loupe"
     loupe_dir.mkdir()
     shutil.copy(FIXTURES / "bootstrap_context.md", loupe_dir / "context.md")
-    ctx = RunContext.bootstrap(BootstrapInputs(
-        run_id="r-isolate", mode="ci", started_at=datetime(2026, 5, 15),
-        user_intent="isolation test", loupe_dir=loupe_dir,
-    ))
+    ctx = RunContext.bootstrap(
+        BootstrapInputs(
+            run_id="r-isolate",
+            mode="ci",
+            started_at=datetime(2026, 5, 15),
+            user_intent="isolation test",
+            loupe_dir=loupe_dir,
+        )
+    )
     return ctx, loupe_dir
 
 

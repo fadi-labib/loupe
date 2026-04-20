@@ -11,6 +11,7 @@ contracts the CLI guarantees around server lifecycle:
 - KeyboardInterrupt during server.run() is a clean shutdown -> 0.
 - Other server.run() exceptions surface a one-line summary -> 1.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -81,6 +82,7 @@ def test_mcp_invalid_config_falls_back_to_readonly(tmp_path: Path, monkeypatch, 
         s = MagicMock()
         s.run.return_value = None
         return s
+
     monkeypatch.setattr("loupe_cli.mcp_cmd.build_mcp_server", _fake_build)
     monkeypatch.setattr("loupe_cli.mcp_cmd.discover_lenses", lambda: [])
 

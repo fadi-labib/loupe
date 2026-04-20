@@ -26,6 +26,7 @@ over `loupe_dir` and (when present) `boundary`, registering it with
 the FastMCP server. The split mirrors `loupe_core.mcp_server` so the
 tools can be unit-tested without spinning up the server.
 """
+
 from __future__ import annotations
 
 from collections import Counter
@@ -49,7 +50,8 @@ StrideLetter = Literal["S", "T", "R", "I", "D", "E"]
 
 
 def query_threats_by_stride_impl(
-    loupe_dir: Path, stride_category: str,
+    loupe_dir: Path,
+    stride_category: str,
 ) -> list[dict[str, Any]]:
     """Return threats whose `stride_category` matches.
 
@@ -65,7 +67,8 @@ def query_threats_by_stride_impl(
 
 
 def query_threats_by_severity_impl(
-    loupe_dir: Path, severity: str,
+    loupe_dir: Path,
+    severity: str,
 ) -> list[dict[str, Any]]:
     """Return threats at exactly the given severity level."""
     threats_path = loupe_dir / "threats.yaml"
@@ -119,6 +122,7 @@ def register_threatlens_mcp_tools(
     `mcp.server.fastmcp.FastMCP` instance; the `.tool()` method works
     polymorphically over either the official or any compatible API.
     """
+
     @server.tool()
     def threatlens_query_by_stride(stride_category: StrideLetter) -> list[dict[str, Any]]:
         """Filter threats by STRIDE category letter (S, T, R, I, D, E).
@@ -179,8 +183,10 @@ def register_threatlens_mcp_tools(
             mitigation_ids=mitigation_ids or [],
         )
         threat_id = write_threat_directly(
-            loupe_dir, boundary,
-            threat_input, proposed_by="mcp/client",
+            loupe_dir,
+            boundary,
+            threat_input,
+            proposed_by="mcp/client",
         )
         return {"threat_id": threat_id, "status": "written"}
 
@@ -189,9 +195,7 @@ def register_threatlens_mcp_tools(
         title: str,
         description: str,
         threats_addressed: list[str] | None = None,
-        status: Literal["proposed", "planned", "implemented", "verified", "retired"] = (
-            "proposed"
-        ),
+        status: Literal["proposed", "planned", "implemented", "verified", "retired"] = ("proposed"),
         evidence_kind: Literal["code", "doc", "test", "config", "external"] | None = None,
         evidence_location: str | None = None,
     ) -> dict[str, str]:

@@ -8,6 +8,7 @@ agent invocation when run.
 Per D-16, the system prompt at prompts/system.md is informed by
 StrideGPT's prompt structure (MIT-licensed prior art).
 """
+
 from __future__ import annotations
 
 import logging
@@ -35,12 +36,30 @@ logger = logging.getLogger(__name__)
 _FALLBACK_MODEL_ID = "anthropic:claude-opus-4-7"
 
 _CODE_EXTS = (
-    ".py", ".ts", ".tsx", ".js", ".jsx", ".go", ".rs",
-    ".java", ".kt", ".swift", ".c", ".cpp", ".cs", ".rb",
+    ".py",
+    ".ts",
+    ".tsx",
+    ".js",
+    ".jsx",
+    ".go",
+    ".rs",
+    ".java",
+    ".kt",
+    ".swift",
+    ".c",
+    ".cpp",
+    ".cs",
+    ".rb",
 )
 _DEP_FILES = {
-    "requirements.txt", "Pipfile", "package.json", "pnpm-lock.yaml",
-    "Cargo.toml", "go.mod", "pom.xml", "Gemfile",
+    "requirements.txt",
+    "Pipfile",
+    "package.json",
+    "pnpm-lock.yaml",
+    "Cargo.toml",
+    "go.mod",
+    "pom.xml",
+    "Gemfile",
 }
 
 
@@ -51,7 +70,15 @@ class ThreatLens:
         name="threatlens",
         domain="security",
         handles_intent_keywords=[
-            "threat", "STRIDE", "TARA", "CRA", "asset", "attack", "vex", "cve", "sbom",
+            "threat",
+            "STRIDE",
+            "TARA",
+            "CRA",
+            "asset",
+            "attack",
+            "vex",
+            "cve",
+            "sbom",
         ],
         artifact_paths=[
             ".loupe/threats.yaml",

@@ -5,6 +5,7 @@ Uses the same pattern as syft_sbom / grype_cve tests: the real
 We mock subprocess.run to return canned JSON output and assert the
 backend parses it into typed SecretFinding objects.
 """
+
 from __future__ import annotations
 
 import json
@@ -53,15 +54,19 @@ def test_parse_empty_stdout_returns_empty():
 
 
 def test_parse_single_finding():
-    payload = json.dumps([{
-        "Description": "AWS access token detected",
-        "StartLine": 42,
-        "EndLine": 42,
-        "File": "src/api/secrets.py",
-        "Match": "key = AKIAIOSFODNN7EXAMPLE",
-        "Secret": "AKIAIOSFODNN7EXAMPLE",
-        "RuleID": "aws-access-token",
-    }])
+    payload = json.dumps(
+        [
+            {
+                "Description": "AWS access token detected",
+                "StartLine": 42,
+                "EndLine": 42,
+                "File": "src/api/secrets.py",
+                "Match": "key = AKIAIOSFODNN7EXAMPLE",
+                "Secret": "AKIAIOSFODNN7EXAMPLE",
+                "RuleID": "aws-access-token",
+            }
+        ]
+    )
     findings = _parse_gitleaks_json(payload)
     assert len(findings) == 1
     f = findings[0]
@@ -74,10 +79,12 @@ def test_parse_single_finding():
 
 
 def test_parse_multiple_findings():
-    payload = json.dumps([
-        {"File": "a.py", "StartLine": 1, "RuleID": "rule-a", "Secret": "s1"},
-        {"File": "b.py", "StartLine": 2, "RuleID": "rule-b", "Secret": "s2"},
-    ])
+    payload = json.dumps(
+        [
+            {"File": "a.py", "StartLine": 1, "RuleID": "rule-a", "Secret": "s1"},
+            {"File": "b.py", "StartLine": 2, "RuleID": "rule-b", "Secret": "s2"},
+        ]
+    )
     findings = _parse_gitleaks_json(payload)
     assert len(findings) == 2
     assert findings[0].file == "a.py"
@@ -107,7 +114,10 @@ def test_parse_malformed_json_raises():
 
 
 def _make_gitleaks_subprocess_side_effect(
-    *, report_payload: str, returncode: int = 0, stderr: str = "",
+    *,
+    report_payload: str,
+    returncode: int = 0,
+    stderr: str = "",
 ):
     """Build a subprocess.run side_effect that mimics gitleaks writing its
     report to the path passed after ``--report-path``. The backend now
@@ -134,10 +144,16 @@ def _make_gitleaks_subprocess_side_effect(
 
 @pytest.mark.asyncio
 async def test_backend_returns_typed_result(tmp_path: Path):
-    payload = json.dumps([{
-        "File": "leak.py", "StartLine": 5, "RuleID": "generic-api-key",
-        "Secret": "sk-test-XXXXXXX",
-    }])
+    payload = json.dumps(
+        [
+            {
+                "File": "leak.py",
+                "StartLine": 5,
+                "RuleID": "generic-api-key",
+                "Secret": "sk-test-XXXXXXX",
+            }
+        ]
+    )
 
     with (
         patch("shutil.which", return_value="/usr/bin/gitleaks"),

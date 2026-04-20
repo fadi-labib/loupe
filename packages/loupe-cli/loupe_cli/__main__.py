@@ -45,11 +45,13 @@ def init_cmd() -> None:
 def ci_cmd(
     pr: str | None = typer.Option(None, "--pr", help="Pull request number (informational)."),
     diff: str = typer.Option(
-        "", "--diff",
+        "",
+        "--diff",
         help="Unified diff text (mutually exclusive with --diff-file).",
     ),
     diff_file: Path | None = typer.Option(
-        None, "--diff-file",
+        None,
+        "--diff-file",
         help="Path to a unified diff (mutually exclusive with --diff).",
     ),
     base_sha: str | None = typer.Option(
@@ -59,7 +61,8 @@ def ci_cmd(
         None, "--head-sha", help="Head commit SHA of the diff (informational)."
     ),
     config: Path = typer.Option(
-        Path(".loupe/config.yaml"), "--config",
+        Path(".loupe/config.yaml"),
+        "--config",
         help="Path to the Loupe config file.",
     ),
 ) -> None:
@@ -89,7 +92,8 @@ def ci_cmd(
 @app.command("verify")
 def verify_cmd(
     strict: bool = typer.Option(
-        False, "--strict",
+        False,
+        "--strict",
         help="Run extended checks (protected-path authorship via git).",
     ),
 ) -> None:
@@ -106,7 +110,8 @@ def chat_cmd() -> None:
 @app.command("scan")
 def scan_cmd(
     paths: list[str] = typer.Option(
-        [], "--paths",
+        [],
+        "--paths",
         help="Limit scan to these paths (repeatable). Empty = full-repo scan.",
     ),
     config: Path = typer.Option(Path(".loupe/config.yaml"), "--config"),
@@ -123,7 +128,8 @@ def scan_cmd(
 @app.command("mcp")
 def mcp_cmd(
     loupe_dir: Path = typer.Option(
-        Path(".loupe"), "--loupe-dir",
+        Path(".loupe"),
+        "--loupe-dir",
         help="Path to the .loupe/ directory the MCP server serves from.",
     ),
 ) -> None:

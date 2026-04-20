@@ -18,9 +18,7 @@ to dedupe or vote on. Multi-backend merging is therefore meaningless
 for SBOM. Operators must pick `single` or `fallback`.
 """
 
-_KNOWN_CAPABILITIES: frozenset[str] = frozenset(
-    {"sbom", "cve", "secret_detect", "static_analysis"}
-)
+_KNOWN_CAPABILITIES: frozenset[str] = frozenset({"sbom", "cve", "secret_detect", "static_analysis"})
 """Known capability names. Source of truth: ``loupe_core.capabilities.bootstrap._RESULT_TYPES``.
 
 Listed here to avoid an import cycle (config → capabilities → config via
@@ -28,13 +26,15 @@ Listed here to avoid an import cycle (config → capabilities → config via
 """
 
 
-_KNOWN_CHEAP_TASKS: frozenset[str] = frozenset({
-    # Lens-side sub-tasks that may opt into the cheap model. New task
-    # names land here as they are wired in so a typo in config.yaml fails
-    # fast instead of silently disabling the cheap-routing.
-    "doc_polish",     # threatlens: polishing mitigation prose
-    "vex_drafting",   # threatlens: drafting VEX statements for CVEs
-})
+_KNOWN_CHEAP_TASKS: frozenset[str] = frozenset(
+    {
+        # Lens-side sub-tasks that may opt into the cheap model. New task
+        # names land here as they are wired in so a typo in config.yaml fails
+        # fast instead of silently disabling the cheap-routing.
+        "doc_polish",  # threatlens: polishing mitigation prose
+        "vex_drafting",  # threatlens: drafting VEX statements for CVEs
+    }
+)
 """Task names recognised by `LensModelConfig.cheap_for`.
 
 Kept intentionally small: a frozenset of strings rather than a `Literal`
@@ -88,7 +88,8 @@ class ModelsConfig(BaseModel):
         description="Default `provider:model` (e.g., `anthropic:claude-opus-4-7`).",
     )
     threatlens: LensModelConfig | None = Field(
-        default=None, description="Per-lens override for ThreatLens; falls back to `default`.",
+        default=None,
+        description="Per-lens override for ThreatLens; falls back to `default`.",
     )
 
 
@@ -96,13 +97,16 @@ class LimitsConfig(BaseModel):
     """Hard cost and step caps. A run that would exceed any of these stops cleanly."""
 
     per_run_max_usd: float = Field(
-        gt=0, description="Maximum estimated cost per run, in USD. Must be > 0.",
+        gt=0,
+        description="Maximum estimated cost per run, in USD. Must be > 0.",
     )
     per_run_max_tokens_in: int = Field(
-        gt=0, description="Maximum input-token budget per run. Must be > 0.",
+        gt=0,
+        description="Maximum input-token budget per run. Must be > 0.",
     )
     per_run_max_steps: int = Field(
-        gt=0, description="Maximum number of LLM steps per run. Must be > 0.",
+        gt=0,
+        description="Maximum number of LLM steps per run. Must be > 0.",
     )
 
 
@@ -130,10 +134,13 @@ class LensActivation(BaseModel):
     """Operator's opt-in for one installed lens."""
 
     enabled: bool = Field(
-        default=True, description="Run this lens? `false` skips it regardless of relevance.",
+        default=True,
+        description="Run this lens? `false` skips it regardless of relevance.",
     )
     minimum_relevance: float = Field(
-        ge=0.0, le=1.0, default=0.3,
+        ge=0.0,
+        le=1.0,
+        default=0.3,
         description="Skip the lens when `is_relevant(ctx).score` is below this threshold.",
     )
 
@@ -148,8 +155,7 @@ class CapabilityActivation(BaseModel):
     mode: CompositionModeName = Field(
         default="single",
         description=(
-            "How to combine backends: `single`, `fallback`, `union`, "
-            "`consensus`, `pipeline`."
+            "How to combine backends: `single`, `fallback`, `union`, `consensus`, `pipeline`."
         ),
     )
     backends: list[str] = Field(
@@ -157,7 +163,8 @@ class CapabilityActivation(BaseModel):
         description="Backend names in the desired order. Must be non-empty.",
     )
     consensus_threshold: int | None = Field(
-        default=None, ge=1,
+        default=None,
+        ge=1,
         description="Required when `mode == 'consensus'`. Must be ≥1 and ≤ `len(backends)`.",
     )
     options: dict[str, str] = Field(
@@ -172,9 +179,7 @@ class CapabilityActivation(BaseModel):
     def _validate_consensus(self) -> Self:
         if self.mode == "consensus":
             if self.consensus_threshold is None:
-                raise ValueError(
-                    "consensus_threshold is required when mode='consensus'"
-                )
+                raise ValueError("consensus_threshold is required when mode='consensus'")
             if self.consensus_threshold > len(self.backends):
                 raise ValueError(
                     f"consensus_threshold={self.consensus_threshold} exceeds "
@@ -193,7 +198,8 @@ class LoupeConfig(BaseModel):
     """
 
     schema_version: int = Field(
-        default=1, description="Migration marker. v1 today; bumped on a breaking schema change.",
+        default=1,
+        description="Migration marker. v1 today; bumped on a breaking schema change.",
     )
     models: ModelsConfig = Field(
         default=ModelsConfig(default="anthropic:claude-opus-4-7"),
@@ -201,12 +207,15 @@ class LoupeConfig(BaseModel):
     )
     limits: LimitsConfig = Field(
         default=LimitsConfig(
-            per_run_max_usd=2.5, per_run_max_tokens_in=500_000, per_run_max_steps=30,
+            per_run_max_usd=2.5,
+            per_run_max_tokens_in=500_000,
+            per_run_max_steps=30,
         ),
         description="Hard cost and step caps for a single run.",
     )
     ci: CIConfig = Field(
-        default=CIConfig(), description="Gate behaviour for CI (severity → fail/warn).",
+        default=CIConfig(),
+        description="Gate behaviour for CI (severity → fail/warn).",
     )
     agent_writable_paths: list[str] = Field(
         default_factory=list,
@@ -229,9 +238,7 @@ class LoupeConfig(BaseModel):
         for cap_name, activation in self.capabilities.items():
             if cap_name not in _KNOWN_CAPABILITIES:
                 known = ", ".join(sorted(_KNOWN_CAPABILITIES))
-                raise ValueError(
-                    f"unknown capability {cap_name!r}; known: {known}"
-                )
+                raise ValueError(f"unknown capability {cap_name!r}; known: {known}")
             if cap_name in _NO_MULTI_BACKEND_MERGE and activation.mode in ("union", "consensus"):
                 raise ValueError(
                     f"capability {cap_name!r}: mode {activation.mode!r} not supported "

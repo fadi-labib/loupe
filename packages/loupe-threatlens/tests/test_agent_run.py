@@ -16,6 +16,7 @@ To record the cassette for the first time:
 
 Then commit the new file under tests/cassettes/.
 """
+
 import shutil
 from datetime import datetime
 from pathlib import Path
@@ -32,11 +33,7 @@ from loupe_threatlens.lens import ThreatLens
 
 CASSETTE_DIR = Path(__file__).parent / "cassettes"
 FIXTURES_DIR = (
-    Path(__file__).parent.parent.parent
-    / "loupe-core"
-    / "tests"
-    / "artifacts"
-    / "fixtures"
+    Path(__file__).parent.parent.parent / "loupe-core" / "tests" / "artifacts" / "fixtures"
 )
 
 
@@ -47,6 +44,7 @@ def _cassette_present() -> bool:
 def _can_record() -> bool:
     """An API key in the env means we can record a cassette on this run."""
     import os
+
     return bool(os.environ.get("ANTHROPIC_API_KEY"))
 
 
@@ -61,6 +59,7 @@ def _can_record() -> bool:
 async def test_threatlens_proposes_threats_on_diff(tmp_path, monkeypatch):
     """Agent receives a synthetic diff, calls propose_threat ≥1 time."""
     import os
+
     monkeypatch.setenv("THREATLENS_MODEL", "anthropic:claude-haiku-4-5")
     # In replay mode, PydanticAI's auth machinery still needs *some* value in
     # ANTHROPIC_API_KEY before VCR intercepts the call. Only set a placeholder
@@ -85,11 +84,14 @@ async def test_threatlens_proposes_threats_on_diff(tmp_path, monkeypatch):
     )
     ctx = RunContext.bootstrap(
         BootstrapInputs(
-            run_id="r-vcr", mode="ci", started_at=datetime(2026, 5, 14),
+            run_id="r-vcr",
+            mode="ci",
+            started_at=datetime(2026, 5, 14),
             user_intent="analyse new refund endpoint",
             loupe_dir=loupe_dir,
             unified_diff=synthetic_diff,
-            base_sha="a", head_sha="b",
+            base_sha="a",
+            head_sha="b",
         )
     )
     ctx.plan = [
@@ -112,9 +114,7 @@ async def test_threatlens_proposes_threats_on_diff(tmp_path, monkeypatch):
 
     # Whichever threats the model proposed should have landed in the
     # RunContext findings dict (recorded by propose_threat_impl).
-    threat_keys = [
-        k for k in ctx.findings.get("threatlens", {}) if k.startswith("threat:")
-    ]
+    threat_keys = [k for k in ctx.findings.get("threatlens", {}) if k.startswith("threat:")]
     assert len(threat_keys) >= 1, (
         f"Expected ThreatLens to propose at least one threat for an obvious "
         f"E (Elevation of Privilege) diff, got findings: {ctx.findings}"
@@ -123,9 +123,7 @@ async def test_threatlens_proposes_threats_on_diff(tmp_path, monkeypatch):
     # ctx.lens_usage must populate with non-zero tokens — the cost-discipline
     # data flow [principle §8] depends on it. If this fails the most likely
     # cause is that the lens.run() function lost the usage-capture block.
-    assert "threatlens" in ctx.lens_usage, (
-        "lens.run() didn't record token usage on RunContext"
-    )
+    assert "threatlens" in ctx.lens_usage, "lens.run() didn't record token usage on RunContext"
     usage = ctx.lens_usage["threatlens"]
     assert usage.model_id == "anthropic:claude-haiku-4-5"
     assert usage.input_tokens > 0, "expected non-zero input tokens from a real run"

@@ -1,4 +1,3 @@
-
 from loupe_cli.__main__ import app
 from typer.testing import CliRunner
 
@@ -23,6 +22,7 @@ def test_init_knowledge_loads(tmp_path, monkeypatch):
     result = runner.invoke(app, ["init"])
     assert result.exit_code == 0
     from loupe_core.artifacts.knowledge import KnowledgeGraph
+
     kg = KnowledgeGraph.load(tmp_path / ".loupe" / "knowledge.yaml")
     assert kg.schema_version == 1
     assert kg.assets == []
@@ -66,6 +66,7 @@ def test_init_config_loads(tmp_path, monkeypatch):
     result = runner.invoke(app, ["init"])
     assert result.exit_code == 0
     from loupe_core.config import load_config
+
     cfg = load_config(tmp_path / ".loupe" / "config.yaml")
     assert cfg.schema_version == 1
     assert "threatlens" in cfg.lenses
@@ -80,5 +81,6 @@ def test_init_scaffolds_knowledge_in_writable_paths(tmp_path, monkeypatch):
     result = runner.invoke(app, ["init"])
     assert result.exit_code == 0, result.stdout
     from loupe_core.config import load_config
+
     cfg = load_config(tmp_path / ".loupe" / "config.yaml")
     assert ".loupe/knowledge.yaml" in cfg.agent_writable_paths

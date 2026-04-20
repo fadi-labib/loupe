@@ -20,6 +20,7 @@ class DummyLens:
 
     def is_relevant(self, run_ctx):
         from loupe_core.run_context import RelevanceScore
+
         return RelevanceScore(score=1.0, reason="dummy always relevant")
 
     async def run(self, ctx, plan_entry, boundary, loupe_dir):

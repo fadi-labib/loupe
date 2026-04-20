@@ -33,11 +33,7 @@ def _env(workspace: Path, output: Path) -> dict[str, str]:
 def _seed_workspace(workspace: Path) -> None:
     loupe = workspace / ".loupe"
     (loupe / "runs").mkdir(parents=True)
-    (workspace / "config.yaml").write_text(
-        "schema_version: 1\n"
-        "ci:\n"
-        "  fail_on: [critical, high]\n"
-    )
+    (workspace / "config.yaml").write_text("schema_version: 1\nci:\n  fail_on: [critical, high]\n")
     record = {
         "run_id": "run-fixture",
         "timestamp": _FIXED_RUN_TIMESTAMP,
@@ -61,9 +57,7 @@ def _seed_workspace(workspace: Path) -> None:
         "prev_run_hash": None,
         "self_hash": "fixturehash",
     }
-    (loupe / "runs" / "2026-05-15T00-00-00-000000Z-run-fixture.json").write_text(
-        json.dumps(record)
-    )
+    (loupe / "runs" / "2026-05-15T00-00-00-000000Z-run-fixture.json").write_text(json.dumps(record))
 
 
 def _seed_threats(workspace: Path, severities: list[str]) -> None:
@@ -71,10 +65,10 @@ def _seed_threats(workspace: Path, severities: list[str]) -> None:
     for i, sev in enumerate(severities):
         threats.append(
             {
-                "id": f"T-00{i+1}",
+                "id": f"T-00{i + 1}",
                 "element_id": "E-001",
                 "stride_category": "S",
-                "title": f"Threat {i+1}",
+                "title": f"Threat {i + 1}",
                 "description": "test description",
                 "severity": sev,
                 "status": "proposed",
@@ -93,12 +87,12 @@ def _seed_threats(workspace: Path, severities: list[str]) -> None:
                 f"  - id: {t['id']}\n"
                 f"    element_id: {t['element_id']}\n"
                 f"    stride_category: {t['stride_category']}\n"
-                f"    title: \"{t['title']}\"\n"
-                f"    description: \"{t['description']}\"\n"
+                f'    title: "{t["title"]}"\n'
+                f'    description: "{t["description"]}"\n'
                 f"    severity: {t['severity']}\n"
                 f"    status: {t['status']}\n"
                 f"    last_reviewed: {t['last_reviewed']}\n"
-                f"    rationale: \"{t['rationale']}\"\n"
+                f'    rationale: "{t["rationale"]}"\n'
                 f"    proposed_by: {t['proposed_by']}\n"
                 for t in threats
             ]
@@ -331,9 +325,7 @@ async def test_entrypoint_writes_severity_counts_to_outputs(tmp_path: Path):
 
     with patch("loupe_action.entrypoint.ci_command", return_value=0):
         async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
-            await entrypoint.run(
-                env=_env(workspace, output), client=client, cwd=workspace
-            )
+            await entrypoint.run(env=_env(workspace, output), client=client, cwd=workspace)
 
     output_text = output.read_text()
     assert "findings_count=4" in output_text

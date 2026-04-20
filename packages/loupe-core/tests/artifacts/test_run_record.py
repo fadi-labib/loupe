@@ -50,14 +50,25 @@ def _record_with_naive_timestamp() -> RunRecord:
     return RunRecord(
         run_id="run-naive",
         timestamp=datetime(2026, 5, 13, 14, 32),  # no tzinfo
-        mode="ci", invoked_by="b", trigger="t",
-        base_sha=None, head_sha=None,
-        diff_hash="0" * 64, context_md_hash="1" * 64,
-        lenses_considered=[], lenses_run=[],
-        models_used={}, total_tokens_in=0, total_tokens_out=0,
-        cost_usd_estimate=0.0, cache_hit_rate=None,
-        artifacts_changed=[], proposed_patches=[], pending_decisions=[],
-        prev_run_hash=None, self_hash="",
+        mode="ci",
+        invoked_by="b",
+        trigger="t",
+        base_sha=None,
+        head_sha=None,
+        diff_hash="0" * 64,
+        context_md_hash="1" * 64,
+        lenses_considered=[],
+        lenses_run=[],
+        models_used={},
+        total_tokens_in=0,
+        total_tokens_out=0,
+        cost_usd_estimate=0.0,
+        cache_hit_rate=None,
+        artifacts_changed=[],
+        proposed_patches=[],
+        pending_decisions=[],
+        prev_run_hash=None,
+        self_hash="",
     )
 
 
@@ -65,18 +76,30 @@ def test_timestamp_coerced_to_utc_when_aware():
     """A tz-aware datetime in a different timezone is coerced to UTC at
     construction so downstream hash chain stays portable."""
     from datetime import timedelta, timezone
+
     plus_two = timezone(timedelta(hours=2))
     r = RunRecord(
         run_id="run-tz",
         timestamp=datetime(2026, 5, 13, 14, 32, tzinfo=plus_two),
-        mode="ci", invoked_by="b", trigger="t",
-        base_sha=None, head_sha=None,
-        diff_hash="0" * 64, context_md_hash="1" * 64,
-        lenses_considered=[], lenses_run=[],
-        models_used={}, total_tokens_in=0, total_tokens_out=0,
-        cost_usd_estimate=0.0, cache_hit_rate=None,
-        artifacts_changed=[], proposed_patches=[], pending_decisions=[],
-        prev_run_hash=None, self_hash="",
+        mode="ci",
+        invoked_by="b",
+        trigger="t",
+        base_sha=None,
+        head_sha=None,
+        diff_hash="0" * 64,
+        context_md_hash="1" * 64,
+        lenses_considered=[],
+        lenses_run=[],
+        models_used={},
+        total_tokens_in=0,
+        total_tokens_out=0,
+        cost_usd_estimate=0.0,
+        cache_hit_rate=None,
+        artifacts_changed=[],
+        proposed_patches=[],
+        pending_decisions=[],
+        prev_run_hash=None,
+        self_hash="",
     )
     assert r.timestamp.tzinfo == UTC
     assert r.timestamp.hour == 12  # 14:32 +02:00 -> 12:32 UTC
@@ -103,6 +126,7 @@ def test_save_is_atomic_on_crash(tmp_path, monkeypatch):
     Without atomic write (tmp + os.replace), a truncated JSON file breaks
     the entire hash chain that ``loupe verify`` walks.
     """
+
     def boom(src, dst):
         raise OSError("simulated crash during rename")
 

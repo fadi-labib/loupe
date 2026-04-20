@@ -5,6 +5,7 @@ is mocked so no real binary is required. The tests pin the JSON-shape
 contract each backend depends on so an upstream tool format change
 surfaces here, not in production.
 """
+
 from __future__ import annotations
 
 import json
@@ -39,22 +40,23 @@ def _osv_doc(*findings: dict) -> str:
     packages = []
     for fs in by_pkg.values():
         f0 = fs[0]
-        packages.append({
-            "package": {"name": f0["name"], "version": f0["version"],
-                        "ecosystem": "PyPI"},
-            "vulnerabilities": [
-                {
-                    "id": f.get("ghsa", f["cve"]),
-                    "aliases": [f["cve"]],
-                    "summary": f.get("summary", "Example summary."),
-                    "database_specific": {
-                        "severity": f.get("severity", "MODERATE"),
-                    },
-                    "references": [{"url": f.get("url", "https://example.com")}],
-                }
-                for f in fs
-            ],
-        })
+        packages.append(
+            {
+                "package": {"name": f0["name"], "version": f0["version"], "ecosystem": "PyPI"},
+                "vulnerabilities": [
+                    {
+                        "id": f.get("ghsa", f["cve"]),
+                        "aliases": [f["cve"]],
+                        "summary": f.get("summary", "Example summary."),
+                        "database_specific": {
+                            "severity": f.get("severity", "MODERATE"),
+                        },
+                        "references": [{"url": f.get("url", "https://example.com")}],
+                    }
+                    for f in fs
+                ],
+            }
+        )
     return json.dumps({"results": [{"packages": packages}]})
 
 
@@ -63,10 +65,14 @@ def test_osv_parse_empty_stdout_returns_empty():
 
 
 def test_osv_parse_basic_finding():
-    payload = _osv_doc({
-        "name": "requests", "version": "2.31.0",
-        "cve": "CVE-2024-35195", "severity": "MODERATE",
-    })
+    payload = _osv_doc(
+        {
+            "name": "requests",
+            "version": "2.31.0",
+            "cve": "CVE-2024-35195",
+            "severity": "MODERATE",
+        }
+    )
     findings = _parse_osv_json(payload)
     assert len(findings) == 1
     f = findings[0]
@@ -78,28 +84,40 @@ def test_osv_parse_basic_finding():
 
 def test_osv_prefers_cve_alias_over_ghsa_id():
     """The union composition dedups on cve_id — must match Grype's ID space."""
-    payload = _osv_doc({
-        "name": "requests", "version": "2.31.0",
-        "cve": "CVE-2024-1234", "ghsa": "GHSA-j8r2-6x86-q33q",
-        "severity": "HIGH",
-    })
+    payload = _osv_doc(
+        {
+            "name": "requests",
+            "version": "2.31.0",
+            "cve": "CVE-2024-1234",
+            "ghsa": "GHSA-j8r2-6x86-q33q",
+            "severity": "HIGH",
+        }
+    )
     findings = _parse_osv_json(payload)
     assert findings[0].cve_id == "CVE-2024-1234"
 
 
-@pytest.mark.parametrize("osv_sev, expected", [
-    ("CRITICAL", "critical"),
-    ("HIGH", "high"),
-    ("MODERATE", "medium"),
-    ("MEDIUM", "medium"),
-    ("LOW", "low"),
-    ("UNKNOWN", "informational"),
-    ("anything-weird", "informational"),  # graceful fallback
-])
+@pytest.mark.parametrize(
+    "osv_sev, expected",
+    [
+        ("CRITICAL", "critical"),
+        ("HIGH", "high"),
+        ("MODERATE", "medium"),
+        ("MEDIUM", "medium"),
+        ("LOW", "low"),
+        ("UNKNOWN", "informational"),
+        ("anything-weird", "informational"),  # graceful fallback
+    ],
+)
 def test_osv_severity_mapping(osv_sev, expected):
-    payload = _osv_doc({
-        "name": "x", "version": "1", "cve": "CVE-X", "severity": osv_sev,
-    })
+    payload = _osv_doc(
+        {
+            "name": "x",
+            "version": "1",
+            "cve": "CVE-X",
+            "severity": osv_sev,
+        }
+    )
     findings = _parse_osv_json(payload)
     assert findings[0].severity == expected
 
@@ -111,10 +129,14 @@ def test_osv_parse_malformed_json_raises():
 
 @pytest.mark.asyncio
 async def test_osv_backend_returns_typed_result(tmp_path):
-    payload = _osv_doc({
-        "name": "fastapi", "version": "0.104.0",
-        "cve": "CVE-2024-5678", "severity": "HIGH",
-    })
+    payload = _osv_doc(
+        {
+            "name": "fastapi",
+            "version": "0.104.0",
+            "cve": "CVE-2024-5678",
+            "severity": "HIGH",
+        }
+    )
     mock_proc = MagicMock()
     mock_proc.returncode = 1  # findings present → exit 1; still success
     mock_proc.stdout = payload
@@ -191,13 +213,16 @@ def test_bandit_parse_basic_finding(tmp_path):
     assert f.severity == "high"
 
 
-@pytest.mark.parametrize("bandit_sev, expected", [
-    ("HIGH", "high"),
-    ("MEDIUM", "medium"),
-    ("LOW", "low"),
-    ("UNDEFINED", "informational"),
-    ("WHATEVER", "informational"),
-])
+@pytest.mark.parametrize(
+    "bandit_sev, expected",
+    [
+        ("HIGH", "high"),
+        ("MEDIUM", "medium"),
+        ("LOW", "low"),
+        ("UNDEFINED", "informational"),
+        ("WHATEVER", "informational"),
+    ],
+)
 def test_bandit_severity_mapping(tmp_path, bandit_sev, expected):
     out = _parse_bandit_json(
         _bandit_doc(_bandit_result(severity=bandit_sev)),
@@ -247,11 +272,13 @@ def test_bandit_backend_registered_under_static_analysis_capability():
 
 
 def _ds_doc(results: dict[str, list[dict]]) -> str:
-    return json.dumps({
-        "version": "1.5.0",
-        "plugins_used": [],
-        "results": results,
-    })
+    return json.dumps(
+        {
+            "version": "1.5.0",
+            "plugins_used": [],
+            "results": results,
+        }
+    )
 
 
 def _ds_entry(
@@ -296,10 +323,12 @@ def test_ds_verified_secret_is_critical(tmp_path):
 
 
 def test_ds_multiple_secrets_per_file(tmp_path):
-    payload = _ds_doc({
-        "a.py": [_ds_entry(line=1), _ds_entry(line=2)],
-        "b.py": [_ds_entry(line=5)],
-    })
+    payload = _ds_doc(
+        {
+            "a.py": [_ds_entry(line=1), _ds_entry(line=2)],
+            "b.py": [_ds_entry(line=5)],
+        }
+    )
     findings = _parse_detect_secrets_json(payload, repo_path=tmp_path)
     assert len(findings) == 3
     # All entries serialise; per-file order preserved.

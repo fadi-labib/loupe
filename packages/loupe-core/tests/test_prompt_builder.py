@@ -25,9 +25,14 @@ def test_stable_and_variable_layers_kept_separate():
 
 def test_cache_control_marker_on_system():
     parts = PromptParts(
-        common_framing="x", project_context="y", diff_summary="z",
-        sbom_delta_summary="", relevant_artifacts="",
-        lens_system_prompt="", lens_task="task", prior_findings_handover="",
+        common_framing="x",
+        project_context="y",
+        diff_summary="z",
+        sbom_delta_summary="",
+        relevant_artifacts="",
+        lens_system_prompt="",
+        lens_task="task",
+        prior_findings_handover="",
     )
     msgs = assemble_messages(parts)
     assert msgs[0].get("cache_control") == {"type": "ephemeral"}
@@ -35,8 +40,13 @@ def test_cache_control_marker_on_system():
 
 def test_prior_findings_in_variable_layer():
     parts = PromptParts(
-        common_framing="x", project_context="", diff_summary="", sbom_delta_summary="",
-        relevant_artifacts="", lens_system_prompt="", lens_task="task",
+        common_framing="x",
+        project_context="",
+        diff_summary="",
+        sbom_delta_summary="",
+        relevant_artifacts="",
+        lens_system_prompt="",
+        lens_task="task",
         prior_findings_handover="From safetylens: asset X is ASIL-D",
     )
     msgs = assemble_messages(parts)

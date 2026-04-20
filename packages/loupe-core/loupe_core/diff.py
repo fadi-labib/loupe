@@ -6,6 +6,7 @@ circular dependency (diff.py imported `CodeDiff` from run_context.py).
 Phase 7 moves the type here — where the parser lives — and re-exports
 it from `run_context.py` for backward compatibility.
 """
+
 from __future__ import annotations
 
 import re

@@ -1,4 +1,5 @@
 """Tests for the TruffleHog secret-detection backend."""
+
 from __future__ import annotations
 
 import json
@@ -106,10 +107,12 @@ def test_parse_falls_back_to_local_redact_when_no_redacted_field():
 
 
 def test_parse_severity_promotes_verified_to_critical():
-    payload = "\n".join([
-        json.dumps(_entry(file_path="a.py", verified=True)),
-        json.dumps(_entry(file_path="b.py", verified=False)),
-    ])
+    payload = "\n".join(
+        [
+            json.dumps(_entry(file_path="a.py", verified=True)),
+            json.dumps(_entry(file_path="b.py", verified=False)),
+        ]
+    )
     findings = _parse_trufflehog_ndjson(payload)
     verified_f = next(f for f in findings if f.file == "a.py")
     unverified_f = next(f for f in findings if f.file == "b.py")
@@ -125,11 +128,13 @@ def test_parse_rule_id_marks_verified_findings():
 
 def test_parse_malformed_lines_are_skipped_not_fatal():
     """One bad line shouldn't sink the whole scan."""
-    payload = "\n".join([
-        json.dumps(_entry(file_path="ok.py")),
-        '{"truncated incomplete json',  # malformed
-        json.dumps(_entry(file_path="also_ok.py")),
-    ])
+    payload = "\n".join(
+        [
+            json.dumps(_entry(file_path="ok.py")),
+            '{"truncated incomplete json',  # malformed
+            json.dumps(_entry(file_path="also_ok.py")),
+        ]
+    )
     findings = _parse_trufflehog_ndjson(payload)
     assert {f.file for f in findings} == {"ok.py", "also_ok.py"}
 
@@ -141,9 +146,11 @@ def test_parse_malformed_lines_are_skipped_not_fatal():
 
 @pytest.mark.asyncio
 async def test_backend_returns_typed_result(tmp_path: Path):
-    payload = "\n".join([
-        json.dumps(_entry(file_path="leak.py", verified=True)),
-    ])
+    payload = "\n".join(
+        [
+            json.dumps(_entry(file_path="leak.py", verified=True)),
+        ]
+    )
     mock_proc = MagicMock()
     mock_proc.returncode = 0
     mock_proc.stdout = payload

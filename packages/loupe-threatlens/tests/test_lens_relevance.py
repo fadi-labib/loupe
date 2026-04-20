@@ -6,13 +6,22 @@ from loupe_threatlens.lens import ThreatLens
 
 def _ctx(paths: list[str]) -> RunContext:
     return RunContext(
-        run_id="r", mode="ci", started_at=datetime(2026, 5, 13),
+        run_id="r",
+        mode="ci",
+        started_at=datetime(2026, 5, 13),
         user_intent="",
         diff=CodeDiff(
-            base_sha="a", head_sha="b", changed_paths=paths,
-            added_lines=1, removed_lines=0, raw_unified="",
+            base_sha="a",
+            head_sha="b",
+            changed_paths=paths,
+            added_lines=1,
+            removed_lines=0,
+            raw_unified="",
         ),
-        sbom_delta=None, project=None, plan=[], knowledge=None,
+        sbom_delta=None,
+        project=None,
+        plan=[],
+        knowledge=None,
     )
 
 
@@ -44,8 +53,15 @@ def test_no_diff_returns_low_relevance():
     """In diff mode without a diff, relevance is low (full-repo scan goes via D-15)."""
     lens = ThreatLens()
     ctx = RunContext(
-        run_id="r", mode="ci", started_at=datetime(2026, 5, 13),
-        user_intent="", diff=None, sbom_delta=None, project=None, plan=[], knowledge=None,
+        run_id="r",
+        mode="ci",
+        started_at=datetime(2026, 5, 13),
+        user_intent="",
+        diff=None,
+        sbom_delta=None,
+        project=None,
+        plan=[],
+        knowledge=None,
     )
     score = lens.is_relevant(ctx)
     assert score.score < 0.3

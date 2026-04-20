@@ -6,6 +6,7 @@ Configures VCR (via pytest-vcr) so that:
 - The matcher includes method + URI + body so prompt changes invalidate
   the cassette deliberately (re-recording becomes necessary, not silent)
 """
+
 import pytest
 
 
@@ -18,7 +19,7 @@ def vcr_config():
         "filter_headers": [
             "authorization",
             "x-api-key",
-            "anthropic-version",      # not secret, but version-coupled; safer to omit
+            "anthropic-version",  # not secret, but version-coupled; safer to omit
             "x-stainless-arch",
             "x-stainless-os",
             "x-stainless-package-version",

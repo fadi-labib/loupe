@@ -60,18 +60,13 @@ async def _request_with_retry(
         if response.status_code < 400:
             return response
         if response.status_code == 404:
-            raise PRNotFoundError(
-                f"{method} {url} returned 404: {response.text}"
-            )
+            raise PRNotFoundError(f"{method} {url} returned 404: {response.text}")
         rate_limited = (
-            response.status_code == 403
-            and response.headers.get("X-RateLimit-Remaining") == "0"
+            response.status_code == 403 and response.headers.get("X-RateLimit-Remaining") == "0"
         )
         is_retryable = response.status_code >= 500 or rate_limited
         if not is_retryable:
-            raise PRFetchError(
-                f"{method} {url} returned {response.status_code}: {response.text}"
-            )
+            raise PRFetchError(f"{method} {url} returned {response.status_code}: {response.text}")
         last_response = response
         if attempt < _MAX_ATTEMPTS - 1:
             retry_after = response.headers.get("Retry-After")

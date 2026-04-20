@@ -8,6 +8,7 @@ coordinator must NOT suppress it via relevance filtering. The lens's
 is_relevant() is still called for the reason string in the run record,
 but the score is overridden.
 """
+
 from datetime import datetime
 
 from loupe_core.config import LensActivation, LoupeConfig
@@ -19,29 +20,50 @@ from loupe_core.run_context import CodeDiff, RelevanceScore, RunContext
 class _MakeLens:
     def __init__(self, name: str, score: float):
         self.capabilities = LensCapabilities(
-            name=name, domain="x", artifact_paths=[f".loupe/{name}.yaml"],
+            name=name,
+            domain="x",
+            artifact_paths=[f".loupe/{name}.yaml"],
         )
         self._score = score
 
-    def build_agent(self, t): return None
-    def mcp_tools(self): return []
-    def mcp_workflows(self): return []
+    def build_agent(self, t):
+        return None
+
+    def mcp_tools(self):
+        return []
+
+    def mcp_workflows(self):
+        return []
+
     def is_relevant(self, c):
         return RelevanceScore(score=self._score, reason="t")
-    async def run(self, ctx, p, b, d): return None
+
+    async def run(self, ctx, p, b, d):
+        return None
 
 
 def _ctx(scope: str = "diff", diff_paths=None) -> RunContext:
     diff = None
     if diff_paths is not None:
         diff = CodeDiff(
-            base_sha="a", head_sha="b", changed_paths=diff_paths,
-            added_lines=1, removed_lines=0, raw_unified="",
+            base_sha="a",
+            head_sha="b",
+            changed_paths=diff_paths,
+            added_lines=1,
+            removed_lines=0,
+            raw_unified="",
         )
     return RunContext(
-        run_id="r", mode="ci", started_at=datetime(2026, 5, 14),
-        user_intent="", diff=diff, sbom_delta=None,
-        project=None, plan=[], knowledge=None, scope=scope,
+        run_id="r",
+        mode="ci",
+        started_at=datetime(2026, 5, 14),
+        user_intent="",
+        diff=diff,
+        sbom_delta=None,
+        project=None,
+        plan=[],
+        knowledge=None,
+        scope=scope,
     )
 
 

@@ -1,4 +1,5 @@
 """Tests for the CodeQL static-analysis backend."""
+
 from __future__ import annotations
 
 import json
@@ -16,13 +17,17 @@ from loupe_core.capabilities.errors import BackendError
 
 
 def _sarif(*results: dict) -> str:
-    return json.dumps({
-        "version": "2.1.0",
-        "runs": [{
-            "tool": {"driver": {"name": "CodeQL"}},
-            "results": list(results),
-        }],
-    })
+    return json.dumps(
+        {
+            "version": "2.1.0",
+            "runs": [
+                {
+                    "tool": {"driver": {"name": "CodeQL"}},
+                    "results": list(results),
+                }
+            ],
+        }
+    )
 
 
 def _result(
@@ -37,12 +42,14 @@ def _result(
         "ruleId": rule_id,
         "message": {"text": message},
         "level": level,
-        "locations": [{
-            "physicalLocation": {
-                "artifactLocation": {"uri": file},
-                "region": {"startLine": line},
-            },
-        }],
+        "locations": [
+            {
+                "physicalLocation": {
+                    "artifactLocation": {"uri": file},
+                    "region": {"startLine": line},
+                },
+            }
+        ],
     }
 
 
@@ -66,9 +73,13 @@ def test_locate_database_typed_option_wins(tmp_path, monkeypatch):
     # because the env var is never consulted.
     with warnings.catch_warnings():
         warnings.simplefilter("error", DeprecationWarning)
-        assert _locate_database(
-            tmp_path / "repo", database_path=str(typed_db),
-        ) == typed_db
+        assert (
+            _locate_database(
+                tmp_path / "repo",
+                database_path=str(typed_db),
+            )
+            == typed_db
+        )
 
 
 def test_locate_database_env_var_emits_deprecation_warning(tmp_path, monkeypatch):
@@ -106,9 +117,13 @@ def test_locate_database_ignores_env_when_path_missing(tmp_path, monkeypatch):
 def test_locate_database_ignores_typed_option_when_path_missing(tmp_path, monkeypatch):
     """A stale typed `database_path` falls through to env-var / default."""
     monkeypatch.delenv("LOUPE_CODEQL_DB", raising=False)
-    assert _locate_database(
-        tmp_path, database_path=str(tmp_path / "does-not-exist"),
-    ) is None
+    assert (
+        _locate_database(
+            tmp_path,
+            database_path=str(tmp_path / "does-not-exist"),
+        )
+        is None
+    )
 
 
 @pytest.mark.asyncio
@@ -178,14 +193,17 @@ def test_parse_sarif_extracts_basic_finding():
     assert f.severity == "high"
 
 
-@pytest.mark.parametrize("sarif_level, expected", [
-    ("error", "high"),
-    ("warning", "medium"),
-    ("note", "low"),
-    ("none", "informational"),
-    ("UNKNOWN", "informational"),  # graceful fallback
-    ("ERROR", "high"),              # case-insensitive
-])
+@pytest.mark.parametrize(
+    "sarif_level, expected",
+    [
+        ("error", "high"),
+        ("warning", "medium"),
+        ("note", "low"),
+        ("none", "informational"),
+        ("UNKNOWN", "informational"),  # graceful fallback
+        ("ERROR", "high"),  # case-insensitive
+    ],
+)
 def test_parse_sarif_severity_mapping(sarif_level, expected):
     findings = _parse_sarif(_sarif(_result(level=sarif_level)))
     assert findings[0].severity == expected
@@ -210,13 +228,15 @@ def test_parse_sarif_handles_missing_message():
 
 def test_parse_sarif_walks_multiple_runs():
     """SARIF allows multiple runs per document; we should walk all of them."""
-    doc = json.dumps({
-        "version": "2.1.0",
-        "runs": [
-            {"results": [_result(file="a.py")]},
-            {"results": [_result(file="b.py")]},
-        ],
-    })
+    doc = json.dumps(
+        {
+            "version": "2.1.0",
+            "runs": [
+                {"results": [_result(file="a.py")]},
+                {"results": [_result(file="b.py")]},
+            ],
+        }
+    )
     findings = _parse_sarif(doc)
     assert {f.file for f in findings} == {"a.py", "b.py"}
 

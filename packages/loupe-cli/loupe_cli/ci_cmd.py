@@ -14,6 +14,7 @@ End-to-end:
 10. Exit with the gate-determined status (currently always 0; gate logic
     per config.yaml's ci.fail_on will be wired in a follow-up).
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -55,8 +56,7 @@ def ci_command(
     loupe = cwd / ".loupe"
     if not loupe.exists():
         typer.echo(
-            "Error: .loupe/ not found in the current directory.\n"
-            "Run `loupe init` first.",
+            "Error: .loupe/ not found in the current directory.\nRun `loupe init` first.",
             err=True,
         )
         return USAGE_ERROR
@@ -71,16 +71,18 @@ def ci_command(
     started_at = datetime.now(UTC)
     run_id = f"run-{uuid.uuid4().hex[:8]}"
 
-    ctx = RunContext.bootstrap(BootstrapInputs(
-        run_id=run_id,
-        mode="ci",
-        started_at=started_at,
-        user_intent="ci diff analysis",
-        loupe_dir=loupe,
-        unified_diff=diff,
-        base_sha=base_sha,
-        head_sha=head_sha,
-    ))
+    ctx = RunContext.bootstrap(
+        BootstrapInputs(
+            run_id=run_id,
+            mode="ci",
+            started_at=started_at,
+            user_intent="ci diff analysis",
+            loupe_dir=loupe,
+            unified_diff=diff,
+            base_sha=base_sha,
+            head_sha=head_sha,
+        )
+    )
     ctx.plan = build_run_plan(ctx, lenses, cfg)
 
     if not ctx.plan:
@@ -93,19 +95,18 @@ def ci_command(
     # ctx.secrets, ctx.static_findings — every lens reads the same cached
     # values off the shared blackboard. Cost-discipline lever (D-10 §2).
     planned_lenses = _planned_lenses(lenses, ctx)
-    if any(
-        getattr(lens.capabilities, "requires_capabilities", [])
-        for lens in planned_lenses
-    ):
+    if any(getattr(lens.capabilities, "requires_capabilities", []) for lens in planned_lenses):
         registry = CapabilityRegistry.discover()
         try:
-            asyncio.run(bootstrap_capabilities(
-                ctx=ctx,
-                lenses=planned_lenses,
-                config=cfg,
-                registry=registry,
-                repo_path=cwd,
-            ))
+            asyncio.run(
+                bootstrap_capabilities(
+                    ctx=ctx,
+                    lenses=planned_lenses,
+                    config=cfg,
+                    registry=registry,
+                    repo_path=cwd,
+                )
+            )
         except CapabilityError as exc:
             # Surface the specific capability error so the operator can
             # fix config.yaml or install the missing backend, then continue
@@ -215,11 +216,13 @@ def _write_run_record(
     considered_records: list[LensConsidered] = []
     for lens in considered:
         score = lens.is_relevant(ctx)
-        considered_records.append(LensConsidered(
-            name=lens.capabilities.name,
-            score=score.score,
-            reason=score.reason,
-        ))
+        considered_records.append(
+            LensConsidered(
+                name=lens.capabilities.name,
+                score=score.score,
+                reason=score.reason,
+            )
+        )
 
     # Aggregate per-lens usage into workspace-level totals for the run
     # record. Cache reads count toward total_tokens_in because they ARE
@@ -227,8 +230,7 @@ def _write_run_record(
     # cache_hit_rate field reports the discount separately.
     models_used = {name: u.model_id for name, u in ctx.lens_usage.items()}
     total_in = sum(
-        u.input_tokens + u.cache_read_tokens + u.cache_write_tokens
-        for u in ctx.lens_usage.values()
+        u.input_tokens + u.cache_read_tokens + u.cache_write_tokens for u in ctx.lens_usage.values()
     )
     total_out = sum(u.output_tokens for u in ctx.lens_usage.values())
     cost_total = round(sum(u.cost_usd_estimate for u in ctx.lens_usage.values()), 6)
@@ -237,8 +239,7 @@ def _write_run_record(
     # cache hits" (0.0) from "no LLM call happened" (None).
     cache_read = sum(u.cache_read_tokens for u in ctx.lens_usage.values())
     cache_denom = sum(
-        u.input_tokens + u.cache_read_tokens + u.cache_write_tokens
-        for u in ctx.lens_usage.values()
+        u.input_tokens + u.cache_read_tokens + u.cache_write_tokens for u in ctx.lens_usage.values()
     )
     cache_hit = round(cache_read / cache_denom, 4) if cache_denom else None
 
@@ -259,10 +260,16 @@ def _write_run_record(
         total_tokens_out=total_out,
         cost_usd_estimate=cost_total,
         cache_hit_rate=cache_hit,
-        artifacts_changed=sorted(set().union(*(
-            set(threat_keys) for lens_findings in ctx.findings.values()
-            for threat_keys in [list(lens_findings.keys())]
-        )) | {p.location for p in ctx.proposed_patches}),
+        artifacts_changed=sorted(
+            set().union(
+                *(
+                    set(threat_keys)
+                    for lens_findings in ctx.findings.values()
+                    for threat_keys in [list(lens_findings.keys())]
+                )
+            )
+            | {p.location for p in ctx.proposed_patches}
+        ),
         proposed_patches=[p.location for p in ctx.proposed_patches],
         pending_decisions=[d.id for d in ctx.pending_decisions],
         prev_run_hash=prev_hash,

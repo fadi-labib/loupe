@@ -15,6 +15,7 @@ prompt-builder change and add a CHANGELOG line under "Cost".
 
 [1]: ../docs/principles.md#principle-8
 """
+
 from __future__ import annotations
 
 import json
@@ -24,9 +25,7 @@ import pytest
 import yaml
 
 CASSETTE_PATH = (
-    Path(__file__).parent
-    / "cassettes"
-    / "test_threatlens_proposes_threats_on_diff.yaml"
+    Path(__file__).parent / "cassettes" / "test_threatlens_proposes_threats_on_diff.yaml"
 )
 
 # ---------------------------------------------------------------------------
@@ -95,18 +94,14 @@ def test_recorded_cassette_output_tokens_under_budget():
     """
     _, total_out = _load_usage_from_cassette()
     assert total_out < MAX_OUTPUT_TOKENS, (
-        f"output-token budget regression: recorded {total_out}, "
-        f"budget {MAX_OUTPUT_TOKENS}."
+        f"output-token budget regression: recorded {total_out}, budget {MAX_OUTPUT_TOKENS}."
     )
 
 
 def test_recorded_cassette_estimated_cost_under_cap():
     """End-to-end USD cost cap (Haiku 4.5 pricing as of 2026-05-15)."""
     total_in, total_out = _load_usage_from_cassette()
-    estimated_cost = (
-        total_in * HAIKU_INPUT_USD_PER_TOKEN
-        + total_out * HAIKU_OUTPUT_USD_PER_TOKEN
-    )
+    estimated_cost = total_in * HAIKU_INPUT_USD_PER_TOKEN + total_out * HAIKU_OUTPUT_USD_PER_TOKEN
     assert estimated_cost < MAX_COST_USD, (
         f"recorded scenario estimated cost ${estimated_cost:.4f} exceeds "
         f"cap ${MAX_COST_USD}. Either the prompt grew or Haiku pricing "
@@ -117,9 +112,7 @@ def test_recorded_cassette_estimated_cost_under_cap():
 def test_cassette_has_at_least_one_interaction():
     """Sanity check: an empty cassette would pass the budget tests trivially."""
     data = yaml.safe_load(CASSETTE_PATH.read_text())
-    assert len(data.get("interactions", [])) >= 1, (
-        "cassette is empty — recording may have failed"
-    )
+    assert len(data.get("interactions", [])) >= 1, "cassette is empty — recording may have failed"
 
 
 def test_cassette_carries_no_secret_strings():
@@ -127,6 +120,5 @@ def test_cassette_carries_no_secret_strings():
     body = CASSETTE_PATH.read_text()
     for needle in ("sk-ant", "x-api-key", "authorization", "bearer "):
         assert needle.lower() not in body.lower(), (
-            f"cassette appears to leak '{needle}' — verify conftest.py "
-            f"filter_headers and re-record"
+            f"cassette appears to leak '{needle}' — verify conftest.py filter_headers and re-record"
         )

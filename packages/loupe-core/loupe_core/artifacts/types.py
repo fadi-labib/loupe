@@ -1,4 +1,5 @@
 """Common enum types and stable-ID aliases used across Loupe artifacts."""
+
 from __future__ import annotations
 
 from enum import StrEnum

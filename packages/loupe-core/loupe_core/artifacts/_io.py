@@ -4,6 +4,7 @@ Every Loupe artefact write must be atomic so a crash mid-write cannot
 strand the audit trail with a half-written YAML file. Readers (humans
 and CI) should only ever see complete files.
 """
+
 from __future__ import annotations
 
 import os

@@ -26,6 +26,7 @@ Gitleaks' JSON schema as of v8.21 (verified 2026-05-15):
       ...
     ]
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -79,7 +80,9 @@ class GitleaksSecretBackend:
         # Gitleaks exits 1 when findings are present, which is informational —
         # we treat the run as successful as long as the JSON parses.
         with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".gitleaks.json", delete=False,
+            mode="w",
+            suffix=".gitleaks.json",
+            delete=False,
         ) as fh:
             report_path = Path(fh.name)
 
@@ -87,12 +90,17 @@ class GitleaksSecretBackend:
             proc = await asyncio.to_thread(
                 subprocess.run,
                 [
-                    "gitleaks", "detect",
-                    "--source", str(repo_path),
+                    "gitleaks",
+                    "detect",
+                    "--source",
+                    str(repo_path),
                     "--no-banner",
-                    "--report-format", "json",
-                    "--report-path", str(report_path),
-                    "--exit-code", "0",   # always exit 0; we read findings from the report file
+                    "--report-format",
+                    "json",
+                    "--report-path",
+                    str(report_path),
+                    "--exit-code",
+                    "0",  # always exit 0; we read findings from the report file
                 ],
                 capture_output=True,
                 text=True,
@@ -142,14 +150,16 @@ def _parse_gitleaks_json(stdout: str) -> list[SecretFinding]:
     findings: list[SecretFinding] = []
     for entry in raw:
         line_raw = int(entry.get("StartLine", 0) or 0)
-        findings.append(SecretFinding(
-            file=entry.get("File", ""),
-            line=line_raw if line_raw >= 1 else None,
-            rule_id=entry.get("RuleID", "unknown"),
-            redacted_match=_redact(entry.get("Secret", "")),
-            # gitleaks doesn't emit a severity; convention is HIGH for any
-            # matched secret because the consequence is the same regardless
-            # of which rule fired. Operators can re-grade in mitigation review.
-            severity="high",
-        ))
+        findings.append(
+            SecretFinding(
+                file=entry.get("File", ""),
+                line=line_raw if line_raw >= 1 else None,
+                rule_id=entry.get("RuleID", "unknown"),
+                redacted_match=_redact(entry.get("Secret", "")),
+                # gitleaks doesn't emit a severity; convention is HIGH for any
+                # matched secret because the consequence is the same regardless
+                # of which rule fired. Operators can re-grade in mitigation review.
+                severity="high",
+            )
+        )
     return findings

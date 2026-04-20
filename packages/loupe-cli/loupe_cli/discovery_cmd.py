@@ -8,6 +8,7 @@ Useful for operators verifying their install before running `loupe ci`,
 and for the `loupe verify --strict` Layer-3 check that warns when a lens
 the config references is not actually installed.
 """
+
 from __future__ import annotations
 
 import typer

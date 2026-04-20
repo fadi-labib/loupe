@@ -80,9 +80,7 @@ def _registry_with_fakes() -> CapabilityRegistry:
 
 class _Lens:
     def __init__(self, name: str, requires: list[str]) -> None:
-        self.capabilities = LensCapabilities(
-            name=name, domain="t", requires_capabilities=requires
-        )
+        self.capabilities = LensCapabilities(name=name, domain="t", requires_capabilities=requires)
 
 
 @pytest.mark.asyncio

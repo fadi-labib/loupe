@@ -24,15 +24,23 @@ def assemble_messages(parts: PromptParts) -> list[dict[str, Any]]:
     The system message is marked `cache_control: {type: 'ephemeral'}` so Anthropic
     prompt caching applies; providers that don't recognise the field ignore it.
     """
-    system_content = "\n\n".join(filter(None, [
-        parts.common_framing,
-        f"## Project context\n{parts.project_context}" if parts.project_context else "",
-        f"## Diff summary\n{parts.diff_summary}" if parts.diff_summary else "",
-        f"## SBOM delta\n{parts.sbom_delta_summary}" if parts.sbom_delta_summary else "",
-        (f"## Relevant existing artifacts\n{parts.relevant_artifacts}"
-         if parts.relevant_artifacts else ""),
-        f"## Lens framing\n{parts.lens_system_prompt}" if parts.lens_system_prompt else "",
-    ]))
+    system_content = "\n\n".join(
+        filter(
+            None,
+            [
+                parts.common_framing,
+                f"## Project context\n{parts.project_context}" if parts.project_context else "",
+                f"## Diff summary\n{parts.diff_summary}" if parts.diff_summary else "",
+                f"## SBOM delta\n{parts.sbom_delta_summary}" if parts.sbom_delta_summary else "",
+                (
+                    f"## Relevant existing artifacts\n{parts.relevant_artifacts}"
+                    if parts.relevant_artifacts
+                    else ""
+                ),
+                f"## Lens framing\n{parts.lens_system_prompt}" if parts.lens_system_prompt else "",
+            ],
+        )
+    )
     user_content = parts.lens_task
     if parts.prior_findings_handover:
         user_content += f"\n\n## Prior findings\n{parts.prior_findings_handover}"

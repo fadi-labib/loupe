@@ -8,6 +8,7 @@ via the existing register_threatlens_mcp_tools entry point.
 The full handshake-over-stdio path is exercised by an additional
 integration test in test_mcp_handshake.py.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -60,7 +61,10 @@ def test_write_threat_appends_to_empty_threats_file(tmp_path: Path):
     boundary = _boundary_with(loupe, "threats.yaml")
 
     threat_id = write_threat_directly(
-        loupe, boundary, _threat_input(), proposed_by="mcp/test",
+        loupe,
+        boundary,
+        _threat_input(),
+        proposed_by="mcp/test",
     )
 
     assert threat_id == "T-001"
@@ -77,8 +81,7 @@ def test_write_threat_assigns_sequential_ids(tmp_path: Path):
     boundary = _boundary_with(loupe, "threats.yaml")
 
     ids = [
-        write_threat_directly(loupe, boundary, _threat_input(), proposed_by="x")
-        for _ in range(3)
+        write_threat_directly(loupe, boundary, _threat_input(), proposed_by="x") for _ in range(3)
     ]
     assert ids == ["T-001", "T-002", "T-003"]
 
@@ -107,7 +110,10 @@ def test_write_threat_runs_through_path_boundary(tmp_path: Path):
     boundary = PathBoundary(writable_globs=[str(loupe / "threats.yaml")])
 
     threat_id = write_threat_directly(
-        loupe, boundary, _threat_input(), proposed_by="mcp/test",
+        loupe,
+        boundary,
+        _threat_input(),
+        proposed_by="mcp/test",
     )
     assert threat_id == "T-001"
     assert (loupe / "threats.yaml").exists()
@@ -124,7 +130,8 @@ def test_write_mitigation_appends_to_empty_file(tmp_path: Path):
     boundary = _boundary_with(loupe, "mitigations.yaml")
 
     mid = write_mitigation_directly(
-        loupe, boundary,
+        loupe,
+        boundary,
         ProposeMitigationInput(
             title="Sanitise exception messages",
             description="Wrap the framework error handler.",
@@ -143,7 +150,8 @@ def test_write_mitigation_with_evidence_pointer(tmp_path: Path):
     boundary = _boundary_with(loupe, "mitigations.yaml")
 
     write_mitigation_directly(
-        loupe, boundary,
+        loupe,
+        boundary,
         ProposeMitigationInput(
             title="Add CSRF token check",
             description="...",
@@ -164,7 +172,8 @@ def test_write_mitigation_without_evidence_pointer(tmp_path: Path):
     boundary = _boundary_with(loupe, "mitigations.yaml")
 
     write_mitigation_directly(
-        loupe, boundary,
+        loupe,
+        boundary,
         ProposeMitigationInput(
             title="Pure documentation mitigation",
             description="No code evidence yet.",
@@ -181,7 +190,8 @@ def test_write_mitigation_raises_when_path_not_writable(tmp_path: Path):
 
     with pytest.raises(BoundaryViolation):
         write_mitigation_directly(
-            loupe, boundary,
+            loupe,
+            boundary,
             ProposeMitigationInput(title="x", description="x"),
         )
 
@@ -193,7 +203,8 @@ def test_write_mitigation_assigns_sequential_ids(tmp_path: Path):
 
     ids = [
         write_mitigation_directly(
-            loupe, boundary,
+            loupe,
+            boundary,
             ProposeMitigationInput(title=f"m{i}", description="..."),
         )
         for i in range(3)
@@ -221,7 +232,9 @@ def test_write_tools_registered_only_when_boundary_supplied(tmp_path: Path):
 
     server_rw = FastMCP(name="rw")
     register_threatlens_mcp_tools(
-        server_rw, tmp_path / ".loupe", boundary=boundary,
+        server_rw,
+        tmp_path / ".loupe",
+        boundary=boundary,
     )
     # Read+write: same call shape, with boundary. Successful registration
     # means the closures captured cleanly.

@@ -19,6 +19,7 @@ Two layers of write helpers ship here:
   Used by the MCP write tools where there is no per-call RunContext to
   thread through. Same Layer 1 guarantees apply via write_agent_artifact.
 """
+
 from __future__ import annotations
 
 import io
@@ -55,15 +56,17 @@ class ProposeThreatInput(BaseModel):
     These constraints become the JSON Schema visible to the model, so the
     model is guided toward valid output before any post-validation.
     """
+
     element_id: str = Field(
         description="ID of the architectural element this threat targets (e.g., E-001)",
     )
     stride_category: Literal["S", "T", "R", "I", "D", "E"] = Field(
         description="STRIDE category: S=Spoofing, T=Tampering, R=Repudiation, "
-                    "I=Information disclosure, D=Denial of service, E=Elevation of privilege",
+        "I=Information disclosure, D=Denial of service, E=Elevation of privilege",
     )
     title: str = Field(
-        min_length=1, max_length=200,
+        min_length=1,
+        max_length=200,
         description="Short threat title (<=200 chars).",
     )
     description: str = Field(
@@ -72,8 +75,7 @@ class ProposeThreatInput(BaseModel):
     )
     severity: Literal["low", "medium", "high", "critical"] = Field(
         description=(
-            "Severity relative to the assets in context.md; "
-            "do not use generic web-app heuristics."
+            "Severity relative to the assets in context.md; do not use generic web-app heuristics."
         ),
     )
     rationale: str = Field(
@@ -86,8 +88,7 @@ class ProposeThreatInput(BaseModel):
     mitigation_ids: list[str] = Field(
         default_factory=list,
         description=(
-            "Optional IDs of existing mitigations in mitigations.yaml "
-            "that address this threat."
+            "Optional IDs of existing mitigations in mitigations.yaml that address this threat."
         ),
     )
 
@@ -154,7 +155,10 @@ def propose_threat_impl(
     and records the finding in the RunContext blackboard.
     """
     threat = _append_threat(
-        loupe_dir, boundary, input, proposed_by=f"threatlens/{model_id}",
+        loupe_dir,
+        boundary,
+        input,
+        proposed_by=f"threatlens/{model_id}",
     )
     # Record in blackboard so later lenses / coordinator can see what was added.
     ctx.record_finding("threatlens", f"threat:{threat.id}", threat.model_dump(mode="json"))
@@ -208,11 +212,11 @@ class ProposeMitigationInput(BaseModel):
         default_factory=list,
         description="Threat IDs (T-NNN) this mitigation closes.",
     )
-    status: Literal["proposed", "planned", "implemented", "verified", "retired"] = (
-        Field(default="proposed")
+    status: Literal["proposed", "planned", "implemented", "verified", "retired"] = Field(
+        default="proposed"
     )
-    evidence_kind: Literal["code", "doc", "test", "config", "external"] | None = (
-        Field(default=None, description="Optional pointer-kind for a single evidence entry.")
+    evidence_kind: Literal["code", "doc", "test", "config", "external"] | None = Field(
+        default=None, description="Optional pointer-kind for a single evidence entry."
     )
     evidence_location: str | None = Field(
         default=None,
@@ -240,10 +244,12 @@ def write_mitigation_directly(
 
     evidence: list[Evidence] = []
     if input.evidence_kind and input.evidence_location:
-        evidence.append(Evidence(
-            kind=input.evidence_kind,
-            location=input.evidence_location,
-        ))
+        evidence.append(
+            Evidence(
+                kind=input.evidence_kind,
+                location=input.evidence_location,
+            )
+        )
 
     mitigation = Mitigation(
         id=next_id,

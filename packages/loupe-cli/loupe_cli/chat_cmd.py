@@ -13,6 +13,7 @@ matching VALUES.md §5 (humans stay in the decision seat).
 There is no `--auto-confirm` flag. There is no environment variable that
 lowers the bar. By design.
 """
+
 from __future__ import annotations
 
 import sys

@@ -4,6 +4,7 @@ This protects against the failure mode where pyproject.toml registers an
 entry point pointing at a module that doesn't exist — `discover_lenses()`
 would then fail at import time on every Loupe invocation.
 """
+
 from importlib.metadata import entry_points
 
 
@@ -19,6 +20,7 @@ def test_threatlens_entry_point_loads():
 
 def test_threatlens_discoverable_via_registry():
     from loupe_core.lens_registry import discover_lenses
+
     lenses = discover_lenses()
     names = {lens.capabilities.name for lens in lenses}
     assert "threatlens" in names

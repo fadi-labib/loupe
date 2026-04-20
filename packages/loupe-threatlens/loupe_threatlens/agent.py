@@ -16,6 +16,7 @@ The agent itself is built lazily by `build_agent()` so the module imports
 without needing any provider SDK installed — the actual Anthropic / OpenAI /
 etc. client is only instantiated when `agent.run(...)` is called.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -42,6 +43,7 @@ class AgentDeps:
     boundary for Layer-1-enforced writes, the loupe directory, and the
     model identifier for attribution.
     """
+
     ctx: LoupeRunContext
     boundary: PathBoundary
     loupe_dir: Path

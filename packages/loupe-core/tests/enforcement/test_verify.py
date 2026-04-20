@@ -3,6 +3,7 @@
 Exercises check_run_record_chain in isolation against in-process run records,
 without going through the CLI or filesystem-watcher path.
 """
+
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -58,6 +59,7 @@ def test_self_hash_mismatch_detected(tmp_path: Path) -> None:
     assert len(files) == 1
     # Corrupt: change the invoked_by field but not self_hash
     import json
+
     data = json.loads(files[0].read_text())
     data["invoked_by"] = "TAMPERED"
     files[0].write_text(json.dumps(data, indent=2, sort_keys=True))

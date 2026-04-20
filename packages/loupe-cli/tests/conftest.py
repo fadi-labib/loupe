@@ -6,6 +6,7 @@ loupe-core's own test suite, and lens internals are covered by VCR-based
 integration tests in each lens package. Patching dispatch_plan to a no-op
 keeps CLI tests fast and focussed on coordination logic.
 """
+
 from __future__ import annotations
 
 import pytest

@@ -136,9 +136,7 @@ async def test_handles_paginated_comment_listing():
             return httpx.Response(
                 200,
                 json=[{"id": 1, "body": "unrelated", "user": {"login": "alice"}}],
-                headers={
-                    "Link": f'<{request.url}&page=2>; rel="next"'
-                },
+                headers={"Link": f'<{request.url}&page=2>; rel="next"'},
             )
         if request.method == "GET" and "page=2" in str(request.url):
             return httpx.Response(

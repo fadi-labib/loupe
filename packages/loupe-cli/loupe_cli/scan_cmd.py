@@ -16,6 +16,7 @@ When to use:
 - Architectural review of a specific subsystem (`loupe scan --paths …`)
 - Audit kickoff
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -52,8 +53,7 @@ def scan_command(
     loupe = cwd / ".loupe"
     if not loupe.exists():
         typer.echo(
-            "Error: .loupe/ not found in the current directory.\n"
-            "Run `loupe init` first.",
+            "Error: .loupe/ not found in the current directory.\nRun `loupe init` first.",
             err=True,
         )
         return USAGE_ERROR
@@ -67,22 +67,22 @@ def scan_command(
     # because the on-disk filename appends a literal 'Z' (Phase 7).
     started_at = datetime.now(UTC)
     run_id = f"run-{uuid.uuid4().hex[:8]}"
-    user_intent = (
-        f"scan scoped to {paths}" if paths else "full-repo scan"
-    )
+    user_intent = f"scan scoped to {paths}" if paths else "full-repo scan"
 
-    ctx = RunContext.bootstrap(BootstrapInputs(
-        run_id=run_id,
-        mode="ci",                              # scan is a non-interactive flow
-        started_at=started_at,
-        user_intent=user_intent,
-        loupe_dir=loupe,
-        unified_diff="",                        # no diff in scan mode
-        base_sha=None,
-        head_sha=None,
-        scope=scope,
-        scope_paths=list(paths),
-    ))
+    ctx = RunContext.bootstrap(
+        BootstrapInputs(
+            run_id=run_id,
+            mode="ci",  # scan is a non-interactive flow
+            started_at=started_at,
+            user_intent=user_intent,
+            loupe_dir=loupe,
+            unified_diff="",  # no diff in scan mode
+            base_sha=None,
+            head_sha=None,
+            scope=scope,
+            scope_paths=list(paths),
+        )
+    )
     ctx.plan = build_run_plan(ctx, lenses, cfg)
 
     if not ctx.plan:
@@ -115,11 +115,13 @@ def _write_run_record(
     considered_records: list[LensConsidered] = []
     for lens in considered:
         score = lens.is_relevant(ctx)
-        considered_records.append(LensConsidered(
-            name=lens.capabilities.name,
-            score=score.score,
-            reason=score.reason,
-        ))
+        considered_records.append(
+            LensConsidered(
+                name=lens.capabilities.name,
+                score=score.score,
+                reason=score.reason,
+            )
+        )
 
     record = RunRecord(
         run_id=ctx.run_id,
@@ -129,7 +131,7 @@ def _write_run_record(
         trigger=f"manual_scan_{scope}",
         base_sha=None,
         head_sha=None,
-        diff_hash=hashlib.sha256(b"").hexdigest(),    # no diff
+        diff_hash=hashlib.sha256(b"").hexdigest(),  # no diff
         context_md_hash=hashlib.sha256(context_bytes).hexdigest(),
         lenses_considered=considered_records,
         lenses_run=[p.lens_name for p in ctx.plan],

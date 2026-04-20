@@ -91,9 +91,7 @@ def _merge_union[R: BaseModel](results: list[R], result_type: type[R]) -> R:
     return _build_result(result_type, list(seen.values()), backend_name="union")
 
 
-def _merge_consensus[R: BaseModel](
-    results: list[R], result_type: type[R], *, threshold: int
-) -> R:
+def _merge_consensus[R: BaseModel](results: list[R], result_type: type[R], *, threshold: int) -> R:
     counts: Counter[tuple[Any, ...]] = Counter()
     representatives: dict[tuple[Any, ...], BaseModel] = {}
     for r in results:

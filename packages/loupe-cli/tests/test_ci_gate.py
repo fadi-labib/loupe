@@ -5,6 +5,7 @@ network, no agent invocation. The end-to-end gate behavior (lens runs,
 proposes threats, ci returns 1) is the integration concern of
 `test_ci_real.py`; this file pins the function-level contract.
 """
+
 from datetime import datetime
 
 from loupe_cli.ci_cmd import _gate_exit_code
@@ -15,9 +16,15 @@ from loupe_core.run_context import RunContext
 def _ctx(threats: list[dict]) -> RunContext:
     """RunContext with the given Threat-shaped dicts in findings."""
     ctx = RunContext(
-        run_id="r-gate", mode="ci", started_at=datetime(2026, 5, 15),
-        user_intent="", diff=None, sbom_delta=None,
-        project=None, plan=[], knowledge=None,
+        run_id="r-gate",
+        mode="ci",
+        started_at=datetime(2026, 5, 15),
+        user_intent="",
+        diff=None,
+        sbom_delta=None,
+        project=None,
+        plan=[],
+        knowledge=None,
     )
     for t in threats:
         ctx.record_finding("threatlens", f"threat:{t['id']}", t)
@@ -51,28 +58,38 @@ def test_only_low_threat_with_critical_high_in_fail_on_returns_zero():
 
 
 def test_multiple_threats_one_triggers_exits_one():
-    ctx = _ctx([
-        {"id": "T-001", "severity": "low"},
-        {"id": "T-002", "severity": "medium"},
-        {"id": "T-003", "severity": "high"},
-    ])
+    ctx = _ctx(
+        [
+            {"id": "T-001", "severity": "low"},
+            {"id": "T-002", "severity": "medium"},
+            {"id": "T-003", "severity": "high"},
+        ]
+    )
     assert _gate_exit_code(ctx, _cfg(fail_on=["high"])) == 1
 
 
 def test_multiple_fail_on_severities():
     """Gate fires on any threat whose severity matches any listed level."""
-    ctx = _ctx([
-        {"id": "T-001", "severity": "medium"},
-    ])
+    ctx = _ctx(
+        [
+            {"id": "T-001", "severity": "medium"},
+        ]
+    )
     assert _gate_exit_code(ctx, _cfg(fail_on=["medium", "high", "critical"])) == 1
 
 
 def test_non_threat_findings_ignored():
     """ctx.findings can hold non-threat keys; the gate must only inspect 'threat:*'."""
     ctx = RunContext(
-        run_id="r", mode="ci", started_at=datetime(2026, 5, 15),
-        user_intent="", diff=None, sbom_delta=None,
-        project=None, plan=[], knowledge=None,
+        run_id="r",
+        mode="ci",
+        started_at=datetime(2026, 5, 15),
+        user_intent="",
+        diff=None,
+        sbom_delta=None,
+        project=None,
+        plan=[],
+        knowledge=None,
     )
     ctx.record_finding("threatlens", "metric:total_calls", {"value": 3, "severity": "critical"})
     assert _gate_exit_code(ctx, _cfg(fail_on=["critical"])) == 0
@@ -91,10 +108,12 @@ def test_warn_only_threat_returns_zero():
 
 def test_warn_and_fail_threats_exits_one():
     """Mix of warn and fail severities: warnings print, exit code follows fail_on."""
-    ctx = _ctx([
-        {"id": "T-001", "severity": "medium"},
-        {"id": "T-002", "severity": "critical"},
-    ])
+    ctx = _ctx(
+        [
+            {"id": "T-001", "severity": "medium"},
+            {"id": "T-002", "severity": "critical"},
+        ]
+    )
     cfg = _cfg_with_warn(fail_on=["critical"], warn_on=["medium"])
     assert _gate_exit_code(ctx, cfg) == 1
 

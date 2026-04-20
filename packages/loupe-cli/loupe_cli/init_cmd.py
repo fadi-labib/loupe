@@ -11,6 +11,7 @@ Creates a minimal layout that:
 Templates carry "TODO" markers in places the human is expected to fill in.
 The agent never auto-fills these — they're human-owned by Layer 1 design.
 """
+
 from __future__ import annotations
 
 from datetime import UTC, datetime
@@ -123,8 +124,7 @@ def init_command() -> None:
     (loupe / "decisions").mkdir()
     typer.echo(f"Initialised {loupe}.")
     typer.echo(
-        "Edit .loupe/context.md to describe your product, then run "
-        "`loupe ci` or `loupe chat`."
+        "Edit .loupe/context.md to describe your product, then run `loupe ci` or `loupe chat`."
     )
 
 

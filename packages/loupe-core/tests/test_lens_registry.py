@@ -11,24 +11,44 @@ from loupe_core.lens_registry import (
 
 class FakeLensA:
     capabilities = LensCapabilities(name="a", domain="d1", artifact_paths=[".loupe/a.yaml"])
-    def build_agent(self, t): return None
-    def mcp_tools(self): return []
-    def mcp_workflows(self): return []
+
+    def build_agent(self, t):
+        return None
+
+    def mcp_tools(self):
+        return []
+
+    def mcp_workflows(self):
+        return []
+
     def is_relevant(self, c):
         from loupe_core.run_context import RelevanceScore
+
         return RelevanceScore(score=0.5, reason="")
-    async def run(self, ctx, p, b, d): return None
+
+    async def run(self, ctx, p, b, d):
+        return None
 
 
 class FakeLensB:
     capabilities = LensCapabilities(name="b", domain="d2", artifact_paths=[".loupe/b.yaml"])
-    def build_agent(self, t): return None
-    def mcp_tools(self): return []
-    def mcp_workflows(self): return []
+
+    def build_agent(self, t):
+        return None
+
+    def mcp_tools(self):
+        return []
+
+    def mcp_workflows(self):
+        return []
+
     def is_relevant(self, c):
         from loupe_core.run_context import RelevanceScore
+
         return RelevanceScore(score=0.5, reason="")
-    async def run(self, ctx, p, b, d): return None
+
+    async def run(self, ctx, p, b, d):
+        return None
 
 
 def _fake_entry_points(group):
@@ -49,13 +69,23 @@ def test_discovers_two_lenses():
 def test_rejects_conflicting_artifact_paths():
     class FakeBOverlap:
         capabilities = LensCapabilities(name="b", domain="d2", artifact_paths=[".loupe/a.yaml"])
-        def build_agent(self, t): return None
-        def mcp_tools(self): return []
-        def mcp_workflows(self): return []
+
+        def build_agent(self, t):
+            return None
+
+        def mcp_tools(self):
+            return []
+
+        def mcp_workflows(self):
+            return []
+
         def is_relevant(self, c):
             from loupe_core.run_context import RelevanceScore
+
             return RelevanceScore(score=0.5, reason="")
-        async def run(self, ctx, p, b, d): return None
+
+        async def run(self, ctx, p, b, d):
+            return None
 
     def conflicting(group):
         ep_a, ep_b = MagicMock(), MagicMock()
@@ -72,17 +102,24 @@ def test_rejects_conflicting_artifact_paths():
 
 class _DummyLens:
     def __init__(self, name: str, artifact_paths: list[str]) -> None:
-        self.capabilities = LensCapabilities(
-            name=name, domain="d", artifact_paths=artifact_paths
-        )
+        self.capabilities = LensCapabilities(name=name, domain="d", artifact_paths=artifact_paths)
 
-    def build_agent(self, t): return None
-    def mcp_tools(self): return []
-    def mcp_workflows(self): return []
+    def build_agent(self, t):
+        return None
+
+    def mcp_tools(self):
+        return []
+
+    def mcp_workflows(self):
+        return []
+
     def is_relevant(self, c):
         from loupe_core.run_context import RelevanceScore
+
         return RelevanceScore(score=0.5, reason="")
-    async def run(self, ctx, p, b, d): return None
+
+    async def run(self, ctx, p, b, d):
+        return None
 
 
 def test_three_way_artifact_path_conflict_detected():

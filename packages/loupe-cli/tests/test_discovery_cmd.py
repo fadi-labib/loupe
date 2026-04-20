@@ -5,6 +5,7 @@ the `loupe.lenses` and `loupe.capabilities` entry-point groups. Since the
 workspace ships ThreatLens, Syft, and Grype in editable mode during dev
 sync, the commands have real data to print and we can assert on it.
 """
+
 from loupe_cli.__main__ import app
 from typer.testing import CliRunner
 

@@ -35,6 +35,7 @@ osv-scanner v1.9 (verified 2026-05-15):
       ]
     }
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -85,7 +86,9 @@ class OsvScannerCveBackend:
         # CycloneDX document to a temp file. The temp file holds the SBOM
         # only for the duration of the scan; never persisted.
         with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".cdx.json", delete=False,
+            mode="w",
+            suffix=".cdx.json",
+            delete=False,
         ) as fh:
             sbom_path = Path(fh.name)
             fh.write(sbom.raw_document or "")
@@ -94,9 +97,13 @@ class OsvScannerCveBackend:
             proc = await asyncio.to_thread(
                 subprocess.run,
                 [
-                    "osv-scanner", "scan", "source",
-                    "--sbom", str(sbom_path),
-                    "--format", "json",
+                    "osv-scanner",
+                    "scan",
+                    "source",
+                    "--sbom",
+                    str(sbom_path),
+                    "--format",
+                    "json",
                 ],
                 capture_output=True,
                 text=True,
@@ -156,16 +163,21 @@ def _parse_osv_json(stdout: str) -> list[CveFinding]:
                 level_raw = (db.get("severity") or "").upper()
                 severity = _SEVERITY_MAP.get(level_raw, "informational")
                 source_url = next(
-                    (r.get("url") for r in (vuln.get("references") or [])
-                     if r.get("url", "").startswith("http")),
+                    (
+                        r.get("url")
+                        for r in (vuln.get("references") or [])
+                        if r.get("url", "").startswith("http")
+                    ),
                     None,
                 )
-                findings.append(CveFinding(
-                    cve_id=cve_id,
-                    component_name=name,
-                    component_version=version,
-                    severity=severity,
-                    summary=summary,
-                    source_url=source_url,
-                ))
+                findings.append(
+                    CveFinding(
+                        cve_id=cve_id,
+                        component_name=name,
+                        component_version=version,
+                        severity=severity,
+                        summary=summary,
+                        source_url=source_url,
+                    )
+                )
     return findings

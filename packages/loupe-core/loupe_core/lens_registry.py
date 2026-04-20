@@ -37,14 +37,9 @@ def _check_artifact_path_conflicts(lenses: list[Lens]) -> None:
     for lens in lenses:
         for path in lens.capabilities.artifact_paths:
             owners[path].append(lens.capabilities.name)
-    conflicts = {
-        path: names for path, names in owners.items() if len(set(names)) > 1
-    }
+    conflicts = {path: names for path, names in owners.items() if len(set(names)) > 1}
     if conflicts:
         rendered = "; ".join(
-            f"{path!r} claimed by {sorted(set(names))}"
-            for path, names in sorted(conflicts.items())
+            f"{path!r} claimed by {sorted(set(names))}" for path, names in sorted(conflicts.items())
         )
-        raise LensRegistryError(
-            f"artefact-path conflicts: {rendered}. Uninstall all but one."
-        )
+        raise LensRegistryError(f"artefact-path conflicts: {rendered}. Uninstall all but one.")

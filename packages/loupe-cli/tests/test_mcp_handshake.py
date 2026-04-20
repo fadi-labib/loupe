@@ -15,6 +15,7 @@ to HTTP transport for some flow, that flow would benefit from
 cassette-style recording — until then, the subprocess pattern is
 strictly better.
 """
+
 from __future__ import annotations
 
 import shutil
@@ -66,27 +67,36 @@ def _make_loupe_dir(root: Path, *, write_config: bool = False) -> Path:
     loupe = root / ".loupe"
     loupe.mkdir()
     (loupe / "runs").mkdir()
-    ThreatsFile(threats=[
-        Threat(
-            id="T-001", element_id="E-001",
-            stride_category=StrideCategory.ELEVATION_OF_PRIVILEGE,
-            title="Sample handshake threat",
-            description="Used by the MCP handshake test fixture.",
-            severity=Severity.HIGH, status=ThreatStatus.PROPOSED,
-            mitigation_ids=[], cwe_refs=[],
-            introduced_in_pr=None, last_reviewed=date(2026, 5, 15),
-            rationale="Test data.", proposed_by="test",
-        ),
-    ]).save(loupe / "threats.yaml")
+    ThreatsFile(
+        threats=[
+            Threat(
+                id="T-001",
+                element_id="E-001",
+                stride_category=StrideCategory.ELEVATION_OF_PRIVILEGE,
+                title="Sample handshake threat",
+                description="Used by the MCP handshake test fixture.",
+                severity=Severity.HIGH,
+                status=ThreatStatus.PROPOSED,
+                mitigation_ids=[],
+                cwe_refs=[],
+                introduced_in_pr=None,
+                last_reviewed=date(2026, 5, 15),
+                rationale="Test data.",
+                proposed_by="test",
+            ),
+        ]
+    ).save(loupe / "threats.yaml")
     if write_config:
         # Use absolute paths in agent_writable_paths so the boundary
         # matches the in-test loupe location. Operators editing config
         # by hand normally use relative paths against the repo root;
         # we sidestep that resolution here.
         absolute_config = _INIT_CONFIG.replace(
-            ".loupe/threats.yaml", str(loupe / "threats.yaml"),
+            ".loupe/threats.yaml",
+            str(loupe / "threats.yaml"),
         ).replace(
-            ".loupe/mitigations.yaml", str(loupe / "mitigations.yaml"),
+            ".loupe/mitigations.yaml",
+            str(loupe / "mitigations.yaml"),
         )
         (loupe / "config.yaml").write_text(absolute_config)
     return loupe
@@ -150,9 +160,7 @@ async def test_mcp_call_list_threats_returns_fixture_data(tmp_path: Path):
             # whose body is JSON. We don't need to parse it here — the
             # presence of the seeded threat ID is enough to confirm the
             # round-trip works.
-            blob = "".join(
-                getattr(c, "text", "") for c in result.content
-            )
+            blob = "".join(getattr(c, "text", "") for c in result.content)
             assert "T-001" in blob
             assert "Sample handshake threat" in blob
 

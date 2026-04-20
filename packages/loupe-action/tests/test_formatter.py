@@ -46,9 +46,7 @@ def _run_record(run_id: str = "run-abc123", lenses_run: list[str] | None = None)
         head_sha="b" * 40,
         diff_hash="d" * 64,
         context_md_hash="c" * 64,
-        lenses_considered=[
-            LensConsidered(name="threatlens", score=0.9, reason="code changes")
-        ],
+        lenses_considered=[LensConsidered(name="threatlens", score=0.9, reason="code changes")],
         lenses_run=lenses_run or ["threatlens"],
         models_used={"threatlens": "anthropic:claude-opus-4-7"},
         total_tokens_in=12000,
@@ -97,9 +95,7 @@ def test_clean_run_shows_explicit_no_findings_block():
 
 
 def test_comment_includes_lenses_run_summary():
-    body = format_pr_comment(
-        record=_run_record(lenses_run=["threatlens", "autocyber"]), threats=[]
-    )
+    body = format_pr_comment(record=_run_record(lenses_run=["threatlens", "autocyber"]), threats=[])
     assert "threatlens" in body
     assert "autocyber" in body
 
@@ -162,9 +158,7 @@ def test_format_pr_comment_strips_html_comment_end_marker_from_threat_title():
     threats = [_threat("T-001", Severity.HIGH, title="evil --> close sentinel")]
     body = format_pr_comment(record=_run_record(), threats=threats)
     # The only `-->` allowed in the body is the one inside our own sentinel.
-    title_line = next(
-        line for line in body.splitlines() if "evil" in line and "close" in line
-    )
+    title_line = next(line for line in body.splitlines() if "evil" in line and "close" in line)
     assert "-->" not in title_line
 
 

@@ -90,6 +90,4 @@ def test_write_agent_artifact_writes_full_content_for_large_payload(tmp_path):
     big = "x" * 200_000  # 200KB; well above any reasonable short-write window
     write_agent_artifact(pb, target, big)
     written = target.read_text()
-    assert written == big, (
-        f"truncation: wrote {len(big)} bytes, read back {len(written)}"
-    )
+    assert written == big, f"truncation: wrote {len(big)} bytes, read back {len(written)}"

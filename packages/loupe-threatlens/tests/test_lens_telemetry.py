@@ -7,6 +7,7 @@ that produced a cost-tracking blackout [principle §8 "Cost discipline"].
 These tests stub `build_agent` so they exercise the telemetry-capture
 branch without needing a real provider SDK or API key.
 """
+
 from __future__ import annotations
 
 import logging
@@ -24,9 +25,15 @@ from loupe_threatlens.lens import ThreatLens
 
 def _ctx() -> RunContext:
     return RunContext(
-        run_id="r", mode="ci", started_at=datetime(2026, 5, 15),
-        user_intent="", diff=None, sbom_delta=None,
-        project=None, plan=[], knowledge=None,
+        run_id="r",
+        mode="ci",
+        started_at=datetime(2026, 5, 15),
+        user_intent="",
+        diff=None,
+        sbom_delta=None,
+        project=None,
+        plan=[],
+        knowledge=None,
     )
 
 

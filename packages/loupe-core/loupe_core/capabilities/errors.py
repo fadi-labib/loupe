@@ -30,9 +30,7 @@ class EntryPointMalformedError(CapabilityError):
     """
 
     def __init__(self, *, entry_point_name: str, reason: str) -> None:
-        super().__init__(
-            f"entry-point '{entry_point_name}' is malformed: {reason}"
-        )
+        super().__init__(f"entry-point '{entry_point_name}' is malformed: {reason}")
         self.entry_point_name = entry_point_name
         self.reason = reason
 

@@ -4,6 +4,7 @@ Schema consistency, threats-to-mitigations cross-references, protected-
 path authorship — each has its own test. Hash-chain has separate
 existing coverage in test_verify.py.
 """
+
 from __future__ import annotations
 
 import os
@@ -67,19 +68,26 @@ def _make_loupe_dir(tmp_path: Path) -> Path:
 
 def _threat(id_: str = "T-001", mitigation_ids: list[str] | None = None) -> Threat:
     return Threat(
-        id=id_, element_id="E-001",
+        id=id_,
+        element_id="E-001",
         stride_category=StrideCategory.ELEVATION_OF_PRIVILEGE,
-        title="Sample", description="Sample description.",
-        severity=Severity.HIGH, status=ThreatStatus.PROPOSED,
-        mitigation_ids=mitigation_ids or [], cwe_refs=[],
-        introduced_in_pr=None, last_reviewed=date(2026, 5, 15),
-        rationale="Sample rationale.", proposed_by="test",
+        title="Sample",
+        description="Sample description.",
+        severity=Severity.HIGH,
+        status=ThreatStatus.PROPOSED,
+        mitigation_ids=mitigation_ids or [],
+        cwe_refs=[],
+        introduced_in_pr=None,
+        last_reviewed=date(2026, 5, 15),
+        rationale="Sample rationale.",
+        proposed_by="test",
     )
 
 
 def _mitigation(id_: str = "M-001", threats_addressed: list[str] | None = None) -> Mitigation:
     return Mitigation(
-        id=id_, title="Sample mitigation",
+        id=id_,
+        title="Sample mitigation",
         description="Sample description.",
         threats_addressed=threats_addressed or [],
         status=MitigationStatus.PLANNED,
@@ -132,9 +140,7 @@ def test_schema_check_fails_on_broken_mitigations_yaml(tmp_path):
 
 def test_xref_check_passes_when_all_references_resolve(tmp_path):
     loupe = _make_loupe_dir(tmp_path)
-    ThreatsFile(threats=[_threat(mitigation_ids=["M-001"])]).save(
-        loupe / "threats.yaml"
-    )
+    ThreatsFile(threats=[_threat(mitigation_ids=["M-001"])]).save(loupe / "threats.yaml")
     MitigationsFile(mitigations=[_mitigation(threats_addressed=["T-001"])]).save(
         loupe / "mitigations.yaml"
     )
@@ -163,9 +169,7 @@ def test_xref_check_catches_dangling_mitigation_id_on_threat(tmp_path):
     # The dangling ID must be valid `M-NNN` format (enforced at parse time);
     # the Layer 3 check separately confirms the referenced mitigation exists.
     loupe = _make_loupe_dir(tmp_path)
-    ThreatsFile(threats=[_threat(mitigation_ids=["M-999"])]).save(
-        loupe / "threats.yaml"
-    )
+    ThreatsFile(threats=[_threat(mitigation_ids=["M-999"])]).save(loupe / "threats.yaml")
     MitigationsFile(mitigations=[_mitigation()]).save(loupe / "mitigations.yaml")
     failures = check_threats_mitigations_cross_refs(loupe)
     assert len(failures) == 1
@@ -178,9 +182,9 @@ def test_xref_check_catches_dangling_threat_id_on_mitigation(tmp_path):
     # the Layer 3 check separately confirms the referenced threat exists.
     loupe = _make_loupe_dir(tmp_path)
     ThreatsFile(threats=[_threat()]).save(loupe / "threats.yaml")
-    MitigationsFile(
-        mitigations=[_mitigation(threats_addressed=["T-999"])]
-    ).save(loupe / "mitigations.yaml")
+    MitigationsFile(mitigations=[_mitigation(threats_addressed=["T-999"])]).save(
+        loupe / "mitigations.yaml"
+    )
     failures = check_threats_mitigations_cross_refs(loupe)
     assert len(failures) == 1
     assert failures[0].kind == "dangling_threat_ref"
@@ -197,17 +201,26 @@ def _init_git_repo(tmp_path: Path, author_name: str, author_email: str) -> None:
     env = _git_isolated_env(tmp_path)
     subprocess.run(["git", "init", "-q"], cwd=tmp_path, check=True, env=env)
     subprocess.run(
-        ["git", "config", "user.email", author_email], cwd=tmp_path, check=True, env=env,
+        ["git", "config", "user.email", author_email],
+        cwd=tmp_path,
+        check=True,
+        env=env,
     )
     subprocess.run(
-        ["git", "config", "user.name", author_name], cwd=tmp_path, check=True, env=env,
+        ["git", "config", "user.name", author_name],
+        cwd=tmp_path,
+        check=True,
+        env=env,
     )
     # GPG signing is the most common operator-config leak: a global
     # `commit.gpgsign=true` would force `git commit` to attempt signing
     # even with `--no-gpg-sign` if signingkey is missing in some configs.
     # Override at the repo level too.
     subprocess.run(
-        ["git", "config", "commit.gpgsign", "false"], cwd=tmp_path, check=True, env=env,
+        ["git", "config", "commit.gpgsign", "false"],
+        cwd=tmp_path,
+        check=True,
+        env=env,
     )
 
 
@@ -218,7 +231,9 @@ def _commit_file(repo: Path, rel_path: str, content: str, message: str) -> None:
     subprocess.run(["git", "add", rel_path], cwd=repo, check=True, env=env)
     subprocess.run(
         ["git", "commit", "-q", "-m", message, "--no-gpg-sign"],
-        cwd=repo, check=True, env=env,
+        cwd=repo,
+        check=True,
+        env=env,
     )
 
 

@@ -1,4 +1,5 @@
 """Tests for the per-model cost lookup and cache_hit_rate helpers."""
+
 from __future__ import annotations
 
 import pytest
@@ -15,7 +16,8 @@ def test_unknown_model_returns_zero():
     can re-cost externally once the pricing table is updated."""
     usage = LensUsage(
         model_id="some:future-model-9000",
-        input_tokens=10_000, output_tokens=1_000,
+        input_tokens=10_000,
+        output_tokens=1_000,
     )
     assert estimate_cost_usd(usage) == 0.0
 
@@ -33,7 +35,8 @@ def test_haiku_mixed_input_output():
     """100k input + 50k output at Haiku: 0.08 + 0.20 = 0.28."""
     usage = LensUsage(
         model_id="anthropic:claude-haiku-4-5",
-        input_tokens=100_000, output_tokens=50_000,
+        input_tokens=100_000,
+        output_tokens=50_000,
     )
     cost = estimate_cost_usd(usage)
     assert cost == pytest.approx(0.28, abs=1e-6)
@@ -46,7 +49,8 @@ def test_cache_reads_at_ten_percent():
     """
     usage = LensUsage(
         model_id="anthropic:claude-haiku-4-5",
-        input_tokens=0, cache_read_tokens=100_000,
+        input_tokens=0,
+        cache_read_tokens=100_000,
     )
     cost = estimate_cost_usd(usage)
     assert cost == pytest.approx(0.008, abs=1e-6)
@@ -59,7 +63,8 @@ def test_cache_writes_at_premium():
     """
     usage = LensUsage(
         model_id="anthropic:claude-haiku-4-5",
-        input_tokens=0, cache_write_tokens=100_000,
+        input_tokens=0,
+        cache_write_tokens=100_000,
     )
     cost = estimate_cost_usd(usage)
     assert cost == pytest.approx(0.10, abs=1e-6)
@@ -79,10 +84,10 @@ def test_combined_costs_sum_correctly():
     """All four token categories combine additively."""
     usage = LensUsage(
         model_id="anthropic:claude-haiku-4-5",
-        input_tokens=100_000,        # 0.080
-        output_tokens=50_000,         # 0.200
-        cache_read_tokens=200_000,    # 0.016 (10% of 0.16)
-        cache_write_tokens=80_000,    # 0.080 (125% of 0.064)
+        input_tokens=100_000,  # 0.080
+        output_tokens=50_000,  # 0.200
+        cache_read_tokens=200_000,  # 0.016 (10% of 0.16)
+        cache_write_tokens=80_000,  # 0.080 (125% of 0.064)
     )
     cost = estimate_cost_usd(usage)
     assert cost == pytest.approx(0.080 + 0.200 + 0.016 + 0.080, abs=1e-6)

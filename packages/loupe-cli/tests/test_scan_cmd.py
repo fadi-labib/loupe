@@ -1,4 +1,5 @@
 """Tests for `loupe scan` — D-15 full-repo / scoped scan mode."""
+
 import shutil
 from pathlib import Path
 
@@ -9,9 +10,7 @@ from typer.testing import CliRunner
 from .conftest import minimal_config_yaml
 
 runner = CliRunner()
-FIXTURES = (
-    Path(__file__).parent.parent.parent / "loupe-core" / "tests" / "artifacts" / "fixtures"
-)
+FIXTURES = Path(__file__).parent.parent.parent / "loupe-core" / "tests" / "artifacts" / "fixtures"
 
 
 def _init_project(tmp_path: Path) -> Path:
@@ -21,9 +20,7 @@ def _init_project(tmp_path: Path) -> Path:
     loupe.mkdir()
     shutil.copy(FIXTURES / "valid_context.md", loupe / "context.md")
     # Impossible-for-diff-mode threshold — only scan mode can include this lens.
-    (loupe / "config.yaml").write_text(
-        minimal_config_yaml(threatlens_min_relevance=0.99)
-    )
+    (loupe / "config.yaml").write_text(minimal_config_yaml(threatlens_min_relevance=0.99))
     (loupe / "runs").mkdir()
     return loupe
 
@@ -61,7 +58,8 @@ def test_scan_scoped_with_paths(tmp_path, monkeypatch):
     loupe = _init_project(tmp_path)
 
     result = runner.invoke(
-        app, ["scan", "--paths", "src/payments/", "--paths", "src/api/"],
+        app,
+        ["scan", "--paths", "src/payments/", "--paths", "src/api/"],
     )
     assert result.exit_code == 0, result.stdout
 

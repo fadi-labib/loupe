@@ -76,8 +76,7 @@ def write_agent_artifact(boundary: PathBoundary, path: Path, content: str) -> st
             except OSError as exc:
                 # ELOOP (O_NOFOLLOW caught a symlink) / ENOTDIR / etc.
                 raise BoundaryViolation(
-                    f"refused to follow symlink at parent component "
-                    f"{component!r} of {str(path)!r}"
+                    f"refused to follow symlink at parent component {component!r} of {str(path)!r}"
                 ) from exc
             os.close(parent_fd)
             parent_fd = child_fd
@@ -91,9 +90,7 @@ def write_agent_artifact(boundary: PathBoundary, path: Path, content: str) -> st
                 dir_fd=parent_fd,
             )
         except OSError as exc:
-            raise BoundaryViolation(
-                f"refused to follow symlink at target {str(path)!r}"
-            ) from exc
+            raise BoundaryViolation(f"refused to follow symlink at target {str(path)!r}") from exc
         # Wrap the fd in a stdio file object so .write() loops internally
         # until the full buffer is written. Bare os.write() may short-write
         # under POSIX, which would silently truncate the artifact. closefd=True

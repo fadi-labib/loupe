@@ -27,6 +27,7 @@ keyed by filename. Shape (verified against detect-secrets 1.5, 2026-
       }
     }
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -83,7 +84,9 @@ class DetectSecretsBackend:
 
 
 def _parse_detect_secrets_json(
-    stdout: str, *, repo_path: Path,
+    stdout: str,
+    *,
+    repo_path: Path,
 ) -> list[SecretFinding]:
     """Convert detect-secrets' file-keyed `results` map to a flat list."""
     text = stdout.strip()
@@ -115,11 +118,13 @@ def _parse_detect_secrets_json(
             # recognise the class.
             redacted = f"<{detector}{' (verified)' if verified else ''}>"
             line_raw = int(entry.get("line_number", 0) or 0)
-            findings.append(SecretFinding(
-                file=rel,
-                line=line_raw if line_raw >= 1 else None,
-                rule_id=rule_id,
-                redacted_match=redacted,
-                severity="critical" if verified else "high",
-            ))
+            findings.append(
+                SecretFinding(
+                    file=rel,
+                    line=line_raw if line_raw >= 1 else None,
+                    rule_id=rule_id,
+                    redacted_match=redacted,
+                    severity="critical" if verified else "high",
+                )
+            )
     return findings

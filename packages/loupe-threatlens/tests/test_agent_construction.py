@@ -10,6 +10,7 @@ The full end-to-end agent-execution test lives in test_agent_run.py and
 uses VCR cassettes; that one requires a one-time ANTHROPIC_API_KEY to
 record (and runs offline thereafter).
 """
+
 from datetime import datetime
 from pathlib import Path
 
@@ -64,6 +65,7 @@ def test_lens_resolves_threatlens_model_env_var(monkeypatch):
     # provider, just confirm that the env value is what `os.environ.get`
     # would return at the resolution site.
     import os
+
     assert os.environ.get("THREATLENS_MODEL", lens_module._FALLBACK_MODEL_ID) == "openai:gpt-5"
 
 
@@ -90,9 +92,15 @@ def test_agent_deps_has_required_fields():
     """AgentDeps must carry ctx, boundary, loupe_dir, model_id."""
     deps = AgentDeps(
         ctx=RunContext(
-            run_id="r", mode="ci", started_at=datetime(2026, 5, 14),
-            user_intent="", diff=None, sbom_delta=None,
-            project=None, plan=[], knowledge=None,
+            run_id="r",
+            mode="ci",
+            started_at=datetime(2026, 5, 14),
+            user_intent="",
+            diff=None,
+            sbom_delta=None,
+            project=None,
+            plan=[],
+            knowledge=None,
         ),
         boundary=PathBoundary(writable_globs=[]),
         loupe_dir=Path("/tmp/.loupe"),
@@ -110,9 +118,7 @@ def test_propose_threat_tool_registered_on_agent():
     # Different PydanticAI versions structure this slightly differently;
     # what we care about is that the tool is discoverable by name.
     tool_names = _collect_tool_names(agent)
-    assert "propose_threat" in tool_names, (
-        f"propose_threat not in registered tools: {tool_names}"
-    )
+    assert "propose_threat" in tool_names, f"propose_threat not in registered tools: {tool_names}"
 
 
 def _collect_tool_names(agent) -> set[str]:

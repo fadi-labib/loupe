@@ -4,6 +4,7 @@ Targets the `*_impl` functions directly — pure, no MCP plumbing needed.
 Also exercises `build_mcp_server` to confirm the server registers the
 expected tool names under the FastMCP instance.
 """
+
 from __future__ import annotations
 
 from datetime import UTC, date, datetime
@@ -49,20 +50,29 @@ def loupe_dir(tmp_path: Path) -> Path:
 
 def _threat(id_: str = "T-001", severity: Severity = Severity.HIGH) -> Threat:
     return Threat(
-        id=id_, element_id="E-001",
+        id=id_,
+        element_id="E-001",
         stride_category=StrideCategory.ELEVATION_OF_PRIVILEGE,
-        title=f"Sample {id_}", description="...",
-        severity=severity, status=ThreatStatus.PROPOSED,
-        mitigation_ids=[], cwe_refs=[],
-        introduced_in_pr=None, last_reviewed=date(2026, 5, 15),
-        rationale="...", proposed_by="test",
+        title=f"Sample {id_}",
+        description="...",
+        severity=severity,
+        status=ThreatStatus.PROPOSED,
+        mitigation_ids=[],
+        cwe_refs=[],
+        introduced_in_pr=None,
+        last_reviewed=date(2026, 5, 15),
+        rationale="...",
+        proposed_by="test",
     )
 
 
 def _mitigation(id_: str = "M-001") -> Mitigation:
     return Mitigation(
-        id=id_, title=f"Sample {id_}", description="...",
-        threats_addressed=[], status=MitigationStatus.PLANNED,
+        id=id_,
+        title=f"Sample {id_}",
+        description="...",
+        threats_addressed=[],
+        status=MitigationStatus.PLANNED,
         evidence=[Evidence(kind="code", location="src/x.py")],
     )
 
@@ -77,9 +87,7 @@ def test_list_threats_empty_when_no_file(loupe_dir: Path):
 
 
 def test_list_threats_returns_all_present(loupe_dir: Path):
-    ThreatsFile(threats=[_threat("T-001"), _threat("T-002")]).save(
-        loupe_dir / "threats.yaml"
-    )
+    ThreatsFile(threats=[_threat("T-001"), _threat("T-002")]).save(loupe_dir / "threats.yaml")
     out = list_threats_impl(loupe_dir)
     assert len(out) == 2
     assert {t["id"] for t in out} == {"T-001", "T-002"}
@@ -88,9 +96,7 @@ def test_list_threats_returns_all_present(loupe_dir: Path):
 
 
 def test_get_threat_returns_specific(loupe_dir: Path):
-    ThreatsFile(threats=[_threat("T-001"), _threat("T-002")]).save(
-        loupe_dir / "threats.yaml"
-    )
+    ThreatsFile(threats=[_threat("T-001"), _threat("T-002")]).save(loupe_dir / "threats.yaml")
     found = get_threat_impl(loupe_dir, "T-002")
     assert found is not None
     assert found["id"] == "T-002"
@@ -119,9 +125,7 @@ def test_list_mitigations_returns_all_present(loupe_dir: Path):
 
 
 def test_get_mitigation_returns_specific(loupe_dir: Path):
-    MitigationsFile(mitigations=[_mitigation("M-001")]).save(
-        loupe_dir / "mitigations.yaml"
-    )
+    MitigationsFile(mitigations=[_mitigation("M-001")]).save(loupe_dir / "mitigations.yaml")
     found = get_mitigation_impl(loupe_dir, "M-001")
     assert found is not None
     assert found["id"] == "M-001"
@@ -169,15 +173,25 @@ def test_latest_run_returns_most_recent(loupe_dir: Path):
         record = RunRecord(
             run_id=run_id,
             timestamp=datetime(2026, 5, 15, 10, i, tzinfo=UTC),
-            mode="ci", invoked_by="test", trigger="manual",
-            base_sha="a", head_sha="b",
-            diff_hash="0" * 64, context_md_hash="1" * 64,
+            mode="ci",
+            invoked_by="test",
+            trigger="manual",
+            base_sha="a",
+            head_sha="b",
+            diff_hash="0" * 64,
+            context_md_hash="1" * 64,
             lenses_considered=[LensConsidered(name="threatlens", score=0.9, reason="r")],
             lenses_run=["threatlens"],
-            models_used={}, total_tokens_in=0, total_tokens_out=0,
-            cost_usd_estimate=0.0, cache_hit_rate=None,
-            artifacts_changed=[], proposed_patches=[], pending_decisions=[],
-            prev_run_hash=None, self_hash="",
+            models_used={},
+            total_tokens_in=0,
+            total_tokens_out=0,
+            cost_usd_estimate=0.0,
+            cache_hit_rate=None,
+            artifacts_changed=[],
+            proposed_patches=[],
+            pending_decisions=[],
+            prev_run_hash=None,
+            self_hash="",
         )
         save_run_record(runs_dir, record)
     out = latest_run_impl(loupe_dir)
@@ -198,15 +212,25 @@ def test_latest_run_skips_malformed_run_record(loupe_dir: Path):
     record = RunRecord(
         run_id="run-valid",
         timestamp=datetime(2026, 5, 15, 10, 0, tzinfo=UTC),
-        mode="ci", invoked_by="test", trigger="manual",
-        base_sha="a", head_sha="b",
-        diff_hash="0" * 64, context_md_hash="1" * 64,
+        mode="ci",
+        invoked_by="test",
+        trigger="manual",
+        base_sha="a",
+        head_sha="b",
+        diff_hash="0" * 64,
+        context_md_hash="1" * 64,
         lenses_considered=[LensConsidered(name="threatlens", score=0.9, reason="r")],
         lenses_run=["threatlens"],
-        models_used={}, total_tokens_in=0, total_tokens_out=0,
-        cost_usd_estimate=0.0, cache_hit_rate=None,
-        artifacts_changed=[], proposed_patches=[], pending_decisions=[],
-        prev_run_hash=None, self_hash="",
+        models_used={},
+        total_tokens_in=0,
+        total_tokens_out=0,
+        cost_usd_estimate=0.0,
+        cache_hit_rate=None,
+        artifacts_changed=[],
+        proposed_patches=[],
+        pending_decisions=[],
+        prev_run_hash=None,
+        self_hash="",
     )
     save_run_record(runs_dir, record)
 
@@ -224,7 +248,7 @@ def test_latest_run_returns_none_when_only_malformed_records(loupe_dir: Path):
     """If every record on disk is corrupt, latest_run returns None instead of crashing."""
     runs_dir = loupe_dir / "runs"
     (runs_dir / "2026-05-15T10-00-00-000000Z-run-bad1.json").write_text("not json")
-    (runs_dir / "2026-05-15T11-00-00-000000Z-run-bad2.json").write_text("{\"incomplete\": true}")
+    (runs_dir / "2026-05-15T11-00-00-000000Z-run-bad2.json").write_text('{"incomplete": true}')
     assert latest_run_impl(loupe_dir) is None
 
 
@@ -245,7 +269,8 @@ def test_build_mcp_server_registers_expected_tools(loupe_dir: Path):
 
 
 def test_build_mcp_server_isolates_lens_registration_failure(
-    loupe_dir: Path, caplog: pytest.LogCaptureFixture,
+    loupe_dir: Path,
+    caplog: pytest.LogCaptureFixture,
 ):
     """A lens whose register_to_mcp raises must not take down the core
     read tools or sibling lenses."""
@@ -253,6 +278,7 @@ def test_build_mcp_server_isolates_lens_registration_failure(
     class _BoomLens:
         class _Caps:
             name = "boomlens"
+
         capabilities = _Caps()
 
         def register_to_mcp(self, server, loupe_dir, *, boundary):
@@ -261,6 +287,7 @@ def test_build_mcp_server_isolates_lens_registration_failure(
     class _OkLens:
         class _Caps:
             name = "oklens"
+
         capabilities = _Caps()
         registered: bool = False
 

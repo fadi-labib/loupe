@@ -4,6 +4,7 @@ The v1 scope is intentionally narrow: TTY guard + the default-N confirm
 helper for protected-path proposals. The full conversational REPL is a
 v1.x feature.
 """
+
 from unittest.mock import patch
 
 from loupe_cli.__main__ import app
@@ -45,7 +46,8 @@ def test_confirm_explicit_y_applies():
 def test_confirm_y_case_insensitive():
     with patch("typer.prompt", return_value="Y"):
         applied = confirm_with_diff(
-            target="x", unified_diff="diff",
+            target="x",
+            unified_diff="diff",
             rationale="r",
         )
     assert applied is True
@@ -54,6 +56,8 @@ def test_confirm_y_case_insensitive():
 def test_confirm_skip_does_not_apply():
     with patch("typer.prompt", return_value="skip"):
         applied = confirm_with_diff(
-            target="x", unified_diff="diff", rationale="r",
+            target="x",
+            unified_diff="diff",
+            rationale="r",
         )
     assert applied is False

@@ -12,16 +12,12 @@ rule has been intentionally retired (remove it from the list).
 
 Source of truth: `prompts/system.md` `## Hard rules` and `## What you must NOT do`.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
 
-_SYSTEM_PROMPT = (
-    Path(__file__).parent.parent
-    / "loupe_threatlens"
-    / "prompts"
-    / "system.md"
-)
+_SYSTEM_PROMPT = Path(__file__).parent.parent / "loupe_threatlens" / "prompts" / "system.md"
 
 
 def test_system_prompt_contains_key_safety_rules():

@@ -5,6 +5,7 @@ logic. ThreatLens's stub `run()` is a no-op, so we verify everything
 *around* the lens invocation: bootstrap, plan building, run-record
 writing, exit codes.
 """
+
 import shutil
 from pathlib import Path
 
@@ -15,9 +16,7 @@ from typer.testing import CliRunner
 from .conftest import minimal_config_yaml
 
 runner = CliRunner()
-FIXTURES = (
-    Path(__file__).parent.parent.parent / "loupe-core" / "tests" / "artifacts" / "fixtures"
-)
+FIXTURES = Path(__file__).parent.parent.parent / "loupe-core" / "tests" / "artifacts" / "fixtures"
 
 
 def _init_project(tmp_path: Path) -> Path:
@@ -35,14 +34,10 @@ def test_ci_exits_zero_when_no_relevant_lens(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     _init_project(tmp_path)
 
-    docs_only_diff = (
-        "diff --git a/README.md b/README.md\n"
-        "@@ -1 +1,2 @@\n"
-        " title\n"
-        "+more docs\n"
-    )
+    docs_only_diff = "diff --git a/README.md b/README.md\n@@ -1 +1,2 @@\n title\n+more docs\n"
     result = runner.invoke(
-        app, ["ci", "--diff", docs_only_diff, "--base-sha", "a", "--head-sha", "b"],
+        app,
+        ["ci", "--diff", docs_only_diff, "--base-sha", "a", "--head-sha", "b"],
     )
     assert result.exit_code == 0, result.stdout
     assert "no relevant lens" in result.stdout.lower()
@@ -55,14 +50,10 @@ def test_ci_writes_run_record(tmp_path, monkeypatch):
 
     # Code-touching diff — ThreatLens will be considered (and "run", but its
     # current stub run() is a no-op, so no threats.yaml is produced).
-    code_diff = (
-        "diff --git a/src/api.py b/src/api.py\n"
-        "@@ -0,0 +1,3 @@\n"
-        "+def x():\n"
-        "+    return 1\n"
-    )
+    code_diff = "diff --git a/src/api.py b/src/api.py\n@@ -0,0 +1,3 @@\n+def x():\n+    return 1\n"
     result = runner.invoke(
-        app, ["ci", "--diff", code_diff, "--base-sha", "a", "--head-sha", "b"],
+        app,
+        ["ci", "--diff", code_diff, "--base-sha", "a", "--head-sha", "b"],
     )
     assert result.exit_code == 0, result.stdout
 
@@ -97,7 +88,8 @@ def test_ci_fails_when_loupe_dir_missing(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     docs_diff = "diff --git a/R.md b/R.md\n@@ -1 +1,2 @@\n x\n+y\n"
     result = runner.invoke(
-        app, ["ci", "--diff", docs_diff, "--base-sha", "a", "--head-sha", "b"],
+        app,
+        ["ci", "--diff", docs_diff, "--base-sha", "a", "--head-sha", "b"],
     )
     assert result.exit_code != 0
     combined = (result.stdout or "") + (result.stderr or "")
@@ -109,11 +101,10 @@ def test_ci_diff_file_option(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     _init_project(tmp_path)
     diff_file = tmp_path / "pr.patch"
-    diff_file.write_text(
-        "diff --git a/src/x.py b/src/x.py\n@@ -0,0 +1 @@\n+pass\n"
-    )
+    diff_file.write_text("diff --git a/src/x.py b/src/x.py\n@@ -0,0 +1 @@\n+pass\n")
     result = runner.invoke(
-        app, ["ci", "--diff-file", str(diff_file), "--base-sha", "a", "--head-sha", "b"],
+        app,
+        ["ci", "--diff-file", str(diff_file), "--base-sha", "a", "--head-sha", "b"],
     )
     assert result.exit_code == 0, result.stdout
 
@@ -127,8 +118,11 @@ def test_ci_rejects_both_diff_flags(tmp_path, monkeypatch):
     result = runner.invoke(
         app,
         [
-            "ci", "--diff", "diff --git a/x b/x\n@@\n+z\n",
-            "--diff-file", str(diff_file),
+            "ci",
+            "--diff",
+            "diff --git a/x b/x\n@@\n+z\n",
+            "--diff-file",
+            str(diff_file),
         ],
     )
     assert result.exit_code == 64

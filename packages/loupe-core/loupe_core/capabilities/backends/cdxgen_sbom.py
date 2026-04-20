@@ -17,6 +17,7 @@ which auto-detects every manifest type cdxgen knows about. Output
 goes to a temp file because cdxgen historically wrote stdout banner
 text that pollutes JSON parsing.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -49,7 +50,9 @@ class CdxgenSbomBackend:
             )
 
         with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".cdx.json", delete=False,
+            mode="w",
+            suffix=".cdx.json",
+            delete=False,
         ) as fh:
             out_path = Path(fh.name)
 
@@ -58,8 +61,10 @@ class CdxgenSbomBackend:
                 subprocess.run,
                 [
                     "cdxgen",
-                    "-t", "universal",
-                    "-o", str(out_path),
+                    "-t",
+                    "universal",
+                    "-o",
+                    str(out_path),
                     str(repo_path),
                 ],
                 capture_output=True,
@@ -107,13 +112,14 @@ def _parse_cyclonedx(document: str) -> list[SbomComponent]:
 
     components: list[SbomComponent] = []
     for c in parsed.get("components", []):
-        components.append(SbomComponent(
-            name=c.get("name", ""),
-            version=c.get("version", ""),
-            purl=c.get("purl"),
-            licenses=[
-                lic.get("license", {}).get("id", "")
-                for lic in c.get("licenses", []) or []
-            ],
-        ))
+        components.append(
+            SbomComponent(
+                name=c.get("name", ""),
+                version=c.get("version", ""),
+                purl=c.get("purl"),
+                licenses=[
+                    lic.get("license", {}).get("id", "") for lic in c.get("licenses", []) or []
+                ],
+            )
+        )
     return components

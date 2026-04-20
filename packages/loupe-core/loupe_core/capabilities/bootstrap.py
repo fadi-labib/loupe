@@ -104,9 +104,7 @@ def _order_capabilities(required: set[str]) -> list[str]:
         if node in visited:
             return
         if node in temp:
-            raise RuntimeError(
-                f"capability dependency cycle detected involving {node!r}"
-            )
+            raise RuntimeError(f"capability dependency cycle detected involving {node!r}")
         temp.add(node)
         for dep in _CAPABILITY_GRAPH.get(node, []):
             if dep in required:
@@ -167,9 +165,7 @@ def _args_for(capability: str, *, ctx: RunContext, repo_path: Path) -> tuple[Any
     # CVE backends consume the previously-populated SbomResult.
     if capability == "cve":
         if ctx.sbom is None:
-            raise RuntimeError(
-                "cve capability invoked before sbom — _CAPABILITY_GRAPH is wrong"
-            )
+            raise RuntimeError("cve capability invoked before sbom — _CAPABILITY_GRAPH is wrong")
         return (ctx.sbom,)
     return (repo_path,)
 

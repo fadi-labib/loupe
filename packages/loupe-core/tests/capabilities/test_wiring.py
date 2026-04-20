@@ -97,16 +97,12 @@ def test_loupe_config_capabilities_section_parses():
 
 def test_capability_activation_rejects_unknown_mode():
     with pytest.raises(ValueError):
-        CapabilityActivation.model_validate(
-            {"mode": "magic_wand", "backends": ["x"]}
-        )
+        CapabilityActivation.model_validate({"mode": "magic_wand", "backends": ["x"]})
 
 
 def test_consensus_threshold_required_when_mode_is_consensus():
     with pytest.raises(ValueError, match="consensus_threshold"):
-        CapabilityActivation.model_validate(
-            {"mode": "consensus", "backends": ["a", "b"]}
-        )
+        CapabilityActivation.model_validate({"mode": "consensus", "backends": ["a", "b"]})
 
 
 def test_consensus_threshold_must_not_exceed_backend_count():

@@ -101,10 +101,8 @@ def _topo_sort(
         if name in visited or name not in selected:
             return
         if name in on_path:
-            cycle = path[path.index(name):] + [name]
-            raise ValueError(
-                f"Lens dependency cycle detected: {' -> '.join(cycle)}"
-            )
+            cycle = path[path.index(name) :] + [name]
+            raise ValueError(f"Lens dependency cycle detected: {' -> '.join(cycle)}")
         on_path.add(name)
         lens, _ = selected[name]
         for dep in lens.capabilities.requires_lenses:

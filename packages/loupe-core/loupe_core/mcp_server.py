@@ -18,6 +18,7 @@ Two-layer design:
 - `build_mcp_server()` wraps each impl in a FastMCP tool, registering
   it under the canonical ``loupe.<resource>`` naming convention.
 """
+
 from __future__ import annotations
 
 import logging
@@ -202,11 +203,15 @@ def build_mcp_server(
             register(mcp, loupe_dir, boundary=boundary)
         except Exception as exc:  # noqa: BLE001 — deliberate broad catch
             lens_name = getattr(
-                getattr(lens, "capabilities", None), "name", repr(lens),
+                getattr(lens, "capabilities", None),
+                "name",
+                repr(lens),
             )
             _LOG.warning(
                 "Lens %s failed to register MCP tools: %s; core tools remain available.",
-                lens_name, exc, exc_info=True,
+                lens_name,
+                exc,
+                exc_info=True,
             )
 
     return mcp

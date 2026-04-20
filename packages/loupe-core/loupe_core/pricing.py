@@ -15,6 +15,7 @@ The numbers below are reference points for v1; bump deliberately when
 a model price moves or a new family lands. Treat regressions in this
 table as out-of-band signals: pricing didn't change, our usage did.
 """
+
 from __future__ import annotations
 
 from loupe_core.run_context import LensUsage
@@ -35,8 +36,8 @@ _PRICING_PER_MILLION: dict[str, tuple[float, float]] = {
 }
 # --8<-- [end:price_table]
 
-_CACHE_READ_DISCOUNT = 0.10   # cache reads pay 10% of the input rate
-_CACHE_WRITE_PREMIUM = 1.25   # cache writes pay 125% of the input rate (one-time)
+_CACHE_READ_DISCOUNT = 0.10  # cache reads pay 10% of the input rate
+_CACHE_WRITE_PREMIUM = 1.25  # cache writes pay 125% of the input rate (one-time)
 
 
 def estimate_cost_usd(usage: LensUsage) -> float:
@@ -51,12 +52,8 @@ def estimate_cost_usd(usage: LensUsage) -> float:
         return 0.0
     input_rate, output_rate = rates
     base_input_cost = (usage.input_tokens / 1_000_000) * input_rate
-    cache_read_cost = (
-        (usage.cache_read_tokens / 1_000_000) * input_rate * _CACHE_READ_DISCOUNT
-    )
-    cache_write_cost = (
-        (usage.cache_write_tokens / 1_000_000) * input_rate * _CACHE_WRITE_PREMIUM
-    )
+    cache_read_cost = (usage.cache_read_tokens / 1_000_000) * input_rate * _CACHE_READ_DISCOUNT
+    cache_write_cost = (usage.cache_write_tokens / 1_000_000) * input_rate * _CACHE_WRITE_PREMIUM
     output_cost = (usage.output_tokens / 1_000_000) * output_rate
     return round(
         base_input_cost + cache_read_cost + cache_write_cost + output_cost,

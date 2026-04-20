@@ -53,9 +53,7 @@ def parse_inputs(env: dict[str, str]) -> ActionInputs:
 
     mode_raw = env.get("INPUT_COMMENT_MODE", "sticky").strip() or "sticky"
     if mode_raw not in _VALID_COMMENT_MODES:
-        raise InputError(
-            f"comment_mode must be one of {_VALID_COMMENT_MODES}, got: {mode_raw!r}"
-        )
+        raise InputError(f"comment_mode must be one of {_VALID_COMMENT_MODES}, got: {mode_raw!r}")
 
     token = env.get("GITHUB_TOKEN", "").strip()
     if not token:
@@ -65,9 +63,7 @@ def parse_inputs(env: dict[str, str]) -> ActionInputs:
 
     repo = env.get("GITHUB_REPOSITORY", "").strip()
     if "/" not in repo or repo.count("/") != 1:
-        raise InputError(
-            f"GITHUB_REPOSITORY must be 'owner/repo', got: {repo!r}"
-        )
+        raise InputError(f"GITHUB_REPOSITORY must be 'owner/repo', got: {repo!r}")
     owner, name = repo.split("/", 1)
     if not owner or not name:
         raise InputError(f"GITHUB_REPOSITORY must be 'owner/repo', got: {repo!r}")
@@ -89,14 +85,8 @@ def parse_inputs(env: dict[str, str]) -> ActionInputs:
 def _validate_config_path(path: str) -> None:
     for fragment in _HOSTILE_PATH_FRAGMENTS:
         if fragment in path:
-            raise InputError(
-                f"config input contains disallowed character {fragment!r}"
-            )
+            raise InputError(f"config input contains disallowed character {fragment!r}")
     if path.startswith("/"):
-        raise InputError(
-            f"config path must be relative to the workspace, got absolute: {path!r}"
-        )
+        raise InputError(f"config path must be relative to the workspace, got absolute: {path!r}")
     if ".." in path.split("/"):
-        raise InputError(
-            f"config path must not contain parent-directory traversal, got: {path!r}"
-        )
+        raise InputError(f"config path must not contain parent-directory traversal, got: {path!r}")

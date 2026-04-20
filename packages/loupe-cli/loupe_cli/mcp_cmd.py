@@ -11,6 +11,7 @@ boundary in ``loupe ci`` and ``loupe chat``. When writes land in v1.x,
 they reuse the same `PathBoundary` + `confirm_with_diff` machinery so
 MCP clients are subject to the same gates as the local CLI.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -41,8 +42,7 @@ def mcp_command(loupe_dir: Path) -> int:
     """
     if not loupe_dir.exists():
         typer.echo(
-            f"Error: {loupe_dir} not found. Run `loupe init` first or pass "
-            f"--loupe-dir.",
+            f"Error: {loupe_dir} not found. Run `loupe init` first or pass --loupe-dir.",
             err=True,
         )
         return USAGE_ERROR
@@ -66,8 +66,7 @@ def mcp_command(loupe_dir: Path) -> int:
             # KeyboardInterrupt, etc.) propagates so we don't silently
             # mask real defects behind a "MCP write tools disabled" line.
             typer.echo(
-                f"warning: could not load {config_path} ({exc}); "
-                f"MCP write tools disabled.",
+                f"warning: could not load {config_path} ({exc}); MCP write tools disabled.",
                 err=True,
             )
     server = build_mcp_server(loupe_dir, lenses=lenses, boundary=boundary)

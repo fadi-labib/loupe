@@ -24,6 +24,7 @@ Bandit JSON output (verified against bandit 1.7, 2026-05-15):
       "errors": []
     }
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -75,8 +76,10 @@ class BanditStaticBackend:
             subprocess.run,
             [
                 "bandit",
-                "-r", str(repo_path),
-                "-f", "json",
+                "-r",
+                str(repo_path),
+                "-f",
+                "json",
                 "-q",  # quiet: suppress non-JSON banner output
             ],
             capture_output=True,
@@ -126,11 +129,13 @@ def _parse_bandit_json(stdout: str, *, repo_path: Path) -> list[StaticFinding]:
         line_raw = int(entry.get("line_number", 0) or 0)
         line: int | None = line_raw if line_raw >= 1 else None
 
-        findings.append(StaticFinding(
-            rule_id=rule_id,
-            file=rel,
-            line=line,
-            severity=severity,
-            message=message,
-        ))
+        findings.append(
+            StaticFinding(
+                rule_id=rule_id,
+                file=rel,
+                line=line,
+                severity=severity,
+                message=message,
+            )
+        )
     return findings

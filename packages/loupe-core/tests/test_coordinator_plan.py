@@ -9,30 +9,49 @@ from loupe_core.run_context import CodeDiff, RelevanceScore, RunContext
 
 def _ctx(paths: list[str]) -> RunContext:
     return RunContext(
-        run_id="r", mode="ci", started_at=datetime(2026, 5, 13),
+        run_id="r",
+        mode="ci",
+        started_at=datetime(2026, 5, 13),
         user_intent="",
         diff=CodeDiff(
-            base_sha="a", head_sha="b", changed_paths=paths,
-            added_lines=1, removed_lines=0, raw_unified="",
+            base_sha="a",
+            head_sha="b",
+            changed_paths=paths,
+            added_lines=1,
+            removed_lines=0,
+            raw_unified="",
         ),
-        sbom_delta=None, project=None, plan=[], knowledge=None,
+        sbom_delta=None,
+        project=None,
+        plan=[],
+        knowledge=None,
     )
 
 
 class _MakeLens:
     def __init__(self, name: str, score: float, depends_on: list[str] | None = None):
         self.capabilities = LensCapabilities(
-            name=name, domain="x",
+            name=name,
+            domain="x",
             artifact_paths=[f".loupe/{name}.yaml"],
             requires_lenses=depends_on or [],
         )
         self._score = score
 
-    def build_agent(self, t): return None
-    def mcp_tools(self): return []
-    def mcp_workflows(self): return []
-    def is_relevant(self, c): return RelevanceScore(score=self._score, reason="t")
-    async def run(self, ctx, p, b, d): return None
+    def build_agent(self, t):
+        return None
+
+    def mcp_tools(self):
+        return []
+
+    def mcp_workflows(self):
+        return []
+
+    def is_relevant(self, c):
+        return RelevanceScore(score=self._score, reason="t")
+
+    async def run(self, ctx, p, b, d):
+        return None
 
 
 def _cfg(lenses: dict[str, float]) -> LoupeConfig:
@@ -127,19 +146,28 @@ def test_is_relevant_called_once_per_lens():
     class _CountingLens:
         def __init__(self, name: str, score: float):
             self.capabilities = LensCapabilities(
-                name=name, domain="x",
+                name=name,
+                domain="x",
                 artifact_paths=[f".loupe/{name}.yaml"],
             )
             self._score = score
             call_counts[name] = 0
 
-        def build_agent(self, t): return None
-        def mcp_tools(self): return []
-        def mcp_workflows(self): return []
+        def build_agent(self, t):
+            return None
+
+        def mcp_tools(self):
+            return []
+
+        def mcp_workflows(self):
+            return []
+
         def is_relevant(self, c):
             call_counts[self.capabilities.name] += 1
             return RelevanceScore(score=self._score, reason="t")
-        async def run(self, ctx, p, b, d): return None
+
+        async def run(self, ctx, p, b, d):
+            return None
 
     ctx = _ctx(["x.py"])
     lenses = [_CountingLens("a", 0.9), _CountingLens("b", 0.9)]

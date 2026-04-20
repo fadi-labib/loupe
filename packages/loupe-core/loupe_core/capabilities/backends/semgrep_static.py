@@ -36,6 +36,7 @@ JSON output shape (verified against semgrep 1.92, 2026-05-15):
       "errors": [ ... ]
     }
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -88,7 +89,8 @@ class SemgrepStaticBackend:
         proc = await asyncio.to_thread(
             subprocess.run,
             [
-                "semgrep", "scan",
+                "semgrep",
+                "scan",
                 "--config=auto",
                 "--json",
                 "--metrics=off",
@@ -147,11 +149,13 @@ def _parse_semgrep_json(stdout: str, *, repo_path: Path) -> list[StaticFinding]:
         message = extra.get("message", "").strip() or "(no message)"
         severity = _SEVERITY_MAP.get(extra.get("severity", "").upper(), "informational")
 
-        findings.append(StaticFinding(
-            rule_id=rule_id,
-            file=rel,
-            line=line,
-            severity=severity,
-            message=message,
-        ))
+        findings.append(
+            StaticFinding(
+                rule_id=rule_id,
+                file=rel,
+                line=line,
+                severity=severity,
+                message=message,
+            )
+        )
     return findings

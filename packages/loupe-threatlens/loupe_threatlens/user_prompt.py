@@ -13,6 +13,7 @@ architectural elements the agent should reference with stable IDs.
 See [principles.md §8 "Cost discipline"] and [decisions.md D-10] for the
 prompt-assembly cost-lever rationale.
 """
+
 from __future__ import annotations
 
 from loupe_core.artifacts.context import BulletItem, ProjectContext
@@ -31,8 +32,7 @@ _NO_PROJECT_NOTICE = (
 )
 
 _NO_DIFF_NOTICE = (
-    "No diff provided. Operating in full-repo or scoped mode; "
-    "reason about the project as a whole."
+    "No diff provided. Operating in full-repo or scoped mode; reason about the project as a whole."
 )
 
 _NO_ELEMENTS_NOTICE = (
@@ -95,15 +95,17 @@ def _focus_section(plan_entry: LensRunPlan) -> str:
 def _project_section(project: ProjectContext | None) -> str:
     if project is None:
         return f"## Project context\n\n{_NO_PROJECT_NOTICE}"
-    return "\n\n".join([
-        "## Project context (from .loupe/context.md)",
-        f"**Product:** {project.product_description}",
-        f"**Critical assets:** {_render_bullets(project.assets)}",
-        f"**Users and roles:** {_render_bullets(project.users)}",
-        f"**Deployment:** {project.deployment}",
-        f"**Threat actors of concern:** {_render_bullets(project.threat_actors)}",
-        f"**Out of scope:** {_render_bullets(project.out_of_scope)}",
-    ])
+    return "\n\n".join(
+        [
+            "## Project context (from .loupe/context.md)",
+            f"**Product:** {project.product_description}",
+            f"**Critical assets:** {_render_bullets(project.assets)}",
+            f"**Users and roles:** {_render_bullets(project.users)}",
+            f"**Deployment:** {project.deployment}",
+            f"**Threat actors of concern:** {_render_bullets(project.threat_actors)}",
+            f"**Out of scope:** {_render_bullets(project.out_of_scope)}",
+        ]
+    )
 
 
 def _diff_section(ctx: RunContext) -> str:

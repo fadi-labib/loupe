@@ -16,15 +16,19 @@ FIXTURES = Path(__file__).parent / "fixtures"
 
 class EchoLens:
     capabilities = LensCapabilities(
-        name="echo", domain="test",
+        name="echo",
+        domain="test",
         artifact_paths=[".loupe/echo.txt"],
     )
 
     def build_agent(self, t):
         return None
 
-    def mcp_tools(self): return []
-    def mcp_workflows(self): return []
+    def mcp_tools(self):
+        return []
+
+    def mcp_workflows(self):
+        return []
 
     def is_relevant(self, ctx):
         return RelevanceScore(score=0.99, reason="dummy is always interested")
@@ -41,10 +45,15 @@ async def test_dispatch_runs_lens_and_writes_artifact(tmp_path):
     loupe_dir.mkdir()
     shutil.copy(FIXTURES / "bootstrap_context.md", loupe_dir / "context.md")
 
-    ctx = RunContext.bootstrap(BootstrapInputs(
-        run_id="r1", mode="ci", started_at=datetime(2026, 5, 13),
-        user_intent="echo", loupe_dir=loupe_dir,
-    ))
+    ctx = RunContext.bootstrap(
+        BootstrapInputs(
+            run_id="r1",
+            mode="ci",
+            started_at=datetime(2026, 5, 13),
+            user_intent="echo",
+            loupe_dir=loupe_dir,
+        )
+    )
 
     cfg = LoupeConfig(
         agent_writable_paths=[str(loupe_dir / "echo.txt")],

@@ -101,7 +101,4 @@ def save_run_record(runs_dir: Path, record: RunRecord) -> RunRecord:
 def load_run_records(runs_dir: Path) -> list[RunRecord]:
     if not runs_dir.exists():
         return []
-    return [
-        RunRecord.model_validate_json(p.read_text())
-        for p in sorted(runs_dir.glob("*.json"))
-    ]
+    return [RunRecord.model_validate_json(p.read_text()) for p in sorted(runs_dir.glob("*.json"))]

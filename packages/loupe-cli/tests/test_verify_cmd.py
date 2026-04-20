@@ -4,6 +4,7 @@ The actual verification logic lives in loupe_core/enforcement/verify.py
 and is independently tested there. These tests verify the CLI surface:
 exit codes, output formatting, the .loupe/ presence check.
 """
+
 import json
 import shutil
 from datetime import UTC, datetime, timedelta
@@ -16,9 +17,7 @@ from typer.testing import CliRunner
 from .conftest import minimal_config_yaml
 
 runner = CliRunner()
-FIXTURES = (
-    Path(__file__).parent.parent.parent / "loupe-core" / "tests" / "artifacts" / "fixtures"
-)
+FIXTURES = Path(__file__).parent.parent.parent / "loupe-core" / "tests" / "artifacts" / "fixtures"
 
 
 class _FrozenClock:

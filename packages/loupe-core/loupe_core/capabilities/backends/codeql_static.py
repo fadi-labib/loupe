@@ -32,6 +32,7 @@ Output format: SARIF 2.1.0 — the same standard the GitHub Code Scanning
 flow consumes. CodeQL writes SARIF; we parse the subset we care about
 (ruleId, message, level, location).
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -102,7 +103,9 @@ class CodeQLStaticBackend:
             )
 
         with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".sarif", delete=False,
+            mode="w",
+            suffix=".sarif",
+            delete=False,
         ) as fh:
             sarif_path = Path(fh.name)
 
@@ -110,7 +113,9 @@ class CodeQLStaticBackend:
             proc = await asyncio.to_thread(
                 subprocess.run,
                 [
-                    "codeql", "database", "analyze",
+                    "codeql",
+                    "database",
+                    "analyze",
                     str(db_path),
                     "--format=sarif-latest",
                     f"--output={sarif_path}",

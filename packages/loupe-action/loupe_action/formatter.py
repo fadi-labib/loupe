@@ -36,6 +36,7 @@ def markdown_escape(text: str) -> str:
     """
     return _MD_SPECIAL.sub(r"\\\1", text).replace("-->", "")
 
+
 _SEVERITY_ORDER: tuple[Severity, ...] = (
     Severity.CRITICAL,
     Severity.HIGH,
@@ -79,9 +80,7 @@ def _summary_line(threats: list[Threat]) -> str:
     if not threats:
         return "No threats identified in this change."
     counts = Counter(t.severity for t in threats)
-    summary_parts = [
-        f"{counts[sev]} {sev.value}" for sev in _SEVERITY_ORDER if counts[sev]
-    ]
+    summary_parts = [f"{counts[sev]} {sev.value}" for sev in _SEVERITY_ORDER if counts[sev]]
     return f"**Findings:** {', '.join(summary_parts)}."
 
 
@@ -113,9 +112,7 @@ def _findings_section(threats: list[Threat]) -> str:
 
 def _run_metadata_section(record: RunRecord) -> str:
     cost = f"${record.cost_usd_estimate:.2f}" if record.cost_usd_estimate else "$0.00"
-    cache = (
-        f"{record.cache_hit_rate * 100:.0f}%" if record.cache_hit_rate is not None else "n/a"
-    )
+    cache = f"{record.cache_hit_rate * 100:.0f}%" if record.cache_hit_rate is not None else "n/a"
     lenses = ", ".join(record.lenses_run) if record.lenses_run else "(none)"
     lines = [
         "<details>",

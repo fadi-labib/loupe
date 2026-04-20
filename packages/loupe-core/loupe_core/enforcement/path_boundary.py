@@ -17,13 +17,9 @@ def validate_relative_target_path(target_path: str) -> None:
     if "\x00" in target_path:
         raise ValueError(f"target_path contains NUL byte: {target_path!r}")
     if Path(target_path).is_absolute():
-        raise ValueError(
-            f"target_path must be relative, got absolute: {target_path!r}"
-        )
+        raise ValueError(f"target_path must be relative, got absolute: {target_path!r}")
     if ".." in Path(target_path).parts:
-        raise ValueError(
-            f"target_path contains path traversal '..': {target_path!r}"
-        )
+        raise ValueError(f"target_path contains path traversal '..': {target_path!r}")
 
 
 class PathBoundary:

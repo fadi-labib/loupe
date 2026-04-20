@@ -5,6 +5,7 @@ The end-to-end registration via `register_threatlens_mcp_tools` is
 exercised by an additional smoke test that walks an actual FastMCP
 instance.
 """
+
 from __future__ import annotations
 
 from datetime import date
@@ -40,11 +41,19 @@ def _threat(
     status: ThreatStatus = ThreatStatus.PROPOSED,
 ) -> Threat:
     return Threat(
-        id=id_, element_id="E-001",
-        stride_category=stride, title=f"Sample {id_}",
-        description="...", severity=severity, status=status,
-        mitigation_ids=[], cwe_refs=[], introduced_in_pr=None,
-        last_reviewed=date(2026, 5, 15), rationale="...", proposed_by="test",
+        id=id_,
+        element_id="E-001",
+        stride_category=stride,
+        title=f"Sample {id_}",
+        description="...",
+        severity=severity,
+        status=status,
+        mitigation_ids=[],
+        cwe_refs=[],
+        introduced_in_pr=None,
+        last_reviewed=date(2026, 5, 15),
+        rationale="...",
+        proposed_by="test",
     )
 
 
@@ -58,11 +67,13 @@ def test_query_by_stride_returns_empty_when_no_file(loupe_dir: Path):
 
 
 def test_query_by_stride_filters_correctly(loupe_dir: Path):
-    ThreatsFile(threats=[
-        _threat(id_="T-001", stride=StrideCategory.ELEVATION_OF_PRIVILEGE),
-        _threat(id_="T-002", stride=StrideCategory.SPOOFING),
-        _threat(id_="T-003", stride=StrideCategory.ELEVATION_OF_PRIVILEGE),
-    ]).save(loupe_dir / "threats.yaml")
+    ThreatsFile(
+        threats=[
+            _threat(id_="T-001", stride=StrideCategory.ELEVATION_OF_PRIVILEGE),
+            _threat(id_="T-002", stride=StrideCategory.SPOOFING),
+            _threat(id_="T-003", stride=StrideCategory.ELEVATION_OF_PRIVILEGE),
+        ]
+    ).save(loupe_dir / "threats.yaml")
     e_threats = query_threats_by_stride_impl(loupe_dir, "E")
     assert {t["id"] for t in e_threats} == {"T-001", "T-003"}
 
@@ -78,11 +89,13 @@ def test_query_by_stride_unknown_category_returns_empty(loupe_dir: Path):
 
 
 def test_query_by_severity_filters_correctly(loupe_dir: Path):
-    ThreatsFile(threats=[
-        _threat(id_="T-001", severity=Severity.CRITICAL),
-        _threat(id_="T-002", severity=Severity.HIGH),
-        _threat(id_="T-003", severity=Severity.CRITICAL),
-    ]).save(loupe_dir / "threats.yaml")
+    ThreatsFile(
+        threats=[
+            _threat(id_="T-001", severity=Severity.CRITICAL),
+            _threat(id_="T-002", severity=Severity.HIGH),
+            _threat(id_="T-003", severity=Severity.CRITICAL),
+        ]
+    ).save(loupe_dir / "threats.yaml")
     crit = query_threats_by_severity_impl(loupe_dir, "critical")
     assert {t["id"] for t in crit} == {"T-001", "T-003"}
 
@@ -105,13 +118,19 @@ def test_summary_empty_when_no_file(loupe_dir: Path):
 
 
 def test_summary_counts_correctly(loupe_dir: Path):
-    ThreatsFile(threats=[
-        _threat(id_="T-001", severity=Severity.HIGH, stride=StrideCategory.SPOOFING),
-        _threat(id_="T-002", severity=Severity.HIGH, stride=StrideCategory.TAMPERING),
-        _threat(id_="T-003", severity=Severity.MEDIUM, stride=StrideCategory.SPOOFING),
-        _threat(id_="T-004", severity=Severity.CRITICAL, stride=StrideCategory.SPOOFING,
-                status=ThreatStatus.ACCEPTED),
-    ]).save(loupe_dir / "threats.yaml")
+    ThreatsFile(
+        threats=[
+            _threat(id_="T-001", severity=Severity.HIGH, stride=StrideCategory.SPOOFING),
+            _threat(id_="T-002", severity=Severity.HIGH, stride=StrideCategory.TAMPERING),
+            _threat(id_="T-003", severity=Severity.MEDIUM, stride=StrideCategory.SPOOFING),
+            _threat(
+                id_="T-004",
+                severity=Severity.CRITICAL,
+                stride=StrideCategory.SPOOFING,
+                status=ThreatStatus.ACCEPTED,
+            ),
+        ]
+    ).save(loupe_dir / "threats.yaml")
     s = threat_model_summary_impl(loupe_dir)
     assert s["total"] == 4
     assert s["by_severity"] == {"high": 2, "medium": 1, "critical": 1}
@@ -188,7 +207,8 @@ async def test_query_by_severity_accepts_all_valid_values(loupe_dir: Path):
         # No threats file yet — the impl just returns [] but the call
         # path validates the input against the Literal first.
         await server._tool_manager.call_tool(
-            "threatlens_query_by_severity", {"severity": sev},
+            "threatlens_query_by_severity",
+            {"severity": sev},
         )
 
 
@@ -202,7 +222,8 @@ async def test_query_by_severity_rejects_informational(loupe_dir: Path):
     register_threatlens_mcp_tools(server, loupe_dir)
     with pytest.raises((ToolError, ValueError, TypeError, Exception)) as excinfo:
         await server._tool_manager.call_tool(
-            "threatlens_query_by_severity", {"severity": "informational"},
+            "threatlens_query_by_severity",
+            {"severity": "informational"},
         )
     # The error message should make it clear that "informational" was rejected.
     msg = str(excinfo.value).lower()

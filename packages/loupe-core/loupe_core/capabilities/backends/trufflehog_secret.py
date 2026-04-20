@@ -22,6 +22,7 @@ invoked with `--json`. Shape (verified against v3.85, 2026-05-15):
       ...
     }
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -67,10 +68,12 @@ class TruffleHogSecretBackend:
         proc = await asyncio.to_thread(
             subprocess.run,
             [
-                "trufflehog", "filesystem", str(repo_path),
+                "trufflehog",
+                "filesystem",
+                str(repo_path),
                 "--json",
-                "--no-update",         # don't reach to update detectors mid-run
-                "--fail-no-detectors", # surface "no detectors" as a hard error
+                "--no-update",  # don't reach to update detectors mid-run
+                "--fail-no-detectors",  # surface "no detectors" as a hard error
             ],
             capture_output=True,
             text=True,
@@ -120,16 +123,10 @@ def _parse_trufflehog_ndjson(stdout: str) -> list[SecretFinding]:
             continue
 
         file_path = (
-            entry.get("SourceMetadata", {})
-                 .get("Data", {})
-                 .get("Filesystem", {})
-                 .get("file", "")
+            entry.get("SourceMetadata", {}).get("Data", {}).get("Filesystem", {}).get("file", "")
         )
         line_no = (
-            entry.get("SourceMetadata", {})
-                 .get("Data", {})
-                 .get("Filesystem", {})
-                 .get("line", 0)
+            entry.get("SourceMetadata", {}).get("Data", {}).get("Filesystem", {}).get("line", 0)
         )
         detector = entry.get("DetectorName", "unknown")
         verified = entry.get("Verified", False)
@@ -142,16 +139,18 @@ def _parse_trufflehog_ndjson(stdout: str) -> list[SecretFinding]:
         redacted = entry.get("Redacted") or _redact(entry.get("Raw", ""))
 
         line_raw = int(line_no or 0)
-        findings.append(SecretFinding(
-            file=file_path,
-            line=line_raw if line_raw >= 1 else None,
-            rule_id=rule_id,
-            redacted_match=redacted,
-            # Verified findings are higher confidence than mere matches.
-            # Critical for verified credentials (someone can use them now),
-            # high otherwise.
-            severity="critical" if verified else "high",
-        ))
+        findings.append(
+            SecretFinding(
+                file=file_path,
+                line=line_raw if line_raw >= 1 else None,
+                rule_id=rule_id,
+                redacted_match=redacted,
+                # Verified findings are higher confidence than mere matches.
+                # Critical for verified credentials (someone can use them now),
+                # high otherwise.
+                severity="critical" if verified else "high",
+            )
+        )
     if skipped:
         _LOG.warning(
             "trufflehog backend: skipped %d unparseable line(s) from NDJSON output",

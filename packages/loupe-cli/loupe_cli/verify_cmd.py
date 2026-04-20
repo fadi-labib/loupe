@@ -13,6 +13,7 @@ Strict-only checks (`--strict`):
 - Authorship of protected paths (context.md, decisions/, config.yaml,
   knowledge.yaml must not be touched by an agent-identity commit)
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -30,8 +31,7 @@ def verify_command(strict: bool = False) -> int:
     cwd = Path.cwd()
     if not (cwd / ".loupe").exists():
         typer.echo(
-            "Error: .loupe/ not found in the current directory.\n"
-            "Run `loupe init` first.",
+            "Error: .loupe/ not found in the current directory.\nRun `loupe init` first.",
             err=True,
         )
         return USAGE_ERROR

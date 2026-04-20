@@ -19,6 +19,7 @@ Strict checks (`loupe verify --strict` only):
   commit authored by a human identity. Strict checks need git or
   filesystem access beyond `.loupe/`, so opt-in keeps the default fast.
 """
+
 from __future__ import annotations
 
 import subprocess
@@ -41,9 +42,7 @@ _HUMAN_OWNED = (
     "config.yaml",
     "knowledge.yaml",
 )
-_HUMAN_OWNED_DIRS = (
-    "decisions",
-)
+_HUMAN_OWNED_DIRS = ("decisions",)
 
 # A commit author is treated as a bot/agent identity when ANY of these
 # match. Conservative — better to false-positive (require manual review)
@@ -75,17 +74,21 @@ def check_run_record_chain(runs_dir: Path) -> list[VerifyFailure]:
     expected_prev: str | None = None
     for r in records:
         if r.prev_run_hash != expected_prev:
-            failures.append(VerifyFailure(
-                kind="run_chain_broken",
-                run_id=r.run_id,
-                detail=f"prev_run_hash={r.prev_run_hash} but expected {expected_prev}",
-            ))
+            failures.append(
+                VerifyFailure(
+                    kind="run_chain_broken",
+                    run_id=r.run_id,
+                    detail=f"prev_run_hash={r.prev_run_hash} but expected {expected_prev}",
+                )
+            )
         if r.self_hash != r.compute_self_hash():
-            failures.append(VerifyFailure(
-                kind="run_self_hash_mismatch",
-                run_id=r.run_id,
-                detail="content does not match self_hash",
-            ))
+            failures.append(
+                VerifyFailure(
+                    kind="run_self_hash_mismatch",
+                    run_id=r.run_id,
+                    detail="content does not match self_hash",
+                )
+            )
         expected_prev = r.self_hash
     return failures
 
@@ -110,19 +113,23 @@ def check_artefact_schemas(loupe_dir: Path) -> list[VerifyFailure]:
         try:
             ThreatsFile.load(threats_path)
         except Exception as exc:
-            failures.append(VerifyFailure(
-                kind="schema_invalid",
-                detail=f"threats.yaml does not parse as ThreatsFile: {exc}",
-            ))
+            failures.append(
+                VerifyFailure(
+                    kind="schema_invalid",
+                    detail=f"threats.yaml does not parse as ThreatsFile: {exc}",
+                )
+            )
     mitigations_path = loupe_dir / "mitigations.yaml"
     if mitigations_path.exists():
         try:
             MitigationsFile.load(mitigations_path)
         except Exception as exc:
-            failures.append(VerifyFailure(
-                kind="schema_invalid",
-                detail=f"mitigations.yaml does not parse as MitigationsFile: {exc}",
-            ))
+            failures.append(
+                VerifyFailure(
+                    kind="schema_invalid",
+                    detail=f"mitigations.yaml does not parse as MitigationsFile: {exc}",
+                )
+            )
     return failures
 
 
@@ -166,24 +173,28 @@ def check_threats_mitigations_cross_refs(loupe_dir: Path) -> list[VerifyFailure]
     for threat in threats.threats:
         for mid in threat.mitigation_ids:
             if mid not in mitigation_ids:
-                failures.append(VerifyFailure(
-                    kind="dangling_mitigation_ref",
-                    detail=(
-                        f"threat {threat.id} references mitigation '{mid}', "
-                        f"but no such ID exists in mitigations.yaml"
-                    ),
-                ))
+                failures.append(
+                    VerifyFailure(
+                        kind="dangling_mitigation_ref",
+                        detail=(
+                            f"threat {threat.id} references mitigation '{mid}', "
+                            f"but no such ID exists in mitigations.yaml"
+                        ),
+                    )
+                )
 
     for mitigation in mitigations.mitigations:
         for tid in mitigation.threats_addressed:
             if tid not in threat_ids:
-                failures.append(VerifyFailure(
-                    kind="dangling_threat_ref",
-                    detail=(
-                        f"mitigation {mitigation.id} addresses threat '{tid}', "
-                        f"but no such ID exists in threats.yaml"
-                    ),
-                ))
+                failures.append(
+                    VerifyFailure(
+                        kind="dangling_threat_ref",
+                        detail=(
+                            f"mitigation {mitigation.id} addresses threat '{tid}', "
+                            f"but no such ID exists in threats.yaml"
+                        ),
+                    )
+                )
 
     return failures
 
@@ -219,14 +230,16 @@ def check_protected_path_authorship(repo_root: Path) -> list[VerifyFailure]:
             continue  # file never committed or git unavailable — silent skip
         if _looks_like_agent(identity):
             rel = path.relative_to(repo_root)
-            failures.append(VerifyFailure(
-                kind="protected_path_agent_author",
-                detail=(
-                    f"protected path '{rel}' was last touched by an "
-                    f"agent-identity commit ({identity}). A human must "
-                    f"author changes to this file."
-                ),
-            ))
+            failures.append(
+                VerifyFailure(
+                    kind="protected_path_agent_author",
+                    detail=(
+                        f"protected path '{rel}' was last touched by an "
+                        f"agent-identity commit ({identity}). A human must "
+                        f"author changes to this file."
+                    ),
+                )
+            )
     return failures
 
 

@@ -25,11 +25,7 @@ def test_missing_config_raises(tmp_path):
 def test_invalid_relevance_threshold_rejected(tmp_path):
     bad = tmp_path / "bad.yaml"
     bad.write_text(
-        "schema_version: 1\n"
-        "lenses:\n"
-        "  threatlens:\n"
-        "    enabled: true\n"
-        "    minimum_relevance: 1.5\n"
+        "schema_version: 1\nlenses:\n  threatlens:\n    enabled: true\n    minimum_relevance: 1.5\n"
     )
     with pytest.raises(ValidationError):
         load_config(bad)
@@ -37,56 +33,68 @@ def test_invalid_relevance_threshold_rejected(tmp_path):
 
 def test_sbom_rejects_union_mode():
     with pytest.raises(ValueError, match="union.*sbom|sbom.*union"):
-        LoupeConfig.model_validate({
-            "models": {"default": "anthropic:claude-opus-4-7"},
-            "capabilities": {"sbom": {"mode": "union", "backends": ["syft", "cdxgen"]}},
-        })
+        LoupeConfig.model_validate(
+            {
+                "models": {"default": "anthropic:claude-opus-4-7"},
+                "capabilities": {"sbom": {"mode": "union", "backends": ["syft", "cdxgen"]}},
+            }
+        )
 
 
 def test_sbom_rejects_consensus_mode():
     with pytest.raises(ValueError, match="consensus.*sbom|sbom.*consensus"):
-        LoupeConfig.model_validate({
-            "models": {"default": "anthropic:claude-opus-4-7"},
-            "capabilities": {
-                "sbom": {
-                    "mode": "consensus",
-                    "backends": ["syft", "cdxgen"],
-                    "consensus_threshold": 2,
+        LoupeConfig.model_validate(
+            {
+                "models": {"default": "anthropic:claude-opus-4-7"},
+                "capabilities": {
+                    "sbom": {
+                        "mode": "consensus",
+                        "backends": ["syft", "cdxgen"],
+                        "consensus_threshold": 2,
+                    },
                 },
-            },
-        })
+            }
+        )
 
 
 def test_sbom_accepts_single_mode():
-    cfg = LoupeConfig.model_validate({
-        "models": {"default": "anthropic:claude-opus-4-7"},
-        "capabilities": {"sbom": {"mode": "single", "backends": ["syft"]}},
-    })
+    cfg = LoupeConfig.model_validate(
+        {
+            "models": {"default": "anthropic:claude-opus-4-7"},
+            "capabilities": {"sbom": {"mode": "single", "backends": ["syft"]}},
+        }
+    )
     assert cfg.capabilities["sbom"].mode == "single"
 
 
 def test_sbom_accepts_fallback_mode():
-    cfg = LoupeConfig.model_validate({
-        "models": {"default": "anthropic:claude-opus-4-7"},
-        "capabilities": {"sbom": {"mode": "fallback", "backends": ["syft", "cdxgen"]}},
-    })
+    cfg = LoupeConfig.model_validate(
+        {
+            "models": {"default": "anthropic:claude-opus-4-7"},
+            "capabilities": {"sbom": {"mode": "fallback", "backends": ["syft", "cdxgen"]}},
+        }
+    )
     assert cfg.capabilities["sbom"].mode == "fallback"
 
 
 def test_unknown_capability_name_rejected_at_validation():
     with pytest.raises(ValueError, match="unknown capability.*'imaginary'"):
-        LoupeConfig.model_validate({
-            "models": {"default": "anthropic:claude-opus-4-7"},
-            "capabilities": {"imaginary": {"mode": "single", "backends": ["whatever"]}},
-        })
+        LoupeConfig.model_validate(
+            {
+                "models": {"default": "anthropic:claude-opus-4-7"},
+                "capabilities": {"imaginary": {"mode": "single", "backends": ["whatever"]}},
+            }
+        )
 
 
 def test_known_capabilities_accepted():
     for cap in ["sbom", "cve", "secret_detect", "static_analysis"]:
-        cfg = LoupeConfig.model_validate({
-            "models": {"default": "anthropic:claude-opus-4-7"},
-            "capabilities": {cap: {"mode": "single", "backends": ["any"]}},
-        })
+        cfg = LoupeConfig.model_validate(
+            {
+                "models": {"default": "anthropic:claude-opus-4-7"},
+                "capabilities": {cap: {"mode": "single", "backends": ["any"]}},
+            }
+        )
         assert cap in cfg.capabilities
 
 
@@ -94,29 +102,33 @@ def test_cheap_for_unknown_task_rejected():
     """A typo in `cheap_for` would silently disable cheap-routing.
     Fail fast at load time with a message that lists the known names."""
     with pytest.raises(ValidationError) as exc_info:
-        LoupeConfig.model_validate({
-            "models": {
-                "default": "anthropic:claude-opus-4-7",
-                "threatlens": {
-                    "primary": "anthropic:claude-opus-4-7",
-                    "cheap_for": ["doc_polishh"],  # typo
-                    "cheap_model": "anthropic:claude-haiku-4-5",
+        LoupeConfig.model_validate(
+            {
+                "models": {
+                    "default": "anthropic:claude-opus-4-7",
+                    "threatlens": {
+                        "primary": "anthropic:claude-opus-4-7",
+                        "cheap_for": ["doc_polishh"],  # typo
+                        "cheap_model": "anthropic:claude-haiku-4-5",
+                    },
                 },
-            },
-        })
+            }
+        )
     assert "unknown task name" in str(exc_info.value)
 
 
 def test_cheap_for_known_task_accepted():
-    cfg = LoupeConfig.model_validate({
-        "models": {
-            "default": "anthropic:claude-opus-4-7",
-            "threatlens": {
-                "primary": "anthropic:claude-opus-4-7",
-                "cheap_for": ["doc_polish", "vex_drafting"],
-                "cheap_model": "anthropic:claude-haiku-4-5",
+    cfg = LoupeConfig.model_validate(
+        {
+            "models": {
+                "default": "anthropic:claude-opus-4-7",
+                "threatlens": {
+                    "primary": "anthropic:claude-opus-4-7",
+                    "cheap_for": ["doc_polish", "vex_drafting"],
+                    "cheap_model": "anthropic:claude-haiku-4-5",
+                },
             },
-        },
-    })
+        }
+    )
     assert cfg.models.threatlens is not None
     assert cfg.models.threatlens.cheap_for == ["doc_polish", "vex_drafting"]
