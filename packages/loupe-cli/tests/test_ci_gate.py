@@ -137,3 +137,48 @@ def test_warn_only_config_returns_zero_even_at_critical():
     ctx = _ctx([{"id": "T-001", "severity": "critical"}])
     cfg = _cfg_with_warn(fail_on=[], warn_on=["critical"])
     assert _gate_exit_code(ctx, cfg) == 0
+
+
+def test_lens_error_finding_fails_gate():
+    """A crashed lens leaves a `lens_error` finding via dispatcher's isolation
+    handler. Treat missing evidence as a non-zero exit — a green CI when the
+    lens never produced output is worse than a red one with a clear message.
+    """
+    ctx = RunContext(
+        run_id="r-lens-err",
+        mode="ci",
+        started_at=datetime(2026, 5, 15),
+        user_intent="",
+        diff=None,
+        sbom_delta=None,
+        project=None,
+        plan=[],
+        knowledge=None,
+    )
+    # Mirror dispatcher.py's payload shape exactly.
+    ctx.record_finding(
+        "threatlens",
+        "lens_error",
+        {
+            "type": "RuntimeError",
+            "message": "ThreatLens blew up parsing the diff",
+            "traceback": "Traceback ...",
+        },
+    )
+    # Even with no fail_on configured, a crashed lens must trip the gate —
+    # the operator's fail_on policy is about threat severity, not lens
+    # liveness. Liveness is non-negotiable.
+    assert _gate_exit_code(ctx, _cfg(fail_on=[])) == 1
+
+
+def test_lens_error_takes_precedence_over_threat_gate():
+    """If a lens crashed AND another lens produced threats, lens_error still
+    fails the gate even when the threat-severity gate would otherwise pass.
+    """
+    ctx = _ctx([{"id": "T-001", "severity": "low"}])
+    ctx.record_finding(
+        "secret-detect",
+        "lens_error",
+        {"type": "TimeoutError", "message": "trufflehog exceeded budget", "traceback": ""},
+    )
+    assert _gate_exit_code(ctx, _cfg(fail_on=["critical"])) == 1

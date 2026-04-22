@@ -145,7 +145,30 @@ def _gate_exit_code(ctx: RunContext, cfg: LoupeConfig) -> int:
       change the exit code.
     - Empty fail_on AND empty warn_on means report-only mode; the function
       returns 0 silently.
+    - A `lens_error` finding (written by the dispatcher's isolation handler
+      when a lens raises in `run()`) ALWAYS fails the gate. Missing
+      evidence beats a false-green: the operator configured fail_on for
+      threat severity, but lens liveness is non-negotiable — if a lens
+      never produced output we cannot claim CI verified its concern.
     """
+    # Liveness check: any lens that crashed during dispatch left a
+    # `lens_error` finding with type/message/traceback fields (see
+    # loupe_core/dispatcher.py). Surface it and short-circuit to exit 1
+    # BEFORE the threat-severity gate — even fail_on=[] must trip on this.
+    for lens_name, lens_findings in ctx.findings.items():
+        lens_error = lens_findings.get("lens_error")
+        if lens_error is None:
+            continue
+        payload = lens_error.payload
+        typer.echo(
+            f"Gate failure: lens {lens_name!r} crashed during dispatch "
+            f"({payload.get('type', 'Exception')}: "
+            f"{payload.get('message', 'unknown')}). "
+            f"Treating missing evidence as a hard failure.",
+            err=True,
+        )
+        return 1
+
     fail_severities = set(cfg.ci.fail_on)
     warn_severities = set(cfg.ci.warn_on) - fail_severities
 
