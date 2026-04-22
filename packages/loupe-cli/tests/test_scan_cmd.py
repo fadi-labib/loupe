@@ -74,3 +74,32 @@ def test_scan_fails_when_loupe_dir_missing(tmp_path, monkeypatch):
     assert result.exit_code != 0
     combined = (result.stdout or "") + (result.stderr or "")
     assert "loupe init" in combined.lower() or ".loupe" in combined
+
+
+def test_scan_bootstraps_capabilities_before_dispatch(tmp_path, monkeypatch):
+    """`loupe scan` must call bootstrap_capabilities() so lenses have their
+    declared SBOM/CVE/etc inputs available. ci_cmd does this; scan_cmd
+    historically skipped it, so ThreatLens (requires sbom+cve) ran with
+    empty capability slots on every full-repo scan.
+    """
+    monkeypatch.chdir(tmp_path)
+    _init_project(tmp_path)
+
+    calls: list[dict] = []
+
+    async def _spy(**kwargs):
+        # Capture the kwargs so we can assert ctx/lenses/config were threaded.
+        calls.append(kwargs)
+
+    monkeypatch.setattr("loupe_cli.scan_cmd.bootstrap_capabilities", _spy)
+
+    result = runner.invoke(app, ["scan"])
+    assert result.exit_code == 0, result.stdout
+    assert len(calls) == 1, "bootstrap_capabilities was not called by loupe scan"
+    # Sanity: scan threaded the planned lenses through so the bootstrap
+    # only runs caps for what will actually execute.
+    assert "lenses" in calls[0]
+    assert any(
+        getattr(lens.capabilities, "name", None) == "threatlens"
+        for lens in calls[0]["lenses"]
+    )

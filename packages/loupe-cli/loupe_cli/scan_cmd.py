@@ -33,6 +33,9 @@ from loupe_core.artifacts.run_record import (
     load_run_records,
     save_run_record,
 )
+from loupe_core.capabilities.bootstrap import bootstrap_capabilities
+from loupe_core.capabilities.errors import CapabilityError
+from loupe_core.capabilities.registry import CapabilityRegistry
 from loupe_core.config import LoupeConfig, load_config
 from loupe_core.coordinator import build_run_plan
 from loupe_core.dispatcher import dispatch_plan
@@ -90,12 +93,51 @@ def scan_command(
         _write_run_record(ctx, loupe, considered=lenses, cfg=cfg, scope=scope)
         return 0
 
+    # Run capability bootstrap ONCE before any lens executes — mirror of
+    # ci_cmd. ThreatLens declares requires_capabilities=["sbom", "cve"];
+    # without this, full-repo scans saw ctx.sbom/ctx.cve_findings as None
+    # and silently produced threat output without any vulnerability context.
+    planned_lenses = _planned_lenses(lenses, ctx)
+    if any(getattr(lens.capabilities, "requires_capabilities", []) for lens in planned_lenses):
+        registry = CapabilityRegistry.discover()
+        try:
+            asyncio.run(
+                bootstrap_capabilities(
+                    ctx=ctx,
+                    lenses=planned_lenses,
+                    config=cfg,
+                    registry=registry,
+                    repo_path=cwd,
+                )
+            )
+        except CapabilityError as exc:
+            # Same policy as ci_cmd: surface the misconfiguration and
+            # let lenses run with whatever slots got populated. The
+            # alternative (hard-fail the scan) would block onboarding
+            # runs where the operator hasn't wired up Syft/Grype yet.
+            typer.echo(
+                f"warning: capability bootstrap failed — {exc}. "
+                f"Lenses will see partial capability results.",
+                err=True,
+            )
+
     asyncio.run(dispatch_plan(ctx, lenses, boundary, loupe))
     _write_run_record(ctx, loupe, considered=lenses, cfg=cfg, scope=scope)
 
     typer.echo(f"Loupe scan complete. Run: {run_id} (scope={scope}).")
     typer.echo(f"Lenses run: {[p.lens_name for p in ctx.plan]}")
     return 0
+
+
+def _planned_lenses(lenses: list[Lens], ctx: RunContext) -> list[Lens]:
+    """Filter discovered lenses to those actually in the run plan.
+
+    Mirror of ci_cmd._planned_lenses — kept duplicated for now rather than
+    extracted, because there's no third caller yet (D-21: extract on the
+    third instance, not the second).
+    """
+    planned_names = {p.lens_name for p in ctx.plan}
+    return [lens for lens in lenses if lens.capabilities.name in planned_names]
 
 
 def _write_run_record(
