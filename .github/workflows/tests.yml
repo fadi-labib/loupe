@@ -30,7 +30,10 @@ jobs:
         run: uv python install 3.13
 
       - name: Sync workspace
-        run: uv sync --all-packages --frozen
+        # NOTE: --frozen is intentionally omitted because `uv.lock` is
+        # gitignored (.gitignore L19). CI resolves dependencies fresh on each
+        # run. If the project later commits the lockfile, add --frozen here.
+        run: uv sync --all-packages
 
       - name: Ruff lint
         run: uv run ruff check packages/
