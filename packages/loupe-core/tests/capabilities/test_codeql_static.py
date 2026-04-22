@@ -11,6 +11,8 @@ from loupe_core.capabilities.backends.codeql_static import (
     CodeQLStaticBackend,
     _locate_database,
     _parse_sarif,
+    _read_database_language,
+    _resolve_query,
     _sarif_result_to_finding,
 )
 from loupe_core.capabilities.errors import BackendError
@@ -134,6 +136,7 @@ async def test_backend_reads_database_path_from_options(tmp_path, monkeypatch):
 
     typed_db = tmp_path / "typed-db"
     typed_db.mkdir()
+    (typed_db / "codeql-database.yml").write_text("primaryLanguage: python\n")
     monkeypatch.delenv("LOUPE_CODEQL_DB", raising=False)
 
     backend = CodeQLStaticBackend()
@@ -264,6 +267,7 @@ async def test_backend_returns_typed_result(tmp_path, monkeypatch):
     # Set up a fake database directory so _locate_database succeeds.
     db = tmp_path / ".codeql-db"
     db.mkdir()
+    (db / "codeql-database.yml").write_text("primaryLanguage: python\n")
     monkeypatch.delenv("LOUPE_CODEQL_DB", raising=False)
 
     sarif_payload = _sarif(_result(file="src/x.py", line=10))
@@ -318,6 +322,7 @@ async def test_backend_raises_when_database_missing(tmp_path, monkeypatch):
 async def test_backend_raises_on_subprocess_failure(tmp_path, monkeypatch):
     db = tmp_path / ".codeql-db"
     db.mkdir()
+    (db / "codeql-database.yml").write_text("primaryLanguage: python\n")
     monkeypatch.delenv("LOUPE_CODEQL_DB", raising=False)
 
     mock_proc = MagicMock()
@@ -337,3 +342,143 @@ async def test_backend_raises_on_subprocess_failure(tmp_path, monkeypatch):
 def test_backend_registered_under_static_analysis_capability():
     assert CodeQLStaticBackend.name == "static_analysis"
     assert CodeQLStaticBackend.backend_name == "codeql"
+
+
+# ---------------------------------------------------------------------------
+# Query-suite resolution — `codeql database analyze` REQUIRES a query arg
+# ---------------------------------------------------------------------------
+
+
+def test_resolve_query_uses_operator_override(tmp_path):
+    """Operator-provided `options.query` wins, no need to read the DB metadata."""
+    # Note: db_path doesn't need codeql-database.yml when override is set.
+    db = tmp_path / "db"
+    db.mkdir()
+    assert (
+        _resolve_query({"query": "codeql/python-queries:custom.qls"}, db)
+        == "codeql/python-queries:custom.qls"
+    )
+
+
+def test_resolve_query_defaults_from_database_language(tmp_path):
+    """Without override, read primaryLanguage from codeql-database.yml and
+    pick the standard pack for that language."""
+    db = tmp_path / "db"
+    db.mkdir()
+    (db / "codeql-database.yml").write_text("primaryLanguage: python\n")
+    assert _resolve_query({}, db) == "codeql/python-queries"
+
+
+def test_resolve_query_raises_when_metadata_missing(tmp_path):
+    """No metadata file AND no override → BackendError pointing at the fix."""
+    db = tmp_path / "db"
+    db.mkdir()
+    with pytest.raises(BackendError) as exc_info:
+        _resolve_query({}, db)
+    msg = str(exc_info.value).lower()
+    assert "codeql-database.yml" in msg or "query" in msg
+
+
+def test_resolve_query_raises_for_unknown_language(tmp_path):
+    """A language with no shipped default pack must raise rather than silently
+    running the analyzer with no query (which produces empty SARIF)."""
+    db = tmp_path / "db"
+    db.mkdir()
+    (db / "codeql-database.yml").write_text("primaryLanguage: brainfuck\n")
+    with pytest.raises(BackendError) as exc_info:
+        _resolve_query({}, db)
+    assert "brainfuck" in str(exc_info.value)
+
+
+def test_read_database_language_strips_quotes_and_comments(tmp_path):
+    """codeql-database.yml may quote or annotate the language — be robust."""
+    db = tmp_path / "db"
+    db.mkdir()
+    (db / "codeql-database.yml").write_text(
+        'primaryLanguage: "javascript"  # set by codeql database create\n'
+    )
+    assert _read_database_language(db) == "javascript"
+
+
+def test_read_database_language_returns_none_when_file_absent(tmp_path):
+    assert _read_database_language(tmp_path) is None
+
+
+@pytest.mark.asyncio
+async def test_backend_passes_query_argument_to_codeql(tmp_path, monkeypatch):
+    """The subprocess invocation MUST include a query/suite/pack arg per the
+    CodeQL CLI manual — this is the regression this commit fixes."""
+    db = tmp_path / ".codeql-db"
+    db.mkdir()
+    (db / "codeql-database.yml").write_text("primaryLanguage: python\n")
+    monkeypatch.delenv("LOUPE_CODEQL_DB", raising=False)
+
+    sarif_payload = _sarif(_result())
+    mock_proc = MagicMock()
+    mock_proc.returncode = 0
+    mock_proc.stdout = ""
+    mock_proc.stderr = ""
+
+    captured_cmd: list[str] = []
+
+    def _fake_run(cmd, **_kwargs):
+        captured_cmd.extend(cmd)
+        for arg in cmd:
+            if isinstance(arg, str) and arg.startswith("--output="):
+                Path(arg.split("=", 1)[1]).write_text(sarif_payload)
+                break
+        return mock_proc
+
+    with (
+        patch("shutil.which", return_value="/usr/bin/codeql"),
+        patch("subprocess.run", side_effect=_fake_run),
+    ):
+        await CodeQLStaticBackend().run(tmp_path)
+
+    # The default Python pack must appear BEFORE the --format flag, because
+    # `codeql database analyze` is positional: <db> <query> --format ...
+    assert "codeql/python-queries" in captured_cmd
+    db_idx = captured_cmd.index(str(db))
+    query_idx = captured_cmd.index("codeql/python-queries")
+    format_idx = next(
+        i for i, a in enumerate(captured_cmd) if isinstance(a, str) and a.startswith("--format=")
+    )
+    assert db_idx < query_idx < format_idx
+
+
+@pytest.mark.asyncio
+async def test_backend_honours_operator_query_override(tmp_path, monkeypatch):
+    """`options.query` lets operators substitute a non-default suite."""
+    db = tmp_path / ".codeql-db"
+    db.mkdir()
+    # No codeql-database.yml — proving the override skips metadata lookup.
+    monkeypatch.delenv("LOUPE_CODEQL_DB", raising=False)
+
+    sarif_payload = _sarif(_result())
+    mock_proc = MagicMock()
+    mock_proc.returncode = 0
+    mock_proc.stdout = ""
+    mock_proc.stderr = ""
+
+    captured_cmd: list[str] = []
+
+    def _fake_run(cmd, **_kwargs):
+        captured_cmd.extend(cmd)
+        for arg in cmd:
+            if isinstance(arg, str) and arg.startswith("--output="):
+                Path(arg.split("=", 1)[1]).write_text(sarif_payload)
+                break
+        return mock_proc
+
+    backend = CodeQLStaticBackend()
+    backend.options = {"query": "my-org/custom-queries:audit.qls"}
+
+    with (
+        patch("shutil.which", return_value="/usr/bin/codeql"),
+        patch("subprocess.run", side_effect=_fake_run),
+    ):
+        await backend.run(tmp_path)
+
+    assert "my-org/custom-queries:audit.qls" in captured_cmd
+    # The default pack MUST NOT leak through when an override is set.
+    assert "codeql/python-queries" not in captured_cmd

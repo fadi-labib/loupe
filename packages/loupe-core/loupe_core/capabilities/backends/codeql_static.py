@@ -53,6 +53,28 @@ from loupe_core.capabilities.protocols import (
 )
 from loupe_core.capabilities.protocols.static_analysis import Severity
 
+# `codeql database analyze` requires a query/suite/pack argument
+# (per the CodeQL CLI manual). Defaulting to the standard
+# language-specific pack — `codeql/<lang>-queries` — gives operators a
+# meaningful baseline scan without needing to author a custom suite.
+# The pack identifier resolves to the security-and-quality default
+# suite shipped with the CodeQL pack registry. Operators can override
+# via ``capabilities.static_analysis.options.query``.
+_DEFAULT_QUERY_BY_LANGUAGE: dict[str, str] = {
+    "python": "codeql/python-queries",
+    "javascript": "codeql/javascript-queries",
+    "typescript": "codeql/javascript-queries",  # CodeQL bundles them together.
+    "go": "codeql/go-queries",
+    "java": "codeql/java-queries",
+    "kotlin": "codeql/java-queries",  # Same pack.
+    "csharp": "codeql/csharp-queries",
+    "cpp": "codeql/cpp-queries",
+    "c": "codeql/cpp-queries",
+    "ruby": "codeql/ruby-queries",
+    "swift": "codeql/swift-queries",
+    "rust": "codeql/rust-queries",
+}
+
 # SARIF severity → Loupe severity. SARIF's vocabulary is "error",
 # "warning", "note", "none" with optional security-severity (CVSS-like).
 # We map by `level`; CVSS-style scoring is out of scope for v1.
@@ -102,6 +124,13 @@ class CodeQLStaticBackend:
                 ),
             )
 
+        # Resolve the mandatory query argument. Operator override wins;
+        # otherwise fall back to the language-specific standard pack
+        # derived from the database's `codeql-database.yml`. Raising here
+        # rather than silently running with no findings makes the
+        # misconfiguration visible at the right layer.
+        query = _resolve_query(self.options, db_path)
+
         with tempfile.NamedTemporaryFile(
             mode="w",
             suffix=".sarif",
@@ -117,6 +146,7 @@ class CodeQLStaticBackend:
                     "database",
                     "analyze",
                     str(db_path),
+                    query,
                     "--format=sarif-latest",
                     f"--output={sarif_path}",
                     "--quiet",
@@ -181,6 +211,76 @@ def _locate_database(
     default = repo_path / ".codeql-db"
     if default.exists():
         return default
+    return None
+
+
+def _resolve_query(options: dict[str, str], db_path: Path) -> str:
+    """Pick the query/suite/pack argument for ``codeql database analyze``.
+
+    Resolution order:
+
+    1. ``options['query']`` (typed override from
+       ``capabilities.static_analysis.options.query``).
+    2. ``_DEFAULT_QUERY_BY_LANGUAGE[lang]``, where ``lang`` is read from
+       the database's ``codeql-database.yml`` metadata file.
+
+    Raises ``BackendError`` if no operator override is set AND the
+    database language cannot be determined or maps to no known default —
+    silently running with no query would produce empty SARIF, which is
+    indistinguishable from "no findings" and is the bug this function
+    exists to prevent.
+    """
+    override = options.get("query") if options else None
+    if override:
+        return override
+
+    language = _read_database_language(db_path)
+    if language is None:
+        raise BackendError(
+            backend_name="codeql",
+            message=(
+                f"codeql database at {db_path} has no readable "
+                "`codeql-database.yml` to derive a query suite from. Either "
+                "rebuild the database with `codeql database create` or set "
+                "`capabilities.static_analysis.options.query` to a known "
+                "query/suite/pack (e.g. `codeql/python-queries`)."
+            ),
+        )
+    default = _DEFAULT_QUERY_BY_LANGUAGE.get(language)
+    if default is None:
+        raise BackendError(
+            backend_name="codeql",
+            message=(
+                f"no default CodeQL query suite for language {language!r}. "
+                "Set `capabilities.static_analysis.options.query` in "
+                ".loupe/config.yaml to override (e.g. `codeql/<lang>-queries`)."
+            ),
+        )
+    return default
+
+
+def _read_database_language(db_path: Path) -> str | None:
+    """Return the primary language of a CodeQL database, or None if unreadable.
+
+    CodeQL writes ``codeql-database.yml`` at the database root with a
+    ``primaryLanguage:`` key. We parse only that key to avoid pulling
+    ruamel.yaml into this module just for one field — a line-based read
+    is enough for the well-defined output of ``codeql database create``.
+    """
+    metadata = db_path / "codeql-database.yml"
+    if not metadata.exists():
+        return None
+    try:
+        for raw in metadata.read_text().splitlines():
+            line = raw.strip()
+            if line.startswith("primaryLanguage:"):
+                # Strip quotes and inline comments.
+                value = line.split(":", 1)[1].strip()
+                value = value.split("#", 1)[0].strip()
+                value = value.strip("\"'")
+                return value.lower() or None
+    except OSError:
+        return None
     return None
 
 
