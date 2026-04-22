@@ -38,7 +38,11 @@ from loupe_core.artifacts.types import Severity
 from loupe_core.config import load_config
 from ruamel.yaml import YAML
 
-from loupe_action.comment_poster import GitHubAPIError, StickyCommentPoster
+from loupe_action.comment_poster import (
+    FreshCommentPoster,
+    GitHubAPIError,
+    StickyCommentPoster,
+)
 from loupe_action.formatter import format_pr_comment
 from loupe_action.inputs import ActionInputs, InputError, parse_inputs
 from loupe_action.pr_fetcher import PRFetcher, PRFetchError
@@ -71,8 +75,18 @@ async def run(*, env: dict[str, str], client: httpx.AsyncClient, cwd: Path) -> i
     threats = _load_threats(workspace / ".loupe" / "threats.yaml")
     body = format_pr_comment(record=record, threats=threats)
 
-    if inputs.comment_mode != "none":
-        await StickyCommentPoster(
+    # action.yml documents three modes; pick the matching poster.
+    # "new" historically fell through to StickyCommentPoster and silently
+    # behaved like sticky — that's the bug this branch fixes.
+    if inputs.comment_mode == "new":
+        poster_cls: type[StickyCommentPoster] = FreshCommentPoster
+    elif inputs.comment_mode == "sticky":
+        poster_cls = StickyCommentPoster
+    else:  # "none"
+        poster_cls = None  # type: ignore[assignment]
+
+    if poster_cls is not None:
+        await poster_cls(
             client=client,
             repo_owner=inputs.repo_owner,
             repo_name=inputs.repo_name,

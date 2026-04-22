@@ -5,6 +5,7 @@ from typing import Any
 import httpx
 import pytest
 from loupe_action.comment_poster import (
+    FreshCommentPoster,
     GitHubAPIError,
     StickyCommentPoster,
 )
@@ -188,6 +189,75 @@ async def test_ignores_stranger_authored_comment_with_sentinel():
         await _build_poster(client).post(body=f"{COMMENT_SENTINEL}\nfresh\n")
     assert len(posted_bodies) == 1
     assert "fresh" in posted_bodies[0]
+
+
+def _build_fresh_poster(client) -> FreshCommentPoster:
+    return FreshCommentPoster(
+        client=client,
+        repo_owner="acme",
+        repo_name="widgets",
+        pr_number=42,
+        token="ghp_test",
+    )
+
+
+@pytest.mark.asyncio
+async def test_fresh_poster_always_creates_even_when_sticky_exists():
+    """`comment_mode: new` must NOT edit prior sticky comments. A reviewer
+    who chose `new` is asking for a per-push timeline; editing the older
+    comment would erase that intent."""
+    requests_seen: list[str] = []
+    posted_bodies: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests_seen.append(f"{request.method} {request.url.path}")
+        # FreshCommentPoster MUST NOT GET /comments (no list-then-edit).
+        if request.method == "GET":
+            raise AssertionError(f"FreshCommentPoster must not list comments — got {request.url}")
+        if request.method == "PATCH":
+            raise AssertionError(f"FreshCommentPoster must not PATCH — got {request.url}")
+        if request.method == "POST" and "comments" in str(request.url):
+            posted_bodies.append(request.content.decode())
+            return httpx.Response(201, json={"id": 12345})
+        raise AssertionError(f"unexpected: {request.method} {request.url}")
+
+    async with _async_client(handler) as client:
+        body = f"{COMMENT_SENTINEL}\nfresh-each-time\n"
+        comment_id = await _build_fresh_poster(client).post(body=body)
+
+    assert comment_id == 12345
+    assert len(posted_bodies) == 1
+    assert "fresh-each-time" in posted_bodies[0]
+    # Only one HTTP call total — the POST.
+    assert len(requests_seen) == 1
+    assert requests_seen[0].startswith("POST")
+
+
+@pytest.mark.asyncio
+async def test_fresh_poster_authorization_header_carries_token():
+    """Auth wiring must be identical to StickyCommentPoster — inherited from parent."""
+    seen_headers: dict[str, str] = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen_headers.update(request.headers)
+        return httpx.Response(201, json={"id": 1})
+
+    async with _async_client(handler) as client:
+        await _build_fresh_poster(client).post(body=f"{COMMENT_SENTINEL}\n")
+    assert seen_headers["authorization"] == "Bearer ghp_test"
+
+
+@pytest.mark.asyncio
+async def test_fresh_poster_propagates_post_failures():
+    """If the POST fails, surface the API error rather than silently
+    swallowing it — the action step should turn red, not look clean."""
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(422, json={"message": "validation"})
+
+    async with _async_client(handler) as client:
+        with pytest.raises(GitHubAPIError, match="422"):
+            await _build_fresh_poster(client).post(body=f"{COMMENT_SENTINEL}\n")
 
 
 @pytest.mark.asyncio

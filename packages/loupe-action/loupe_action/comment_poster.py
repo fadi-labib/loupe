@@ -1,16 +1,18 @@
-"""Sticky-comment poster for the GitHub PR API.
+"""Comment posters for the GitHub PR API.
 
-`StickyCommentPoster.post(body)` is find-or-create:
+Two strategies, selectable via ``action.yml``'s ``comment_mode`` input:
 
-1. List comments on the PR, paginating until exhausted.
-2. If any comment body starts with ``COMMENT_SENTINEL``, ``PATCH`` it.
-3. Otherwise, ``POST`` a new comment.
+- ``StickyCommentPoster.post(body)`` is find-or-create. List comments,
+  PATCH any prior bot-authored comment carrying ``COMMENT_SENTINEL``,
+  otherwise POST a new one. Long-lived PRs end with *one* current
+  Loupe summary instead of one per push.
+- ``FreshCommentPoster.post(body)`` always POSTs a new comment, even if
+  a prior sticky one exists. Use when reviewers prefer a per-push
+  timeline (each comment captures the state at that push) over a single
+  rolling summary.
 
-The sticky behaviour matters for audit hygiene: a long-lived PR with
-30 push events should end with *one* Loupe comment showing the current
-state, not 30 stale comments cluttering the review timeline. The
-hash-chained run records under ``.loupe/runs/`` are where the audit
-trail lives — the PR comment is a summary affordance.
+The hash-chained run records under ``.loupe/runs/`` are where the audit
+trail lives — PR comments are a summary affordance, not authoritative.
 """
 
 from __future__ import annotations
@@ -112,6 +114,27 @@ class StickyCommentPoster:
             "X-GitHub-Api-Version": "2022-11-28",
             "Content-Type": "application/json",
         }
+
+
+class FreshCommentPoster(StickyCommentPoster):
+    """Always create a new comment; never edit an existing sticky one.
+
+    Inherits header construction and ``_create`` from
+    ``StickyCommentPoster`` so the only behavioural delta is the override
+    of ``post()`` — no list / patch logic. The shared transport state
+    (auth header, API base, repo coords) is wired through the parent
+    constructor unchanged.
+
+    This implements ``comment_mode: new`` from ``action.yml``. Operators
+    who want a per-push audit trail in the PR timeline pick this over
+    sticky; operators who want a single rolling summary pick sticky.
+    """
+
+    async def post(self, *, body: str) -> int:
+        # Deliberately bypass `_find_existing` — even if a prior sticky
+        # comment exists, we leave it alone and create fresh. The historical
+        # bot-authored comments stay in the timeline as a per-push record.
+        return await self._create(body=body)
 
 
 _LINK_NEXT = re.compile(r'<([^>]+)>;\s*rel="next"')

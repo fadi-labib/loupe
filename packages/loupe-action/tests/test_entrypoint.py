@@ -201,6 +201,54 @@ async def test_entrypoint_skips_comment_when_mode_is_none(tmp_path: Path):
 
 
 @pytest.mark.asyncio
+async def test_entrypoint_uses_fresh_poster_when_comment_mode_is_new(tmp_path: Path):
+    """`comment_mode: new` must dispatch FreshCommentPoster — not silently
+    fall through to StickyCommentPoster, which was the original bug.
+
+    The contract from FreshCommentPoster's unit tests is "never GET, never
+    PATCH, only POST". This integration check asserts the same network
+    shape end-to-end so a future regression in entrypoint dispatch would
+    show up here as well.
+    """
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    _seed_workspace(workspace)
+    output = tmp_path / "gh_output"
+    env = _env(workspace, output)
+    env["INPUT_COMMENT_MODE"] = "new"
+
+    posted: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        url = str(request.url)
+        accept = request.headers.get("accept", "")
+        if "/pulls/42" in url and "diff" in accept:
+            return httpx.Response(200, text="diff --git a/x b/x\n+x\n")
+        if "/pulls/42" in url:
+            return httpx.Response(
+                200,
+                json={"base": {"sha": "b" * 40}, "head": {"sha": "h" * 40}},
+            )
+        # Fresh mode: GET /comments and PATCH must NEVER fire.
+        if "/comments" in url and request.method == "GET":
+            raise AssertionError("FreshCommentPoster must not list comments")
+        if "/comments" in url and request.method == "PATCH":
+            raise AssertionError("FreshCommentPoster must not edit a comment")
+        if "/comments" in url and request.method == "POST":
+            posted.append(request.content.decode())
+            return httpx.Response(201, json={"id": 7777})
+        raise AssertionError(f"unexpected: {request.method} {url}")
+
+    with patch("loupe_action.entrypoint.ci_command", return_value=0):
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+            exit_code = await entrypoint.run(env=env, client=client, cwd=workspace)
+
+    assert exit_code == 0
+    assert len(posted) == 1
+    assert COMMENT_SENTINEL in posted[0]
+
+
+@pytest.mark.asyncio
 async def test_entrypoint_propagates_ci_exit_64_without_on_disk_gate(tmp_path: Path):
     # ``loupe ci`` returns 64 for usage/config errors. The action used to
     # fold that with the on-disk gate via boolean-OR, which (a) could

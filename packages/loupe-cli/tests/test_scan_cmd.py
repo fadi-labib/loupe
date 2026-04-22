@@ -100,6 +100,5 @@ def test_scan_bootstraps_capabilities_before_dispatch(tmp_path, monkeypatch):
     # only runs caps for what will actually execute.
     assert "lenses" in calls[0]
     assert any(
-        getattr(lens.capabilities, "name", None) == "threatlens"
-        for lens in calls[0]["lenses"]
+        getattr(lens.capabilities, "name", None) == "threatlens" for lens in calls[0]["lenses"]
     )
