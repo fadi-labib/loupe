@@ -21,7 +21,7 @@ You pick the LLM. PydanticAI gives you Anthropic, OpenAI, Google, Mistral, Groq,
 **Install (pre-alpha; pre-PyPI):**
 
 ```bash
-git clone https://github.com/fadilabib/loupe.git
+git clone https://github.com/fadi-labib/loupe.git
 cd loupe
 uv sync --all-packages
 ```
@@ -61,8 +61,8 @@ jobs:
       # this repo. GitHub's `uses:` resolution does not currently support
       # sub-paths cleanly, so the cleanest workaround is to vendor the action
       # ref directly or wait for the v0.1 tag at the repo root. Once v0.1
-      # publishes, switch to: `uses: fadilabib/loupe-action@v0.1`.
-      - uses: fadilabib/loupe@main
+      # publishes, switch to: `uses: fadi-labib/loupe-action@v0.1`.
+      - uses: fadi-labib/loupe@main
         with:
           pr: ${{ github.event.pull_request.number }}
           comment_mode: sticky  # or 'new' or 'none'
@@ -75,7 +75,7 @@ The Action publishes seven outputs (`findings_count`, `findings_critical`, `find
 
 ## Where to go next
 
-The published docs site lives at <https://fadilabib.github.io/loupe/> with search, navigation, and per-page social previews. The table below is the GitHub-flavoured Markdown fallback for browsing in-tree.
+The published docs site lives at <https://fadi-labib.github.io/loupe/> with search, navigation, and per-page social previews. The table below is the GitHub-flavoured Markdown fallback for browsing in-tree.
 
 | Question | File |
 |---|---|

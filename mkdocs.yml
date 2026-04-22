@@ -1,8 +1,8 @@
 site_name: Loupe
 site_description: A platform of analysis lenses for software-engineering risk activities. v1 ships ThreatLens for diff-aware STRIDE threat modelling and EU CRA Annex I evidence.
-site_url: https://fadilabib.github.io/loupe/
-repo_url: https://github.com/fadilabib/loupe
-repo_name: fadilabib/loupe
+site_url: https://fadi-labib.github.io/loupe/
+repo_url: https://github.com/fadi-labib/loupe
+repo_name: fadi-labib/loupe
 edit_uri: edit/main/docs/
 docs_dir: docs
 site_dir: site
@@ -14,8 +14,8 @@ site_dir: site
 # a clear owner to operate against.
 copyright: >
   Copyright &copy; 2026 Fadi Labib ·
-  <a href="https://github.com/fadilabib/loupe/blob/main/LICENSE">Apache 2.0</a> ·
-  <a href="https://github.com/fadilabib/loupe/blob/main/SECURITY.md">Security</a> ·
+  <a href="https://github.com/fadi-labib/loupe/blob/main/LICENSE">Apache 2.0</a> ·
+  <a href="https://github.com/fadi-labib/loupe/blob/main/SECURITY.md">Security</a> ·
   <a href="changelog/">Changelog</a>
 
 # Local-only plan/spec subdirs (kept on disk via .git/info/exclude) should
@@ -229,5 +229,5 @@ extra:
     alias: true
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/fadilabib/loupe
+      link: https://github.com/fadi-labib/loupe
       name: Source on GitHub

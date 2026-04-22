@@ -95,7 +95,7 @@ jobs:
         run: uv run mike deploy --push --update-aliases dev latest
 
       - name: Set default version
-        # Make the bare URL (https://fadilabib.github.io/loupe/) redirect to
+        # Make the bare URL (https://fadi-labib.github.io/loupe/) redirect to
         # /latest/ so first-time visitors land on the rolling docs.
         # Idempotent — safe to run on every workflow invocation.
         run: uv run mike set-default --push latest

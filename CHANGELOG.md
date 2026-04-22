@@ -95,4 +95,4 @@ This section will get more substantive once v0.1 is in flight. Outline:
 4. Push the tag. The release workflow (to be added) builds wheels and publishes to PyPI.
 5. Once the doc site is published, `mike deploy <version>` (mike is the standard MkDocs versioning tool) writes the versioned docs to the `gh-pages` branch.
 
-[Unreleased]: https://github.com/fadilabib/loupe/commits/main
+[Unreleased]: https://github.com/fadi-labib/loupe/commits/main

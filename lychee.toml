@@ -18,7 +18,7 @@ exclude = [
   # Placeholder repo paths used in CHANGELOG `[Unreleased]` compare links and
   # similar templates. Narrow to placeholder fragments only so real repo URLs
   # still get verified.
-  'https://github.com/fadilabib/loupe/<placeholder>',
+  'https://github.com/fadi-labib/loupe/<placeholder>',
 ]
 
 # Treat redirects as success. 429 = rate-limited (GitHub anonymous quota);

@@ -23,7 +23,7 @@ If you are evaluating Loupe for production use, wait for the agent wiring to lan
 From source (pre-alpha, today):
 
 ```bash
-git clone https://github.com/fadilabib/loupe.git
+git clone https://github.com/fadi-labib/loupe.git
 cd loupe
 uv sync --all-packages
 ```

@@ -4,7 +4,7 @@ Loupe is a **development product**, not a production-supported one. There is no 
 
 ## Reporting a vulnerability
 
-Open a regular [GitHub issue](https://github.com/fadilabib/loupe/issues/new) describing what you found. There is no private disclosure channel because the project is pre-alpha and the threat model assumes the source is fully public.
+Open a regular [GitHub issue](https://github.com/fadi-labib/loupe/issues/new) describing what you found. There is no private disclosure channel because the project is pre-alpha and the threat model assumes the source is fully public.
 
 When opening the issue, please include:
 
