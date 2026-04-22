@@ -32,10 +32,11 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Run Vale
-        # Pin away from the moving `reviewdog` branch ref to a stable major
-        # tag. TODO: tighten further to a SHA pin once we audit which v3.x
-        # tag corresponds to the current `reviewdog` branch tip.
-        uses: errata-ai/vale-action@v3
+        # The action ships under the `reviewdog` branch ref (no semver
+        # tags are published as of 2026-05). Treat the branch ref as
+        # moving; audit changes when they occur. TODO: switch to a SHA
+        # pin once the action publishes a versioned tag.
+        uses: errata-ai/vale-action@reviewdog
         with:
           version: 3.9.1
           files: docs
