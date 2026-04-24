@@ -35,8 +35,9 @@ max_concurrency = 8
 max_retries = 2
 retry_wait_time = 2
 
-# We do not check mailto: or tel: links.
-exclude_mail = true
+# We do not check mailto: or tel: links. (Lychee v0.23+ renamed
+# `exclude_mail` to `include_mail`; same boolean, inverted sense.)
+include_mail = false
 
 # Cache results between runs in CI so re-running PRs is fast.
 cache = true

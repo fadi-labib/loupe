@@ -60,6 +60,11 @@ jobs:
         uses: astral-sh/setup-uv@v4.1
         with:
           enable-cache: true
+          # uv.lock is gitignored in this project (.gitignore L19); without
+          # an explicit glob, setup-uv defaults to `**/uv.lock` and the
+          # cache step fails the workflow because no lockfile is checked
+          # in. Key the cache on pyproject.toml instead.
+          cache-dependency-glob: '**/pyproject.toml'
 
       - name: Set up Python
         run: uv python install 3.13
