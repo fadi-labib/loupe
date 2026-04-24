@@ -1,0 +1,1869 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A platform of analysis lenses for software-engineering risk activities. v1 ships ThreatLens for diff-aware STRIDE threat modelling and EU CRA Annex I evidence.">
+      
+      
+      
+        <link rel="canonical" href="https://fadi-labib.github.io/loupe/dev/reference/glossary/">
+      
+      
+        <link rel="prev" href="../decisions/">
+      
+      
+        <link rel="next" href="../data-handling/">
+      
+      
+      <link rel="icon" href="../../assets/favicon.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.23">
+    
+    
+      
+        <title>Glossary - Loupe</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.84d31ad4.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Geist:300,300i,400,400i,700,700i%7CGeist+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Geist";--md-code-font:"Geist Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+      
+        <meta  property="og:type"  content="website" >
+      
+        <meta  property="og:title"  content="Glossary - Loupe" >
+      
+        <meta  property="og:description"  content="A platform of analysis lenses for software-engineering risk activities. v1 ships ThreatLens for diff-aware STRIDE threat modelling and EU CRA Annex I evidence." >
+      
+        <meta  property="og:image"  content="https://fadi-labib.github.io/loupe/dev/assets/images/social/reference/glossary.png" >
+      
+        <meta  property="og:image:type"  content="image/png" >
+      
+        <meta  property="og:image:width"  content="1200" >
+      
+        <meta  property="og:image:height"  content="630" >
+      
+        <meta  property="og:url"  content="https://fadi-labib.github.io/loupe/dev/reference/glossary/" >
+      
+        <meta  name="twitter:card"  content="summary_large_image" >
+      
+        <meta  name="twitter:title"  content="Glossary - Loupe" >
+      
+        <meta  name="twitter:description"  content="A platform of analysis lenses for software-engineering risk activities. v1 ships ThreatLens for diff-aware STRIDE threat modelling and EU CRA Annex I evidence." >
+      
+        <meta  name="twitter:image"  content="https://fadi-labib.github.io/loupe/dev/assets/images/social/reference/glossary.png" >
+      
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#loupe-glossary" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+        <aside class="md-banner">
+          <div class="md-banner__inner md-grid md-typeset">
+            
+              <button class="md-banner__button md-icon" aria-label="Don't show this again">
+                
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+              </button>
+            
+            
+  <strong>Pre-alpha.</strong>
+  The ThreatLens agent is scaffolded; live-LLM wiring is the next milestone.
+  See the
+  <a href="../../changelog/">changelog</a>
+  for status, or the
+  <a href="../../roadmap/">roadmap</a>
+  for what's coming.
+
+          </div>
+          
+            <script>var el=document.querySelector("[data-md-component=announce]");if(el){var content=el.querySelector(".md-typeset");__md_hash(content.innerHTML)===__md_get("__announce")&&(el.hidden=!0)}</script>
+          
+        </aside>
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Loupe" class="md-header__button md-logo" aria-label="Loupe" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Loupe
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Glossary
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/fadi-labib/loupe" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    fadi-labib/loupe
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../quickstart/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Quickstart
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../tutorials/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Tutorials
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../how-to/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  How-to
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../principles/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Principles
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../concepts/architecture/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Concepts
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../cli/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../roadmap/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Roadmap
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../about/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  About
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../comparison/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Comparison
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../contributing/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Contributing
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../changelog/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Changelog
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../tags/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Tags
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Loupe" class="md-nav__button md-logo" aria-label="Loupe" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    Loupe
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/fadi-labib/loupe" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    fadi-labib/loupe
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Quickstart
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../tutorials/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    Tutorials
+    
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../how-to/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    How-to
+    
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../principles/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Principles
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../concepts/architecture/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    Concepts
+    
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Reference
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CLI
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mcp-tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MCP tools
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Config
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../loupe-directory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    .loupe layout
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Verification
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../versioning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Versioning
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../decisions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Decisions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    Glossary
+    
+  </span>
+  
+
+      </a>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../data-handling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data handling
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pricing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Pricing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../loupe-threat-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Threat model of Loupe
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../evaluation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Evaluation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_13" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../schemas/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    Schemas
+    
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7_13" id="__nav_7_13_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_13_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7_13">
+            <span class="md-nav__icon md-icon"></span>
+            Schemas
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../schemas/threat/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Threat
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../schemas/mitigation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Mitigation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../schemas/run-record/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    RunRecord
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../schemas/project-context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ProjectContext
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../schemas/knowledge/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    KnowledgeGraph
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../schemas/capabilities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Capability results
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Roadmap
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../about/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    About
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../comparison/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Comparison
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Contributing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../changelog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Changelog
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tags/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Tags
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/fadi-labib/loupe/edit/main/docs/reference/glossary.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+    
+      
+    
+    <a href="https://github.com/fadi-labib/loupe/raw/main/docs/reference/glossary.md" title="View source of this page" class="md-content__button md-icon">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 18c.56 0 1 .44 1 1s-.44 1-1 1-1-.44-1-1 .44-1 1-1m0-3c-2.73 0-5.06 1.66-6 4 .94 2.34 3.27 4 6 4s5.06-1.66 6-4c-.94-2.34-3.27-4-6-4m0 6.5a2.5 2.5 0 0 1-2.5-2.5 2.5 2.5 0 0 1 2.5-2.5 2.5 2.5 0 0 1 2.5 2.5 2.5 2.5 0 0 1-2.5 2.5M9.27 20H6V4h7v5h5v4.07c.7.08 1.36.25 2 .49V8l-6-6H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h4.5a8.2 8.2 0 0 1-1.23-2"/></svg>
+    </a>
+  
+
+
+<h1 id="loupe-glossary"><abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr> glossary<a class="headerlink" href="#loupe-glossary" title="Permanent link">&para;</a></h1>
+<p>Terms you'll encounter across the codebase and docs. Alphabetical. Each entry carries a stable <code>#term-&lt;slug&gt;</code> anchor so other docs can deep-link.</p>
+<hr />
+<p><strong id="term-artifact">Artifact</strong>
+: A structured file <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr> maintains in <code>.loupe/</code>. Each artifact has a Pydantic schema and (where it's machine-readable) a YAML/JSON round-trip. The ten artifacts are: <code>context.md</code>, <code>knowledge.yaml</code>, <code>threat-model.md</code>, <code>threats.yaml</code>, <code>mitigations.yaml</code>, <code>sbom.cdx.json</code>, <code>vex.json</code>, <code>decisions/*.md</code>, <code>runs/*.json</code>, <code>config.yaml</code>. See <a href="../decisions/#d-06"><code>decisions.md</code> D-06</a>.</p>
+<p><strong id="term-audit-trail">Audit trail</strong>
+: The chronological record of every <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr> run. Implemented as <code>runs/*.json</code> files with a <abbr title="Secure Hash Algorithm, 256-bit variant. Used for run-record hash chains.">SHA-256</abbr> hash chain (each record references the previous one's <code>self_hash</code>). Tampering with history breaks the chain and is detected by <code>loupe verify</code>.</p>
+<p><strong id="term-baseline">Baseline</strong>
+: A "known-good" snapshot of a project's threat model against which future diffs can be compared. <strong>Deferred to v1.x</strong>; v1 ships only diff mode and full-repo scan, with no explicit baseline concept.</p>
+<p><strong id="term-blackboard">Blackboard</strong>
+: The <code>RunContext</code> object, treated as a shared workspace where lenses read and write within a single invocation. The blackboard pattern (from classical multi-agent systems) is what lets multiple lenses coordinate cheaply without re-sending each other's context to the <abbr title="Large Language Model.">LLM</abbr>.</p>
+<p><strong id="term-boundary-violation">BoundaryViolation</strong>
+: The exception raised when an agent tool attempts to write outside its allow-list. Caught by callers; logged in run records as <code>enforcement_error</code>. Surfacing this exception aborts the lens; surfacing it in <abbr title="Continuous Integration.">CI</abbr> fails the run.</p>
+<p><strong id="term-capability">Capability</strong>
+: A typed Python Protocol describing one focused, tool-agnostic operation (e.g., <code>SbomCapability</code> for <abbr title="Software Bill of Materials. CycloneDX is the format Loupe uses.">SBOM</abbr> generation, <code>CveCapability</code> for <abbr title="Common Vulnerabilities and Exposures — public catalogue of disclosed security flaws.">CVE</abbr> matching, <code>SecretDetectionCapability</code> for secret scanning). Capabilities are the verbs of the system; lenses are the nouns. A lens declares which capabilities it <code>requires_capabilities</code> and the platform resolves backends from registered packages. See <a href="../../concepts/capabilities/"><code>../concepts/capabilities.md</code></a> and <a href="../decisions/#d-18"><code>decisions.md</code> D-18</a>.</p>
+<p><strong id="term-capability-backend">CapabilityBackend</strong>
+: A concrete implementation of a Capability Protocol. Backends register via Python entry points under the single <code>loupe.capabilities</code> group; the class's <code>name</code> attribute declares which capability it satisfies (e.g., <code>name = "sbom"</code>). Bundled defaults (Syft, Grype) live in <code>loupe_core/capabilities/backends/</code>; third-party backends ship as their own pip packages.</p>
+<p><strong id="term-capability-registry">CapabilityRegistry</strong>
+: The runtime facade in <code>loupe_core/capabilities/registry.py</code> that discovers backends at startup and resolves <code>(capability_name, backend_name)</code> pairs to concrete instances. <code>bootstrap_capabilities()</code> invokes them and populates the typed <code>RunContext</code> slots (<code>ctx.sbom</code>, <code>ctx.cve_findings</code>, <code>ctx.secrets</code>, <code>ctx.static_findings</code>).</p>
+<p><strong id="term-composition-mode">Composition mode</strong>
+: How the registry combines multiple backends for the same capability. Configured per-capability in <code>config.yaml</code>. Five modes:</p>
+<div class="language-text highlight"><pre><span></span><code>- `single`: use the first available backend.
+- `fallback`: try in order, failover to the next on failure.
+- `union`: run all and merge findings.
+- `consensus`: only emit findings ≥N backends agree on.
+- `pipeline`: chain output of one into the next.
+
+The composition mode is part of the project&#39;s audit posture; a regulator can read it.
+</code></pre></div>
+<p><strong id="term-code-diff">CodeDiff</strong>
+: The parsed representation of a unified diff: base SHA, head SHA, changed paths, added/removed line counts, and the raw unified-diff text. Produced by <code>parse_unified_diff()</code> once per <code>RunContext.bootstrap()</code>.</p>
+<p><strong id="term-conformity-assessment">Conformity assessment</strong>
+: The EU <abbr title="EU Cyber Resilience Act. Regulation 2024/2847. Fully applicable December 2027.">CRA</abbr>'s term for "the process of proving you meet the requirements." <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr>'s artefacts (<code>threats.yaml</code>, <code>mitigations.yaml</code>, <code>threat-model.md</code>, <code>sbom.cdx.json</code>, <code>vex.json</code>) feed <abbr title="EU Cyber Resilience Act. Regulation 2024/2847. Fully applicable December 2027.">CRA</abbr> Annex I conformity evidence directly.</p>
+<p><strong id="term-coordinator">Coordinator</strong>
+: The top-level orchestrator in <code>loupe_core/coordinator.py</code>. Builds the <code>LensRunPlan</code> for an invocation: which lenses run, in what order, with what dependencies between them. Uses each lens's <code>is_relevant()</code> to skip lenses cheaply.</p>
+<p><strong id="term-cra"><abbr title="EU Cyber Resilience Act. Regulation 2024/2847. Fully applicable December 2027.">CRA</abbr></strong>
+: EU Cyber Resilience Act. Regulation 2024/2847. Fully applicable December 2027. Requires manufacturers of "products with digital elements" to maintain risk assessment, secure-by-design rationale, <abbr title="Software Bill of Materials. CycloneDX is the format Loupe uses.">SBOM</abbr>, and per-vulnerability impact statements.</p>
+<p><strong id="term-cyclonedx"><abbr title="SBOM format standard. Loupe uses 1.6 JSON. cyclonedx.org.">CycloneDX</abbr></strong>
+: The <abbr title="Software Bill of Materials. CycloneDX is the format Loupe uses.">SBOM</abbr> format <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr> uses, generated by Syft. <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr> never authors <abbr title="SBOM format standard. Loupe uses 1.6 JSON. cyclonedx.org.">CycloneDX</abbr> with the <abbr title="Large Language Model.">LLM</abbr>; the tool produces it deterministically.</p>
+<p><strong id="term-defence-in-depth">Defence in depth</strong>
+: <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr>'s enforcement model. Four layers (tool surface, branch namespace, verify command, interactive UX gate) each enforce write boundaries independently. No single layer is load-bearing; if one fails, the others still hold.</p>
+<p><strong id="term-diff-mode">Diff mode</strong>
+: <code>loupe ci --diff …</code>. The agent analyses only what's in the unified diff, with high prompt-cache hit rate and minimal cost. The default invocation mode. Contrast: <strong>full-repo mode</strong> (<code>loupe scan</code>).</p>
+<p><strong id="term-dispatcher">Dispatcher</strong>
+: The runtime in <code>loupe_core/dispatcher.py</code> that executes a <code>LensRunPlan</code>. Calls each lens's <code>run()</code> method in order, sharing the same <code>RunContext</code> across all calls.</p>
+<p><strong id="term-element">Element</strong>
+: A discrete system component referenced in threat modelling, with a stable <code>E-NNN</code> ID. The <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr>-self threat model uses <code>E-LOUPE-001</code> through <code>E-LOUPE-007</code> for things like "the <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr> CLI process" or "the <abbr title="Large Language Model.">LLM</abbr> provider HTTPS API". Threats and mitigations cross-reference elements by ID. Elements live in <code>knowledge.yaml</code> once promoted from a <code>Fact</code>.</p>
+<p><strong id="term-evidence-grade">Evidence-grade</strong>
+: <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr>'s quality bar. Artefacts that an external auditor could verify with their own tooling, without trusting <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr>. Standard formats (<abbr title="SBOM format standard. Loupe uses 1.6 JSON. cyclonedx.org.">CycloneDX</abbr>, <abbr title="Vulnerability EXploitability eXchange — open format for per-CVE impact statements. openvex.dev.">OpenVEX</abbr>), stable IDs, hash chains, Git as the audit substrate. See <a href="../../principles/#principle-1"><code>principles.md</code> §1</a>.</p>
+<p><strong id="term-fact">Fact</strong>
+: A cross-cutting datum posted by a lens to <code>RunContext.facts</code>. <code>Fact(subject, predicate, value, confidence, rationale)</code>. Read by other lenses to coordinate; promoted to the persistent knowledge graph only when high-confidence and corroborated. Contrast: <strong>Finding</strong>, which is lens-private.</p>
+<p><strong id="term-finding">Finding</strong>
+: A lens-private datum stored in <code>RunContext.findings["&lt;lens-name&gt;"]</code>. Other lenses can read findings from completed lenses but writes are namespaced (one lens can't clobber another). Contrast: <strong>Fact</strong>, which is cross-cutting.</p>
+<p><strong id="term-full-repo-mode">Full-repo mode</strong>
+: <code>loupe scan</code>. The agent analyses the whole codebase as if it were a giant diff against an empty baseline. Used for onboarding, periodic re-baseline, audit prep. Higher cost than diff mode. See <a href="../decisions/#d-15"><code>decisions.md</code> D-15</a>.</p>
+<p><strong id="term-hara"><abbr title="Hazard Analysis and Risk Assessment. ISO 26262's term (functional safety).">HARA</abbr></strong>
+: Hazard Analysis and Risk Assessment. ISO 26262's term for functional-safety risk analysis. Not in scope for v1; will be the focus of a future <strong>SafetyLens</strong>.</p>
+<p><strong id="term-hash-chain">Hash chain</strong>
+: The cryptographic linking of run records, each storing a <abbr title="Secure Hash Algorithm, 256-bit variant. Used for run-record hash chains.">SHA-256</abbr> hash of the previous one. Tamper-evident audit trail. Implemented in <code>loupe_core/artifacts/run_record.py</code>.</p>
+<p><strong id="term-intent-keyword">Intent keyword</strong>
+: A string in a lens's <code>capabilities.handles_intent_keywords</code> list, used by the coordinator to route natural-language user requests to the right lens in interactive mode.</p>
+<p><strong id="term-is-relevant"><code>is_relevant()</code></strong>
+: A required Lens method. Pure-Python (no <abbr title="Large Language Model.">LLM</abbr> call). Returns <code>RelevanceScore(score, reason)</code> based on the contents of <code>RunContext</code>. Used by the coordinator for cost-saving dispatch: lenses below the configured <code>minimum_relevance</code> are skipped entirely. In full-repo mode (D-15), the coordinator overrides the score but still calls <code>is_relevant()</code> for the reason string.</p>
+<p><strong id="term-knowledge-graph">Knowledge graph</strong>
+: <code>.loupe/knowledge.yaml</code>. Persistent across runs. Holds assets, architectural elements, decisions, and cross-references between lenses. Promoted from in-memory <code>Fact</code>s only when high-confidence + corroborated. Schema is open at the edges (additive new sections, new predicates) and closed at the core (immutable run inputs).</p>
+<p><strong id="term-layer-1">Layer 1</strong>
+: Tool-surface enforcement (in-process). The agent's only write tools are <code>write_agent_artifact</code> (path must be in the allow-list) and <code>propose_patch</code> (writes to <code>.proposed/</code>). The boundary is a Python function, not a prompt instruction. The strongest of the four layers.</p>
+<p><strong id="term-layer-2">Layer 2</strong>
+: (Designed, not yet enforced at runtime.) Branch-namespace enforcement at the <abbr title="Continuous Integration.">CI</abbr> runner. The commitment is that a fine-grained GitHub App token only allows pushes to <code>loupe/proposal-*</code> branches and that <abbr title="GitHub file listing required reviewers per path.">CODEOWNERS</abbr> gates <code>.loupe/context.md</code>, <code>.loupe/decisions/**</code>, and <code>.loupe/config.yaml</code>. Today the Action uses the standard <code>GITHUB_TOKEN</code> and the branch restriction is a commitment rather than a runtime constraint.</p>
+<p><strong id="term-layer-3">Layer 3</strong>
+: (Shipped.) <code>loupe verify</code>. Four checks run on every invocation: (1) hash-chain integrity across <code>.loupe/runs/*.json</code>, (2) artefact schema consistency for every <code>threats.yaml</code> / <code>mitigations.yaml</code>, (3) threats-to-mitigations cross-references (every <code>mitigation_ids</code> resolves; every <code>threats_addressed</code> resolves), and (4) protected-path authorship when invoked with <code>--strict</code> (also reachable as <code>verify_repo(..., strict=True)</code> from the library). Reachable as a pre-commit hook and as a required <abbr title="Continuous Integration.">CI</abbr> check.</p>
+<p><strong id="term-layer-4">Layer 4</strong>
+: (Designed.) Interactive UX gate. Once <code>loupe chat</code> is implemented, every protected-path proposal will render as a unified diff with a <code>[y/N/edit/skip]</code> prompt, default-N, with no <code>--auto-confirm</code> flag. The chat command is currently a placeholder.</p>
+<p><strong id="term-lens">Lens</strong>
+: A Python package that registers with <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr> via Python entry points (<code>loupe.lenses</code> group). Contributes a <abbr title="Multi-provider LLM agent framework Loupe is built on. By the Pydantic team.">PydanticAI</abbr> agent, Pydantic-typed artefacts it owns, <abbr title="Model Context Protocol — Anthropic-originated JSON-RPC protocol for LLM tool/resource exposure.">MCP</abbr> tools and workflows, a pure-Python <code>is_relevant()</code> heuristic, and a list of <code>requires_capabilities</code> (see Capability). v1 ships exactly one: <strong><abbr title="Loupe's v1 lens. STRIDE-based threat modelling.">ThreatLens</abbr></strong>. Lenses are the <em>domain</em> extension point; Capabilities are the <em>tool</em> extension point.</p>
+<p><strong id="term-lens-capabilities">LensCapabilities</strong>
+: The static metadata a lens declares: <code>name</code>, <code>domain</code>, <code>handles_intent_keywords</code>, <code>artifact_paths</code>, <code>requires_lenses</code>. <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr>-core inspects this at registration time (e.g., to detect conflicting <code>artifact_paths</code>).</p>
+<p><strong id="term-lens-run-plan">LensRunPlan</strong>
+: One entry in <code>RunContext.plan</code>. Built by the coordinator. Specifies which lens to run, its relevance score, its dependencies on other lenses, and the sub-prompt the agent should receive.</p>
+<p><strong id="term-linddun"><abbr title="Privacy threat-modelling methodology (Linkability, Identifiability, Non-repudiation, Detectability, Disclosure, Unawareness, Non-compliance).">LINDDUN</abbr></strong>
+: Privacy threat-modelling methodology (Linkability, Identifiability, Non-repudiation, Detectability, Disclosure of information, Unawareness, Non-compliance). Not in scope for v1; will be the focus of a future <strong>PrivacyLens</strong>.</p>
+<p><strong id="term-loupe"><abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr></strong>
+: The platform. Named after the precision inspection lens used by jewellers and watchmakers. Not "ComplianceMate." See <a href="../../about/#why-the-name-avoids-compliance"><code>about.md</code></a>.</p>
+<p><strong id="term-mcp"><abbr title="Model Context Protocol — Anthropic-originated JSON-RPC protocol for LLM tool/resource exposure.">MCP</abbr></strong>
+: Model Context Protocol. An open JSON-RPC protocol (Anthropic-originated) for <abbr title="Large Language Model.">LLM</abbr> tool/resource/prompt exposure. <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr> exposes both granular tools (<code>loupe.tools.*</code>) and high-level workflows (<code>loupe.workflows.*</code>) over <abbr title="Model Context Protocol — Anthropic-originated JSON-RPC protocol for LLM tool/resource exposure.">MCP</abbr>. Transports: stdio (local) or HTTP+SSE (remote).</p>
+<p><strong id="term-openvex"><abbr title="Vulnerability EXploitability eXchange — open format for per-CVE impact statements. openvex.dev.">OpenVEX</abbr></strong>
+: The vulnerability-impact-statement format <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr> uses. Standard from the openvex.dev community. Each statement says "we are / are not / fixed / are investigating affected by <abbr title="Common Vulnerabilities and Exposures — public catalogue of disclosed security flaws.">CVE</abbr>-X because Y."</p>
+<p><strong id="term-path-boundary">PathBoundary</strong>
+: The Python object that decides whether a given path is agent-writable. Constructed from the <code>agent_writable_paths</code> list in <code>config.yaml</code>. Rejects path traversal (<code>..</code>) regardless of the allow-list.</p>
+<p><strong id="term-prompt-parts">PromptParts / PromptBuilder</strong>
+: The cache-friendly prompt assembly in <code>loupe_core/prompt_builder.py</code>. Separates <strong>stable prefix</strong> (system framing + context.md + diff + <abbr title="Software Bill of Materials. CycloneDX is the format Loupe uses.">SBOM</abbr> delta) from <strong>variable suffix</strong> (lens-specific task + prior findings). The stable prefix is paid full price once per run and ~10% per subsequent lens call via Anthropic prompt cache.</p>
+<p><strong id="term-proposal-pr">Proposal <abbr title="Pull Request — GitHub's term for a proposed change.">PR</abbr></strong>
+: A pull request opened against a <code>loupe/proposal-*</code> branch by the <abbr title="Continuous Integration.">CI</abbr> runner. Contains the agent's artefact changes (and any <code>propose_patch</code> drafts) for human review. Never auto-merged.</p>
+<p><strong id="term-propose-patch"><code>propose_patch</code></strong>
+: One of two agent write tools. Used for paths the agent does <em>not</em> own (<code>context.md</code>, <code>decisions/*</code>, <code>config.yaml</code>). Writes a draft into <code>.loupe/.proposed/</code> for human review and explicit application.</p>
+<p><strong id="term-pydantic-ai"><abbr title="Multi-provider LLM agent framework Loupe is built on. By the Pydantic team.">PydanticAI</abbr></strong>
+: The <abbr title="Large Language Model.">LLM</abbr> agent framework <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr> is built on. Multi-provider (Anthropic, OpenAI, Google, Mistral, Groq, Cohere, Ollama, Bedrock), typed I/O via Pydantic, lightweight, no LangChain abstractions. By the Pydantic team.</p>
+<p><strong id="term-relevance-score">RelevanceScore</strong>
+: <code>RelevanceScore(score: float[0..1], reason: str)</code>. Returned by <code>Lens.is_relevant()</code>. Used by the coordinator's dispatch logic.</p>
+<p><strong id="term-risk-acceptance">Risk acceptance</strong>
+: A documented decision that a specific risk is acknowledged and tolerated. Recorded in <code>decisions/D-&lt;date&gt;-&lt;slug&gt;.md</code>. Authored by a human (the agent can only <em>draft</em>, never author).</p>
+<p><strong id="term-run-context">RunContext</strong>
+: The in-memory shared workspace passed via <abbr title="Multi-provider LLM agent framework Loupe is built on. By the Pydantic team.">PydanticAI</abbr>'s <code>deps</code> to every lens agent in a single invocation. Holds the parsed diff, <abbr title="Software Bill of Materials. CycloneDX is the format Loupe uses.">SBOM</abbr> delta, project context, run plan, knowledge-graph snapshot, plus the mutable findings dict, facts list, pending decisions, and proposed patches. Discarded at end of run; only its persistent outputs (artefacts, run record, promoted knowledge graph entries) survive.</p>
+<p><strong id="term-run-record">Run record</strong>
+: One <code>.loupe/runs/*.json</code> file. Captures everything about one <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr> invocation: inputs (hashed), lenses considered + run, models used, tokens consumed, artifacts changed, hash-chain pointer to the previous run.</p>
+<p><strong id="term-scope">Scope</strong>
+: <code>RunContext.scope: Literal["diff", "full", "scoped"]</code>. Set during bootstrap based on which CLI command invoked <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr>. Controls whether the coordinator filters lenses by relevance or runs all of them.</p>
+<p><strong id="term-schema-version">Schema version</strong>
+: An integer field on every machine-readable artefact (<code>schema_version: 1</code> on <code>threats.yaml</code>, <code>runs/*.json</code>, <code>knowledge.yaml</code>, etc.). Bumped independently from the host package version: a <code>loupe-core</code> v0.4 release may read both schema v1 and v2 files transparently. Migration rules live in <a href="../versioning/#why-artefact-schemas-version-independently"><code>versioning.md</code></a>.</p>
+<p><strong id="term-stable-prefix">Stable prefix</strong>
+: The portion of an <abbr title="Large Language Model.">LLM</abbr> prompt that's identical across all lens calls in one run. Cache-pinned via Anthropic's <code>cache_control: {type: "ephemeral"}</code> marker. The first cost lever of three.</p>
+<p><strong id="term-stride"><abbr title="Microsoft's threat-modelling categorisation: Spoofing, Tampering, Repudiation, Information disclosure, Denial of service, Elevation of privilege.">STRIDE</abbr></strong>
+: Microsoft's threat-modelling categorisation: Spoofing, Tampering, Repudiation, Information disclosure, Denial of service, Elevation of privilege. The method <abbr title="Loupe's v1 lens. STRIDE-based threat modelling.">ThreatLens</abbr> uses.</p>
+<p><strong id="term-syft">Syft</strong>
+: Open-source <abbr title="Software Bill of Materials. CycloneDX is the format Loupe uses.">SBOM</abbr> generator from Anchore. <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr> shells out to it for <code>sbom.cdx.json</code>. <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr> never asks the <abbr title="Large Language Model.">LLM</abbr> to author an <abbr title="Software Bill of Materials. CycloneDX is the format Loupe uses.">SBOM</abbr>.</p>
+<p><strong id="term-tara"><abbr title="Threat Analysis and Risk Assessment. ISO/SAE 21434's term (automotive cybersecurity).">TARA</abbr></strong>
+: Threat Analysis and Risk Assessment. ISO/SAE 21434's term (automotive cybersecurity). Not the v1 framing; <abbr title="Loupe's v1 lens. STRIDE-based threat modelling.">ThreatLens</abbr> uses <abbr title="Microsoft's threat-modelling categorisation: Spoofing, Tampering, Repudiation, Information disclosure, Denial of service, Elevation of privilege.">STRIDE</abbr> because it's broader, but <abbr title="Threat Analysis and Risk Assessment. ISO/SAE 21434's term (automotive cybersecurity).">TARA</abbr>-shaped output is achievable from the same artefacts.</p>
+<p><strong id="term-threatlens"><abbr title="Loupe's v1 lens. STRIDE-based threat modelling.">ThreatLens</abbr></strong>
+: <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr>'s v1 lens. <abbr title="Microsoft's threat-modelling categorisation: Spoofing, Tampering, Repudiation, Information disclosure, Denial of service, Elevation of privilege.">STRIDE</abbr>-based threat modelling. Maintains <code>threats.yaml</code>, <code>mitigations.yaml</code>, <code>threat-model.md</code>, drafts <code>vex.json</code> entries, references <code>sbom.cdx.json</code>.</p>
+<p><strong id="term-trust-boundary">Trust boundary</strong>
+: The line in a system diagram across which trust assumptions change. Data crossing a trust boundary must be validated. Threat modelling identifies threats <em>at</em> trust boundaries (e.g., diff input from a malicious <abbr title="Pull Request — GitHub's term for a proposed change.">PR</abbr> contributor crosses into <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr>'s prompt-builder; the boundary is where prompt-injection mitigations apply). Used throughout the <a href="../loupe-threat-model/"><abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr> threat model</a>.</p>
+<p><strong id="term-vcr"><abbr title="pytest-vcr. Records HTTP fixtures once, replays forever. Loupe uses it for LLM-involving integration tests.">VCR</abbr></strong>
+: <code>pytest-vcr</code>. Records HTTP fixtures once (with an API key) and replays forever (without one). <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr> tests use <abbr title="pytest-vcr. Records HTTP fixtures once, replays forever. Loupe uses it for LLM-involving integration tests.">VCR</abbr> for any <abbr title="Large Language Model.">LLM</abbr>-involving integration test. Cassettes are committed to the repo.</p>
+<p><strong id="term-vex"><abbr title="Vulnerability EXploitability eXchange — per-CVE impact statements. OpenVEX is the standard.">VEX</abbr></strong>
+: Vulnerability EXploitability eXchange. <abbr title="Vulnerability EXploitability eXchange — open format for per-CVE impact statements. openvex.dev.">OpenVEX</abbr> is the standard format. Each statement says "is this product affected by this <abbr title="Common Vulnerabilities and Exposures — public catalogue of disclosed security flaws.">CVE</abbr>? why?"; letting downstream consumers and auditors filter noise. Generated by <abbr title="Loupe's v1 lens. STRIDE-based threat modelling.">ThreatLens</abbr>; <code>not_affected</code> statements require human approval (Layer 1 routes them through <code>propose_patch</code>).</p>
+<p><strong id="term-write-agent-artifact"><code>write_agent_artifact</code></strong>
+: One of two agent write tools. Used for paths the agent owns (<code>.loupe/threats.yaml</code>, etc.). Checks the path against the <code>PathBoundary</code> and raises <code>BoundaryViolation</code> if rejected.</p>
+
+
+
+
+
+
+
+  
+    
+  
+  
+    
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Last update">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 15, 2026 21:38:43 UTC">May 15, 2026</span>
+  </span>
+
+    
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Created">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 3, 2026 08:54:14 UTC">May 3, 2026</span>
+  </span>
+
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../decisions/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Decisions">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Decisions
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../data-handling/" class="md-footer__link md-footer__link--next" aria-label="Next: Data handling">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Data handling
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 Fadi Labib · <a href="https://github.com/fadi-labib/loupe/blob/main/LICENSE">Apache 2.0</a> · <a href="https://github.com/fadi-labib/loupe/blob/main/SECURITY.md">Security</a> · <a href="changelog/">Changelog</a>
+
+    </div>
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+    <a href="https://github.com/fadi-labib/loupe" target="_blank" rel="noopener" title="Source on GitHub" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../..", "features": ["announce.dismiss", "navigation.instant", "navigation.instant.prefetch", "navigation.instant.progress", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.indexes", "navigation.prune", "navigation.top", "navigation.path", "navigation.footer", "toc.follow", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.code.annotate", "content.tabs.link", "content.tooltips", "content.footnote.tooltips", "content.action.edit", "content.action.view"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"alias": true, "default": "latest", "provider": "mike"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      
+    
+  </body>
+</html>
