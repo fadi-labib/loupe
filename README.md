@@ -1,24 +1,101 @@
+<div align="center">
+
+<img src="docs/assets/logo.svg" alt="Loupe" width="96" height="96" />
+
 # Loupe
 
-Loupe is a Python platform that runs domain-specialised AI agents (lenses) against your code changes and writes auditor-credible evidence as plain files in your repo. v1 ships **ThreatLens**, which does STRIDE threat modelling and produces artefacts shaped to feed EU CRA Annex I conformity evidence.
+**Auditor-credible AI lenses for code review.**
 
-A *loupe* is the precision lens jewellers and watchmakers use to inspect detail others miss. Each Loupe lens does the same to a codebase: ThreatLens looks for security threats, SafetyLens (future) for functional-safety hazards, PrivacyLens (future) for data-protection issues. Same instrument, different lens.
+*A precision instrument for software-engineering risk: threat models, hazard analyses, privacy reviews — same platform, different lens.*
 
-**Status:** pre-alpha. The platform, capability registry, CLI, GitHub Action, and ThreatLens lens are wired end-to-end. ThreatLens calls a live LLM through PydanticAI (a VCR cassette test fixture is committed, recorded against the configured provider). `loupe mcp` exposes read tools (`list_threats`, `query_by_severity`, `latest_run`) and write tools (`propose_threat`, `propose_mitigation`) over stdio. Run records today carry real token and cost data populated by the lens. Ten capability backends ship bundled (Syft, cdxgen, Grype, osv-scanner, gitleaks, TruffleHog, detect-secrets, Semgrep, CodeQL, Bandit), composing through `single` / `fallback` / `union` / `consensus` / `pipeline` modes.
+[![License](https://img.shields.io/badge/license-Apache_2.0-2E7DAF.svg?style=flat-square)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.13+-3776AB.svg?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
+[![Status](https://img.shields.io/badge/status-pre--alpha-orange.svg?style=flat-square)](#status)
+[![Tests](https://github.com/fadi-labib/loupe/actions/workflows/tests.yml/badge.svg)](https://github.com/fadi-labib/loupe/actions/workflows/tests.yml)
+[![Docs](https://github.com/fadi-labib/loupe/actions/workflows/docs.yml/badge.svg)](https://github.com/fadi-labib/loupe/actions/workflows/docs.yml)
+[![Vale](https://github.com/fadi-labib/loupe/actions/workflows/prose-check.yml/badge.svg)](https://github.com/fadi-labib/loupe/actions/workflows/prose-check.yml)
+[![Links](https://github.com/fadi-labib/loupe/actions/workflows/link-check.yml/badge.svg)](https://github.com/fadi-labib/loupe/actions/workflows/link-check.yml)
 
-Still in flight: the `loupe chat` REPL (TTY guard wired, conversational pipeline pending), Layer 2 fine-grained-PAT branch namespace enforcement, and the HTTP+SSE remote MCP transport.
+[Docs](https://fadi-labib.github.io/loupe/) · [Quickstart](docs/quickstart.md) · [Architecture](docs/concepts/architecture.md) · [Verification](docs/reference/verification.md) · [Decisions](docs/reference/decisions.md) · [Changelog](CHANGELOG.md)
 
-## What it does for you
+</div>
 
-Three frontends, all functional. `loupe ci` runs on every PR via the GitHub Action and posts a sticky comment with severity-grouped findings. `loupe mcp` runs an MCP server over stdio with both read tools (queries against `.loupe/`) and Layer-1-gated write tools (proposes new threats and mitigations). `loupe chat` (interactive REPL) is the next frontend: the TTY guard is wired but the conversational pipeline is not.
+---
 
-Outputs live in `.loupe/` as Git-tracked plain files: threats, mitigations, a CycloneDX SBOM, OpenVEX statements, hash-chained run records, and an ADR-style decision log. The LLM-driven artefacts (threats, mitigations) are produced by ThreatLens against your configured provider; the SBOM and CVE artefacts come from the bundled capability backends. There is no SaaS, no telemetry, no Loupe-hosted backend.
+## 🔍 The problem
 
-You pick the LLM. PydanticAI gives you Anthropic, OpenAI, Google, Mistral, Groq, Cohere, Ollama, and Bedrock through one env var. You pick the tools. SBOM, CVE, secret detection, and static analysis are pluggable Capability Protocols with composition modes (`single`, `fallback`, `union`, `consensus`, `pipeline`).
+Software-engineering risk activities — threat modelling, hazard analysis, privacy review — share a structural failure mode: **artefacts drift out of sync with the code they describe**, and the work needed to keep them current is the slow, careful, evidence-shaped work most engineers will not do without external pressure.
 
-## Quick example
+Two failure modes show up everywhere. **Stale documents**: a wiki page from 2023 still claims the service uses session cookies, two years after the OAuth migration. An auditor reads it. The auditor is satisfied. The document is wrong. **Compliance theatre**: a scanner emits a 200-page PDF on every commit. Nobody reads it. The process runs. No actual analysis happens.
 
-**Install (pre-alpha; pre-PyPI):**
+The EU Cyber Resilience Act (fully applicable December 2027) makes both worse: manufacturers must maintain a *current* risk assessment, a *current* secure-by-design rationale, a *current* SBOM, and *current* per-vulnerability impact statements — as living documents, not point-in-time PDFs filed after release.
+
+## 💡 The bet
+
+| Claim | Shape |
+|---|---|
+| **AI agents can do the slow, careful, evidence-shaped work** | … provided their outputs are structured, auditable, and human-reviewed at the boundaries that matter |
+| **A plugin platform with separate domain lenses is the right shape** | Threat modelling, safety analysis, privacy review have different methods but share infrastructure (diff parsing, SBOM generation, artefact storage, enforcement, MCP exposure) |
+| **The platform must be auditor-credible from day one or it loses to the spreadsheet** | Standards-conformant outputs (CycloneDX, OpenVEX, STRIDE), Git-versioned artefacts, hash-chained run records, write-boundary enforcement in code (not policy) |
+
+## 🩺 The mental model
+
+The shortest correct answer to *"what is Loupe?"* is a medical-clinic metaphor that holds all the way down.
+
+> A pull request rolls in (the **patient**). The **clinic** decides which **specialists** should see this patient. The specialists order the **diagnostic tests** they need. The clinic writes up a **chart** an external auditor can read.
+
+| Role | What it is | What it does | In Loupe |
+|---|---|---|---|
+| 🏥 The clinic | The platform | Orchestrates, files paperwork, enforces boundaries | `loupe-core` |
+| 👩‍⚕️ The specialist | A lens | Brings domain expertise, decides what to look for | `ThreatLens` (security), `SafetyLens` *(future)*, `PrivacyLens` *(future)* |
+| 🔬 The diagnostic test | A capability | A tool category specialists can order | `sbom`, `cve`, `secret_detect`, `static_analysis` |
+| ⚙️ The test machine | A backend | The specific tool that performs the test | `syft`, `cdxgen`, `grype`, `trufflehog`, `semgrep`, … |
+| 📋 The chart | An artefact | The patient's medical record | Files in `.loupe/` |
+
+## 🏗️ Architecture at a glance
+
+```mermaid
+flowchart TB
+    PR["📬 Pull request"]
+    Action["⚡ loupe-action<br/>(GitHub Action wrapper)"]
+    Core["🏥 loupe-core<br/>(coordinator · enforcement · run records)"]
+
+    subgraph lenses["👩‍⚕️ Lenses (domain plugins)"]
+        ThreatLens["🛡️ ThreatLens<br/>(v1, shipped)"]
+        Future["💤 SafetyLens · PrivacyLens · AIRiskLens<br/>(planned)"]
+    end
+
+    subgraph caps["🔬 Capabilities"]
+        SBOM["sbom"]
+        CVE["cve"]
+        Secret["secret_detect"]
+        SAST["static_analysis"]
+    end
+
+    Backends["⚙️ 10 bundled backends<br/>syft · cdxgen · grype · osv-scanner ·<br/>gitleaks · trufflehog · detect-secrets ·<br/>semgrep · codeql · bandit"]
+
+    LLM["🤖 LLM (you pick)<br/>Anthropic · OpenAI · Google · Mistral ·<br/>Groq · Ollama · Bedrock · …"]
+
+    Artefacts[("📁 .loupe/<br/>threats · mitigations ·<br/>SBOM · VEX · run records ·<br/>decisions · knowledge graph")]
+
+    PR --> Action --> Core
+    Core --> lenses
+    Core --> caps
+    caps --> Backends
+    ThreatLens -.-> LLM
+    Core --> Artefacts
+
+    classDef shipped fill:#d4edda,stroke:#155724,stroke-width:2px
+    classDef planned fill:#fff3cd,stroke:#856404,stroke-width:1px,stroke-dasharray:5 5
+    class ThreatLens,Action,Core,Backends shipped
+    class Future planned
+```
+
+Each layer is replaceable without disturbing the others. Swap `syft` for `trivy` and lenses don't notice. Add `AutoCyberLens` for TARA and the platform doesn't change. Change the GitHub Action wrapper for a GitLab one and the core stays the same.
+
+## ⚡ Quickstart
+
+> **Pre-alpha · pre-PyPI.** Install from source for now.
 
 ```bash
 git clone https://github.com/fadi-labib/loupe.git
@@ -26,26 +103,19 @@ cd loupe
 uv sync --all-packages
 ```
 
-This installs the four workspace packages (`loupe-core`, `loupe-cli`, `loupe-threatlens`, `loupe-action`) in editable mode. Invoke the CLI through `uv run loupe …`.
-
-Once v0.1 is tagged and published, the install will simplify to:
-
-```bash
-pip install loupe-cli loupe-threatlens
-```
-
-The PyPI publishing process is documented in [`CHANGELOG.md`](CHANGELOG.md#release-process).
-
-**First run:**
+Then in your project:
 
 ```bash
 cd your-repo
-uv run loupe init
-$EDITOR .loupe/context.md       # describe your product, assets, threat actors
+uv run loupe init                    # scaffold .loupe/
+$EDITOR .loupe/context.md            # describe your product (anti-hallucination anchor)
+export ANTHROPIC_API_KEY="sk-ant-…"  # or OPENAI_API_KEY / GOOGLE_API_KEY / etc.
 uv run loupe ci --diff-file <(git diff main...)
 ```
 
-In a GitHub workflow:
+A full walk-through with screenshots is in the **[Quickstart](docs/quickstart.md)**.
+
+### GitHub Action
 
 ```yaml
 # .github/workflows/loupe.yml
@@ -57,42 +127,121 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      # Pre-alpha: the Action lives at packages/loupe-action/action.yml inside
-      # this repo. GitHub's `uses:` resolution does not currently support
-      # sub-paths cleanly, so the cleanest workaround is to vendor the action
-      # ref directly or wait for the v0.1 tag at the repo root. Once v0.1
-      # publishes, switch to: `uses: fadi-labib/loupe-action@v0.1`.
-      - uses: fadi-labib/loupe@main
+      - uses: fadi-labib/loupe@main          # post-v0.1: fadi-labib/loupe-action@v0.1
         with:
           pr: ${{ github.event.pull_request.number }}
-          comment_mode: sticky  # or 'new' or 'none'
+          comment_mode: sticky                # or 'new' or 'none'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 ```
 
-The Action publishes seven outputs (`findings_count`, `findings_critical`, `findings_high`, `findings_medium`, `findings_low`, `run_id`, `run_hash`, `exit_code`); see [`packages/loupe-action/action.yml`](packages/loupe-action/action.yml) for the schema. Exit code `0` is clean, `1` is a gate failure (severity threshold tripped), `64` is a usage or configuration error (BSD `sysexits.h` `EX_USAGE`).
+| Exit code | Meaning |
+|:-:|---|
+| `0` | Clean run; no severity in `ci.fail_on` triggered |
+| `1` | Gate failure: a threat at a `ci.fail_on` severity was reported |
+| `64` | Usage / configuration error (BSD `sysexits.h` `EX_USAGE`) |
 
-## Where to go next
+The Action publishes eight outputs (`findings_count`, severity-specific counts, `run_id`, `run_hash`, `exit_code`) — see [`action.yml`](packages/loupe-action/action.yml) for the schema.
 
-The published docs site lives at <https://fadi-labib.github.io/loupe/> with search, navigation, and per-page social previews. The table below is the GitHub-flavoured Markdown fallback for browsing in-tree.
+## 📂 What lives in `.loupe/`
 
-| Question | File |
-|---|---|
-| What's the mental model? | [`docs/index.md`](docs/index.md) |
-| How do I get started? | [`docs/quickstart.md`](docs/quickstart.md) |
-| What are the principles? | [`docs/principles.md`](docs/principles.md) |
-| What changed in this release? | [`CHANGELOG.md`](CHANGELOG.md) |
-| How do I run the CLI? | [`docs/reference/cli.md`](docs/reference/cli.md) |
-| How do I configure `.loupe/config.yaml`? | [`docs/reference/config.md`](docs/reference/config.md) |
-| How do I verify the principles? | [`docs/reference/verification.md`](docs/reference/verification.md) |
-| What does each artefact look like? | [`docs/reference/schemas/`](docs/reference/schemas/index.md) |
-| Why was X decided this way? | [`docs/reference/decisions.md`](docs/reference/decisions.md) |
-| How does Loupe compare with other tools? | [`docs/comparison.md`](docs/comparison.md) |
-| What data leaves my repo? | [`docs/reference/data-handling.md`](docs/reference/data-handling.md) |
-| Term I don't recognise? | [`docs/reference/glossary.md`](docs/reference/glossary.md) |
-| How do I contribute? | [`docs/contributing.md`](docs/contributing.md) |
+The audit pack is plain files, Git-tracked, no SaaS, no hidden state:
 
-## Licence
+| File | Who writes it | What it is |
+|---|---|---|
+| `context.md` | Human | Product brief — the anti-hallucination anchor every lens reads |
+| `threats.yaml` + `threat-model.md` | `ThreatLens` | STRIDE threats, machine-readable + narrative |
+| `mitigations.yaml` | `ThreatLens` | Mitigations cross-referencing threats |
+| `sbom.cdx.json` | Syft (or cdxgen, or your pick) | CycloneDX 1.6 SBOM |
+| `vex.json` | `ThreatLens` + human approval | OpenVEX vulnerability statements |
+| `runs/*.json` | `loupe-core` | Hash-chained audit trail of every invocation |
+| `decisions/D-*.md` | Human | ADR-style risk acceptances |
+| `knowledge.yaml` | `loupe-core` | Persistent cross-run knowledge graph |
+| `config.yaml` | Human | Operator settings — which lenses, which backends, which gates |
+
+Full schemas in [`docs/reference/schemas/`](docs/reference/schemas/index.md).
+
+## 🔌 You pick the LLM. You pick the tools.
+
+- **Multi-LLM by design.** PydanticAI ships Anthropic, OpenAI, Google, Mistral, Groq, Cohere, Ollama, Bedrock natively. Set `THREATLENS_MODEL=openai:gpt-5` and you're done — no code change.
+- **No tool lock-in.** Every non-LLM tool is a Capability Protocol. Five composition modes (`single`, `fallback`, `union`, `consensus`, `pipeline`) let you say *"run TruffleHog AND gitleaks and merge"* or *"require two of three SAST scanners to agree"* in `config.yaml`. That's the evidence.
+
+## 🛡️ Defence in depth (four layers)
+
+| Layer | Status | What it protects |
+|:-:|:-:|---|
+| **1** — Tool surface | ✅ Shipped | Agent has only `write_agent_artifact` (allow-list) + `propose_patch` (writes to `.proposed/`). `PathBoundary` enforced in Python, not in a prompt. Parent-symlink-safe via `dir_fd` + `O_NOFOLLOW`. |
+| **2** — Branch namespace | 📐 Designed | Fine-grained GitHub PAT scoped to `loupe/proposal-*`; CODEOWNERS gates protected paths |
+| **3** — `loupe verify` | ✅ Shipped | Four checks: hash chain · artefact schemas · cross-references · protected-path authorship (`--strict`) |
+| **4** — Interactive UX gate | 📐 Designed | `loupe chat` `[y/N/edit/skip]` confirmation with no `--auto-confirm` |
+
+See [`docs/reference/verification.md`](docs/reference/verification.md) for the **mechanical recipes** an auditor can run against each principle.
+
+## 🚀 Status
+
+### ✅ Shipped today
+
+- **Platform**: `loupe-core` (coordinator, dispatcher, run context, prompt builder, MCP server, pricing, enforcement)
+- **CLI**: `loupe init`, `loupe ci`, `loupe verify [--strict]`, `loupe scan`, `loupe mcp`, `loupe chat` (TTY guard only), `loupe lens list`, `loupe cap list`
+- **GitHub Action**: PR fetch · `loupe ci` runner · sticky-comment poster (sticky / new / none modes) · retry + rate-limit handling
+- **ThreatLens**: PydanticAI agent wired to a live LLM, exercised in CI through a VCR cassette · STRIDE threats · mitigations · cross-references
+- **MCP server** (stdio): read tools (`list_threats`, `query_by_severity`, `latest_run`, `threat_model_summary`) + write tools (`propose_threat`, `propose_mitigation`, both Layer-1 gated)
+- **10 bundled capability backends**: Syft + cdxgen (SBOM) · Grype + osv-scanner (CVE) · gitleaks + TruffleHog + detect-secrets (secret) · Semgrep + CodeQL + Bandit (SAST)
+- **Composition modes**: `single`, `fallback`, `union`, `consensus`, `pipeline`
+- **Audit trail**: hash-chained run records · `loupe verify` Layer 3 checks (chain, schema, cross-refs, authorship)
+- **Cost discipline**: stable-prefix prompt caching, blackboard, dispatch skipping, RunRecord token/cost telemetry, [cost-regression test](packages/loupe-threatlens/tests/test_cost_regression.py)
+
+### 🔄 In flight (before v0.1 tags)
+
+- `loupe chat` conversational pipeline (TTY guard wired; `[y/N/edit/skip]` not)
+- HTTP+SSE remote MCP transport (stdio works today)
+- Layer 2 fine-grained-PAT branch namespace enforcement
+- `--verbose`, `--budget-usd` flags
+- Benchmarks against Cesanta Mongoose (Tier 1) and Eclipse Mosquitto (Tier 2) per [D-19](docs/reference/decisions.md#d-19)
+
+### 💤 Anticipated
+
+- **SafetyLens** — functional-safety hazard analysis (ISO 26262, IEC 61508, IEC 62304)
+- **PrivacyLens** — data-protection review (GDPR DPIA, LINDDUN)
+- **AIRiskLens** — AI/ML risk (NIST AI RMF, EU AI Act high-risk; possibly MAESTRO)
+
+## 📚 Where to find things
+
+The published docs site is at **[fadi-labib.github.io/loupe](https://fadi-labib.github.io/loupe/)** (search, navigation, social previews). The fallback for in-tree browsing:
+
+| 🧭 | If you want to … | Read |
+|:-:|---|---|
+| 🚀 | get something running | [Quickstart](docs/quickstart.md) |
+| 🧠 | understand the mental model | [Architecture](docs/concepts/architecture.md) · [Capabilities](docs/concepts/capabilities.md) |
+| 📜 | know the principles Loupe won't compromise on | [Principles](docs/principles.md) |
+| 🔍 | verify the principles mechanically | [Verification](docs/reference/verification.md) |
+| ⚙️ | look up a CLI command or flag | [CLI reference](docs/reference/cli.md) |
+| 🧩 | configure `.loupe/config.yaml` | [Config reference](docs/reference/config.md) |
+| 📐 | see each artefact's schema | [Schemas](docs/reference/schemas/index.md) |
+| 🛰️ | run the MCP server | [How-to: MCP server](docs/how-to/run-mcp-server.md) · [MCP tools reference](docs/reference/mcp-tools.md) |
+| 💰 | understand cost estimation | [Pricing reference](docs/reference/pricing.md) |
+| ⚖️ | know why a decision was made | [Decisions log](docs/reference/decisions.md) (D-01 → D-22) |
+| 🆚 | compare against StrideGPT / IriusRisk / Snyk / etc. | [Comparison](docs/comparison.md) |
+| 🔒 | check what data leaves your repo | [Data handling](docs/reference/data-handling.md) |
+| 📖 | look up a term | [Glossary](docs/reference/glossary.md) |
+| 🛠️ | contribute code or a lens | [Contributing](docs/contributing.md) |
+| 📰 | see what changed | [CHANGELOG](CHANGELOG.md) |
+
+## 🤝 Contributing
+
+Workspace layout, test discipline (hermetic, VCR-cassetted), commit conventions, and CI gates: **[`docs/contributing.md`](docs/contributing.md)**. Pre-alpha private; PR contributions welcomed once the repo opens.
+
+## 🔐 Security
+
+The threat model for Loupe itself is at **[`docs/reference/loupe-threat-model.md`](docs/reference/loupe-threat-model.md)** — dogfood, same STRIDE shape Loupe would emit for any other repo. Disclosure policy in **[`SECURITY.md`](SECURITY.md)**.
+
+## 📄 Licence
 
 Apache 2.0. See [`LICENSE`](LICENSE). Use it, fork it, ship it. Attribution appreciated, not required.
+
+---
+
+<div align="center">
+<sub>Copyright © 2026 Fadi Labib · <a href="https://fadi-labib.github.io/loupe/">Docs</a> · <a href="LICENSE">Apache 2.0</a> · <a href="SECURITY.md">Security</a> · <a href="CHANGELOG.md">Changelog</a></sub>
+</div>
