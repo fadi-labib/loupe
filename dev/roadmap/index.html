@@ -959,7 +959,7 @@
         <li class="md-nav__item">
   <a href="#next-agent-wiring" class="md-nav__link">
     <span class="md-ellipsis">
-      Next: agent wiring In progress
+      Next: chat REPL + remote MCP transport In progress
     </span>
   </a>
   
@@ -1175,7 +1175,7 @@
         <li class="md-nav__item">
   <a href="#next-agent-wiring" class="md-nav__link">
     <span class="md-ellipsis">
-      Next: agent wiring In progress
+      Next: chat REPL + remote MCP transport In progress
     </span>
   </a>
   
@@ -1286,57 +1286,56 @@
 <h1 id="roadmap">Roadmap<a class="headerlink" href="#roadmap" title="Permanent link">&para;</a></h1>
 <p>A snapshot of where <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr> is heading. This page is editable and expected to drift; the <a href="../reference/decisions/">decisions log</a> is the durable record of <em>why</em> each item is shaped the way it is.</p>
 <h2 id="now-shipped">Now <span class="section-label">Shipped</span><a class="headerlink" href="#now-shipped" title="Permanent link">&para;</a></h2>
-<p>The platform, capability registry, CLI, GitHub Action, and <abbr title="Loupe's v1 lens. STRIDE-based threat modelling.">ThreatLens</abbr> scaffolding are in place. The <abbr title="Multi-provider LLM agent framework Loupe is built on. By the Pydantic team.">PydanticAI</abbr> agent inside <abbr title="Loupe's v1 lens. STRIDE-based threat modelling.">ThreatLens</abbr> is not yet wired to a live <abbr title="Large Language Model.">LLM</abbr>; that is the immediate next milestone.</p>
-<h2 id="next-agent-wiring">Next: agent wiring <span class="section-label">In progress</span><a class="headerlink" href="#next-agent-wiring" title="Permanent link">&para;</a></h2>
-<p><abbr title="Loupe's v1 lens. STRIDE-based threat modelling.">ThreatLens</abbr> against a live <abbr title="Large Language Model.">LLM</abbr>, with <abbr title="pytest-vcr. Records HTTP fixtures once, replays forever. Loupe uses it for LLM-involving integration tests.">VCR</abbr> cassettes for <abbr title="Continuous Integration.">CI</abbr>. The infrastructure to receive that wiring has landed (<abbr title="Model Context Protocol — Anthropic-originated JSON-RPC protocol for LLM tool/resource exposure.">MCP</abbr> server, RunRecord cost fields populated from real agent runs, cost-regression test fixture); what remains is the agent's prompt + tool wiring against the live model and the first end-to-end <abbr title="pytest-vcr. Records HTTP fixtures once, replays forever. Loupe uses it for LLM-involving integration tests.">VCR</abbr> cassette. Once the agent itself goes live, the threat list is no longer stubbed.</p>
+<p>The platform, capability registry with ten bundled backends, CLI (including <code>loupe mcp</code>, <code>loupe lens list</code>, <code>loupe cap list</code>), GitHub Action, and <abbr title="Loupe's v1 lens. STRIDE-based threat modelling.">ThreatLens</abbr> are in place. The <abbr title="Multi-provider LLM agent framework Loupe is built on. By the Pydantic team.">PydanticAI</abbr> agent inside <abbr title="Loupe's v1 lens. STRIDE-based threat modelling.">ThreatLens</abbr> is wired to a live <abbr title="Large Language Model.">LLM</abbr> and exercised in <abbr title="Continuous Integration.">CI</abbr> through a <abbr title="pytest-vcr. Records HTTP fixtures once, replays forever. Loupe uses it for LLM-involving integration tests.">VCR</abbr> cassette; the cost-regression fixture replays it without keys.</p>
+<h2 id="next-agent-wiring">Next: chat <abbr title="Read-Eval-Print Loop. Interactive shell.">REPL</abbr> + remote <abbr title="Model Context Protocol — Anthropic-originated JSON-RPC protocol for LLM tool/resource exposure.">MCP</abbr> transport <span class="section-label">In progress</span><a class="headerlink" href="#next-agent-wiring" title="Permanent link">&para;</a></h2>
+<p>Two strands remain before v0.1: the <code>loupe chat</code> conversational <abbr title="Read-Eval-Print Loop. Interactive shell.">REPL</abbr> (the TTY guard is wired; the <code>[y/N/edit/skip]</code> confirmation pipeline is not), and the HTTP+SSE remote <abbr title="Model Context Protocol — Anthropic-originated JSON-RPC protocol for LLM tool/resource exposure.">MCP</abbr> transport (stdio works today). Neither is load-bearing for <abbr title="Continuous Integration.">CI</abbr> usage.</p>
 <h2 id="capability-layer-phased-plan">Capability layer phased plan<a class="headerlink" href="#capability-layer-phased-plan" title="Permanent link">&para;</a></h2>
-<p>Tracked under <a href="../reference/decisions/#d-18">D-18</a>. Each phase produces working, shippable software on its own.</p>
+<p>Tracked under <a href="../reference/decisions/#d-18">D-18</a>. Each phase produced working, shippable software on its own.</p>
 <table>
 <thead>
 <tr>
 <th>Phase</th>
 <th>Scope</th>
-<th>Approx. effort</th>
+<th>Status</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td>v1.x-A</td>
-<td>Capability protocols + registry skeleton (six Protocol definitions, <code>CapabilityRegistry</code> with entry-point discovery, <code>CapabilityRegistry</code> on <code>RunContext</code>, coordinator dependency check, unit tests with fake backends)</td>
-<td>~1 week</td>
+<td>Capability protocols + registry skeleton (Protocol definitions, <code>CapabilityRegistry</code> with entry-point discovery, <code>RunContext</code> typed slots, coordinator dependency check)</td>
+<td>Shipped</td>
 </tr>
 <tr>
 <td>v1.x-B</td>
-<td><abbr title="Software Bill of Materials. CycloneDX is the format Loupe uses.">SBOM</abbr> capability + Syft backend (refactor <code>loupe_core/sbom.py</code> into <code>SbomCapability</code> Protocol; <code>SyftBackend</code> as a backend package; existing <code>generate_sbom()</code> becomes a thin compat facade for one minor version, then removed)</td>
-<td>~3 days</td>
+<td><abbr title="Software Bill of Materials. CycloneDX is the format Loupe uses.">SBOM</abbr> capability + Syft and cdxgen backends</td>
+<td>Shipped</td>
 </tr>
 <tr>
 <td>v1.x-C</td>
-<td><abbr title="Common Vulnerabilities and Exposures — public catalogue of disclosed security flaws.">CVE</abbr> capability + Grype / osv-scanner backends</td>
-<td>~3 days</td>
+<td><abbr title="Common Vulnerabilities and Exposures — public catalogue of disclosed security flaws.">CVE</abbr> capability + Grype and osv-scanner backends</td>
+<td>Shipped</td>
 </tr>
 <tr>
 <td>v1.x-D</td>
-<td>Secret-detection capability + gitleaks / TruffleHog backends</td>
-<td>~3 days</td>
+<td>Secret-detection capability + gitleaks, TruffleHog, and detect-secrets backends</td>
+<td>Shipped</td>
 </tr>
 <tr>
 <td>v1.x-E</td>
-<td>Static-analysis capability + Semgrep backend</td>
-<td>~3 days</td>
+<td>Static-analysis capability + Semgrep, CodeQL, and Bandit backends</td>
+<td>Shipped</td>
 </tr>
 <tr>
 <td>v1.x-F</td>
-<td>Composition modes <code>union</code> / <code>consensus</code> / <code>pipeline</code> (the <code>single</code> and <code>fallback</code> modes ship in v1.x-A; richer modes come once there are ≥2 backends per capability to compose)</td>
-<td>~1 week</td>
+<td>Composition modes <code>union</code> / <code>consensus</code> / <code>pipeline</code> (the <code>single</code> and <code>fallback</code> modes shipped in v1.x-A; the richer modes shipped alongside the second backend per capability)</td>
+<td>Shipped</td>
 </tr>
 </tbody>
 </table>
-<p>Total estimated v1.x effort: roughly four to five weeks spread across releases.</p>
 <h2 id="frontends-still-in-flight">Frontends still in flight<a class="headerlink" href="#frontends-still-in-flight" title="Permanent link">&para;</a></h2>
 <ul>
 <li><code>loupe chat</code> (Designed) — interactive <abbr title="Read-Eval-Print Loop. Interactive shell.">REPL</abbr> with <code>[y/N/edit/skip]</code> confirmation prompts on protected paths. The TTY guard is in place; the conversational pipeline is not.</li>
-<li><code>loupe mcp</code> (Shipped) — Model Context Protocol server. Listed here as a reminder that the HTTP+SSE remote transport is still designed-not-wired; stdio works today. See <a href="../reference/decisions/#d-09">D-09</a> and <a href="../reference/decisions/#d-21">D-21</a>.</li>
+<li><code>loupe mcp</code> (Shipped, partial) — Model Context Protocol server. Stdio transport with read tools (<code>list_threats</code>, <code>query_by_severity</code>, <code>latest_run</code>) and write tools (<code>propose_threat</code>, <code>propose_mitigation</code>, both gated by Layer 1) works today; the HTTP+SSE remote transport is still designed-not-wired. See <a href="../reference/decisions/#d-09">D-09</a>, <a href="../reference/decisions/#d-21">D-21</a>, and <a href="../reference/decisions/#d-22">D-22</a>.</li>
 <li>GitLab / Gitea / Bitbucket adapters (Designed) — the GitHub Action exists; other VCS hosts are scoped for follow-ups.</li>
 </ul>
 <h2 id="lenses-beyond-threatlens-anticipated">Lenses beyond <abbr title="Loupe's v1 lens. STRIDE-based threat modelling.">ThreatLens</abbr> <span class="section-label">Anticipated</span><a class="headerlink" href="#lenses-beyond-threatlens-anticipated" title="Permanent link">&para;</a></h2>
@@ -1386,7 +1385,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 15, 2026 22:43:34 UTC">May 15, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 15, 2026 23:50:31 UTC">May 15, 2026</span>
   </span>
 
     

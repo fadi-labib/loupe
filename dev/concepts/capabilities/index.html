@@ -1737,7 +1737,7 @@
 <h1 id="capabilities-tool-agnostic-functional-building-blocks">Capabilities: tool-agnostic functional building blocks<a class="headerlink" href="#capabilities-tool-agnostic-functional-building-blocks" title="Permanent link">&para;</a></h1>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p><strong>Status:</strong> D-18 has shipped end-to-end. <code>loupe-core/loupe_core/capabilities/</code> holds the protocol definitions, the registry, the composition modes, and the bundled Syft + Grype backends; the <code>loupe.capabilities</code> entry-point group is wired in <code>loupe-core/pyproject.toml</code>; <code>loupe ci</code> calls <code>bootstrap_capabilities()</code> so the typed <code>ctx.sbom</code> and <code>ctx.cve_findings</code> slots are populated on real runs. The remaining work is the <abbr title="Loupe's v1 lens. STRIDE-based threat modelling.">ThreatLens</abbr> agent consuming those slots against a live <abbr title="Large Language Model.">LLM</abbr>.</p>
+<p><strong>Status:</strong> D-18 has shipped end-to-end. <code>loupe-core/loupe_core/capabilities/</code> holds the protocol definitions, the registry, the five composition modes (<code>single</code>, <code>fallback</code>, <code>union</code>, <code>consensus</code>, <code>pipeline</code>), and ten bundled backends across four capability categories; the <code>loupe.capabilities</code> entry-point group is wired in <code>loupe-core/pyproject.toml</code>; <code>loupe ci</code> calls <code>bootstrap_capabilities()</code> so the typed <code>ctx.sbom</code>, <code>ctx.cve_findings</code>, <code>ctx.secrets</code>, and <code>ctx.static_findings</code> slots are populated on real runs and consumed by the <abbr title="Loupe's v1 lens. STRIDE-based threat modelling.">ThreatLens</abbr> agent.</p>
 </div>
 <h2 id="why-two-extension-points">Why two extension points<a class="headerlink" href="#why-two-extension-points" title="Permanent link">&para;</a></h2>
 <p><abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr> has two distinct pluggable layers. Lenses are domain-specific agents (the noun): <abbr title="Loupe's v1 lens. STRIDE-based threat modelling.">ThreatLens</abbr> does security threat modelling, SafetyLens (future) does ISO 26262 hazard analysis, PrivacyLens (future) does GDPR <abbr title="Data Protection Impact Assessment. GDPR's term.">DPIA</abbr>. A lens reasons about a domain.</p>
@@ -2154,7 +2154,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 15, 2026 21:37:12 UTC">May 15, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 15, 2026 23:50:31 UTC">May 15, 2026</span>
   </span>
 
     

@@ -1309,6 +1309,10 @@
 <li>Two-tier evaluation methodology (D-19): Cesanta Mongoose (Tier 1) and Eclipse Mosquitto (Tier 2). Methodology recorded; scenario catalogue and scoring code pending.</li>
 <li><abbr title="Continuous Integration.">CI</abbr> workflow: pytest + ruff + mypy on every push and <abbr title="Pull Request — GitHub's term for a proposed change.">PR</abbr>.</li>
 <li>D-21 decision: <abbr title="Model Context Protocol — Anthropic-originated JSON-RPC protocol for LLM tool/resource exposure.">MCP</abbr> server uses the official <code>mcp</code> SDK's FastMCP API, not the third-party <code>fastmcp</code> package.</li>
+<li>D-22 decision: <abbr title="Model Context Protocol — Anthropic-originated JSON-RPC protocol for LLM tool/resource exposure.">MCP</abbr> write tools enforce through Layer 1 (<code>PathBoundary</code>) alone; no separate Layer-4 confirm gate. <abbr title="Model Context Protocol — Anthropic-originated JSON-RPC protocol for LLM tool/resource exposure.">MCP</abbr> clients are not TTY-bound, so the human-in-the-loop UX belongs in the client, not the server.</li>
+<li>Typed <code>Finding</code> model with provenance (capability backend, rule, location) replacing free-form dicts in capability results.</li>
+<li>Typed <code>UpgradedPackage</code> model for diff-derived upgrade hints consumed by <abbr title="Loupe's v1 lens. STRIDE-based threat modelling.">ThreatLens</abbr>.</li>
+<li><code>mypy --strict</code> pre-commit hook on <code>loupe-core</code>.</li>
 </ul>
 <h3 id="changed">Changed<a class="headerlink" href="#changed" title="Permanent link">&para;</a></h3>
 <ul>
@@ -1335,12 +1339,23 @@
 <li><abbr title="Loupe's v1 lens. STRIDE-based threat modelling.">ThreatLens</abbr>: single env-var resolution for <code>THREATLENS_MODEL</code> (no hard-coded default in <code>agent.py</code>).</li>
 <li><abbr title="Loupe's v1 lens. STRIDE-based threat modelling.">ThreatLens</abbr> <abbr title="Model Context Protocol — Anthropic-originated JSON-RPC protocol for LLM tool/resource exposure.">MCP</abbr> query tool no longer references the nonexistent <code>informational</code> severity.</li>
 <li><code>loupe-action</code>: <code>pip install</code> pinned in <code>action.yml</code> (source install pre-PyPI; pinned post-v0.1).</li>
+<li><code>RunRecord.timestamp</code> requires a timezone-aware datetime; UTC is no longer silently assumed at parse time.</li>
+<li>Cross-platform tempfile path for <code>gitleaks</code> output (the previous <code>/dev/stdout</code> route was Linux-only).</li>
+<li>Capability bootstrap detects three-way <code>agent_writable_paths</code> conflicts cleanly, with a precise error pointing at the conflicting entries.</li>
+<li>Lens <abbr title="Model Context Protocol — Anthropic-originated JSON-RPC protocol for LLM tool/resource exposure.">MCP</abbr>-registration failures are isolated per-lens, so a broken lens cannot suppress the read tools of others.</li>
+<li>Capability backend errors include a stdout snippet when stderr is empty, so an unhelpful CLI exit no longer surfaces as a featureless <code>BackendError</code>.</li>
+<li><code>pydantic-ai&gt;=1.0,&lt;2</code> bound corrected (a wrong upper bound was silently downgrading installs to a 0.2.x line).</li>
+<li>Upper bounds on pre-1.0 SDKs (<code>mcp</code>, <code>pydantic-ai</code>) added to insulate the project from minor-version API breaks.</li>
 </ul>
 <h3 id="refactored">Refactored<a class="headerlink" href="#refactored" title="Permanent link">&para;</a></h3>
 <ul>
 <li><code>loupe_core.atomic_write_yaml</code> shared helper for all artefact saves.</li>
 <li><abbr title="Loupe's v1 lens. STRIDE-based threat modelling.">ThreatLens</abbr>: <code>_append_threat</code> extracted to deduplicate the two write paths.</li>
 <li>CLI discovery uses public <code>CapabilityRegistry.list_all()</code>.</li>
+<li>Capability backends run their external tool via <code>asyncio.to_thread</code> so the event loop is not blocked during long scans.</li>
+<li>Capability dependency graph consolidated into a single source-of-truth dict (previously fanned out across the bootstrap and the coordinator).</li>
+<li><code>CodeDiff</code> moved into <code>diff.py</code>, removing a circular-import workaround.</li>
+<li>Relative-target-path validator centralised in <code>path_boundary</code> for reuse by both write tools.</li>
 </ul>
 <h3 id="designed-not-yet-shipped">Designed, not yet shipped<a class="headerlink" href="#designed-not-yet-shipped" title="Permanent link">&para;</a></h3>
 <ul>

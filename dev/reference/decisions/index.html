@@ -1286,6 +1286,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#d-22" class="md-nav__link">
+    <span class="md-ellipsis">
+      D-22: MCP write tools enforce through Layer 1; no separate Layer-4 confirm gate
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#open-decisions" class="md-nav__link">
     <span class="md-ellipsis">
       Open decisions
@@ -2012,6 +2021,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#d-22" class="md-nav__link">
+    <span class="md-ellipsis">
+      D-22: MCP write tools enforce through Layer 1; no separate Layer-4 confirm gate
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#open-decisions" class="md-nav__link">
     <span class="md-ellipsis">
       Open decisions
@@ -2350,6 +2368,14 @@
 <p>The <code>*_impl</code> functions in <code>loupe_core/mcp_server.py</code> are deliberately decoupled from the FastMCP wiring. They take a <code>Path</code> to <code>.loupe/</code> and return plain <code>dict</code> / <code>list[dict]</code>. If the <abbr title="Model Context Protocol — Anthropic-originated JSON-RPC protocol for LLM tool/resource exposure.">MCP</abbr> spec or our framework choice changes, only the registration layer in <code>build_mcp_server</code> moves; the data-access layer survives untouched. This mirrors the capability-layer split between Protocol and backend (D-18) and the lens-vs-platform split (D-04).</p>
 <p>Trade-offs accepted: the lowlevel API would let us emit hand-authored JSON Schema with richer constraints than Python type hints can express (e.g., regex <code>pattern</code> on <code>threat_id</code>). For the v1 read-only surface this isn't worth the boilerplate; if we add write tools later that need stricter input validation, we can drop to the lowlevel API for those specific tools while keeping the high-level decorator for the read ones — <code>FastMCP</code> and <code>Server</code> interoperate at the same protocol layer.</p>
 <hr />
+<h2 id="d-22">D-22: <abbr title="Model Context Protocol — Anthropic-originated JSON-RPC protocol for LLM tool/resource exposure.">MCP</abbr> write tools enforce through Layer 1; no separate Layer-4 confirm gate<a class="headerlink" href="#d-22" title="Permanent link">&para;</a></h2>
+<p>The <abbr title="Model Context Protocol — Anthropic-originated JSON-RPC protocol for LLM tool/resource exposure.">MCP</abbr> server (D-21) ships with both <strong>read</strong> tools (<code>list_threats</code>, <code>query_by_severity</code>, <code>latest_run</code>, per-lens summaries) and <strong>write</strong> tools (<code>threatlens_propose_threat</code>, <code>threatlens_propose_mitigation</code>). The question was: do <abbr title="Model Context Protocol — Anthropic-originated JSON-RPC protocol for LLM tool/resource exposure.">MCP</abbr> write tools need their own confirmation gate, mirroring <code>loupe chat</code>'s planned <code>[y/N/edit/skip]</code> prompt (Layer 4, see <a href="#d-08">D-08</a>)?</p>
+<p>We chose <strong>no separate Layer-4 gate for <abbr title="Model Context Protocol — Anthropic-originated JSON-RPC protocol for LLM tool/resource exposure.">MCP</abbr> writes</strong>. The reasoning:</p>
+<p><code>loupe chat</code>'s confirmation prompt exists because a chat <abbr title="Read-Eval-Print Loop. Interactive shell.">REPL</abbr> is a human-in-the-loop frontend: the human is already attending; pausing for <code>[y/N/edit/skip]</code> is the natural granularity. <abbr title="Model Context Protocol — Anthropic-originated JSON-RPC protocol for LLM tool/resource exposure.">MCP</abbr> clients are not TTY-bound — they include editors, IDE assistants, agent harnesses, and headless integrations — so a TTY-based confirmation prompt would either lock out every non-TTY client or pretend to gate while reducing to a no-op.</p>
+<p>What the <abbr title="Model Context Protocol — Anthropic-originated JSON-RPC protocol for LLM tool/resource exposure.">MCP</abbr> write tools share with <code>loupe chat</code> is the structural enforcement: every write goes through <code>write_agent_artifact</code> / <code>propose_patch</code> against the same <code>PathBoundary</code> built from <code>agent_writable_paths</code>. Protected paths (<code>context.md</code>, <code>decisions/*.md</code>, <code>config.yaml</code>) are mechanically refused with <code>BoundaryViolation</code> regardless of the calling client. The write tools also register <em>only</em> when the boundary loaded cleanly from <code>&lt;loupe-dir&gt;/config.yaml</code>; an <abbr title="Model Context Protocol — Anthropic-originated JSON-RPC protocol for LLM tool/resource exposure.">MCP</abbr> server started against a broken or missing config exposes the read surface only. So the absence of a Layer-4 confirm prompt does not weaken the four-layer model: Layer 1 still gates every write, Layer 3 still verifies the resulting artefacts, and the audit trail of <abbr title="Model Context Protocol — Anthropic-originated JSON-RPC protocol for LLM tool/resource exposure.">MCP</abbr>-initiated writes lives in the same hash-chained run history as <abbr title="Continuous Integration.">CI</abbr>-initiated ones.</p>
+<p>Trade-offs accepted: a chat-style <abbr title="Model Context Protocol — Anthropic-originated JSON-RPC protocol for LLM tool/resource exposure.">MCP</abbr> frontend that wants per-write human confirmation has to implement the prompt itself, on the client side, before issuing the tool call. That's where the human-in-the-loop UX belongs — the server is structural, the client is interactive. If a future <abbr title="Model Context Protocol — Anthropic-originated JSON-RPC protocol for LLM tool/resource exposure.">MCP</abbr> client wraps the write tools with its own confirmation UI, nothing about the server changes. The split mirrors the Pydantic / Typer separation already used elsewhere in the codebase: the lens has no UI; the CLI has no enforcement.</p>
+<p>What this rules out: an environment variable on the server side that auto-confirms every write, or a CLI flag like <code>--unsafe-allow-protected-paths</code>. Both would convert the structural gate into a configuration toggle. <a href="../../principles/#principle-7">Principle §7</a> (humans stay in the decision seat) makes that off-limits regardless of caller.</p>
+<hr />
 <h2 id="open-decisions">Open decisions<a class="headerlink" href="#open-decisions" title="Permanent link">&para;</a></h2>
 <p>Deferred until a specific trigger:</p>
 <ul>
@@ -2384,7 +2410,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 15, 2026 21:36:32 UTC">May 15, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 15, 2026 23:50:31 UTC">May 15, 2026</span>
   </span>
 
     
