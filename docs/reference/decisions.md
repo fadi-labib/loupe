@@ -306,6 +306,22 @@ Trade-offs accepted: the lowlevel API would let us emit hand-authored JSON Schem
 
 ---
 
+## D-22: MCP write tools enforce through Layer 1; no separate Layer-4 confirm gate { #d-22 }
+
+The MCP server (D-21) ships with both **read** tools (`list_threats`, `query_by_severity`, `latest_run`, per-lens summaries) and **write** tools (`threatlens_propose_threat`, `threatlens_propose_mitigation`). The question was: do MCP write tools need their own confirmation gate, mirroring `loupe chat`'s planned `[y/N/edit/skip]` prompt (Layer 4, see [D-08](#d-08))?
+
+We chose **no separate Layer-4 gate for MCP writes**. The reasoning:
+
+`loupe chat`'s confirmation prompt exists because a chat REPL is a human-in-the-loop frontend: the human is already attending; pausing for `[y/N/edit/skip]` is the natural granularity. MCP clients are not TTY-bound — they include editors, IDE assistants, agent harnesses, and headless integrations — so a TTY-based confirmation prompt would either lock out every non-TTY client or pretend to gate while reducing to a no-op.
+
+What the MCP write tools share with `loupe chat` is the structural enforcement: every write goes through `write_agent_artifact` / `propose_patch` against the same `PathBoundary` built from `agent_writable_paths`. Protected paths (`context.md`, `decisions/*.md`, `config.yaml`) are mechanically refused with `BoundaryViolation` regardless of the calling client. The write tools also register *only* when the boundary loaded cleanly from `<loupe-dir>/config.yaml`; an MCP server started against a broken or missing config exposes the read surface only. So the absence of a Layer-4 confirm prompt does not weaken the four-layer model: Layer 1 still gates every write, Layer 3 still verifies the resulting artefacts, and the audit trail of MCP-initiated writes lives in the same hash-chained run history as CI-initiated ones.
+
+Trade-offs accepted: a chat-style MCP frontend that wants per-write human confirmation has to implement the prompt itself, on the client side, before issuing the tool call. That's where the human-in-the-loop UX belongs — the server is structural, the client is interactive. If a future MCP client wraps the write tools with its own confirmation UI, nothing about the server changes. The split mirrors the Pydantic / Typer separation already used elsewhere in the codebase: the lens has no UI; the CLI has no enforcement.
+
+What this rules out: an environment variable on the server side that auto-confirms every write, or a CLI flag like `--unsafe-allow-protected-paths`. Both would convert the structural gate into a configuration toggle. [Principle §7](../principles.md#principle-7) (humans stay in the decision seat) makes that off-limits regardless of caller.
+
+---
+
 ## Open decisions
 
 Deferred until a specific trigger:

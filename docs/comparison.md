@@ -388,10 +388,10 @@ If those describe you, Loupe is the right shape. If they don't, one of the tools
 
 External claims in this page are anchored to footnotes. URLs marked `pending` need to be filled in from the original references — they were not fabricated and are not yet verified.
 
-[^peerspot-iriusrisk]: IriusRisk market-share figure. Source: PeerSpot "Threat Modeling Tools" category review, March 2026. URL pending. Accessed: pending.
-[^ms-tmt-v42]: Microsoft Threat Modeling Tool v4.2 release notes — AI-assisted threat detection. URL pending. Accessed: pending.
-[^concordance]: Concordance product page / documentation — coverage of CRA Annex I and 50-protocol mapping. URL pending. Accessed: pending.
-[^maestro]: MAESTRO framework — Cloud Security Alliance publication. URL pending. Accessed: pending.
-[^stridegpt]: StrideGPT (mrwadams/stride-gpt) — supported providers documented in the project README. URL pending. Accessed: pending.
-[^threatcompute]: ThreatCompute — paper at the 2025 ACM Cloud Computing Security Workshop (CCSW). URL pending. Accessed: pending.
-[^cra-reporting]: EU CRA reporting-obligation start date — Regulation (EU) 2024/2847. Reporting obligations apply from 11 September 2026; full applicability 11 December 2027. URL pending (Official Journal of the EU). Accessed: pending.
+[^peerspot-iriusrisk]: IriusRisk (now branded "IriusRisk, a ThreatModeler product" after the January 2026 acquisition) market-share figure. Source: PeerSpot "Threat Modeling Tools" category page, accessed 2026-05-16. URL: <https://www.peerspot.com/categories/threat-modeling>.
+[^ms-tmt-v42]: Microsoft Threat Modeling Tool release notes — Microsoft Learn keeps the canonical version-by-version release log including the v4.2 AI-assisted threat detection entry. URL: <https://learn.microsoft.com/en-us/azure/security/develop/threat-modeling-tool-releases>. Accessed: 2026-05-16.
+[^concordance]: Concordance — CRA-evidence platform; the product page documents Annex I coverage and the 50-protocol mapping (36 engineering-practice + 14 vulnerability-handling protocols, mapped to all 21 CRA Annex I essential requirements). URL: <https://getconcordance.com/cra>. Accessed: 2026-05-16.
+[^maestro]: MAESTRO (Multi-Agent Environment, Security, Threat, Risk, & Outcome) — seven-layer threat-modelling framework for agentic AI, published by the Cloud Security Alliance, February 2025. URL: <https://cloudsecurityalliance.org/blog/2025/02/06/agentic-ai-threat-modeling-framework-maestro>. Accessed: 2026-05-16.
+[^stridegpt]: StrideGPT (mrwadams/stride-gpt) — the project README documents support for OpenAI, Anthropic, Google AI, Mistral, Groq, plus local hosting via Ollama and LM Studio Server. URL: <https://github.com/mrwadams/stride-gpt>. Accessed: 2026-05-16.
+[^threatcompute]: ThreatCompute: Leveraging LLMs for Automated Threat Modeling of Cloud-Native Applications. Proceedings of the 2025 ACM Cloud Computing Security Workshop (CCSW '25), co-located with ACM CCS, Taipei, 17 October 2025. DOI: <https://doi.org/10.1145/3733812.3765533>. Accessed: 2026-05-16.
+[^cra-reporting]: EU CRA reporting obligations — Regulation (EU) 2024/2847, Article 14 applies from 11 September 2026 (full applicability 11 December 2027). Canonical text: <https://eur-lex.europa.eu/eli/reg/2024/2847/oj>. European Commission summary of the reporting timeline and SRP/ENISA flow: <https://digital-strategy.ec.europa.eu/en/policies/cra-reporting>. Accessed: 2026-05-16.

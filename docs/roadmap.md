@@ -10,31 +10,29 @@ A snapshot of where Loupe is heading. This page is editable and expected to drif
 
 ## Now <span class="section-label">Shipped</span>
 
-The platform, capability registry, CLI, GitHub Action, and ThreatLens scaffolding are in place. The PydanticAI agent inside ThreatLens is not yet wired to a live LLM; that is the immediate next milestone.
+The platform, capability registry with ten bundled backends, CLI (including `loupe mcp`, `loupe lens list`, `loupe cap list`), GitHub Action, and ThreatLens are in place. The PydanticAI agent inside ThreatLens is wired to a live LLM and exercised in CI through a VCR cassette; the cost-regression fixture replays it without keys.
 
-## Next: agent wiring <span class="section-label">In progress</span> { #next-agent-wiring }
+## Next: chat REPL + remote MCP transport <span class="section-label">In progress</span> { #next-agent-wiring }
 
-ThreatLens against a live LLM, with VCR cassettes for CI. The infrastructure to receive that wiring has landed (MCP server, RunRecord cost fields populated from real agent runs, cost-regression test fixture); what remains is the agent's prompt + tool wiring against the live model and the first end-to-end VCR cassette. Once the agent itself goes live, the threat list is no longer stubbed.
+Two strands remain before v0.1: the `loupe chat` conversational REPL (the TTY guard is wired; the `[y/N/edit/skip]` confirmation pipeline is not), and the HTTP+SSE remote MCP transport (stdio works today). Neither is load-bearing for CI usage.
 
 ## Capability layer phased plan
 
-Tracked under [D-18](reference/decisions.md#d-18). Each phase produces working, shippable software on its own.
+Tracked under [D-18](reference/decisions.md#d-18). Each phase produced working, shippable software on its own.
 
-| Phase | Scope | Approx. effort |
+| Phase | Scope | Status |
 |---|---|---|
-| v1.x-A | Capability protocols + registry skeleton (six Protocol definitions, `CapabilityRegistry` with entry-point discovery, `CapabilityRegistry` on `RunContext`, coordinator dependency check, unit tests with fake backends) | ~1 week |
-| v1.x-B | SBOM capability + Syft backend (refactor `loupe_core/sbom.py` into `SbomCapability` Protocol; `SyftBackend` as a backend package; existing `generate_sbom()` becomes a thin compat facade for one minor version, then removed) | ~3 days |
-| v1.x-C | CVE capability + Grype / osv-scanner backends | ~3 days |
-| v1.x-D | Secret-detection capability + gitleaks / TruffleHog backends | ~3 days |
-| v1.x-E | Static-analysis capability + Semgrep backend | ~3 days |
-| v1.x-F | Composition modes `union` / `consensus` / `pipeline` (the `single` and `fallback` modes ship in v1.x-A; richer modes come once there are ≥2 backends per capability to compose) | ~1 week |
-
-Total estimated v1.x effort: roughly four to five weeks spread across releases.
+| v1.x-A | Capability protocols + registry skeleton (Protocol definitions, `CapabilityRegistry` with entry-point discovery, `RunContext` typed slots, coordinator dependency check) | Shipped |
+| v1.x-B | SBOM capability + Syft and cdxgen backends | Shipped |
+| v1.x-C | CVE capability + Grype and osv-scanner backends | Shipped |
+| v1.x-D | Secret-detection capability + gitleaks, TruffleHog, and detect-secrets backends | Shipped |
+| v1.x-E | Static-analysis capability + Semgrep, CodeQL, and Bandit backends | Shipped |
+| v1.x-F | Composition modes `union` / `consensus` / `pipeline` (the `single` and `fallback` modes shipped in v1.x-A; the richer modes shipped alongside the second backend per capability) | Shipped |
 
 ## Frontends still in flight
 
 - `loupe chat` (Designed) — interactive REPL with `[y/N/edit/skip]` confirmation prompts on protected paths. The TTY guard is in place; the conversational pipeline is not.
-- `loupe mcp` (Shipped) — Model Context Protocol server. Listed here as a reminder that the HTTP+SSE remote transport is still designed-not-wired; stdio works today. See [D-09](reference/decisions.md#d-09) and [D-21](reference/decisions.md#d-21).
+- `loupe mcp` (Shipped, partial) — Model Context Protocol server. Stdio transport with read tools (`list_threats`, `query_by_severity`, `latest_run`) and write tools (`propose_threat`, `propose_mitigation`, both gated by Layer 1) works today; the HTTP+SSE remote transport is still designed-not-wired. See [D-09](reference/decisions.md#d-09), [D-21](reference/decisions.md#d-21), and [D-22](reference/decisions.md#d-22).
 - GitLab / Gitea / Bitbucket adapters (Designed) — the GitHub Action exists; other VCS hosts are scoped for follow-ups.
 
 ## Lenses beyond ThreatLens <span class="section-label">Anticipated</span>

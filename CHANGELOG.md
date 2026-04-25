@@ -32,6 +32,10 @@ The pre-alpha working set, in flight toward v0.1.
 - Two-tier evaluation methodology (D-19): Cesanta Mongoose (Tier 1) and Eclipse Mosquitto (Tier 2). Methodology recorded; scenario catalogue and scoring code pending.
 - CI workflow: pytest + ruff + mypy on every push and PR.
 - D-21 decision: MCP server uses the official `mcp` SDK's FastMCP API, not the third-party `fastmcp` package.
+- D-22 decision: MCP write tools enforce through Layer 1 (`PathBoundary`) alone; no separate Layer-4 confirm gate. MCP clients are not TTY-bound, so the human-in-the-loop UX belongs in the client, not the server.
+- Typed `Finding` model with provenance (capability backend, rule, location) replacing free-form dicts in capability results.
+- Typed `UpgradedPackage` model for diff-derived upgrade hints consumed by ThreatLens.
+- `mypy --strict` pre-commit hook on `loupe-core`.
 
 ### Changed
 
@@ -58,12 +62,23 @@ The pre-alpha working set, in flight toward v0.1.
 - ThreatLens: single env-var resolution for `THREATLENS_MODEL` (no hard-coded default in `agent.py`).
 - ThreatLens MCP query tool no longer references the nonexistent `informational` severity.
 - `loupe-action`: `pip install` pinned in `action.yml` (source install pre-PyPI; pinned post-v0.1).
+- `RunRecord.timestamp` requires a timezone-aware datetime; UTC is no longer silently assumed at parse time.
+- Cross-platform tempfile path for `gitleaks` output (the previous `/dev/stdout` route was Linux-only).
+- Capability bootstrap detects three-way `agent_writable_paths` conflicts cleanly, with a precise error pointing at the conflicting entries.
+- Lens MCP-registration failures are isolated per-lens, so a broken lens cannot suppress the read tools of others.
+- Capability backend errors include a stdout snippet when stderr is empty, so an unhelpful CLI exit no longer surfaces as a featureless `BackendError`.
+- `pydantic-ai>=1.0,<2` bound corrected (a wrong upper bound was silently downgrading installs to a 0.2.x line).
+- Upper bounds on pre-1.0 SDKs (`mcp`, `pydantic-ai`) added to insulate the project from minor-version API breaks.
 
 ### Refactored
 
 - `loupe_core.atomic_write_yaml` shared helper for all artefact saves.
 - ThreatLens: `_append_threat` extracted to deduplicate the two write paths.
 - CLI discovery uses public `CapabilityRegistry.list_all()`.
+- Capability backends run their external tool via `asyncio.to_thread` so the event loop is not blocked during long scans.
+- Capability dependency graph consolidated into a single source-of-truth dict (previously fanned out across the bootstrap and the coordinator).
+- `CodeDiff` moved into `diff.py`, removing a circular-import workaround.
+- Relative-target-path validator centralised in `path_boundary` for reuse by both write tools.
 
 ### Designed, not yet shipped
 

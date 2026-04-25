@@ -7,7 +7,7 @@ tags:
 # Capabilities: tool-agnostic functional building blocks
 
 > [!NOTE]
-> **Status:** D-18 has shipped end-to-end. `loupe-core/loupe_core/capabilities/` holds the protocol definitions, the registry, the composition modes, and the bundled Syft + Grype backends; the `loupe.capabilities` entry-point group is wired in `loupe-core/pyproject.toml`; `loupe ci` calls `bootstrap_capabilities()` so the typed `ctx.sbom` and `ctx.cve_findings` slots are populated on real runs. The remaining work is the ThreatLens agent consuming those slots against a live LLM.
+> **Status:** D-18 has shipped end-to-end. `loupe-core/loupe_core/capabilities/` holds the protocol definitions, the registry, the five composition modes (`single`, `fallback`, `union`, `consensus`, `pipeline`), and ten bundled backends across four capability categories; the `loupe.capabilities` entry-point group is wired in `loupe-core/pyproject.toml`; `loupe ci` calls `bootstrap_capabilities()` so the typed `ctx.sbom`, `ctx.cve_findings`, `ctx.secrets`, and `ctx.static_findings` slots are populated on real runs and consumed by the ThreatLens agent.
 
 ## Why two extension points
 

@@ -140,6 +140,51 @@ Behaviour:
 
 Exit codes: same scheme as `loupe ci`.
 
+## `loupe mcp`
+
+Start a Model Context Protocol server over stdio so editors, IDEs, and other MCP clients can read Loupe state — and, when configured, propose new threats/mitigations through Layer-1-gated write tools.
+
+```
+loupe mcp [--loupe-dir <path>]
+```
+
+| Flag | Default | What it does |
+|---|---|---|
+| `--loupe-dir` | `.loupe` (cwd-relative) | Path to the project's `.loupe/` directory. The server resolves config, artefacts, and the agent's write boundary against this directory. |
+
+Behaviour:
+
+- Loads `<loupe-dir>/config.yaml` (when present) to read `agent_writable_paths`; that list becomes the `PathBoundary` for write tools.
+- Registers **read tools** unconditionally: `list_threats`, `query_by_severity`, `latest_run`, plus a per-lens summary tool when a lens is installed.
+- Registers **write tools** only when the boundary loaded cleanly: `threatlens_propose_threat`, `threatlens_propose_mitigation`. Every write goes through `PathBoundary` exactly as the in-CI agent does, so protected paths (`context.md`, `decisions/*.md`, `config.yaml`) are mechanically refused. See [D-22](decisions.md#d-22) for the rationale.
+- Transport is JSON-RPC 2.0 over stdio (the standard MCP framing). HTTP+SSE is recorded in the roadmap; not yet wired.
+
+Exit codes: `0` on a clean shutdown; `64` on a config error (`EX_USAGE` — for example, a malformed `agent_writable_paths` entry); `1` on an unhandled exception during the run loop. Errors are written to stderr; stdout is reserved for the protocol stream.
+
+## `loupe lens list`
+
+Print every lens discovered through the `loupe.lenses` entry-point group.
+
+```
+loupe lens list
+```
+
+No flags today. Output is a fixed-width table with one row per registered lens (`NAME`, `DOMAIN`, `REQUIRES`). The `REQUIRES` column flattens the lens's `requires_lenses` and `requires_capabilities` declarations, so an operator can confirm at a glance what tooling each lens expects.
+
+Exit codes: `0` on a clean enumeration (including the empty case — a message points at the discovery troubleshooting steps); non-zero only on an environment error reading the entry-point metadata.
+
+## `loupe cap list`
+
+Print every capability backend discovered through the `loupe.capabilities` entry-point group, grouped by capability category.
+
+```
+loupe cap list
+```
+
+No flags today. Output is grouped by category (`sbom`, `cve`, `secret_detect`, `static_analysis`) with one indented line per backend (`NAME`, dotted import path). Backends whose underlying tool is missing from `PATH` still appear; only the runtime registry's `is_available()` filter hides them at run time.
+
+Exit codes: same scheme as `loupe lens list`.
+
 ## Flags not yet wired
 
 A small set of flags are part of the design but not yet implemented:
