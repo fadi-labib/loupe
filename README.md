@@ -22,6 +22,26 @@
 
 ---
 
+<details>
+<summary><b>📑 Table of contents</b></summary>
+
+- [The problem](#-the-problem)
+- [The bet](#-the-bet)
+- [The mental model](#-the-mental-model)
+- [Architecture at a glance](#️-architecture-at-a-glance)
+- [Quickstart](#-quickstart) · [GitHub Action](#github-action)
+- [What lives in `.loupe/`](#-what-lives-in-loupe)
+- [Sample output](#-sample-output)
+- [You pick the LLM. You pick the tools.](#-you-pick-the-llm-you-pick-the-tools)
+- [Defence in depth (four layers)](#️-defence-in-depth-four-layers)
+- [Status](#-status)
+- [Why now: the CRA timeline](#️-why-now-the-cra-timeline)
+- [Where to find things](#-where-to-find-things)
+- [Built on](#-built-on)
+- [Contributing](#-contributing) · [Security](#-security) · [Licence](#-licence)
+
+</details>
+
 ## 🔍 The problem
 
 Software-engineering risk activities — threat modelling, hazard analysis, privacy review — share a structural failure mode: **artefacts drift out of sync with the code they describe**, and the work needed to keep them current is the slow, careful, evidence-shaped work most engineers will not do without external pressure.
@@ -95,7 +115,8 @@ Each layer is replaceable without disturbing the others. Swap `syft` for `trivy`
 
 ## ⚡ Quickstart
 
-> **Pre-alpha · pre-PyPI.** Install from source for now.
+> [!WARNING]
+> **Pre-alpha · pre-PyPI.** Loupe is wired end-to-end but the API will move before v0.1 tags. Install from source for now; treat the artefact schemas as the stable surface.
 
 ```bash
 git clone https://github.com/fadi-labib/loupe.git
@@ -146,7 +167,8 @@ The Action publishes eight outputs (`findings_count`, severity-specific counts, 
 
 ## 📂 What lives in `.loupe/`
 
-The audit pack is plain files, Git-tracked, no SaaS, no hidden state:
+> [!NOTE]
+> The audit pack is **plain files**, Git-tracked, no SaaS, no hidden state, no telemetry. An auditor can replay every run from in-repo state alone; the `runs/*.json` hash chain detects history rewrites.
 
 | File | Who writes it | What it is |
 |---|---|---|
@@ -162,10 +184,71 @@ The audit pack is plain files, Git-tracked, no SaaS, no hidden state:
 
 Full schemas in [`docs/reference/schemas/`](docs/reference/schemas/index.md).
 
+## 🧾 Sample output
+
+<details>
+<summary>What ThreatLens actually writes to <code>.loupe/threats.yaml</code></summary>
+
+```yaml
+schema_version: 1
+threats:
+  - id: T-001
+    element_id: E-001
+    stride_category: I            # Information disclosure
+    title: API endpoint leaks user IDs in error messages
+    description: |
+      The /api/users endpoint returns stack traces in 500 responses,
+      revealing internal user IDs and database schema names.
+    severity: high
+    status: proposed              # human moves it through accepted / mitigated / accepted_risk / rejected
+    mitigation_ids: [M-005]
+    cwe_refs: [CWE-209]
+    attack_pattern_refs: []
+    introduced_in_pr: "1234"
+    last_reviewed: 2026-05-15
+    review_due: 2026-08-15
+    rationale: |
+      Reviewing the diff for /api/users, I noticed the new exception
+      handler raises Exception directly without sanitisation.
+    proposed_by: threatlens
+```
+
+Every threat carries a stable `T-NNN` ID, an element it applies to (`E-NNN`), a STRIDE category (single letter), severity, lifecycle status, mitigation cross-references (`M-NNN`), CWE/CAPEC references, and a rationale the LLM is required to produce. The mitigations file (`mitigations.yaml`), VEX statements (`vex.json`), and run records (`runs/*.json`) share the same shape: Pydantic-validated, stable IDs, no prose-only fields.
+
+See [`docs/reference/schemas/`](docs/reference/schemas/index.md) for every artefact's schema.
+
+</details>
+
 ## 🔌 You pick the LLM. You pick the tools.
 
-- **Multi-LLM by design.** PydanticAI ships Anthropic, OpenAI, Google, Mistral, Groq, Cohere, Ollama, Bedrock natively. Set `THREATLENS_MODEL=openai:gpt-5` and you're done — no code change.
-- **No tool lock-in.** Every non-LLM tool is a Capability Protocol. Five composition modes (`single`, `fallback`, `union`, `consensus`, `pipeline`) let you say *"run TruffleHog AND gitleaks and merge"* or *"require two of three SAST scanners to agree"* in `config.yaml`. That's the evidence.
+> [!TIP]
+> **Multi-LLM by design.** PydanticAI ships Anthropic, OpenAI, Google, Mistral, Groq, Cohere, Ollama, Bedrock natively. Set `THREATLENS_MODEL=openai:gpt-5` and you're done — no code change.
+
+**No tool lock-in.** Every non-LLM tool is a Capability Protocol. Five composition modes (`single`, `fallback`, `union`, `consensus`, `pipeline`) let you say *"run TruffleHog AND gitleaks and merge"* or *"require two of three SAST scanners to agree"* in `config.yaml`. That's the evidence.
+
+<details>
+<summary>What that looks like in <code>.loupe/config.yaml</code></summary>
+
+```yaml
+capabilities:
+  sbom:
+    mode: single                                       # any SBOM tool is fine
+    backends: [syft, cdxgen]
+  cve:
+    mode: union                                        # different DBs catch different CVEs
+    backends: [grype, osv-scanner]                     # merge results, dedupe by CVE ID
+  secret_detect:
+    mode: union                                        # belt and braces — false negatives are catastrophic
+    backends: [trufflehog, gitleaks, detect-secrets]
+  static_analysis:
+    mode: consensus                                    # require two analysers to agree
+    consensus_threshold: 2
+    backends: [semgrep, codeql, bandit]
+```
+
+An auditor reads this and knows the team's posture without grepping any code. *The configuration is the evidence.*
+
+</details>
 
 ## 🛡️ Defence in depth (four layers)
 
@@ -206,6 +289,22 @@ See [`docs/reference/verification.md`](docs/reference/verification.md) for the *
 - **PrivacyLens** — data-protection review (GDPR DPIA, LINDDUN)
 - **AIRiskLens** — AI/ML risk (NIST AI RMF, EU AI Act high-risk; possibly MAESTRO)
 
+## 🗓️ Why now: the CRA timeline
+
+```text
+   2024              2026-09-11               2027-12-11
+    │                     │                        │
+    ●─────────────────────●────────────────────────●─────►
+   CRA adopted    Reporting obligations    Full applicability
+                  begin (ENISA SRP)        — every manufacturer
+                                            of "products with
+                                            digital elements"
+```
+
+The EU Cyber Resilience Act ([Regulation 2024/2847](https://eur-lex.europa.eu/eli/reg/2024/2847)) becomes fully applicable on **11 December 2027**. From **11 September 2026**, manufacturers must report actively-exploited vulnerabilities and severe incidents via [ENISA's Single Reporting Platform](https://www.enisa.europa.eu/topics/cyber-resilience-act).
+
+Both require *living* risk assessments, *living* SBOMs, *living* per-CVE impact statements. Loupe produces all three as in-repo artefacts, on every PR, with audit-grade provenance.
+
 ## 📚 Where to find things
 
 The published docs site is at **[fadi-labib.github.io/loupe](https://fadi-labib.github.io/loupe/)** (search, navigation, social previews). The fallback for in-tree browsing:
@@ -227,6 +326,25 @@ The published docs site is at **[fadi-labib.github.io/loupe](https://fadi-labib.
 | 📖 | look up a term | [Glossary](docs/reference/glossary.md) |
 | 🛠️ | contribute code or a lens | [Contributing](docs/contributing.md) |
 | 📰 | see what changed | [CHANGELOG](CHANGELOG.md) |
+
+## 🧱 Built on
+
+Loupe stands on:
+
+| Layer | Built with |
+|---|---|
+| LLM agent framework | [PydanticAI](https://ai.pydantic.dev/) (multi-provider, typed I/O) |
+| Validation + serialisation | [Pydantic 2.x](https://docs.pydantic.dev/) |
+| LLM tool protocol | [MCP](https://modelcontextprotocol.io/) (official Anthropic SDK, FastMCP API — [D-21](docs/reference/decisions.md#d-21)) |
+| SBOM | [CycloneDX 1.6](https://cyclonedx.org/) via [Syft](https://github.com/anchore/syft) / [cdxgen](https://github.com/CycloneDX/cdxgen) |
+| Vulnerability matching | [Grype](https://github.com/anchore/grype) · [osv-scanner](https://github.com/google/osv-scanner) |
+| VEX | [OpenVEX 0.2](https://openvex.dev/) |
+| Secret detection | [TruffleHog](https://github.com/trufflesecurity/trufflehog) · [gitleaks](https://github.com/gitleaks/gitleaks) · [detect-secrets](https://github.com/Yelp/detect-secrets) |
+| Static analysis | [Semgrep](https://semgrep.dev/) · [CodeQL](https://codeql.github.com/) · [Bandit](https://github.com/PyCQA/bandit) |
+| Threat-modelling method | [STRIDE](https://learn.microsoft.com/azure/security/develop/threat-modeling-tool-threats) (Microsoft) · methodology inspiration from [StrideGPT](https://github.com/mrwadams/stride-gpt) ([D-16](docs/reference/decisions.md#d-16)) |
+| Docs site | [MkDocs Material](https://squidfunk.github.io/mkdocs-material/) · [mkdocstrings](https://mkdocstrings.github.io/) · [mike](https://github.com/jimporter/mike) versioning |
+| Workspace / packaging | [uv](https://docs.astral.sh/uv/) · [hatchling](https://hatch.pypa.io/) |
+| Prose linting | [Vale](https://vale.sh/) with a custom [`Loupe`](.vale/styles/Loupe/) style |
 
 ## 🤝 Contributing
 
