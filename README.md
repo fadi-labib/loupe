@@ -307,7 +307,7 @@ See [`docs/reference/verification.md`](docs/reference/verification.md) for the m
                                             digital elements"
 ```
 
-The EU Cyber Resilience Act ([Regulation 2024/2847](https://eur-lex.europa.eu/eli/reg/2024/2847)) becomes fully applicable on **11 December 2027**. From **11 September 2026**, manufacturers must report actively-exploited vulnerabilities and severe incidents via [ENISA's Single Reporting Platform](https://www.enisa.europa.eu/topics/cyber-resilience-act).
+The EU Cyber Resilience Act ([Regulation 2024/2847](https://eur-lex.europa.eu/eli/reg/2024/2847)) becomes fully applicable on **11 December 2027**. From **11 September 2026**, manufacturers must report actively-exploited vulnerabilities and severe incidents via ENISA's Single Reporting Platform (SRP), coordinated through their Member State CSIRT.
 
 Both require living risk assessments, living SBOMs, living per-CVE impact statements. Loupe produces all three as in-repo artefacts, on every PR, with audit-grade provenance.
 
