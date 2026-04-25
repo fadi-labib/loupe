@@ -19,6 +19,13 @@ exclude = [
   # similar templates. Narrow to placeholder fragments only so real repo URLs
   # still get verified.
   'https://github.com/fadi-labib/loupe/<placeholder>',
+  # Local dev-server URLs that contributing.md documents (`mkdocs serve` etc.).
+  # These will never resolve from a CI runner.
+  '^http://127\.0\.0\.1:',
+  '^http://localhost:',
+  # The Pages site does not exist yet (the repo is private and Pages is not
+  # configured). Remove this exclusion once `mike deploy` has published.
+  '^https://fadi-labib\.github\.io/loupe/?$',
 ]
 
 # Treat redirects as success. 429 = rate-limited (GitHub anonymous quota);

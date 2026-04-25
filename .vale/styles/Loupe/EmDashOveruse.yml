@@ -5,5 +5,5 @@ scope: text
 ignorecase: false
 limit: 1
 # One em-dash per paragraph is fine; this flags paragraphs with two or more.
-tokens:
-  - '—.*—'
+# Vale's `occurrence` extension takes a single `token` regex, not a list.
+token: '—.*—'
