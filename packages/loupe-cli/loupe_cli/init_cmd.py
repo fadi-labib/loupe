@@ -98,6 +98,29 @@ lenses:
   threatlens:
     enabled: true
     minimum_relevance: 0.3
+
+# Uncomment and edit to wire capability backends. ThreatLens declares
+# `requires: [sbom, cve]` — without these blocks `loupe ci` warns
+# "capability bootstrap failed" on first run because no backend is
+# bound. Each backend below maps to a CLI tool that must be on $PATH:
+# Syft (https://github.com/anchore/syft), Grype (https://github.com/anchore/grype),
+# etc. See docs/concepts/capabilities.md for composition modes
+# (single / fallback / union / consensus / pipeline).
+#
+# capabilities:
+#   sbom:
+#     mode: single
+#     backends: [syft]              # alternative: cdxgen
+#   cve:
+#     mode: single
+#     backends: [grype]             # alternative: osv-scanner
+#   secret_detect:
+#     mode: union                   # union surfaces hits from any tool
+#     backends: [gitleaks, trufflehog]
+#   static_analysis:
+#     mode: consensus               # require N tools to agree
+#     consensus_threshold: 2
+#     backends: [semgrep, codeql, bandit]
 """
 
 

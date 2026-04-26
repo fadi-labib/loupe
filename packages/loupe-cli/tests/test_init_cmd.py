@@ -73,6 +73,29 @@ def test_init_config_loads(tmp_path, monkeypatch):
     assert ".loupe/threats.yaml" in cfg.agent_writable_paths
 
 
+def test_init_ships_commented_capabilities_skeleton(tmp_path, monkeypatch):
+    """The scaffolded config.yaml ships with a commented-out `capabilities:`
+    block. Without it, `loupe ci` warned "capability bootstrap failed" on
+    every fresh install because ThreatLens declares `requires: [sbom, cve]`
+    but no backend was bound. With the skeleton in place, the user has a
+    copy-paste template — uncomment, edit, capabilities resolve."""
+    monkeypatch.chdir(tmp_path)
+    result = runner.invoke(app, ["init"])
+    assert result.exit_code == 0
+    text = (tmp_path / ".loupe" / "config.yaml").read_text()
+    # The block exists and is commented out (so it doesn't activate
+    # backends without operator opt-in).
+    assert "# capabilities:" in text
+    assert "#   sbom:" in text
+    assert "#     backends: [syft]" in text
+    assert "#   cve:" in text
+    # Round-trip: with everything commented, the config still parses.
+    from loupe_core.config import load_config
+
+    cfg = load_config(tmp_path / ".loupe" / "config.yaml")
+    assert cfg.schema_version == 1
+
+
 def test_init_scaffolds_knowledge_in_writable_paths(tmp_path, monkeypatch):
     """knowledge.yaml MUST be agent-writable from the scaffold — the lens
     layer promotes facts there on first run; without this entry, the very
