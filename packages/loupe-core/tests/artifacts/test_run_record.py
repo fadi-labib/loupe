@@ -3,10 +3,13 @@ from datetime import UTC, datetime
 import pytest
 from loupe_core.artifacts.run_record import (
     LensConsidered,
+    LensError,
     RunRecord,
+    extract_lens_errors,
     load_run_records,
     save_run_record,
 )
+from loupe_core.run_context import Finding
 
 
 def _record(run_id: str, prev: str | None) -> RunRecord:
@@ -118,6 +121,150 @@ def test_chain_is_built(tmp_path):
     assert len(records) == 2
     assert records[0].prev_run_hash is None
     assert records[1].prev_run_hash == r1.self_hash
+
+
+# ---------------------------------------------------------------------------
+# LensError / extract_lens_errors (G-4)
+# ---------------------------------------------------------------------------
+
+
+def _err_finding(payload: dict) -> Finding:
+    return Finding(posted_by="dispatcher", payload=payload)
+
+
+def test_extract_lens_errors_empty_when_no_lens_error_finding():
+    findings = {"threatlens": {"threat:T-001": _err_finding({"id": "T-001"})}}
+    assert extract_lens_errors(findings) == []
+
+
+def test_extract_lens_errors_maps_dispatcher_payload_shape():
+    """Mirror the exact payload the dispatcher writes for a crash."""
+    findings = {
+        "threatlens": {
+            "lens_error": _err_finding(
+                {
+                    "type": "UserError",
+                    "message": "Set the ANTHROPIC_API_KEY env variable",
+                    "traceback": "Traceback (most recent call last):\n  ...",
+                }
+            )
+        }
+    }
+    errors = extract_lens_errors(findings)
+    assert len(errors) == 1
+    assert errors[0] == LensError(
+        lens="threatlens",
+        kind="UserError",
+        message="Set the ANTHROPIC_API_KEY env variable",
+        request_id=None,
+        traceback_excerpt="Traceback (most recent call last):\n  ...",
+    )
+
+
+def test_extract_lens_errors_truncates_long_traceback():
+    long_traceback = "x" * 5000
+    findings = {
+        "threatlens": {
+            "lens_error": _err_finding(
+                {"type": "RuntimeError", "message": "boom", "traceback": long_traceback}
+            )
+        }
+    }
+    excerpt = extract_lens_errors(findings)[0].traceback_excerpt
+    assert excerpt is not None
+    assert len(excerpt) == 2048
+    # Tail-preserving truncation — the most recent frames matter most.
+    assert excerpt == long_traceback[-2048:]
+
+
+def test_extract_lens_errors_picks_up_request_id_when_present():
+    """The friendliness pass in dispatcher attaches request_id for
+    ModelHTTPError 401/403; the helper must surface it."""
+    findings = {
+        "threatlens": {
+            "lens_error": _err_finding(
+                {
+                    "type": "ModelHTTPError",
+                    "message": "status_code: 401, model_name: claude-opus-4-7",
+                    "traceback": "",
+                    "request_id": "req_011Cb68Z24U5W4aWfL9nkHet",
+                }
+            )
+        }
+    }
+    err = extract_lens_errors(findings)[0]
+    assert err.request_id == "req_011Cb68Z24U5W4aWfL9nkHet"
+
+
+def test_extract_lens_errors_sorted_by_lens_name_for_determinism():
+    """Two runs with the same crash set must produce the same canonical
+    JSON — ergo the same self_hash. Sort the output."""
+    findings = {
+        "zlens": {
+            "lens_error": _err_finding({"type": "RuntimeError", "message": "z", "traceback": ""})
+        },
+        "alens": {
+            "lens_error": _err_finding({"type": "RuntimeError", "message": "a", "traceback": ""})
+        },
+    }
+    errors = extract_lens_errors(findings)
+    assert [e.lens for e in errors] == ["alens", "zlens"]
+
+
+def test_errors_field_is_part_of_self_hash(tmp_path):
+    """Two runs identical except for `errors` must have different hashes —
+    an auditor needs to distinguish clean from crashed runs by hash alone."""
+    clean = _record("run-clean", prev=None)
+    crashed = _record("run-clean", prev=None)
+    crashed = crashed.model_copy(
+        update={
+            "errors": [
+                LensError(
+                    lens="threatlens",
+                    kind="UserError",
+                    message="missing API key",
+                )
+            ]
+        }
+    )
+    h_clean = save_run_record(tmp_path, clean).self_hash
+    # Different runs_dir so save doesn't clobber.
+    other = tmp_path / "other"
+    other.mkdir()
+    h_crashed = save_run_record(other, crashed).self_hash
+    assert h_clean != h_crashed
+
+
+def test_errors_field_defaults_empty_and_backward_compat(tmp_path):
+    """Pre-G-4 run records on disk have no `errors` key. Pydantic's default
+    extra='ignore' plus a field default keeps `load_run_records` working."""
+    legacy_json = """{
+        "run_id": "legacy-run",
+        "timestamp": "2026-05-01T10:00:00+00:00",
+        "mode": "ci",
+        "invoked_by": "loupe-cli",
+        "trigger": "manual_ci",
+        "base_sha": null,
+        "head_sha": null,
+        "diff_hash": "abc",
+        "context_md_hash": "def",
+        "lenses_considered": [],
+        "lenses_run": [],
+        "models_used": {},
+        "total_tokens_in": 0,
+        "total_tokens_out": 0,
+        "cost_usd_estimate": 0.0,
+        "cache_hit_rate": null,
+        "artifacts_changed": [],
+        "proposed_patches": [],
+        "pending_decisions": [],
+        "prev_run_hash": null,
+        "self_hash": "legacy-hash"
+    }"""
+    (tmp_path / "2026-05-01T10-00-00-000000Z-legacy-run.json").write_text(legacy_json)
+    records = load_run_records(tmp_path)
+    assert len(records) == 1
+    assert records[0].errors == []
 
 
 def test_save_is_atomic_on_crash(tmp_path, monkeypatch):

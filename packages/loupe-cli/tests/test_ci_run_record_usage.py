@@ -147,3 +147,37 @@ def test_cache_hit_rate_distinguishes_zero_from_none(loupe_dir: Path):
 
     record = load_run_records(loupe_dir / "runs")[0]
     assert record.cache_hit_rate == 0.0
+
+
+# ---------------------------------------------------------------------------
+# `errors` field population (G-4)
+# ---------------------------------------------------------------------------
+
+
+def test_lens_error_finding_populates_errors_field(loupe_dir: Path):
+    """When a lens crashes, the dispatcher's `lens_error` finding must be
+    projected into the run record's `errors` array. Without this, an
+    auditor walking `.loupe/runs/*.json` sees no trace of why the run
+    failed beyond `artifacts_changed: ['lens_error']`."""
+    from loupe_cli.ci_cmd import _write_run_record
+
+    ctx = _ctx_with_usage(loupe_dir, {})
+    # Mirror exactly what loupe_core.dispatcher writes on isolation.
+    ctx.record_finding(
+        "threatlens",
+        "lens_error",
+        {
+            "type": "UserError",
+            "message": "Set the ANTHROPIC_API_KEY env variable",
+            "traceback": "Traceback (most recent call last):\n  ...\nUserError: ...",
+        },
+    )
+    _write_run_record(ctx, loupe_dir, considered=[], cfg=LoupeConfig())
+
+    record = load_run_records(loupe_dir / "runs")[0]
+    assert len(record.errors) == 1
+    assert record.errors[0].lens == "threatlens"
+    assert record.errors[0].kind == "UserError"
+    assert record.errors[0].message == "Set the ANTHROPIC_API_KEY env variable"
+    assert record.errors[0].traceback_excerpt is not None
+    assert record.errors[0].traceback_excerpt.endswith("UserError: ...")

@@ -30,6 +30,7 @@ import typer
 from loupe_core.artifacts.run_record import (
     LensConsidered,
     RunRecord,
+    extract_lens_errors,
     load_run_records,
     save_run_record,
 )
@@ -185,6 +186,7 @@ def _write_run_record(
         artifacts_changed=[],
         proposed_patches=[p.location for p in ctx.proposed_patches],
         pending_decisions=[d.id for d in ctx.pending_decisions],
+        errors=extract_lens_errors(ctx.findings),
         prev_run_hash=prev_hash,
         self_hash="",
     )

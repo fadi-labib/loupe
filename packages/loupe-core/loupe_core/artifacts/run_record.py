@@ -5,9 +5,15 @@ import json
 import os
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 from pydantic import BaseModel, Field, field_validator
+
+if TYPE_CHECKING:
+    # Type-check-only import keeps run_record.py loadable before run_context,
+    # which matters for tooling that imports artifacts in isolation
+    # (e.g., docs/reference/schemas/*.schema.json generation).
+    from loupe_core.run_context import Finding
 
 
 class LensConsidered(BaseModel):
@@ -16,6 +22,40 @@ class LensConsidered(BaseModel):
     name: str = Field(description="Lens name, e.g., `threatlens`.")
     score: float = Field(description="Score from `is_relevant()`.")
     reason: str = Field(description="Free-text reason from `is_relevant()`.")
+
+
+# Maximum bytes of formatted traceback to persist in the run record.
+# A full traceback can run tens of KB on a nested exception; truncate to
+# keep the on-disk record auditor-readable and reduce hash-chain pressure.
+# The tail (most recent frames) is the diagnostic-useful half.
+_TRACEBACK_EXCERPT_BYTES = 2048
+
+
+class LensError(BaseModel):
+    """One lens-crash record from `ctx.findings[<lens>]['lens_error']`.
+
+    Populated by the dispatcher's error-isolation handler and surfaced
+    into the run record so auditors can reconstruct what went wrong from
+    the audit trail alone — terminal output is ephemeral, the run record
+    is not. The shape mirrors the payload the dispatcher writes into
+    `Finding.payload`; `request_id` is opportunistically extracted from
+    `pydantic_ai.exceptions.ModelHTTPError` when present.
+    """
+
+    lens: str = Field(description="Lens name that crashed (e.g., `threatlens`).")
+    kind: str = Field(description="Exception class name (e.g., `UserError`, `ModelHTTPError`).")
+    message: str = Field(description="The exception's string form.")
+    request_id: str | None = Field(
+        default=None,
+        description="Provider request id when the exception carries one; null otherwise.",
+    )
+    traceback_excerpt: str | None = Field(
+        default=None,
+        description=(
+            f"Tail of the formatted traceback, truncated to {_TRACEBACK_EXCERPT_BYTES} bytes "
+            "to keep the on-disk record bounded."
+        ),
+    )
 
 
 class RunRecord(BaseModel):
@@ -50,6 +90,15 @@ class RunRecord(BaseModel):
         description="Paths in `.loupe/.proposed/` created this run."
     )
     pending_decisions: list[str] = Field(description="Decisions awaiting human sign-off.")
+    errors: list[LensError] = Field(
+        default_factory=list,
+        description=(
+            "Structured lens-crash records for this run, one per lens that raised in "
+            "`dispatch_plan`. Empty on a clean run. Part of the canonical JSON, so two "
+            "runs that differ only by their `errors` get different `self_hash` values — "
+            "an auditor can distinguish a clean run from a lens-crash run by hash alone."
+        ),
+    )
     prev_run_hash: str | None = Field(
         description="Previous record's `self_hash`; null on first run."
     )
@@ -79,6 +128,38 @@ class RunRecord(BaseModel):
         data = self.model_dump(mode="json", exclude={"self_hash"})
         canonical = json.dumps(data, sort_keys=True, separators=(",", ":"))
         return hashlib.sha256(canonical.encode()).hexdigest()
+
+
+def extract_lens_errors(findings: dict[str, dict[str, Finding]]) -> list[LensError]:
+    """Project per-lens `lens_error` findings into `LensError` records.
+
+    The dispatcher's error-isolation branch writes the same payload shape
+    every time: ``{"type": ..., "message": ..., "traceback": ...}``. The
+    optional ``request_id`` is set by the friendliness pass in
+    `loupe_core.dispatcher` for provider errors that carry one
+    (``pydantic_ai.exceptions.ModelHTTPError``). Lenses are returned in
+    deterministic sorted-by-name order so two runs with the same crash
+    set produce the same canonical JSON.
+    """
+    out: list[LensError] = []
+    for lens_name in sorted(findings.keys()):
+        finding = findings[lens_name].get("lens_error")
+        if finding is None:
+            continue
+        payload = finding.payload
+        traceback_text = payload.get("traceback") or None
+        if traceback_text and len(traceback_text) > _TRACEBACK_EXCERPT_BYTES:
+            traceback_text = traceback_text[-_TRACEBACK_EXCERPT_BYTES:]
+        out.append(
+            LensError(
+                lens=lens_name,
+                kind=str(payload.get("type", "Exception")),
+                message=str(payload.get("message", "")),
+                request_id=payload.get("request_id"),
+                traceback_excerpt=traceback_text,
+            )
+        )
+    return out
 
 
 def save_run_record(runs_dir: Path, record: RunRecord) -> RunRecord:
