@@ -43,7 +43,15 @@ def init_cmd() -> None:
 
 @app.command("ci")
 def ci_cmd(
-    pr: str | None = typer.Option(None, "--pr", help="Pull request number (informational)."),
+    pr: str | None = typer.Option(
+        None,
+        "--pr",
+        help=(
+            "Pull request number; recorded in the run record. Does NOT fetch the "
+            "diff — pass --diff or --diff-file. The GitHub Action wrapper fetches "
+            "the PR diff automatically before invoking the CLI."
+        ),
+    ),
     diff: str = typer.Option(
         "",
         "--diff",
@@ -55,10 +63,14 @@ def ci_cmd(
         help="Path to a unified diff (mutually exclusive with --diff).",
     ),
     base_sha: str | None = typer.Option(
-        None, "--base-sha", help="Base commit SHA of the diff (informational)."
+        None,
+        "--base-sha",
+        help="Base commit SHA; recorded in the run record. Does not affect diff parsing.",
     ),
     head_sha: str | None = typer.Option(
-        None, "--head-sha", help="Head commit SHA of the diff (informational)."
+        None,
+        "--head-sha",
+        help="Head commit SHA; recorded in the run record. Does not affect diff parsing.",
     ),
     config: Path = typer.Option(
         Path(".loupe/config.yaml"),
