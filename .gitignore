@@ -33,6 +33,11 @@ site/
 # Local agent / IDE session state (worktrees, plans, settings). Never commit.
 .claude/
 
+# Project-local Claude Code memory (read by Claude sessions; untracked by
+# choice so per-maintainer notes don't leak into public history).
+CLAUDE.md
+CLAUDE.local.md
+
 # Private design artefacts kept locally only.
 # These were scrubbed from git history; do not re-commit. See docs/contributing.md.
 /docs/plans/
