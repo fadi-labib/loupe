@@ -26,12 +26,16 @@ exclude = [
   # The Pages site does not exist yet (the repo is private and Pages is not
   # configured). Remove this exclusion once `mike deploy` has published.
   '^https://fadi-labib\.github\.io/loupe/?$',
+  # DOI redirects to publisher sites (ACM, Springer, etc.) that anti-crawler
+  # 403 anonymous crawlers. The DOI itself is canonical; if it's wrong, the
+  # citation context will catch it.
+  '^https?://(dx\.)?doi\.org/',
 ]
 
 # Treat redirects as success. 429 = rate-limited (GitHub anonymous quota);
 # 999 = LinkedIn / similar anti-bot responses. Neither implies the link is
 # actually broken, so don't fail CI on them.
-accept = [200, 206, 301, 302, 303, 307, 308, 429, 999]
+accept = [200, 202, 206, 301, 302, 303, 307, 308, 429, 999]
 
 # Reasonable network budgets.
 timeout = 20
