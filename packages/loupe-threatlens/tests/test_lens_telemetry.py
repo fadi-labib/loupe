@@ -57,8 +57,8 @@ class _FakeAgent:
 
 
 async def test_warns_when_usage_is_none(monkeypatch, caplog, tmp_path):
-    """If `result.usage()` returns None, the lens must log a WARNING."""
-    fake_result = SimpleNamespace(usage=lambda: None)
+    """If `result.usage` is None, the lens must log a WARNING."""
+    fake_result = SimpleNamespace(usage=None)
     monkeypatch.setattr(
         "loupe_threatlens.lens.build_agent",
         lambda model_id: _FakeAgent(fake_result),
@@ -92,7 +92,7 @@ async def test_warns_when_all_usage_tokens_are_zero(monkeypatch, caplog, tmp_pat
         cache_read_tokens=0,
         cache_write_tokens=0,
     )
-    fake_result = SimpleNamespace(usage=lambda: zero_usage)
+    fake_result = SimpleNamespace(usage=zero_usage)
     monkeypatch.setattr(
         "loupe_threatlens.lens.build_agent",
         lambda model_id: _FakeAgent(fake_result),
@@ -120,7 +120,7 @@ async def test_no_warning_when_tokens_present(monkeypatch, caplog, tmp_path):
         cache_read_tokens=0,
         cache_write_tokens=0,
     )
-    fake_result = SimpleNamespace(usage=lambda: good_usage)
+    fake_result = SimpleNamespace(usage=good_usage)
     monkeypatch.setattr(
         "loupe_threatlens.lens.build_agent",
         lambda model_id: _FakeAgent(fake_result),

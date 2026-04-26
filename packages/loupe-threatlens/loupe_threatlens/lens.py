@@ -182,8 +182,9 @@ class ThreatLens:
 
         # Capture token usage so the run record can carry real numbers
         # rather than the placeholder zeros [principle §8 — cost discipline].
-        # PydanticAI exposes usage as a method on AgentRunResult (older
-        # versions used a property); handle both by calling when callable.
+        # PydanticAI 1.x exposes `usage` via @deprecated_callable_property:
+        # the attribute is BOTH a property and callable, and calling it
+        # emits a deprecation warning. Access as a property only.
         # Inner attributes are guarded with getattr so providers that emit
         # fewer fields don't raise.
         #
@@ -191,8 +192,7 @@ class ThreatLens:
         # because a future PydanticAI field rename would otherwise produce a
         # silent cost-tracking blackout. The warning is the early-detection
         # signal that the §8 telemetry shape needs updating.
-        usage_attr = getattr(result, "usage", None)
-        usage = usage_attr() if callable(usage_attr) else usage_attr
+        usage = getattr(result, "usage", None)
         if usage is None:
             logger.warning(
                 "ThreatLens lens.run: result.usage() returned None — "
