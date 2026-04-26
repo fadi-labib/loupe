@@ -76,6 +76,45 @@ def test_scan_fails_when_loupe_dir_missing(tmp_path, monkeypatch):
     assert "loupe init" in combined.lower() or ".loupe" in combined
 
 
+def test_scan_lens_error_fails_gate(tmp_path, monkeypatch):
+    """A lens that crashes during dispatch (`lens_error` finding) must
+    cause `loupe scan` to exit 1 — same liveness contract as `loupe ci`.
+
+    Before this fix, scan returned 0 unconditionally, so a scheduled
+    nightly scan would silently mask catastrophic ThreatLens failures.
+    """
+    monkeypatch.chdir(tmp_path)
+    loupe = _init_project(tmp_path)
+
+    async def _crash_dispatch(ctx, lenses, boundary, loupe_dir):  # noqa: ARG001
+        ctx.record_finding(
+            "threatlens",
+            "lens_error",
+            {
+                "type": "RuntimeError",
+                "message": "trufflehog exceeded budget",
+                "traceback": "Traceback (most recent call last):\n  ...",
+            },
+        )
+
+    # Override the autouse `stub_dispatch` from conftest: that one sets
+    # a no-op binding; this test needs the binding to record a lens_error.
+    monkeypatch.setattr("loupe_cli.scan_cmd.dispatch_plan", _crash_dispatch)
+
+    result = runner.invoke(app, ["scan"])
+    assert result.exit_code == 1, (result.exit_code, result.stdout, result.stderr)
+    combined = (result.stdout or "") + (result.stderr or "")
+    assert "lens 'threatlens' crashed" in combined.lower() or "missing evidence" in combined
+
+    # The audit trail must still be written even on a lens crash —
+    # the run record carries the errors[] entry for the auditor.
+    runs = load_run_records(loupe / "runs")
+    assert len(runs) == 1
+    assert len(runs[0].errors) == 1
+    assert runs[0].errors[0].lens == "threatlens"
+    assert runs[0].errors[0].kind == "RuntimeError"
+
+
 def test_scan_bootstraps_capabilities_before_dispatch(tmp_path, monkeypatch):
     """`loupe scan` must call bootstrap_capabilities() so lenses have their
     declared SBOM/CVE/etc inputs available. ci_cmd does this; scan_cmd

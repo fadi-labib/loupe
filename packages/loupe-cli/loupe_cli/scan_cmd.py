@@ -41,6 +41,7 @@ from loupe_core.config import LoupeConfig, load_config
 from loupe_core.coordinator import build_run_plan
 from loupe_core.dispatcher import dispatch_plan
 from loupe_core.enforcement.path_boundary import PathBoundary
+from loupe_core.gating import check_lens_liveness, format_liveness_failure
 from loupe_core.lens_api import Lens
 from loupe_core.lens_registry import discover_lenses
 from loupe_core.run_context import BootstrapInputs, RunContext
@@ -124,6 +125,16 @@ def scan_command(
 
     asyncio.run(dispatch_plan(ctx, lenses, boundary, loupe))
     _write_run_record(ctx, loupe, considered=lenses, cfg=cfg, scope=scope)
+
+    # Mirror loupe ci's liveness contract: a crashed lens (lens_error
+    # finding) must trip the gate even though scan has no fail_on/warn_on
+    # severity gate of its own. Before this check, scans silently exited 0
+    # on crashes — a scheduled scan in CI would never alert the operator
+    # that ThreatLens died, the run record on disk being the only trace.
+    liveness_failure = check_lens_liveness(ctx)
+    if liveness_failure is not None:
+        typer.echo(format_liveness_failure(liveness_failure), err=True)
+        return 1
 
     typer.echo(f"Loupe scan complete. Run: {run_id} (scope={scope}).")
     typer.echo(f"Lenses run: {[p.lens_name for p in ctx.plan]}")

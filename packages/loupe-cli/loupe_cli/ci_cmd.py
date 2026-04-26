@@ -38,6 +38,7 @@ from loupe_core.config import LoupeConfig, load_config
 from loupe_core.coordinator import build_run_plan
 from loupe_core.dispatcher import dispatch_plan
 from loupe_core.enforcement.path_boundary import PathBoundary
+from loupe_core.gating import check_lens_liveness, format_liveness_failure
 from loupe_core.lens_api import Lens
 from loupe_core.lens_registry import discover_lenses
 from loupe_core.run_context import BootstrapInputs, RunContext
@@ -152,22 +153,13 @@ def _gate_exit_code(ctx: RunContext, cfg: LoupeConfig) -> int:
       threat severity, but lens liveness is non-negotiable — if a lens
       never produced output we cannot claim CI verified its concern.
     """
-    # Liveness check: any lens that crashed during dispatch left a
-    # `lens_error` finding with type/message/traceback fields (see
-    # loupe_core/dispatcher.py). Surface it and short-circuit to exit 1
-    # BEFORE the threat-severity gate — even fail_on=[] must trip on this.
-    for lens_name, lens_findings in ctx.findings.items():
-        lens_error = lens_findings.get("lens_error")
-        if lens_error is None:
-            continue
-        payload = lens_error.payload
-        typer.echo(
-            f"Gate failure: lens {lens_name!r} crashed during dispatch "
-            f"({payload.get('type', 'Exception')}: "
-            f"{payload.get('message', 'unknown')}). "
-            f"Treating missing evidence as a hard failure.",
-            err=True,
-        )
+    # Liveness check: short-circuit BEFORE the threat-severity gate so
+    # even fail_on=[] (report-only) still trips on a crashed lens. The
+    # helper lives in loupe_core.gating so `loupe scan` enforces the
+    # same contract from the same code path.
+    liveness_failure = check_lens_liveness(ctx)
+    if liveness_failure is not None:
+        typer.echo(format_liveness_failure(liveness_failure), err=True)
         return 1
 
     fail_severities = set(cfg.ci.fail_on)
