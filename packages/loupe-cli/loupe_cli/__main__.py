@@ -36,9 +36,24 @@ def main(version: bool = typer.Option(False, "--version", help="Print version an
 
 
 @app.command("init")
-def init_cmd() -> None:
+def init_cmd(
+    force: bool = typer.Option(
+        False,
+        "--force",
+        help=(
+            "Regenerate scaffold files (config.yaml, knowledge.yaml) when .loupe/ "
+            "already exists. context.md is preserved if it has been edited; runs/ "
+            "and decisions/ are never touched."
+        ),
+    ),
+    dry_run: bool = typer.Option(
+        False,
+        "--dry-run",
+        help="Print what would be created or overwritten, without writing.",
+    ),
+) -> None:
     """Initialise a .loupe/ directory in the current repo."""
-    init_command()
+    init_command(force=force, dry_run=dry_run)
 
 
 @app.command("ci")

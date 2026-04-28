@@ -132,23 +132,78 @@ _KNOWLEDGE_HEADER = (
 )
 
 
-def init_command() -> None:
-    """Initialise .loupe/ in the current directory."""
+def init_command(*, force: bool = False, dry_run: bool = False) -> None:
+    """Initialise .loupe/ in the current directory.
+
+    With `force=True`, an existing .loupe/ is updated in-place rather
+    than refusing to run: `config.yaml` and `knowledge.yaml` are
+    regenerated from the current template, but `context.md` is
+    preserved if the user has edited it (we don't want to clobber
+    human-authored product context), and `runs/` / `decisions/` are
+    never touched (they contain the audit trail and human-curated
+    risk acceptances).
+
+    With `dry_run=True`, no filesystem changes are made; the command
+    prints what would be created or overwritten and exits 0.
+    """
     cwd = Path.cwd()
     loupe = cwd / ".loupe"
-    if loupe.exists():
-        typer.echo(f"Error: {loupe} already exists. Aborting.", err=True)
+
+    if loupe.exists() and not force:
+        typer.echo(
+            f"Error: {loupe} already exists. Aborting.\n"
+            "Use --force to regenerate scaffold files (context.md is preserved if edited).",
+            err=True,
+        )
         raise typer.Exit(code=USAGE_ERROR)
-    loupe.mkdir()
-    (loupe / "context.md").write_text(_DEFAULT_CONTEXT)
+
+    actions: list[str] = []
+    fresh = not loupe.exists()
+    context_path = loupe / "context.md"
+    # Preserve human-edited context.md across --force regenerations. The
+    # default template carries the literal "TODO:" markers; if those have
+    # been replaced the file is no longer the default. Hash comparison
+    # rather than text-equality avoids whitespace false-negatives.
+    preserve_context = (
+        not fresh and context_path.exists() and context_path.read_text() != _DEFAULT_CONTEXT
+    )
+
+    if fresh:
+        actions.append(f"create {loupe}/")
+        actions.append(f"create {context_path}")
+    else:
+        if preserve_context:
+            actions.append(f"preserve {context_path} (human edits detected)")
+        else:
+            actions.append(f"overwrite {context_path}")
+    actions.append(f"{'create' if fresh else 'overwrite'} {loupe / 'config.yaml'}")
+    actions.append(f"{'create' if fresh else 'overwrite'} {loupe / 'knowledge.yaml'}")
+    actions.append(f"ensure {loupe / 'runs'}/ exists")
+    actions.append(f"ensure {loupe / 'decisions'}/ exists")
+
+    if dry_run:
+        typer.echo("Dry run — no filesystem changes will be made:")
+        for action in actions:
+            typer.echo(f"  - {action}")
+        return
+
+    loupe.mkdir(exist_ok=True)
+    if not preserve_context:
+        context_path.write_text(_DEFAULT_CONTEXT)
     (loupe / "config.yaml").write_text(_DEFAULT_CONFIG)
     _write_empty_knowledge(loupe / "knowledge.yaml")
-    (loupe / "runs").mkdir()
-    (loupe / "decisions").mkdir()
-    typer.echo(f"Initialised {loupe}.")
-    typer.echo(
-        "Edit .loupe/context.md to describe your product, then run `loupe ci` or `loupe chat`."
-    )
+    (loupe / "runs").mkdir(exist_ok=True)
+    (loupe / "decisions").mkdir(exist_ok=True)
+
+    if fresh:
+        typer.echo(f"Initialised {loupe}.")
+        typer.echo(
+            "Edit .loupe/context.md to describe your product, then run `loupe ci` or `loupe chat`."
+        )
+    else:
+        typer.echo(f"Regenerated scaffold files in {loupe}.")
+        if preserve_context:
+            typer.echo(f"  Preserved {context_path} (human edits detected).")
 
 
 def _write_empty_knowledge(path: Path) -> None:
