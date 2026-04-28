@@ -1324,9 +1324,11 @@
 <h2 id="before-you-begin">Before you begin<a class="headerlink" href="#before-you-begin" title="Permanent link">&para;</a></h2>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
-<p><strong>Pre-alpha.</strong> The platform, capability registry, CLI, and GitHub Action all exist. Wiring the <abbr title="Multi-provider LLM agent framework Loupe is built on. By the Pydantic team.">PydanticAI</abbr> agent inside <abbr title="Loupe's v1 lens. STRIDE-based threat modelling.">ThreatLens</abbr> to a live <abbr title="Large Language Model.">LLM</abbr> is in progress (see <a href="../roadmap/#next-agent-wiring">Roadmap</a>). <code>loupe ci</code> will currently run the full pipeline (parse diff, run capabilities, build run record) and emit a stub threats file, not real <abbr title="Microsoft's threat-modelling categorisation: Spoofing, Tampering, Repudiation, Information disclosure, Denial of service, Elevation of privilege.">STRIDE</abbr> analysis.</p>
+<p><strong>Pre-alpha.</strong> The platform, capability registry, CLI, and GitHub Action all exist, and the <abbr title="Loupe's v1 lens. STRIDE-based threat modelling.">ThreatLens</abbr> agent is wired to a live <abbr title="Large Language Model.">LLM</abbr>. APIs and schemas may move before the v0.1 tag.</p>
 </div>
-<p>If you are evaluating <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr> for production use, wait for the agent wiring to land. If you are exploring the architecture, run the steps below.</p>
+<p><code>loupe ci</code> invokes a <abbr title="Multi-provider LLM agent framework Loupe is built on. By the Pydantic team.">PydanticAI</abbr> agent against the provider you select in <code>.loupe/config.yaml</code> under <code>models.default</code> (Anthropic by default). Set the matching provider key in your environment (<code>ANTHROPIC_API_KEY</code> for the default; <code>OPENAI_API_KEY</code>, <code>GOOGLE_API_KEY</code>, and so on for alternatives — the scaffolded <code>config.yaml</code> lists the supported forms). Without a key, <code>loupe ci</code> records a <code>lens_error</code> entry on the run record and exits 1.</p>
+<p>Run <code>loupe doctor</code> to confirm your environment is ready before the first <code>loupe ci</code>: it checks the provider key, the capability binaries on <code>PATH</code>, and that <code>context.md</code> has been filled in.</p>
+<p>If you are evaluating <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr> for production use, expect token costs on every <abbr title="Pull Request — GitHub's term for a proposed change.">PR</abbr> run. If you are exploring the architecture, run the steps below.</p>
 <h2 id="install">Install<a class="headerlink" href="#install" title="Permanent link">&para;</a></h2>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
@@ -1354,7 +1356,7 @@
 </span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>├── runs/                # hash-chained run records
 </span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>└── decisions/           # ADR-style risk acceptances
 </span></code></pre></div>
-<p><code>config.yaml</code> ships with sensible defaults: <abbr title="Loupe's v1 lens. STRIDE-based threat modelling.">ThreatLens</abbr> enabled at relevance threshold 0.3, the <code>agent_writable_paths</code> allow-list pointing at the standard <abbr title="Loupe's v1 lens. STRIDE-based threat modelling.">ThreatLens</abbr> artefact locations, and a <code>ci.fail_on</code> gate. The capability registry exists in the codebase (see <code>concepts/capabilities.md</code>) but the default <code>config.yaml</code> does not yet wire its backends into the <abbr title="Continuous Integration.">CI</abbr> flow; that wiring lands when the <abbr title="Loupe's v1 lens. STRIDE-based threat modelling.">ThreatLens</abbr> agent goes live against an <abbr title="Large Language Model.">LLM</abbr>.</p>
+<p><code>config.yaml</code> ships with sensible defaults: <abbr title="Loupe's v1 lens. STRIDE-based threat modelling.">ThreatLens</abbr> enabled at relevance threshold 0.3, the <code>agent_writable_paths</code> allow-list pointing at the standard <abbr title="Loupe's v1 lens. STRIDE-based threat modelling.">ThreatLens</abbr> artefact locations, a <code>ci.fail_on</code> gate, and a commented-out <code>capabilities:</code> skeleton you can uncomment to wire Syft / Grype / Gitleaks / Semgrep into the run. See <a href="#configure-the-capabilities">Configure the capabilities</a> below for details.</p>
 <p><code>knowledge.yaml</code> is scaffolded as an empty graph (<code>schema_version: 1</code>, empty asset/element/decision lists) with a leading banner comment. Lens runs that promote high-confidence Facts append to it across invocations; you can delete the file at any time to reset.</p>
 <p><code>context.md</code> is your responsibility. Open it in an editor and fill in the marked sections.</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nv">$EDITOR</span><span class="w"> </span>.loupe/context.md
@@ -1369,17 +1371,13 @@
 </span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span>--base-sha<span class="w"> </span><span class="s2">&quot;</span><span class="k">$(</span>git<span class="w"> </span>rev-parse<span class="w"> </span>main<span class="k">)</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
 </span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">  </span>--head-sha<span class="w"> </span>HEAD
 </span></code></pre></div>
-<p>What happens today:</p>
+<p>What happens:</p>
 <ol>
 <li>The CLI bootstraps a <code>RunContext</code> from the diff, <code>context.md</code>, and <code>knowledge.yaml</code>.</li>
 <li>The coordinator asks each enabled lens <code>is_relevant(ctx)</code> and skips anything below threshold.</li>
-<li>Selected lenses run in topological order. <abbr title="Loupe's v1 lens. STRIDE-based threat modelling.">ThreatLens</abbr> runs its scaffolded pipeline; the <abbr title="Large Language Model.">LLM</abbr> step is stubbed.</li>
+<li>Capability backends (Syft for <abbr title="Software Bill of Materials. CycloneDX is the format Loupe uses.">SBOM</abbr>, Grype for <abbr title="Common Vulnerabilities and Exposures — public catalogue of disclosed security flaws.">CVE</abbr>, etc., per <code>capabilities:</code> in <code>config.yaml</code>) run once before any lens dispatches. Typed results land on <code>ctx.sbom</code>, <code>ctx.cve_findings</code>, etc.</li>
+<li>Selected lenses run in topological order. <abbr title="Loupe's v1 lens. STRIDE-based threat modelling.">ThreatLens</abbr>'s <abbr title="Multi-provider LLM agent framework Loupe is built on. By the Pydantic team.">PydanticAI</abbr> agent is called with the diff, the <abbr title="Software Bill of Materials. CycloneDX is the format Loupe uses.">SBOM</abbr>, the <abbr title="Common Vulnerabilities and Exposures — public catalogue of disclosed security flaws.">CVE</abbr> list, and <code>context.md</code> as a stable-prefix prompt, and proposes threats through <code>propose_threat</code> tool calls.</li>
 <li>A run record gets written to <code>.loupe/runs/&lt;id&gt;.json</code> with a <abbr title="Secure Hash Algorithm, 256-bit variant. Used for run-record hash chains.">SHA-256</abbr> hash chain pointing at the previous run.</li>
-</ol>
-<p>What will happen once the agent wiring lands (additional steps slotted into the same pipeline):</p>
-<ol>
-<li>A capability bootstrap pass runs the configured <abbr title="Software Bill of Materials. CycloneDX is the format Loupe uses.">SBOM</abbr> and <abbr title="Common Vulnerabilities and Exposures — public catalogue of disclosed security flaws.">CVE</abbr> backends once before any lens executes. Typed results land on <code>ctx.sbom</code> and <code>ctx.cve_findings</code> for every lens to read.</li>
-<li><abbr title="Loupe's v1 lens. STRIDE-based threat modelling.">ThreatLens</abbr>'s <abbr title="Multi-provider LLM agent framework Loupe is built on. By the Pydantic team.">PydanticAI</abbr> agent gets called with the diff, the <abbr title="Software Bill of Materials. CycloneDX is the format Loupe uses.">SBOM</abbr>, the <abbr title="Common Vulnerabilities and Exposures — public catalogue of disclosed security flaws.">CVE</abbr> list, and <code>context.md</code> as a stable-prefix prompt, then proposes threats through <code>propose_threat</code> tool calls.</li>
 </ol>
 <p>Output ends with the lens names that ran and the path of the new run record.</p>
 <h2 id="read-the-output">Read the output<a class="headerlink" href="#read-the-output" title="Permanent link">&para;</a></h2>
@@ -1387,7 +1385,7 @@
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>loupe<span class="w"> </span>verify
 </span></code></pre></div>
 <p>The command runs the four Layer 3 checks: hash-chain integrity across <code>.loupe/runs/*.json</code>, artefact schema consistency for each <code>threats.yaml</code> / <code>mitigations.yaml</code>, threats-to-mitigations cross-reference integrity, and (when invoked with <code>--strict</code>) protected-path authorship. It exits non-zero on the first failure.</p>
-<p>The threats themselves are in <code>.loupe/threats.yaml</code> once <abbr title="Loupe's v1 lens. STRIDE-based threat modelling.">ThreatLens</abbr> emits any. Each threat has a stable ID (<code>T-NNN</code>), a <abbr title="Microsoft's threat-modelling categorisation: Spoofing, Tampering, Repudiation, Information disclosure, Denial of service, Elevation of privilege.">STRIDE</abbr> category, severity, status, links to the diff lines that introduced it, and a list of mitigation IDs.</p>
+<p>The threats themselves are in <code>.loupe/threats.yaml</code>. Each threat has a stable ID (<code>T-NNN</code>), a <abbr title="Microsoft's threat-modelling categorisation: Spoofing, Tampering, Repudiation, Information disclosure, Denial of service, Elevation of privilege.">STRIDE</abbr> category, severity, status, links to the diff lines that introduced it, and a list of mitigation IDs.</p>
 <h2 id="run-interactively">Run interactively<a class="headerlink" href="#run-interactively" title="Permanent link">&para;</a></h2>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>loupe<span class="w"> </span>chat
 </span></code></pre></div>
@@ -1468,8 +1466,8 @@
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>python<span class="w"> </span>-c<span class="w"> </span><span class="s1">&#39;from importlib.metadata import entry_points; print(list(entry_points(group=&quot;loupe.lenses&quot;)))&#39;</span>
 </span></code></pre></div>
 <h2 id="what-to-expect-what-not-to-expect">What to expect, what not to expect<a class="headerlink" href="#what-to-expect-what-not-to-expect" title="Permanent link">&para;</a></h2>
-<p>Until the agent wiring lands, you will see the pipeline run, the run records appear, and the GitHub Action comment post. The threat list will be empty or stubbed. That is expected.</p>
-<p>When the agent wiring lands, expect three to five threats on a typical small <abbr title="Pull Request — GitHub's term for a proposed change.">PR</abbr>, a cost of around $0.07–$0.20 per <abbr title="Pull Request — GitHub's term for a proposed change.">PR</abbr> on Claude Opus, and roughly 30 seconds of wall time per <abbr title="Pull Request — GitHub's term for a proposed change.">PR</abbr>. Cost numbers are illustrative; actual usage depends on diff size and model choice.</p>
+<p>Expect three to five threats on a typical small <abbr title="Pull Request — GitHub's term for a proposed change.">PR</abbr>, a cost of around $0.07–$0.20 per <abbr title="Pull Request — GitHub's term for a proposed change.">PR</abbr> on Claude Opus, and roughly 30 seconds of wall time per <abbr title="Pull Request — GitHub's term for a proposed change.">PR</abbr>. Cost numbers are illustrative; actual usage depends on diff size and model choice.</p>
+<p>If <code>ANTHROPIC_API_KEY</code> (or the matching key for your <code>models.default</code>) is not set, <code>loupe ci</code> writes a <code>lens_error</code> entry on the run record and exits 1 — see <a href="#when-something-goes-wrong">When something goes wrong</a> for the audit trail format.</p>
 <h2 id="when-something-goes-wrong">When something goes wrong<a class="headerlink" href="#when-something-goes-wrong" title="Permanent link">&para;</a></h2>
 <p><code>.loupe/runs/&lt;latest&gt;.json</code> records every failure mode. If a capability backend fails (Syft not installed, Grype database missing), the run record marks it as <code>backend_error</code> and the lens that requested the capability is skipped. If a lens's tool call hits the path boundary, the run record marks it as <code>enforcement_error</code> and the lens is aborted but the run as a whole continues.</p>
 <p>A richer <code>loupe ci --verbose</code> flag for plan tracing is documented in the CLI design but not yet implemented. Today's <code>loupe ci</code> carries only the flags shown earlier in this page.</p>
@@ -1496,7 +1494,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 15, 2026 23:27:09 UTC">May 15, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 16, 2026 11:58:17 UTC">May 16, 2026</span>
   </span>
 
     

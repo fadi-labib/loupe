@@ -2,138 +2,138 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://fadi-labib.github.io/loupe/dev/</loc>
-         <lastmod>2026-05-15</lastmod>
+         <lastmod>2026-05-16</lastmod>
     </url>
     <url>
          <loc>https://fadi-labib.github.io/loupe/dev/404/</loc>
-         <lastmod>2026-05-15</lastmod>
+         <lastmod>2026-05-16</lastmod>
     </url>
     <url>
          <loc>https://fadi-labib.github.io/loupe/dev/about/</loc>
-         <lastmod>2026-05-15</lastmod>
+         <lastmod>2026-05-16</lastmod>
     </url>
     <url>
          <loc>https://fadi-labib.github.io/loupe/dev/changelog/</loc>
-         <lastmod>2026-05-15</lastmod>
+         <lastmod>2026-05-16</lastmod>
     </url>
     <url>
          <loc>https://fadi-labib.github.io/loupe/dev/comparison/</loc>
-         <lastmod>2026-05-15</lastmod>
+         <lastmod>2026-05-16</lastmod>
     </url>
     <url>
          <loc>https://fadi-labib.github.io/loupe/dev/contributing/</loc>
-         <lastmod>2026-05-15</lastmod>
+         <lastmod>2026-05-16</lastmod>
     </url>
     <url>
          <loc>https://fadi-labib.github.io/loupe/dev/principles/</loc>
-         <lastmod>2026-05-15</lastmod>
+         <lastmod>2026-05-16</lastmod>
     </url>
     <url>
          <loc>https://fadi-labib.github.io/loupe/dev/quickstart/</loc>
-         <lastmod>2026-05-15</lastmod>
+         <lastmod>2026-05-16</lastmod>
     </url>
     <url>
          <loc>https://fadi-labib.github.io/loupe/dev/roadmap/</loc>
-         <lastmod>2026-05-15</lastmod>
+         <lastmod>2026-05-16</lastmod>
     </url>
     <url>
          <loc>https://fadi-labib.github.io/loupe/dev/tags/</loc>
-         <lastmod>2026-05-15</lastmod>
+         <lastmod>2026-05-16</lastmod>
     </url>
     <url>
          <loc>https://fadi-labib.github.io/loupe/dev/concepts/architecture/</loc>
-         <lastmod>2026-05-15</lastmod>
+         <lastmod>2026-05-16</lastmod>
     </url>
     <url>
          <loc>https://fadi-labib.github.io/loupe/dev/concepts/capabilities/</loc>
-         <lastmod>2026-05-15</lastmod>
+         <lastmod>2026-05-16</lastmod>
     </url>
     <url>
          <loc>https://fadi-labib.github.io/loupe/dev/how-to/</loc>
-         <lastmod>2026-05-15</lastmod>
+         <lastmod>2026-05-16</lastmod>
     </url>
     <url>
          <loc>https://fadi-labib.github.io/loupe/dev/how-to/run-mcp-server/</loc>
-         <lastmod>2026-05-15</lastmod>
+         <lastmod>2026-05-16</lastmod>
     </url>
     <url>
          <loc>https://fadi-labib.github.io/loupe/dev/reference/cli/</loc>
-         <lastmod>2026-05-15</lastmod>
+         <lastmod>2026-05-16</lastmod>
     </url>
     <url>
          <loc>https://fadi-labib.github.io/loupe/dev/reference/config/</loc>
-         <lastmod>2026-05-15</lastmod>
+         <lastmod>2026-05-16</lastmod>
     </url>
     <url>
          <loc>https://fadi-labib.github.io/loupe/dev/reference/data-handling/</loc>
-         <lastmod>2026-05-15</lastmod>
+         <lastmod>2026-05-16</lastmod>
     </url>
     <url>
          <loc>https://fadi-labib.github.io/loupe/dev/reference/decisions/</loc>
-         <lastmod>2026-05-15</lastmod>
+         <lastmod>2026-05-16</lastmod>
     </url>
     <url>
          <loc>https://fadi-labib.github.io/loupe/dev/reference/evaluation/</loc>
-         <lastmod>2026-05-15</lastmod>
+         <lastmod>2026-05-16</lastmod>
     </url>
     <url>
          <loc>https://fadi-labib.github.io/loupe/dev/reference/glossary/</loc>
-         <lastmod>2026-05-15</lastmod>
+         <lastmod>2026-05-16</lastmod>
     </url>
     <url>
          <loc>https://fadi-labib.github.io/loupe/dev/reference/loupe-directory/</loc>
-         <lastmod>2026-05-15</lastmod>
+         <lastmod>2026-05-16</lastmod>
     </url>
     <url>
          <loc>https://fadi-labib.github.io/loupe/dev/reference/loupe-threat-model/</loc>
-         <lastmod>2026-05-15</lastmod>
+         <lastmod>2026-05-16</lastmod>
     </url>
     <url>
          <loc>https://fadi-labib.github.io/loupe/dev/reference/mcp-tools/</loc>
-         <lastmod>2026-05-15</lastmod>
+         <lastmod>2026-05-16</lastmod>
     </url>
     <url>
          <loc>https://fadi-labib.github.io/loupe/dev/reference/pricing/</loc>
-         <lastmod>2026-05-15</lastmod>
+         <lastmod>2026-05-16</lastmod>
     </url>
     <url>
          <loc>https://fadi-labib.github.io/loupe/dev/reference/verification/</loc>
-         <lastmod>2026-05-15</lastmod>
+         <lastmod>2026-05-16</lastmod>
     </url>
     <url>
          <loc>https://fadi-labib.github.io/loupe/dev/reference/versioning/</loc>
-         <lastmod>2026-05-15</lastmod>
+         <lastmod>2026-05-16</lastmod>
     </url>
     <url>
          <loc>https://fadi-labib.github.io/loupe/dev/reference/schemas/</loc>
-         <lastmod>2026-05-15</lastmod>
+         <lastmod>2026-05-16</lastmod>
     </url>
     <url>
          <loc>https://fadi-labib.github.io/loupe/dev/reference/schemas/capabilities/</loc>
-         <lastmod>2026-05-15</lastmod>
+         <lastmod>2026-05-16</lastmod>
     </url>
     <url>
          <loc>https://fadi-labib.github.io/loupe/dev/reference/schemas/knowledge/</loc>
-         <lastmod>2026-05-15</lastmod>
+         <lastmod>2026-05-16</lastmod>
     </url>
     <url>
          <loc>https://fadi-labib.github.io/loupe/dev/reference/schemas/mitigation/</loc>
-         <lastmod>2026-05-15</lastmod>
+         <lastmod>2026-05-16</lastmod>
     </url>
     <url>
          <loc>https://fadi-labib.github.io/loupe/dev/reference/schemas/project-context/</loc>
-         <lastmod>2026-05-15</lastmod>
+         <lastmod>2026-05-16</lastmod>
     </url>
     <url>
          <loc>https://fadi-labib.github.io/loupe/dev/reference/schemas/run-record/</loc>
-         <lastmod>2026-05-15</lastmod>
+         <lastmod>2026-05-16</lastmod>
     </url>
     <url>
          <loc>https://fadi-labib.github.io/loupe/dev/reference/schemas/threat/</loc>
-         <lastmod>2026-05-15</lastmod>
+         <lastmod>2026-05-16</lastmod>
     </url>
     <url>
          <loc>https://fadi-labib.github.io/loupe/dev/tutorials/</loc>
-         <lastmod>2026-05-15</lastmod>
+         <lastmod>2026-05-16</lastmod>
     </url>
 </urlset>
