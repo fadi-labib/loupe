@@ -11,9 +11,13 @@ This walks through installing Loupe, scaffolding the `.loupe/` directory in your
 ## Before you begin
 
 > [!WARNING]
-> **Pre-alpha.** The platform, capability registry, CLI, and GitHub Action all exist. Wiring the PydanticAI agent inside ThreatLens to a live LLM is in progress (see [Roadmap](roadmap.md#next-agent-wiring)). `loupe ci` will currently run the full pipeline (parse diff, run capabilities, build run record) and emit a stub threats file, not real STRIDE analysis.
+> **Pre-alpha.** The platform, capability registry, CLI, and GitHub Action all exist, and the ThreatLens agent is wired to a live LLM. APIs and schemas may move before the v0.1 tag.
 
-If you are evaluating Loupe for production use, wait for the agent wiring to land. If you are exploring the architecture, run the steps below.
+`loupe ci` invokes a PydanticAI agent against the provider you select in `.loupe/config.yaml` under `models.default` (Anthropic by default). Set the matching provider key in your environment (`ANTHROPIC_API_KEY` for the default; `OPENAI_API_KEY`, `GOOGLE_API_KEY`, and so on for alternatives — the scaffolded `config.yaml` lists the supported forms). Without a key, `loupe ci` records a `lens_error` entry on the run record and exits 1.
+
+Run `loupe doctor` to confirm your environment is ready before the first `loupe ci`: it checks the provider key, the capability binaries on `PATH`, and that `context.md` has been filled in.
+
+If you are evaluating Loupe for production use, expect token costs on every PR run. If you are exploring the architecture, run the steps below.
 
 ## Install
 
@@ -57,7 +61,7 @@ This creates `.loupe/` with the minimum files Loupe expects:
 └── decisions/           # ADR-style risk acceptances
 ```
 
-`config.yaml` ships with sensible defaults: ThreatLens enabled at relevance threshold 0.3, the `agent_writable_paths` allow-list pointing at the standard ThreatLens artefact locations, and a `ci.fail_on` gate. The capability registry exists in the codebase (see `concepts/capabilities.md`) but the default `config.yaml` does not yet wire its backends into the CI flow; that wiring lands when the ThreatLens agent goes live against an LLM.
+`config.yaml` ships with sensible defaults: ThreatLens enabled at relevance threshold 0.3, the `agent_writable_paths` allow-list pointing at the standard ThreatLens artefact locations, a `ci.fail_on` gate, and a commented-out `capabilities:` skeleton you can uncomment to wire Syft / Grype / Gitleaks / Semgrep into the run. See [Configure the capabilities](#configure-the-capabilities) below for details.
 
 `knowledge.yaml` is scaffolded as an empty graph (`schema_version: 1`, empty asset/element/decision lists) with a leading banner comment. Lens runs that promote high-confidence Facts append to it across invocations; you can delete the file at any time to reset.
 
@@ -83,17 +87,13 @@ loupe ci \
   --head-sha HEAD
 ```
 
-What happens today:
+What happens:
 
 1. The CLI bootstraps a `RunContext` from the diff, `context.md`, and `knowledge.yaml`.
 2. The coordinator asks each enabled lens `is_relevant(ctx)` and skips anything below threshold.
-3. Selected lenses run in topological order. ThreatLens runs its scaffolded pipeline; the LLM step is stubbed.
-4. A run record gets written to `.loupe/runs/<id>.json` with a SHA-256 hash chain pointing at the previous run.
-
-What will happen once the agent wiring lands (additional steps slotted into the same pipeline):
-
-1. A capability bootstrap pass runs the configured SBOM and CVE backends once before any lens executes. Typed results land on `ctx.sbom` and `ctx.cve_findings` for every lens to read.
-2. ThreatLens's PydanticAI agent gets called with the diff, the SBOM, the CVE list, and `context.md` as a stable-prefix prompt, then proposes threats through `propose_threat` tool calls.
+3. Capability backends (Syft for SBOM, Grype for CVE, etc., per `capabilities:` in `config.yaml`) run once before any lens dispatches. Typed results land on `ctx.sbom`, `ctx.cve_findings`, etc.
+4. Selected lenses run in topological order. ThreatLens's PydanticAI agent is called with the diff, the SBOM, the CVE list, and `context.md` as a stable-prefix prompt, and proposes threats through `propose_threat` tool calls.
+5. A run record gets written to `.loupe/runs/<id>.json` with a SHA-256 hash chain pointing at the previous run.
 
 Output ends with the lens names that ran and the path of the new run record.
 
@@ -107,7 +107,7 @@ loupe verify
 
 The command runs the four Layer 3 checks: hash-chain integrity across `.loupe/runs/*.json`, artefact schema consistency for each `threats.yaml` / `mitigations.yaml`, threats-to-mitigations cross-reference integrity, and (when invoked with `--strict`) protected-path authorship. It exits non-zero on the first failure.
 
-The threats themselves are in `.loupe/threats.yaml` once ThreatLens emits any. Each threat has a stable ID (`T-NNN`), a STRIDE category, severity, status, links to the diff lines that introduced it, and a list of mitigation IDs.
+The threats themselves are in `.loupe/threats.yaml`. Each threat has a stable ID (`T-NNN`), a STRIDE category, severity, status, links to the diff lines that introduced it, and a list of mitigation IDs.
 
 ## Run interactively
 
@@ -192,9 +192,9 @@ python -c 'from importlib.metadata import entry_points; print(list(entry_points(
 
 ## What to expect, what not to expect
 
-Until the agent wiring lands, you will see the pipeline run, the run records appear, and the GitHub Action comment post. The threat list will be empty or stubbed. That is expected.
+Expect three to five threats on a typical small PR, a cost of around $0.07–$0.20 per PR on Claude Opus, and roughly 30 seconds of wall time per PR. Cost numbers are illustrative; actual usage depends on diff size and model choice.
 
-When the agent wiring lands, expect three to five threats on a typical small PR, a cost of around $0.07–$0.20 per PR on Claude Opus, and roughly 30 seconds of wall time per PR. Cost numbers are illustrative; actual usage depends on diff size and model choice.
+If `ANTHROPIC_API_KEY` (or the matching key for your `models.default`) is not set, `loupe ci` writes a `lens_error` entry on the run record and exits 1 — see [When something goes wrong](#when-something-goes-wrong) for the audit trail format.
 
 ## When something goes wrong
 

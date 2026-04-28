@@ -274,7 +274,7 @@ See [`docs/reference/verification.md`](docs/reference/verification.md) for the m
 | Platform | `loupe-core`: coordinator, dispatcher, run context, prompt builder, MCP server, pricing, enforcement |
 | CLI | `loupe init`, `ci`, `verify [--strict]`, `scan`, `mcp`, `chat` (TTY guard only), `lens list`, `cap list` |
 | GitHub Action | PR fetch, `loupe ci` runner, sticky-comment poster (sticky / new / none), retry + rate-limit handling |
-| ThreatLens | PydanticAI agent wired to a live LLM, exercised in CI through a VCR cassette; STRIDE threats, mitigations, cross-references |
+| ThreatLens | PydanticAI agent wired to a live LLM. User runs hit the configured provider; the project's own test suite uses VCR cassettes to keep CI deterministic. STRIDE threats, mitigations, cross-references |
 | MCP server (stdio) | Read tools: `list_threats`, `query_by_severity`, `latest_run`, `threat_model_summary`. Write tools: `propose_threat`, `propose_mitigation` (both Layer-1 gated) |
 | Capability backends | 10 bundled: Syft + cdxgen (SBOM), Grype + osv-scanner (CVE), gitleaks + TruffleHog + detect-secrets (secret), Semgrep + CodeQL + Bandit (SAST) |
 | Composition modes | `single`, `fallback`, `union`, `consensus`, `pipeline` |
