@@ -6,6 +6,7 @@ from loupe_core import __version__
 from loupe_cli.chat_cmd import chat_command
 from loupe_cli.ci_cmd import ci_command
 from loupe_cli.discovery_cmd import cap_list_command, lens_list_command
+from loupe_cli.doctor_cmd import doctor_command
 from loupe_cli.init_cmd import init_command
 from loupe_cli.mcp_cmd import mcp_command
 from loupe_cli.scan_cmd import scan_command
@@ -114,6 +115,18 @@ def ci_cmd(
         raise typer.Exit(code=USAGE_ERROR)
     text = diff_file.read_text() if diff_file is not None else diff
     raise typer.Exit(code=ci_command(text, base_sha, head_sha, config))
+
+
+@app.command("doctor")
+def doctor_cmd(
+    loupe_dir: Path = typer.Option(
+        Path(".loupe"),
+        "--loupe-dir",
+        help="Path to the .loupe/ directory to diagnose.",
+    ),
+) -> None:
+    """Run preflight checks: env vars, capability binaries, scaffold completeness."""
+    raise typer.Exit(code=doctor_command(loupe_dir))
 
 
 @app.command("verify")
