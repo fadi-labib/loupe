@@ -180,6 +180,37 @@ def _write_run_record(
             )
         )
 
+    # Mirror ci_cmd._write_run_record's per-lens telemetry aggregation.
+    # Without this, scan run records always shipped zero tokens / cost /
+    # artifacts, making audit replay and budget tracking blind to scan-
+    # mode runs even though the lens did real work (and consumed real
+    # provider tokens). D-21 says "extract on third instance"; we're at
+    # instance 2, so the duplication stays for now — but the contract on
+    # both sides MUST agree, so any future change here must also land in
+    # ci_cmd._write_run_record (and its pinning tests in
+    # test_ci_run_record_usage.py).
+    models_used = {name: u.model_id for name, u in ctx.lens_usage.items()}
+    total_in = sum(
+        u.input_tokens + u.cache_read_tokens + u.cache_write_tokens for u in ctx.lens_usage.values()
+    )
+    total_out = sum(u.output_tokens for u in ctx.lens_usage.values())
+    cost_total = round(sum(u.cost_usd_estimate for u in ctx.lens_usage.values()), 6)
+    cache_read = sum(u.cache_read_tokens for u in ctx.lens_usage.values())
+    cache_denom = sum(
+        u.input_tokens + u.cache_read_tokens + u.cache_write_tokens for u in ctx.lens_usage.values()
+    )
+    cache_hit = round(cache_read / cache_denom, 4) if cache_denom else None
+    artifacts_changed = sorted(
+        set().union(
+            *(
+                set(threat_keys)
+                for lens_findings in ctx.findings.values()
+                for threat_keys in [list(lens_findings.keys())]
+            )
+        )
+        | {p.location for p in ctx.proposed_patches}
+    )
+
     record = RunRecord(
         run_id=ctx.run_id,
         timestamp=ctx.started_at,
@@ -192,12 +223,12 @@ def _write_run_record(
         context_md_hash=hashlib.sha256(context_bytes).hexdigest(),
         lenses_considered=considered_records,
         lenses_run=[p.lens_name for p in ctx.plan],
-        models_used={},
-        total_tokens_in=0,
-        total_tokens_out=0,
-        cost_usd_estimate=0.0,
-        cache_hit_rate=None,
-        artifacts_changed=[],
+        models_used=models_used,
+        total_tokens_in=total_in,
+        total_tokens_out=total_out,
+        cost_usd_estimate=cost_total,
+        cache_hit_rate=cache_hit,
+        artifacts_changed=artifacts_changed,
         proposed_patches=[p.location for p in ctx.proposed_patches],
         pending_decisions=[d.id for d in ctx.pending_decisions],
         errors=extract_lens_errors(ctx.findings),
