@@ -72,12 +72,22 @@ def build_agent(model_id: str) -> Agent[AgentDeps, str]:
     # `defer_model_check=True` postpones provider API-key validation until
     # the first `agent.run()` call. This lets tests and dry-runs construct
     # an agent without keys set, while still failing loudly at invocation.
+    # `tool_retries=3` allows the model up to three chances to correct a
+    # malformed `propose_threat` argument list before the agent aborts.
+    # PydanticAI's default of 1 is too brittle for `loupe scan` workloads
+    # over large source trees: one mis-shaped tool call out of many
+    # crashes the entire lens (observed: a `propose_threat` call missing
+    # required fields when scanning Mongoose's MQTT/HTTP/TLS sources at
+    # once). Three attempts costs at most a few extra request round-trips
+    # but lets the model self-correct from validation feedback instead of
+    # losing every successfully-proposed threat in the same run.
     agent: Agent[AgentDeps, str] = Agent(
         model=model_id,
         deps_type=AgentDeps,
         system_prompt=_load_system_prompt(),
         model_settings={"temperature": 0.0},
         defer_model_check=True,
+        tool_retries=3,
     )
 
     @agent.tool

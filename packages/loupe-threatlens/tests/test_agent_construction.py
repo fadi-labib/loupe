@@ -111,6 +111,25 @@ def test_agent_deps_has_required_fields():
     assert deps.model_id == "anthropic:claude-opus-4-7"
 
 
+def test_agent_tool_retries_above_default():
+    """PydanticAI's default `tool_retries=1` aborts the whole lens after
+    a single malformed `propose_threat` call. On `loupe scan` over a
+    larger codebase the model emits many tool calls; one malformed one
+    must not nuke the entire run. We require at least 2 retries (the
+    fix raised it to 3) so the model can self-correct from validation
+    feedback rather than crashing the dispatcher.
+    """
+    agent = build_agent("anthropic:claude-opus-4-7")
+    # PydanticAI stores the agent-wide value on `_max_tool_retries`.
+    # Asserting via the public surface would require running an agent;
+    # this private attribute is the source of truth that PydanticAI
+    # consults inside `tool_manager._check_max_retries`.
+    assert agent._max_tool_retries >= 2, (
+        f"Agent tool_retries must be ≥2 to survive transient validation "
+        f"failures during scan; got {agent._max_tool_retries}"
+    )
+
+
 def test_propose_threat_tool_registered_on_agent():
     """The agent must have propose_threat registered as a callable tool."""
     agent = build_agent("anthropic:claude-opus-4-7")
