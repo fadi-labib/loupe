@@ -30,7 +30,8 @@ from typing import Literal
 
 import typer
 from loupe_core.capabilities.registry import CapabilityRegistry
-from loupe_core.config import load_config
+from loupe_core.config import LoupeConfig, load_config
+from loupe_core.lens_registry import discover_lenses
 
 # BSD sysexits.h EX_USAGE — operator-config / usage errors.
 USAGE_ERROR = 64
@@ -132,22 +133,73 @@ def _run_checks(loupe: Path) -> list[CheckResult]:
     # Check 4: provider env var.
     results.append(_check_provider_env_var(cfg.models.default))
 
-    # Check 5: capability binaries (skipped if no capabilities configured).
+    # Check 5: required capabilities wired (D-23 / A.10).
+    # Any enabled lens that declares requires_capabilities and has an
+    # unwired matching cap MUST fail this check — the alternative is
+    # the user discovering the contract violation when `loupe ci` exits
+    # 64, which is the wall A.10 exists to push earlier into the flow.
+    results.extend(_check_required_capabilities_wired(cfg))
+
+    # Check 6: capability binaries on PATH (skipped if no capabilities configured).
     if cfg.capabilities:
         registry = CapabilityRegistry.discover()
         for cap_name, activation in sorted(cfg.capabilities.items()):
             for backend in activation.backends:
                 results.append(_check_backend_binary(registry, cap_name, backend))
-    else:
-        results.append(
-            CheckResult(
-                status="warn",
-                label="capabilities",
-                detail="no capabilities wired in config.yaml — see commented skeleton",
-            )
-        )
 
     return results
+
+
+def _check_required_capabilities_wired(cfg: LoupeConfig) -> list[CheckResult]:
+    """Match every enabled lens's requires_capabilities against cfg.capabilities.
+
+    Returns one CheckResult per unwired required cap (each a `fail`), or a
+    single `ok` row when every required cap has a non-empty backends list.
+    Returns nothing when no enabled lens has any required capabilities —
+    Check 6 will then handle whatever the operator wired anyway.
+    """
+    enabled_lens_names = {name for name, lc in cfg.lenses.items() if lc.enabled}
+    if not enabled_lens_names:
+        return []
+
+    discovered = discover_lenses()
+    planned_lenses = [lens for lens in discovered if lens.capabilities.name in enabled_lens_names]
+
+    required_pairs: list[tuple[str, str]] = []
+    for lens in planned_lenses:
+        for cap in lens.capabilities.requires_capabilities:
+            required_pairs.append((lens.capabilities.name, cap))
+
+    if not required_pairs:
+        return []
+
+    unwired: list[CheckResult] = []
+    for lens_name, cap in required_pairs:
+        activation = cfg.capabilities.get(cap)
+        if activation is None or not activation.backends:
+            unwired.append(
+                CheckResult(
+                    status="fail",
+                    label=f"capabilities[{cap}]",
+                    detail=(
+                        f"lens '{lens_name}' requires '{cap}' but no backends are wired "
+                        f"in config.yaml. Uncomment the `capabilities:` block in "
+                        f"`.loupe/config.yaml` and install the backend; `loupe ci` exits "
+                        f"64 otherwise."
+                    ),
+                )
+            )
+    if unwired:
+        return unwired
+    # All required caps are wired — emit a single happy-path row so the
+    # output explicitly shows the check ran and passed (avoid silent green).
+    return [
+        CheckResult(
+            status="ok",
+            label="required capabilities",
+            detail=f"{len(required_pairs)} required cap(s) wired across enabled lenses",
+        )
+    ]
 
 
 def _check_context_md(path: Path) -> CheckResult:

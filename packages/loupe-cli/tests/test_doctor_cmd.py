@@ -15,6 +15,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
 from loupe_cli.__main__ import app
 from typer.testing import CliRunner
 
@@ -23,16 +24,45 @@ from .conftest import minimal_config_yaml
 runner = CliRunner()
 
 
-def _make_loupe_dir(tmp_path: Path, *, context_filled: bool = True) -> Path:
+# Wire two stub capabilities by default so the post-D-23 required-caps
+# check passes. Tests that explicitly want to exercise the "unwired" path
+# build their own config inline.
+_WIRED_CAPS_BLOCK = (
+    "capabilities:\n"
+    "  sbom:\n    mode: single\n    backends: [syft]\n"
+    "  cve:\n    mode: single\n    backends: [grype]\n"
+)
+
+
+@pytest.fixture(autouse=True)
+def stub_which(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Pretend every backend binary is on PATH so the happy-path doctor
+    tests don't fail on a missing /usr/local/bin/syft. Tests that want
+    to exercise the binary-missing path explicitly override `shutil.which`
+    inside the test body; per-test monkeypatch precedence wins."""
+    monkeypatch.setattr(
+        "loupe_cli.doctor_cmd.shutil.which",
+        lambda name: f"/usr/local/bin/{name}",
+    )
+
+
+def _make_loupe_dir(tmp_path: Path, *, context_filled: bool = True, wire_caps: bool = True) -> Path:
     """Build a minimal .loupe/ that doctor can parse.
 
     `context_filled=True` swaps the scaffold TODO markers for real
     text so the context.md check passes by default; individual tests
     can build a different shape inline.
+
+    `wire_caps=True` appends a `capabilities:` block wiring sbom (syft)
+    and cve (grype) so the post-D-23 required-caps check passes. Tests
+    that need to exercise the unwired path set this to False.
     """
     loupe = tmp_path / ".loupe"
     loupe.mkdir()
-    (loupe / "config.yaml").write_text(minimal_config_yaml())
+    cfg = minimal_config_yaml()
+    if wire_caps:
+        cfg += _WIRED_CAPS_BLOCK
+    (loupe / "config.yaml").write_text(cfg)
     if context_filled:
         (loupe / "context.md").write_text(
             "# Product Context\n\n## Product description\nA test product.\n"
@@ -103,6 +133,7 @@ def test_doctor_warns_for_unknown_provider_without_failing(tmp_path, monkeypatch
         "  per_run_max_steps: 5\n"
         "agent_writable_paths: [.loupe/threats.yaml]\n"
         "lenses:\n  threatlens:\n    enabled: true\n    minimum_relevance: 0.3\n"
+        + _WIRED_CAPS_BLOCK
     )
     (loupe / "config.yaml").write_text(loupe_cfg)
     result = runner.invoke(app, ["doctor"])
@@ -126,11 +157,29 @@ def test_doctor_passes_for_ollama_without_key(tmp_path, monkeypatch):
         "  per_run_max_steps: 5\n"
         "agent_writable_paths: [.loupe/threats.yaml]\n"
         "lenses:\n  threatlens:\n    enabled: true\n    minimum_relevance: 0.3\n"
+        + _WIRED_CAPS_BLOCK
     )
     (loupe / "config.yaml").write_text(loupe_cfg)
     result = runner.invoke(app, ["doctor"])
     assert result.exit_code == 0, result.stdout
     assert "local provider" in result.stdout
+
+
+def test_doctor_fails_when_required_capability_unwired(tmp_path, monkeypatch):
+    """D-23 / A.10: ThreatLens declares requires_capabilities=[sbom, cve].
+    Doctor must escalate the previous `[?] no capabilities wired` warn to
+    `[✗]` when any enabled lens has unwired required capabilities — same
+    contract `loupe ci` enforces at exit 64 time, surfaced one step earlier
+    so the operator hits the wall in doctor instead of mid-run."""
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test-123")
+    _make_loupe_dir(tmp_path, wire_caps=False)  # the case we want to flag
+    result = runner.invoke(app, ["doctor"])
+    assert result.exit_code == 64, result.stdout
+    # Failure row names the lens and at least one of the missing capabilities
+    assert "[✗]" in result.stdout
+    assert "threatlens" in result.stdout.lower()
+    assert "sbom" in result.stdout.lower() or "cve" in result.stdout.lower()
 
 
 def test_doctor_fails_when_capability_binary_missing(tmp_path, monkeypatch):

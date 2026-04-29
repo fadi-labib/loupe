@@ -200,6 +200,15 @@ def init_command(*, force: bool = False, dry_run: bool = False) -> None:
         typer.echo(
             "Edit .loupe/context.md to describe your product, then run `loupe ci` or `loupe chat`."
         )
+        # D-23 / A.9: ThreatLens declares requires_capabilities=[sbom, cve].
+        # Under the enforced contract a fresh `loupe ci` will exit 64 until
+        # the operator installs Syft + Grype and uncomments the
+        # `capabilities:` block. Tell them now so they don't hit the wall
+        # in ci. `loupe doctor` is the verification step.
+        typer.echo(
+            "Next: install Syft + Grype, then uncomment the `capabilities:` "
+            "block in .loupe/config.yaml. Run `loupe doctor` to verify."
+        )
     else:
         typer.echo(f"Regenerated scaffold files in {loupe}.")
         if preserve_context:

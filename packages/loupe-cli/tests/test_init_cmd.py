@@ -32,6 +32,22 @@ def test_init_knowledge_loads(tmp_path, monkeypatch):
     assert text.startswith("# .loupe/knowledge.yaml"), "expected leading banner comment"
 
 
+def test_init_post_scaffold_message_points_at_capability_wiring(tmp_path, monkeypatch):
+    """D-23 / A.9: with `requires_capabilities` now hard-enforced, a fresh
+    init -> ci will exit 64 unless Syft + Grype are wired. The post-init
+    message must tell the user the next step explicitly so they don't run
+    `loupe ci` first and bounce off the wall."""
+    monkeypatch.chdir(tmp_path)
+    result = runner.invoke(app, ["init"])
+    assert result.exit_code == 0, result.stdout
+    combined = (result.stdout or "") + (result.stderr or "")
+    # Points at the capability wiring step
+    assert "syft" in combined.lower() or "grype" in combined.lower()
+    assert "capabilities" in combined.lower()
+    # Suggests doctor for verification
+    assert "doctor" in combined.lower()
+
+
 def test_init_refuses_if_already_initialized(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     (tmp_path / ".loupe").mkdir()
