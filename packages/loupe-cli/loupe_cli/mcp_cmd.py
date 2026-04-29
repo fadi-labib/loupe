@@ -57,7 +57,10 @@ def mcp_command(loupe_dir: Path) -> int:
     if config_path.exists():
         try:
             cfg = load_config(config_path)
-            boundary = PathBoundary(writable_globs=cfg.agent_writable_paths)
+            boundary = PathBoundary(
+                writable_globs=cfg.agent_writable_paths,
+                project_root=loupe_dir.parent.resolve(),
+            )
         except (ValidationError, OSError) as exc:
             # Narrow catch: schema-validation failures (pydantic) or I/O
             # errors (file vanished, permission denied, encoding glitch).

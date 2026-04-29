@@ -25,21 +25,55 @@ def validate_relative_target_path(target_path: str) -> None:
 class PathBoundary:
     """Decides whether a given path is writable by an agent tool.
 
-    Paths are normalised; any path that traverses outside `.loupe/` (e.g., `..`),
-    is absolute, or contains a NUL byte is rejected regardless of the allow-list.
+    Paths are normalised; any path that traverses outside `.loupe/` (e.g., `..`)
+    or contains a NUL byte is rejected regardless of the allow-list.
+
+    The allow-list globs in config.yaml are project-root-relative
+    (e.g. `.loupe/threats.yaml`). Real call sites — `loupe ci`,
+    `loupe scan`, the MCP server — construct write targets as
+    absolute paths (`Path.cwd() / .loupe / threats.yaml`). When the
+    caller supplies `project_root`, `is_agent_writable` relativises
+    absolute inputs against it before glob-matching, so the allow-list
+    semantics stay project-root-relative regardless of the caller's CWD.
+    Absolute paths that don't live under `project_root` (e.g. `/etc/passwd`)
+    are rejected unconditionally; this keeps the allow-list from being
+    silently widened by a stray CWD.
     """
 
-    def __init__(self, writable_globs: list[str]) -> None:
+    def __init__(
+        self,
+        writable_globs: list[str],
+        *,
+        project_root: Path | None = None,
+    ) -> None:
+        if project_root is not None and not project_root.is_absolute():
+            raise ValueError(f"project_root must be absolute, got {project_root!r}")
         self._globs = list(writable_globs)
+        self._project_root = project_root
 
     def is_agent_writable(self, path: str) -> bool:
         if "\x00" in path:
             return False
-        normalized = PurePosixPath(path).as_posix()
+        candidate = PurePosixPath(path)
+        if candidate.is_absolute() and self._project_root is not None:
+            # Real CLI flow: project_root is set, input is absolute.
+            # Relativise against project_root so the glob comparison stays
+            # project-root-relative. Absolute paths outside project_root are
+            # rejected — refusing to silently widen the allow-list by
+            # whatever the caller's CWD happens to be.
+            try:
+                rel = candidate.relative_to(PurePosixPath(self._project_root.as_posix()))
+            except ValueError:
+                return False
+            normalized = rel.as_posix()
+        else:
+            # No project_root: fall back to raw fnmatch. This preserves
+            # the legacy contract some call sites and tests rely on, where
+            # absolute paths in `writable_globs` are matched against
+            # absolute inputs directly (no relativisation).
+            normalized = candidate.as_posix()
         if ".." in normalized.split("/"):
             return False
-        # Absolute paths are allowed only if explicitly listed in the allow-list
-        # (e.g., when tests pass tmp_path). Relative paths must match a glob.
         return any(self._match(normalized, g) for g in self._globs)
 
     @staticmethod

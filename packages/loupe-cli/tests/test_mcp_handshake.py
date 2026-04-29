@@ -87,18 +87,12 @@ def _make_loupe_dir(root: Path, *, write_config: bool = False) -> Path:
         ]
     ).save(loupe / "threats.yaml")
     if write_config:
-        # Use absolute paths in agent_writable_paths so the boundary
-        # matches the in-test loupe location. Operators editing config
-        # by hand normally use relative paths against the repo root;
-        # we sidestep that resolution here.
-        absolute_config = _INIT_CONFIG.replace(
-            ".loupe/threats.yaml",
-            str(loupe / "threats.yaml"),
-        ).replace(
-            ".loupe/mitigations.yaml",
-            str(loupe / "mitigations.yaml"),
-        )
-        (loupe / "config.yaml").write_text(absolute_config)
+        # Use the same project-root-relative globs that `loupe init`
+        # scaffolds. `loupe mcp` constructs a PathBoundary with
+        # `project_root=loupe_dir.parent.resolve()`, so the absolute
+        # write targets the lens produces are relativised before the
+        # glob comparison. No absolute-rewriting workaround needed.
+        (loupe / "config.yaml").write_text(_INIT_CONFIG)
     return loupe
 
 

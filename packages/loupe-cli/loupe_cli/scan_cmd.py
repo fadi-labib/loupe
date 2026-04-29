@@ -64,7 +64,10 @@ def scan_command(
         return USAGE_ERROR
 
     cfg = load_config(config_path)
-    boundary = PathBoundary(writable_globs=cfg.agent_writable_paths)
+    boundary = PathBoundary(
+        writable_globs=cfg.agent_writable_paths,
+        project_root=cwd.resolve(),
+    )
     lenses = discover_lenses()
 
     scope: Literal["full", "scoped"] = "scoped" if paths else "full"

@@ -64,7 +64,10 @@ def ci_command(
         return USAGE_ERROR
 
     cfg = load_config(config_path)
-    boundary = PathBoundary(writable_globs=cfg.agent_writable_paths)
+    boundary = PathBoundary(
+        writable_globs=cfg.agent_writable_paths,
+        project_root=cwd.resolve(),
+    )
     lenses = discover_lenses()
 
     # Timezone-aware UTC: RunRecord.timestamp rejects naive datetimes
