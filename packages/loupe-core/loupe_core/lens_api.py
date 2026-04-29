@@ -17,7 +17,15 @@ class LensCapabilities(BaseModel):
     # The coordinator resolves the union across selected lenses and the
     # capability registry runs each backend once, populating typed fields
     # on RunContext that every lens then reads.
+    #
+    # D-23: split into required vs. preferred. A required-but-unavailable
+    # capability raises RequiredCapabilityUnavailable at bootstrap time
+    # and the CLI exits 64 (EX_USAGE). A preferred-but-unavailable
+    # capability lets the lens run with the slot set to None; the run
+    # record carries a structured capability_degraded entry so the
+    # degradation is auditor-visible without breaking the run.
     requires_capabilities: list[str] = Field(default_factory=list)
+    prefers_capabilities: list[str] = Field(default_factory=list)
 
 
 class McpTool(BaseModel):
