@@ -18,7 +18,14 @@ from pathlib import Path
 from typing import Any, Protocol
 
 from loupe_core.capabilities.composition import CompositionMode, compose_run
-from loupe_core.capabilities.errors import NoBackendsConfiguredError
+from loupe_core.capabilities.degradation import CapabilityDegradation, DegradationKind
+from loupe_core.capabilities.errors import (
+    CapabilityError,
+    CapabilityNotFoundError,
+    EntryPointMalformedError,
+    NoBackendsConfiguredError,
+    RequiredCapabilityUnavailable,
+)
 from loupe_core.capabilities.protocols import (
     CveResult,
     SbomResult,
@@ -53,41 +60,151 @@ async def bootstrap_capabilities(
     config: LoupeConfig,
     registry: CapabilityRegistry,
     repo_path: Path,
-) -> None:
-    required = _collect_required(lenses)
-    ordered = _order_capabilities(required)
+) -> list[CapabilityDegradation]:
+    """Resolve every capability the planned lenses declared, populate the
+    typed slots on `ctx`, and return any soft-failure degradations.
 
+    Policy (D-23):
+    - `requires_capabilities` on any lens makes the capability required.
+      Missing config or backend errors raise `RequiredCapabilityUnavailable`
+      with the violating lens and underlying cause attached.
+    - `prefers_capabilities` on a lens (with no lens requiring the same
+      capability) makes it preferred. Missing config or backend errors are
+      recorded as `CapabilityDegradation` entries; the slot stays `None`
+      and the lens runs.
+    - Required wins on disagreement: if two lenses declare the same
+      capability, one as required and one as preferred, the capability is
+      treated as required.
+    - Implicit dependencies (e.g. cve → sbom) inherit the policy of the
+      capability that pulled them in.
+
+    Returns: list of degradations for run-record persistence (A.5). The
+    list is empty on the happy path so callers can use truthiness.
+    """
+    required_by, preferred_by = _collect_capability_demands(lenses)
+    ordered = _order_capabilities(set(required_by) | set(preferred_by))
+
+    degradations: list[CapabilityDegradation] = []
     for capability in ordered:
+        is_required = capability in required_by
+        owning_lens = (
+            required_by.get(capability, [None])[0]
+            if is_required
+            else preferred_by.get(capability, [None])[0]
+        ) or "unknown"
+
         activation = config.capabilities.get(capability)
         if activation is None:
-            # No operator configuration for a capability a lens needs.
-            # NoBackendsConfiguredError carries the specific name so the
-            # user can fix config.yaml without grepping.
-            raise NoBackendsConfiguredError(capability=capability)
-        result = await _run_one(
-            capability=capability,
-            activation=activation,
-            registry=registry,
-            ctx=ctx,
-            repo_path=repo_path,
-        )
+            cause = NoBackendsConfiguredError(capability=capability)
+            if is_required:
+                raise RequiredCapabilityUnavailable(
+                    lens_name=owning_lens, capability=capability, cause=cause
+                )
+            degradations.append(
+                CapabilityDegradation(
+                    lens_name=owning_lens,
+                    capability=capability,
+                    kind="unconfigured",
+                    detail=str(cause),
+                )
+            )
+            continue
+
+        try:
+            result = await _run_one(
+                capability=capability,
+                activation=activation,
+                registry=registry,
+                ctx=ctx,
+                repo_path=repo_path,
+            )
+        except CapabilityError as exc:
+            if is_required:
+                raise RequiredCapabilityUnavailable(
+                    lens_name=owning_lens, capability=capability, cause=exc
+                ) from exc
+            degradations.append(
+                CapabilityDegradation(
+                    lens_name=owning_lens,
+                    capability=capability,
+                    kind=_kind_for(exc),
+                    detail=str(exc),
+                )
+            )
+            continue
         _store_on_context(ctx, capability, result)
 
+    return degradations
 
-def _collect_required(lenses: list[_LensLike]) -> set[str]:
-    required: set[str] = set()
+
+def _collect_capability_demands(
+    lenses: list[_LensLike],
+) -> tuple[dict[str, list[str]], dict[str, list[str]]]:
+    """Split capability demands into required vs preferred maps.
+
+    Required wins: if a capability appears in `requires_capabilities` on
+    any lens, it's tracked as required (and absent from the preferred
+    map) even if other lenses listed it as preferred. Implicit dependencies
+    (from `_CAPABILITY_GRAPH`) inherit the strictest policy of the
+    capabilities that pulled them in.
+    """
+    required_by: dict[str, list[str]] = {}
+    preferred_by: dict[str, list[str]] = {}
     for lens in lenses:
-        required.update(lens.capabilities.requires_capabilities)
-    # Pull in implicit dependencies transitively (e.g., cve → sbom). Iterate
-    # to a fixed point so future multi-hop chains (a → b → c) resolve cleanly.
-    pending = set(required)
+        lens_name = lens.capabilities.name
+        for cap in lens.capabilities.requires_capabilities:
+            required_by.setdefault(cap, []).append(lens_name)
+        for cap in lens.capabilities.prefers_capabilities:
+            preferred_by.setdefault(cap, []).append(lens_name)
+
+    # Required wins over preferred on overlap.
+    for cap in list(preferred_by):
+        if cap in required_by:
+            del preferred_by[cap]
+
+    # Expand implicit dependencies. Required deps stay required; preferred
+    # deps stay preferred unless already promoted by another lens.
+    _expand_transitively(required_by, promote_to_required=True, preferred_by=preferred_by)
+    _expand_transitively(preferred_by, promote_to_required=False, preferred_by=None)
+
+    return required_by, preferred_by
+
+
+def _expand_transitively(
+    targets: dict[str, list[str]],
+    *,
+    promote_to_required: bool,
+    preferred_by: dict[str, list[str]] | None,
+) -> None:
+    """Walk `_CAPABILITY_GRAPH` and add transitive dependencies into `targets`.
+
+    When promote_to_required=True and a transitive dep currently lives in
+    `preferred_by`, it gets removed from there and added to `targets`
+    (the required map). This enforces "required wins" across the implicit
+    edge.
+    """
+    pending = set(targets)
     while pending:
         cap = pending.pop()
         for dep in _CAPABILITY_GRAPH.get(cap, []):
-            if dep not in required:
-                required.add(dep)
-                pending.add(dep)
-    return required
+            if dep in targets:
+                continue
+            owner = targets[cap][0] if targets[cap] else "unknown"
+            targets.setdefault(dep, []).append(owner)
+            if promote_to_required and preferred_by is not None and dep in preferred_by:
+                del preferred_by[dep]
+            pending.add(dep)
+
+
+def _kind_for(exc: CapabilityError) -> DegradationKind:
+    if isinstance(exc, NoBackendsConfiguredError):
+        return "unconfigured"
+    if isinstance(exc, CapabilityNotFoundError):
+        return "not_found"
+    if isinstance(exc, EntryPointMalformedError):
+        return "entry_point_malformed"
+    # BackendError or any other CapabilityError subtype — runtime failure.
+    return "backend_error"
 
 
 def _order_capabilities(required: set[str]) -> list[str]:

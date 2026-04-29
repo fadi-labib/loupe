@@ -40,3 +40,26 @@ class BackendError(CapabilityError):
         super().__init__(f"backend '{backend_name}' failed: {message}")
         self.backend_name = backend_name
         self.message = message
+
+
+class RequiredCapabilityUnavailable(CapabilityError):
+    """D-23: a capability listed in `requires_capabilities` could not be made
+    available. The lens that required it cannot run; the operator must wire
+    the backend (install the binary, uncomment the `capabilities:` block in
+    config.yaml) before the next invocation.
+
+    Wraps the underlying `CapabilityError` cause so diagnostics keep the
+    original failure shape (NoBackendsConfigured / BackendError /
+    CapabilityNotFound / EntryPointMalformed). The CLI translates this to
+    exit 64 (BSD `EX_USAGE`) per D-23 Resolved 2 — exit 1 stays reserved
+    for runs where lenses produced findings that tripped `ci.fail_on`.
+    """
+
+    def __init__(self, *, lens_name: str, capability: str, cause: CapabilityError) -> None:
+        super().__init__(
+            f"lens '{lens_name}' requires capability '{capability}' "
+            f"but it could not be made available: {cause}"
+        )
+        self.lens_name = lens_name
+        self.capability = capability
+        self.cause = cause

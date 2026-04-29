@@ -13,7 +13,11 @@ from unittest.mock import patch
 
 import pytest
 from loupe_core.capabilities.bootstrap import bootstrap_capabilities
-from loupe_core.capabilities.errors import NoBackendsConfiguredError
+from loupe_core.capabilities.degradation import CapabilityDegradation
+from loupe_core.capabilities.errors import (
+    NoBackendsConfiguredError,
+    RequiredCapabilityUnavailable,
+)
 from loupe_core.capabilities.protocols import (
     CveFinding,
     CveResult,
@@ -79,8 +83,18 @@ def _registry_with_fakes() -> CapabilityRegistry:
 
 
 class _Lens:
-    def __init__(self, name: str, requires: list[str]) -> None:
-        self.capabilities = LensCapabilities(name=name, domain="t", requires_capabilities=requires)
+    def __init__(
+        self,
+        name: str,
+        requires: list[str] | None = None,
+        prefers: list[str] | None = None,
+    ) -> None:
+        self.capabilities = LensCapabilities(
+            name=name,
+            domain="t",
+            requires_capabilities=requires or [],
+            prefers_capabilities=prefers or [],
+        )
 
 
 @pytest.mark.asyncio
@@ -169,11 +183,16 @@ async def test_bootstrap_skips_capabilities_no_lens_needs():
 
 
 @pytest.mark.asyncio
-async def test_bootstrap_raises_when_capability_missing_from_config():
+async def test_bootstrap_required_missing_config_raises_required_capability_unavailable():
+    """D-23: a required-but-unwired capability raises the typed
+    RequiredCapabilityUnavailable exception carrying the lens name and
+    the underlying NoBackendsConfiguredError as its cause. The CLI
+    translates this to exit 64; older callers can still catch via the
+    CapabilityError base class for back-compat."""
     ctx = _empty_ctx()
     config = LoupeConfig(capabilities={})  # operator forgot to declare sbom
     lenses = [_Lens("threatlens", requires=["sbom"])]
-    with pytest.raises(NoBackendsConfiguredError):
+    with pytest.raises(RequiredCapabilityUnavailable) as exc_info:
         await bootstrap_capabilities(
             ctx=ctx,
             lenses=lenses,
@@ -181,6 +200,78 @@ async def test_bootstrap_raises_when_capability_missing_from_config():
             registry=_registry_with_fakes(),
             repo_path=Path("/repo"),
         )
+    assert exc_info.value.lens_name == "threatlens"
+    assert exc_info.value.capability == "sbom"
+    assert isinstance(exc_info.value.cause, NoBackendsConfiguredError)
+
+
+@pytest.mark.asyncio
+async def test_bootstrap_preferred_missing_config_returns_degradation():
+    """D-23: a preferred-but-unwired capability returns a
+    CapabilityDegradation entry; the lens runs with the slot at None."""
+    ctx = _empty_ctx()
+    config = LoupeConfig(capabilities={})  # operator forgot to declare sbom
+    lenses = [_Lens("future_lens", prefers=["sbom"])]
+    degradations = await bootstrap_capabilities(
+        ctx=ctx,
+        lenses=lenses,
+        config=config,
+        registry=_registry_with_fakes(),
+        repo_path=Path("/repo"),
+    )
+    assert ctx.sbom is None  # slot stays unpopulated, lens reads None
+    assert len(degradations) == 1
+    entry = degradations[0]
+    assert isinstance(entry, CapabilityDegradation)
+    assert entry.lens_name == "future_lens"
+    assert entry.capability == "sbom"
+    assert entry.kind == "unconfigured"
+    assert "sbom" in entry.detail
+
+
+@pytest.mark.asyncio
+async def test_bootstrap_returns_empty_list_when_all_capabilities_succeed():
+    """The happy path returns an empty degradation list — every required
+    AND preferred capability bootstrapped successfully. Lets callers
+    use truthiness to decide whether to surface anything."""
+    ctx = _empty_ctx()
+    config = LoupeConfig(
+        capabilities={"sbom": CapabilityActivation(mode="single", backends=["fake-syft"])}
+    )
+    lenses = [_Lens("threatlens", requires=["sbom"])]
+    degradations = await bootstrap_capabilities(
+        ctx=ctx,
+        lenses=lenses,
+        config=config,
+        registry=_registry_with_fakes(),
+        repo_path=Path("/repo"),
+    )
+    assert degradations == []
+    assert ctx.sbom is not None
+
+
+@pytest.mark.asyncio
+async def test_bootstrap_required_wins_when_two_lenses_declare_same_capability():
+    """If one lens requires sbom and another prefers sbom, sbom is
+    treated as required (strict policy wins). Missing config raises
+    rather than returning a degradation."""
+    ctx = _empty_ctx()
+    config = LoupeConfig(capabilities={})
+    lenses = [
+        _Lens("strict_lens", requires=["sbom"]),
+        _Lens("loose_lens", prefers=["sbom"]),
+    ]
+    with pytest.raises(RequiredCapabilityUnavailable) as exc_info:
+        await bootstrap_capabilities(
+            ctx=ctx,
+            lenses=lenses,
+            config=config,
+            registry=_registry_with_fakes(),
+            repo_path=Path("/repo"),
+        )
+    # The exception is reported under the strict lens's name — that's
+    # the one whose contract is violated.
+    assert exc_info.value.lens_name == "strict_lens"
 
 
 @pytest.mark.asyncio
