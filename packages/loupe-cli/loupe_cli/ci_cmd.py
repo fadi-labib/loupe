@@ -26,7 +26,7 @@ from pathlib import Path
 import typer
 from loupe_core.artifacts.run_record_writer import build_run_record
 from loupe_core.capabilities.bootstrap import bootstrap_capabilities
-from loupe_core.capabilities.errors import CapabilityError
+from loupe_core.capabilities.errors import RequiredCapabilityUnavailable
 from loupe_core.capabilities.registry import CapabilityRegistry
 from loupe_core.config import LoupeConfig, load_config
 from loupe_core.coordinator import build_run_plan
@@ -94,10 +94,15 @@ def ci_command(
     # ctx.secrets, ctx.static_findings — every lens reads the same cached
     # values off the shared blackboard. Cost-discipline lever (D-10 §2).
     planned_lenses = _planned_lenses(lenses, ctx)
-    if any(getattr(lens.capabilities, "requires_capabilities", []) for lens in planned_lenses):
+    needs_caps = any(
+        getattr(lens.capabilities, "requires_capabilities", [])
+        or getattr(lens.capabilities, "prefers_capabilities", [])
+        for lens in planned_lenses
+    )
+    if needs_caps:
         registry = CapabilityRegistry.discover()
         try:
-            asyncio.run(
+            degradations = asyncio.run(
                 bootstrap_capabilities(
                     ctx=ctx,
                     lenses=planned_lenses,
@@ -106,15 +111,26 @@ def ci_command(
                     repo_path=cwd,
                 )
             )
-        except CapabilityError as exc:
-            # Surface the specific capability error so the operator can
-            # fix config.yaml or install the missing backend, then continue
-            # with whatever capability slots got populated. The lens layer
-            # treats `None`-valued slots as "capability did not run" and
-            # carries on rather than failing the whole CI invocation.
+        except RequiredCapabilityUnavailable as exc:
+            # D-23 / Resolved 2: required-but-unavailable is an operator-
+            # configuration gap, not a lens crash. Exit 64 (EX_USAGE)
+            # distinct from the gate-failure exit 1 reserved for runs
+            # that produced findings tripping ci.fail_on.
             typer.echo(
-                f"warning: capability bootstrap failed — {exc}. "
-                f"Lenses will see partial capability results.",
+                f"Error: lens '{exc.lens_name}' requires capability '{exc.capability}' "
+                f"but no backends are configured. Install the backend binary and "
+                f"uncomment the matching block under `capabilities:` in "
+                f".loupe/config.yaml. See docs/concepts/capabilities.md.\n"
+                f"  underlying: {exc.cause}",
+                err=True,
+            )
+            return USAGE_ERROR
+        ctx.capability_degradations = degradations
+        for d in degradations:
+            typer.echo(
+                f"note: lens '{d.lens_name}' preferred capability '{d.capability}' "
+                f"unavailable ({d.kind}); running without it. See run record "
+                f"capability_degraded entry for details.",
                 err=True,
             )
 

@@ -39,7 +39,7 @@ from typing import Literal
 import typer
 from loupe_core.artifacts.run_record_writer import build_run_record
 from loupe_core.capabilities.bootstrap import bootstrap_capabilities
-from loupe_core.capabilities.errors import CapabilityError
+from loupe_core.capabilities.errors import RequiredCapabilityUnavailable
 from loupe_core.capabilities.registry import CapabilityRegistry
 from loupe_core.config import LoupeConfig, load_config
 from loupe_core.coordinator import build_run_plan
@@ -104,13 +104,18 @@ def scan_command(
 
     # Run capability bootstrap ONCE before any lens executes — mirror of
     # ci_cmd. ThreatLens declares requires_capabilities=["sbom", "cve"];
-    # without this, full-repo scans saw ctx.sbom/ctx.cve_findings as None
-    # and silently produced threat output without any vulnerability context.
+    # under D-23 a required-miss exits 64 (operator must wire Syft/Grype)
+    # rather than the silently-degraded run the platform used to produce.
     planned_lenses = _planned_lenses(lenses, ctx)
-    if any(getattr(lens.capabilities, "requires_capabilities", []) for lens in planned_lenses):
+    needs_caps = any(
+        getattr(lens.capabilities, "requires_capabilities", [])
+        or getattr(lens.capabilities, "prefers_capabilities", [])
+        for lens in planned_lenses
+    )
+    if needs_caps:
         registry = CapabilityRegistry.discover()
         try:
-            asyncio.run(
+            degradations = asyncio.run(
                 bootstrap_capabilities(
                     ctx=ctx,
                     lenses=planned_lenses,
@@ -119,14 +124,22 @@ def scan_command(
                     repo_path=cwd,
                 )
             )
-        except CapabilityError as exc:
-            # Same policy as ci_cmd: surface the misconfiguration and
-            # let lenses run with whatever slots got populated. The
-            # alternative (hard-fail the scan) would block onboarding
-            # runs where the operator hasn't wired up Syft/Grype yet.
+        except RequiredCapabilityUnavailable as exc:
             typer.echo(
-                f"warning: capability bootstrap failed — {exc}. "
-                f"Lenses will see partial capability results.",
+                f"Error: lens '{exc.lens_name}' requires capability '{exc.capability}' "
+                f"but no backends are configured. Install the backend binary and "
+                f"uncomment the matching block under `capabilities:` in "
+                f".loupe/config.yaml. See docs/concepts/capabilities.md.\n"
+                f"  underlying: {exc.cause}",
+                err=True,
+            )
+            return USAGE_ERROR
+        ctx.capability_degradations = degradations
+        for d in degradations:
+            typer.echo(
+                f"note: lens '{d.lens_name}' preferred capability '{d.capability}' "
+                f"unavailable ({d.kind}); running without it. See run record "
+                f"capability_degraded entry for details.",
                 err=True,
             )
 

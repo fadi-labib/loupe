@@ -133,6 +133,9 @@ def test_scan_bootstraps_capabilities_before_dispatch(tmp_path, monkeypatch):
     async def _spy(**kwargs):
         # Capture the kwargs so we can assert ctx/lenses/config were threaded.
         calls.append(kwargs)
+        # D-23 contract: bootstrap_capabilities returns list[CapabilityDegradation];
+        # empty list means "everything bootstrapped cleanly".
+        return []
 
     monkeypatch.setattr("loupe_cli.scan_cmd.bootstrap_capabilities", _spy)
 

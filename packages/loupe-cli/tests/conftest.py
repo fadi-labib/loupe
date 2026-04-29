@@ -17,6 +17,17 @@ async def _noop_dispatch(ctx, lenses, boundary, loupe_dir):  # noqa: ANN001 — 
     return None
 
 
+async def _noop_bootstrap(**kwargs):  # noqa: ANN003 — matches bootstrap_capabilities signature
+    """Stand-in for `loupe_core.capabilities.bootstrap.bootstrap_capabilities`.
+
+    Returns empty degradation list so the post-D-23 CLI flow proceeds as
+    if every capability bootstrapped successfully. Tests that exercise
+    the capability policy (required-miss → exit 64, preferred-miss →
+    record degradation) override this with the real implementation.
+    """
+    return []
+
+
 @pytest.fixture(autouse=True)
 def stub_dispatch(monkeypatch: pytest.MonkeyPatch) -> None:
     """Patch every CLI module's reference to `dispatch_plan` to a no-op.
@@ -31,6 +42,29 @@ def stub_dispatch(monkeypatch: pytest.MonkeyPatch) -> None:
         "loupe_cli.scan_cmd.dispatch_plan",
     ):
         monkeypatch.setattr(target, _noop_dispatch)
+
+
+@pytest.fixture(autouse=True)
+def stub_bootstrap(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Patch CLI bindings of `bootstrap_capabilities` to a no-op.
+
+    Existing CLI tests use minimal configs without a `capabilities:`
+    block — under D-23 enforcement, the real bootstrap would raise
+    RequiredCapabilityUnavailable (ThreatLens requires sbom + cve) and
+    the CLI would exit 64. The tests in this package don't exercise
+    capability bootstrap; they test coordination logic around it.
+    Stubbing the call to return an empty degradation list lets those
+    tests stay focussed.
+
+    Tests in test_ci_capability_policy.py (and test_scan_capability_policy.py)
+    override this with the real implementation to exercise the policy
+    itself.
+    """
+    for target in (
+        "loupe_cli.ci_cmd.bootstrap_capabilities",
+        "loupe_cli.scan_cmd.bootstrap_capabilities",
+    ):
+        monkeypatch.setattr(target, _noop_bootstrap)
 
 
 # ---------------------------------------------------------------------------
