@@ -152,6 +152,85 @@ def test_ci_and_scan_records_equivalent_modulo_origin(tmp_path: Path):
     assert ci_dump == scan_dump
 
 
+def test_capability_degradations_persist_into_run_record(loupe_dir: Path):
+    """D-23 / A.5: preferred-capability degradations on the RunContext
+    land on disk in the run record's `capability_degraded` list. Required-
+    but-unavailable capabilities never reach the writer (the CLI exits 64
+    at bootstrap), so this test only covers the soft-failure persistence
+    path. Empty list on a clean run."""
+    from loupe_core.capabilities.degradation import CapabilityDegradation
+
+    ctx = _ctx_with_usage(loupe_dir)
+    ctx.capability_degradations = [
+        CapabilityDegradation(
+            lens_name="future_lens",
+            capability="secret_detect",
+            kind="unconfigured",
+            detail="Capability 'secret_detect' is required but no backends are configured.",
+        )
+    ]
+
+    build_run_record(
+        ctx=ctx,
+        loupe_dir=loupe_dir,
+        considered=[],
+        trigger="manual_ci",
+        base_sha="abc",
+        head_sha="def",
+        diff_hash="0" * 64,
+    )
+
+    on_disk = load_run_records(loupe_dir / "runs")[0]
+    assert len(on_disk.capability_degraded) == 1
+    entry = on_disk.capability_degraded[0]
+    assert entry.lens_name == "future_lens"
+    assert entry.capability == "secret_detect"
+    assert entry.kind == "unconfigured"
+    assert "secret_detect" in entry.detail
+
+
+def test_capability_degradations_change_self_hash(loupe_dir: Path):
+    """A run that degraded gracefully gets a different self_hash from
+    one that did not. Auditors can distinguish a clean ThreatLens run
+    from one that ran without (e.g.) Grype just by walking the chain."""
+    from loupe_core.capabilities.degradation import CapabilityDegradation
+
+    clean = build_run_record(
+        ctx=_ctx_with_usage(loupe_dir),
+        loupe_dir=loupe_dir,
+        considered=[],
+        trigger="manual_ci",
+        base_sha="a",
+        head_sha="b",
+        diff_hash="0" * 64,
+    )
+
+    # Fresh second .loupe so we don't drag prev_run_hash into the comparison.
+    other_dir = loupe_dir.parent.parent / "other" / ".loupe"
+    other_dir.mkdir(parents=True)
+    (other_dir / "runs").mkdir()
+    degraded_ctx = _ctx_with_usage(other_dir)
+    degraded_ctx.capability_degradations = [
+        CapabilityDegradation(
+            lens_name="threatlens",
+            capability="cve",
+            kind="unconfigured",
+            detail="Grype not wired",
+        )
+    ]
+    degraded = build_run_record(
+        ctx=degraded_ctx,
+        loupe_dir=other_dir,
+        considered=[],
+        trigger="manual_ci",
+        base_sha="a",
+        head_sha="b",
+        diff_hash="0" * 64,
+    )
+
+    assert clean.self_hash != degraded.self_hash
+
+
 def test_chain_link_pickup_across_invocations(loupe_dir: Path):
     """Second invocation in the same .loupe/ picks up the first record's
     self_hash as its prev_run_hash. Verifies the helper handles chain

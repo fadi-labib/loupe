@@ -112,6 +112,7 @@ def build_run_record(
         proposed_patches=[p.location for p in ctx.proposed_patches],
         pending_decisions=[d.id for d in ctx.pending_decisions],
         errors=extract_lens_errors(ctx.findings),
+        capability_degraded=list(ctx.capability_degradations),
         prev_run_hash=prev_hash,
         self_hash="",
     )

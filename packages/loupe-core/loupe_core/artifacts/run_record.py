@@ -9,6 +9,8 @@ from typing import TYPE_CHECKING, Literal
 
 from pydantic import BaseModel, Field, field_validator
 
+from loupe_core.capabilities.degradation import CapabilityDegradation
+
 if TYPE_CHECKING:
     # Type-check-only import keeps run_record.py loadable before run_context,
     # which matters for tooling that imports artifacts in isolation
@@ -97,6 +99,18 @@ class RunRecord(BaseModel):
             "`dispatch_plan`. Empty on a clean run. Part of the canonical JSON, so two "
             "runs that differ only by their `errors` get different `self_hash` values — "
             "an auditor can distinguish a clean run from a lens-crash run by hash alone."
+        ),
+    )
+    capability_degraded: list[CapabilityDegradation] = Field(
+        default_factory=list,
+        description=(
+            "D-23: preferred capabilities that could not be made available. Each entry "
+            "names the lens that wanted the capability, the capability itself, the "
+            "failure kind, and a human-readable detail. Empty on a clean run. Required-"
+            "but-unavailable capabilities never reach this list — they raise "
+            "RequiredCapabilityUnavailable at bootstrap and the CLI exits 64 before "
+            "dispatch runs. The field is included in the canonical hash so a run that "
+            "degraded gracefully gets a different self_hash from one that did not."
         ),
     )
     prev_run_hash: str | None = Field(

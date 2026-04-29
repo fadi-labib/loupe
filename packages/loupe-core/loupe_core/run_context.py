@@ -8,6 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from loupe_core.artifacts.context import ProjectContext
 from loupe_core.artifacts.knowledge import KnowledgeGraph
+from loupe_core.capabilities.degradation import CapabilityDegradation
 from loupe_core.capabilities.protocols import (
     CveResult,
     SbomResult,
@@ -149,6 +150,16 @@ class RunContext(BaseModel):
     # discipline principle (§8) has on-disk evidence per run, not just in
     # the test cassette.
     lens_usage: dict[str, LensUsage] = Field(default_factory=dict)
+
+    # D-23: preferred-but-unavailable capabilities (e.g. operator hasn't
+    # wired Grype but a lens listed cve in prefers_capabilities). Each
+    # entry names the lens, the capability, the failure kind, and a
+    # human-readable detail. build_run_record persists them into the
+    # run record under `capability_degraded:` so the degradation is
+    # auditor-visible. Required-but-unavailable capabilities never
+    # reach this list — they raise RequiredCapabilityUnavailable at
+    # the bootstrap site and the CLI exits 64 before dispatch runs.
+    capability_degradations: list[CapabilityDegradation] = Field(default_factory=list)
 
     def record_finding(self, lens: str, key: str, value: Any) -> None:
         """Record a finding from `lens` under `key` with provenance.
