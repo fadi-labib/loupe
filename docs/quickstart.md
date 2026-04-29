@@ -203,3 +203,10 @@ If `ANTHROPIC_API_KEY` (or the matching key for your `models.default`) is not se
 A richer `loupe ci --verbose` flag for plan tracing is documented in the CLI design but not yet implemented. Today's `loupe ci` carries only the flags shown earlier in this page.
 
 For anything beyond that, [`contributing.md`](contributing.md) describes how to file an issue and how to reproduce locally.
+
+## See it on a real codebase
+
+If you'd rather drive the same flow against an actual third-party project than scaffold against your own, follow the [ThreatLens on Mongoose](tutorials/threatlens-on-mongoose.md) tutorial. It walks through `loupe init`, a real MQTT-parser fix diff, and `loupe scan` end-to-end with expected outputs at every step — useful for sanity-checking your environment before pointing Loupe at code you actually care about.
+
+> [!NOTE]
+> **Diff-mode is the source-grounded path today.** `loupe ci --diff-file <patch>` sends the diff bytes to the LLM and produces threats anchored in those bytes. `loupe scan --paths <file>` is being fixed under [D-24](reference/decisions.md#d-24) to also send source bytes; until that ships, scan-mode produces context.md-grounded brainstorming rather than a code audit. The tutorial above explains the distinction at the scan step.

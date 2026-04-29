@@ -1,11 +1,20 @@
 """`loupe scan` — D-15 full-repo / scoped scan mode.
 
-Unlike `loupe ci` (incremental, diff-driven), `loupe scan` analyses the
-whole codebase from scratch (or a subset specified by `--paths`). The
-coordinator's relevance filter is bypassed in scan mode — the user has
-explicitly invoked the lens, so the platform must run it.
+Unlike `loupe ci` (incremental, diff-driven), `loupe scan` is the
+no-diff entry point: the coordinator's relevance filter is bypassed
+because the user has explicitly invoked the lens, so the platform must
+run it.
 
-Cost note: full-repo scans are materially more expensive than diff-mode
+TODO(F-09 / D-24): today this command attaches `scope_paths` to the
+RunContext but the prompt builder reads only `ctx.diff` /
+`ctx.project` / `ctx.sbom` / `ctx.cve_findings` / `ctx.knowledge`. The
+agent therefore receives NO source bytes for the paths the operator
+scoped, only `context.md` and the "no diff provided" placeholder. The
+fix wires a `ctx.scoped_sources` field + `_sources_section` in the
+prompt builder. See `docs/plans/2026-05-16-mongoose-validation-fix-plan.md`
+Phase B and the D-24 decision entry.
+
+Cost note: scoped scans are materially more expensive than diff-mode
 runs. The per-run limits in config.yaml still apply. A `--budget-usd`
 override flag is planned for the case where users want a one-off
 scan to exceed the configured ceiling. Not yet implemented.
@@ -13,7 +22,8 @@ scan to exceed the configured ceiling. Not yet implemented.
 When to use:
 - First-time onboarding to an existing codebase (`loupe scan`)
 - Periodic re-baseline (quarterly-ish)
-- Architectural review of a specific subsystem (`loupe scan --paths …`)
+- Architectural review of a specific subsystem (`loupe scan --paths …`,
+  after F-09 ships — until then, use `loupe ci --diff-file`)
 - Audit kickoff
 """
 
