@@ -16,6 +16,7 @@ import os
 from pathlib import Path
 
 from loupe_core.enforcement.path_boundary import PathBoundary
+from loupe_core.fs import CODE_EXTENSIONS as _CODE_EXTS
 from loupe_core.lens_api import LensCapabilities, McpTool, McpWorkflow
 from loupe_core.pricing import estimate_cost_usd
 from loupe_core.run_context import LensRunPlan, LensUsage, RelevanceScore, RunContext
@@ -35,22 +36,6 @@ logger = logging.getLogger(__name__)
 # provider-agnostic.
 _FALLBACK_MODEL_ID = "anthropic:claude-opus-4-7"
 
-_CODE_EXTS = (
-    ".py",
-    ".ts",
-    ".tsx",
-    ".js",
-    ".jsx",
-    ".go",
-    ".rs",
-    ".java",
-    ".kt",
-    ".swift",
-    ".c",
-    ".cpp",
-    ".cs",
-    ".rb",
-)
 _DEP_FILES = {
     "requirements.txt",
     "Pipfile",
