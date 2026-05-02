@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import fnmatch
+import os
 from pathlib import Path, PurePosixPath
 
 
@@ -85,3 +86,112 @@ class PathBoundary:
             prefix = glob[:-3]
             return path == prefix or path.startswith(prefix + "/")
         return fnmatch.fnmatchcase(path, glob)
+
+
+class ReadTooLarge(ValueError):
+    """Raised by `safe_read_under` when the target file exceeds `max_bytes`.
+
+    Carries the actual size and the cap so the caller can render a
+    user-visible truncation marker without re-stat-ing the file.
+    """
+
+    def __init__(self, *, target: str, actual_bytes: int, max_bytes: int) -> None:
+        super().__init__(f"file {target!r} is {actual_bytes} bytes; exceeds max_bytes={max_bytes}")
+        self.target = target
+        self.actual_bytes = actual_bytes
+        self.max_bytes = max_bytes
+
+
+def safe_read_under(
+    *,
+    project_root: Path,
+    target: Path,
+    max_bytes: int,
+) -> bytes:
+    """Read `target` bytes after verifying every component is non-symlink.
+
+    Read-side mirror of `tools.write_agent_artifact`'s parent-chain walk
+    (D-24 / B.2). Uses the same `O_RDONLY | O_DIRECTORY | O_NOFOLLOW`
+    discipline on every parent and `O_RDONLY | O_NOFOLLOW` on the leaf,
+    so a symlink anywhere in the path — pre-planted or TOCTOU-raced —
+    is refused before any bytes leave the filesystem.
+
+    Containment: `target` must resolve to a path under `project_root`
+    (absolute, must exist as a real directory). Inputs that don't pass
+    the relative-to-root check raise `BoundaryViolation` from
+    `loupe_core.tools` to match the write-side error type.
+
+    Size cap: reads up to `max_bytes + 1` and raises `ReadTooLarge` if
+    the file contains more than `max_bytes`. Callers truncate to
+    `max_bytes` themselves so they control the truncation marker shape.
+    """
+    # Import locally to avoid a circular dependency: tools.py imports
+    # path_boundary, and BoundaryViolation logically belongs alongside
+    # write_agent_artifact. Keep the error type unified.
+    from loupe_core.tools import BoundaryViolation
+
+    if not project_root.is_absolute():
+        raise ValueError(f"project_root must be absolute, got {project_root!r}")
+    target_str = str(target)
+    if "\x00" in target_str:
+        raise BoundaryViolation(f"target contains NUL byte: {target_str!r}")
+    if max_bytes <= 0:
+        raise ValueError(f"max_bytes must be > 0, got {max_bytes}")
+
+    # Resolve target without following symlinks at the path-string level.
+    # The real symlink check happens via O_NOFOLLOW in the walk below.
+    abs_target = Path(os.path.abspath(target))
+    try:
+        rel = abs_target.relative_to(project_root)
+    except ValueError as exc:
+        raise BoundaryViolation(
+            f"target {target_str!r} resolves outside project_root {str(project_root)!r}"
+        ) from exc
+    if ".." in rel.parts:
+        # Defensive — os.path.abspath should have collapsed these, but the
+        # check is cheap and protects against future input shapes.
+        raise BoundaryViolation(f"target {target_str!r} contains path traversal")
+
+    parts = abs_target.parts
+    anchor = parts[0]  # "/" on POSIX
+    parent_components = parts[1:-1]
+    filename = parts[-1]
+    if not filename:
+        raise BoundaryViolation(f"target {target_str!r} has empty leaf")
+
+    parent_fd = os.open(anchor, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+    try:
+        for component in parent_components:
+            try:
+                child_fd = os.open(
+                    component,
+                    os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW,
+                    dir_fd=parent_fd,
+                )
+            except OSError as exc:
+                # ELOOP (NOFOLLOW caught a symlink) / ENOTDIR / ENOENT
+                raise BoundaryViolation(
+                    f"refused to follow symlink at parent component {component!r} of {target_str!r}"
+                ) from exc
+            os.close(parent_fd)
+            parent_fd = child_fd
+        try:
+            fd = os.open(
+                filename,
+                os.O_RDONLY | os.O_NOFOLLOW,
+                dir_fd=parent_fd,
+            )
+        except OSError as exc:
+            raise BoundaryViolation(f"refused to follow symlink at target {target_str!r}") from exc
+        # fstat on the already-open fd gives the real size with no TOCTOU
+        # window (anything that swaps the file after this point won't be
+        # seen — we hold the inode through the fd). Use it to report
+        # actual_bytes accurately on overflow.
+        actual_size = os.fstat(fd).st_size
+        if actual_size > max_bytes:
+            os.close(fd)
+            raise ReadTooLarge(target=target_str, actual_bytes=actual_size, max_bytes=max_bytes)
+        with os.fdopen(fd, "rb", closefd=True) as f:
+            return f.read(max_bytes + 1)  # +1 only as a safety margin
+    finally:
+        os.close(parent_fd)
