@@ -256,7 +256,7 @@ The result types are stable Pydantic models, so pipelines compose safely.
 
 ## How a lens declares its needs
 
-The lens contract grows by exactly one field: `requires_capabilities`.
+A lens distinguishes hard dependencies from soft dependencies via two fields ([D-23](../reference/decisions.md#d-23)):
 
 ```python
 class LensCapabilities(BaseModel):
@@ -265,8 +265,15 @@ class LensCapabilities(BaseModel):
     handles_intent_keywords: list[str] = Field(default_factory=list)
     artifact_paths: list[str] = Field(default_factory=list)
     requires_lenses: list[str] = Field(default_factory=list)
-    requires_capabilities: list[str] = Field(default_factory=list)  # NEW
+    requires_capabilities: list[str] = Field(default_factory=list)  # hard: lens won't run without these
+    prefers_capabilities: list[str] = Field(default_factory=list)   # soft: lens runs degraded if missing
 ```
+
+**Required (`requires_capabilities`).** The lens contract states the lens cannot produce evidence without the capability. If a required capability is unavailable at bootstrap time — operator hasn't wired a backend, the configured backend's binary isn't on `PATH`, the backend crashes during its `run()` — `bootstrap_capabilities()` raises `RequiredCapabilityUnavailable` and the CLI exits **64** (BSD `EX_USAGE` — operator-configuration error). The lens never executes. Exit 1 stays reserved for runs where lenses produced findings that tripped `ci.fail_on`; the distinction matters for CI wrappers that switch on exit codes.
+
+**Preferred (`prefers_capabilities`).** The lens contract states "I work better with this capability, but I can fall back without it." If a preferred capability is unavailable, the bootstrap returns a `CapabilityDegradation` entry naming the lens, the capability, and the failure kind (`unconfigured` / `backend_error` / `not_found` / `entry_point_malformed`). The matching slot on `RunContext` stays `None`; the lens runs and reads `None` instead of the typed result. The degradation persists on the run record's `capability_degraded` field so auditors can replay the run and see exactly which inputs were missing.
+
+**Required wins on disagreement.** If lens A declares `sbom` in `requires_capabilities` and lens B declares `sbom` in `prefers_capabilities`, `sbom` is treated as required globally — the strictest contract wins. Implicit transitive dependencies (e.g. `cve` → `sbom`) inherit the strictest policy of the capabilities that pulled them in.
 
 Example for ThreatLens v1.x:
 
@@ -277,18 +284,30 @@ class ThreatLens:
         domain="security",
         handles_intent_keywords=["threat", "STRIDE", "CRA", ...],
         artifact_paths=[".loupe/threats.yaml", ".loupe/vex.json", ...],
-        requires_capabilities=["sbom", "cve", "secret_detect"],   # ← NEW
+        requires_capabilities=["sbom", "cve"],   # hard: no LLM call without Grype evidence
     )
 
     async def run(self, ctx, plan_entry, boundary, loupe_dir):
         # ctx.sbom and ctx.cve_findings are populated by bootstrap_capabilities()
         # before any lens runs. Each lens reads typed results off the blackboard.
-        sbom = ctx.sbom                # SbomResult, or None if no SBOM backend ran
-        cves = ctx.cve_findings        # CveResult, or None
+        sbom = ctx.sbom                # SbomResult — never None, contract enforced upstream
+        cves = ctx.cve_findings        # CveResult — likewise
         # Hand structured results to the agent; no LLM call needed for these inputs.
 ```
 
+ThreatLens picks `requires` over `prefers` for `sbom` and `cve` deliberately: every threat produced anchors a CWE reference to a real Grype scan rather than to training-data recall. The first-run cost of installing Syft + Grype is one-time; the audit-trail integrity gain has no expiration date. A future lens (e.g. `PrivacyLens`) might reasonably declare `pii_detection` as required and `static_analysis` as preferred — the per-lens choice is recorded in `LensCapabilities` where code review can see it.
+
 The lens does not know which backend(s) produced the results. That's the point.
+
+### How operators see the contract
+
+The wall is visible in three places before any LLM call:
+
+1. **`loupe init`** finishes with a "Next: install Syft + Grype, then uncomment the `capabilities:` block" message.
+2. **`loupe doctor`** emits a `[✗]` row per unwired required capability: `[✗] capabilities[sbom]: lens 'threatlens' requires 'sbom' but no backends are wired …`. Doctor exits 64 when any required cap is unwired; this matches what `loupe ci` would have done one step later.
+3. **`loupe ci` / `loupe scan`** themselves exit 64 with the same diagnostic if the operator skipped doctor.
+
+After Syft + Grype install and the `capabilities:` block is uncommented, doctor turns `[✓]` and `loupe ci` runs end-to-end. Preferred-capability degradations show up in the run record but never on stderr at exit time, so a CI run with one degraded preferred capability still exits 0.
 
 ---
 
@@ -421,7 +440,7 @@ This is genuinely more architecture than the v1 spec. The trade-offs:
 | What we gain | What we pay |
 |---|---|
 | No tool lock-in (parity with our LLM stance) | One more extension point to maintain |
-| Cross-lens capability reuse (SafetyLens can reuse SBOM, secret-detect from day one) | Lens authors must declare `requires_capabilities` honestly |
+| Cross-lens capability reuse (SafetyLens can reuse SBOM, secret-detect from day one) | Lens authors must pick `requires_capabilities` vs `prefers_capabilities` honestly per [D-23](../reference/decisions.md#d-23) |
 | Composition modes (`union`, `consensus`) the auditor story benefits from | More config knobs for users to get wrong |
 | Capability backends can ship independently (third parties can publish) | Versioning + compatibility across capability protocols is a real concern |
 | The current `sbom.py` mistake (hardcoded Syft) doesn't repeat for CVE / secret / static analysis | Phase 6's planned timeline grows |

@@ -36,6 +36,7 @@ cheaper model in `models.default` if you want to dry-run.
 | A Loupe checkout you've run `uv sync --all-packages` against | Pre-PyPI, the CLI lives in the workspace venv |
 | `ANTHROPIC_API_KEY` exported (or another provider key matching `models.default`) | ThreatLens calls a real LLM |
 | `git` | We clone Mongoose and check out a real fix commit |
+| Syft + Grype on PATH (installed in Step 4.5) | ThreatLens declares both as `requires_capabilities`; `loupe ci` exits 64 until they're wired ([D-23](../reference/decisions.md#d-23)) |
 
 > [!NOTE]
 > Loupe is pre-alpha (pre-PyPI), so the CLI runs out of the workspace checkout.
@@ -179,6 +180,62 @@ Save the file. Now re-run doctor:
 uv run --project /path/to/loupe loupe doctor
 ```
 
+Expected (with `capabilities:` still commented out):
+
+```
+[✓] .loupe/ directory: .loupe
+[✓] config.yaml parse: schema_version=1
+[✓] context.md: all sections filled
+[✓] provider key (anthropic): ANTHROPIC_API_KEY is set
+[✗] capabilities[sbom]: lens 'threatlens' requires 'sbom' but no backends are wired in config.yaml. Uncomment the `capabilities:` block in `.loupe/config.yaml` and install the backend; `loupe ci` exits 64 otherwise.
+[✗] capabilities[cve]: lens 'threatlens' requires 'cve' but no backends are wired in config.yaml. Uncomment the `capabilities:` block in `.loupe/config.yaml` and install the backend; `loupe ci` exits 64 otherwise.
+
+4 ok · 0 warn · 2 fail
+```
+
+Doctor flags both `sbom` and `cve` because ThreatLens declares them as
+required ([D-23](../reference/decisions.md#d-23)). Wire them in the next
+step, then doctor turns green and `loupe ci` will work.
+
+## 4.5. Wire the SBOM + CVE capability backends
+
+ThreatLens needs an SBOM and CVE provider before it runs. Install Syft
+(SBOM generator) and Grype (CVE matcher):
+
+```bash
+# macOS via Homebrew
+brew install anchore/syft/syft anchore/grype/grype
+
+# Linux (one-line installers from the Anchore releases)
+curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh \
+  | sh -s -- -b /usr/local/bin
+curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh \
+  | sh -s -- -b /usr/local/bin
+
+# Verify both are on PATH
+syft version
+grype version
+```
+
+Then uncomment the `capabilities:` block in `.loupe/config.yaml` so both
+backends are wired:
+
+```yaml
+capabilities:
+  sbom:
+    mode: single
+    backends: [syft]
+  cve:
+    mode: single
+    backends: [grype]
+```
+
+Re-run doctor to confirm the wall is down:
+
+```bash
+uv run --project /path/to/loupe loupe doctor
+```
+
 Expected:
 
 ```
@@ -186,24 +243,21 @@ Expected:
 [✓] config.yaml parse: schema_version=1
 [✓] context.md: all sections filled
 [✓] provider key (anthropic): ANTHROPIC_API_KEY is set
-[?] capabilities: no capabilities wired in config.yaml — see commented skeleton
+[✓] required capabilities: 2 required cap(s) wired across enabled lenses
+[✓] backend cve.grype: grype on PATH
+[✓] backend sbom.syft: syft on PATH
 
-4 ok · 1 warn · 0 fail
+7 ok · 0 warn · 0 fail
 ```
 
-The single `[?] capabilities` warn is the default-config state — ThreatLens
-will run without SBOM/CVE. Wire those when you're ready.
-
-> [!WARNING]
-> **Capability contract is being tightened (F-10 / D-23).** Today the
-> warning is informational and the next step works without further setup.
-> Once D-23 lands, ThreatLens's `requires_capabilities=["sbom", "cve"]`
-> declaration will be enforced: `loupe doctor` will escalate this line to
-> `[✗]` and `loupe ci` will exit 64 with `RequiredCapabilityUnavailable`
-> until you install Syft + Grype and uncomment the `capabilities:` block
-> in `.loupe/config.yaml`. The tutorial will grow a Step 4.5 covering the
-> wire-up at that point. Track at
-> [D-23](../reference/decisions.md#d-23).
+> [!NOTE]
+> **Why required, not optional.** ThreatLens declares `sbom` and `cve`
+> as `requires_capabilities`, not `prefers_capabilities`, per
+> [D-23](../reference/decisions.md#d-23). The choice favours audit-trail
+> integrity over onboarding ergonomics: every threat ever produced by
+> ThreatLens carries a real Grype CVE cross-reference rather than a
+> training-data-recalled CWE. The one-time cost of wiring Syft + Grype
+> buys evidence-grade output from the first run forward.
 
 ## 5. Run `loupe ci` against the MQTT-cast diff
 
@@ -214,10 +268,11 @@ uv run --project /path/to/loupe loupe ci \
   --head-sha "$SHA"
 ```
 
-Wall-time roughly 30–60 seconds. The CLI prints a `capability bootstrap`
-warning (the SBOM/CVE backends aren't wired — see F-07 in the validation
-gap log; behaviour is correct), then a pydantic-ai warning about
-`temperature` being ignored on Opus 4.7 (cosmetic, harmless), and finally:
+Wall-time roughly 30–60 seconds. The CLI will print a pydantic-ai warning
+about `temperature` being ignored on Opus 4.7 (cosmetic, harmless — F-08
+tracks the fix), then run Syft and Grype against the Mongoose checkout
+(the SBOM + CVE results land on `ctx.sbom` / `ctx.cve_findings` before
+ThreatLens reads them), and finally:
 
 ```
 Loupe CI complete. Run: run-7414f333.
@@ -361,15 +416,12 @@ If every command above produced the expected output:
    authorship hold under the produced run sequence.
 
 > [!NOTE]
-> **Capability context.** This walkthrough runs ThreatLens with
-> `ctx.sbom = None` and `ctx.cve_findings = None` (the scaffolded
-> `capabilities:` block is commented out by design). CWE references in
-> the threats above therefore come from the model's training data, not
-> from a Grype/Syft scan. Once
-> [D-23](../reference/decisions.md#d-23) lands, the lens declares this
-> dependency explicitly: either as a `requires` (`loupe ci` hard-fails
-> until you wire Syft + Grype) or a `prefers` (run record carries a
-> structured `capability_degraded` entry).
+> **Capability context.** This walkthrough runs ThreatLens after wiring
+> Syft (SBOM) and Grype (CVE) in Step 4.5, so `ctx.sbom` and
+> `ctx.cve_findings` are populated before the lens reads them. The CWE
+> references in the threats above are anchored to the real Grype scan
+> against Mongoose's dependency graph rather than training-data recall.
+> Skip Step 4.5 and `loupe ci` will exit 64 ([D-23](../reference/decisions.md#d-23)) — the wall is deliberate.
 
 ## Where to go next
 
