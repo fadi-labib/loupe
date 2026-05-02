@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Literal, Self
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from ruamel.yaml import YAML
 
 _yaml = YAML()
@@ -93,12 +93,29 @@ class ModelsConfig(BaseModel):
     )
 
 
+class PerRunBudget(BaseModel):
+    """D-24 / Resolved 3: per-mode cost ceiling.
+
+    `ci` covers diff-mode runs (many small PRs per month, cost discipline
+    matters most); `scan` covers scoped/full scans (fewer invocations,
+    scoped reads cost more). A scalar `per_run_max_usd: <N>` in
+    config.yaml is accepted as a back-compat shorthand and treated as
+    both ceilings simultaneously.
+    """
+
+    ci: float = Field(gt=0, description="Cost ceiling for `loupe ci` diff-mode runs, in USD.")
+    scan: float = Field(gt=0, description="Cost ceiling for `loupe scan` runs, in USD.")
+
+
 class LimitsConfig(BaseModel):
     """Hard cost and step caps. A run that would exceed any of these stops cleanly."""
 
-    per_run_max_usd: float = Field(
-        gt=0,
-        description="Maximum estimated cost per run, in USD. Must be > 0.",
+    per_run_max_usd: PerRunBudget = Field(
+        description=(
+            "Maximum estimated cost per run, in USD. Accepts a scalar "
+            "(treated as both ci and scan ceilings) or a nested form "
+            "`{ci: 2.50, scan: 5.00}`. Both ceilings must be > 0."
+        ),
     )
     per_run_max_tokens_in: int = Field(
         gt=0,
@@ -108,6 +125,16 @@ class LimitsConfig(BaseModel):
         gt=0,
         description="Maximum number of LLM steps per run. Must be > 0.",
     )
+
+    @field_validator("per_run_max_usd", mode="before")
+    @classmethod
+    def _coerce_scalar_to_per_mode(cls, v: object) -> object:
+        """Back-compat: a scalar `per_run_max_usd: <N>` becomes both
+        ceilings simultaneously. Existing config.yaml files keep loading
+        without an explicit migration."""
+        if isinstance(v, int | float) and not isinstance(v, bool):
+            return {"ci": float(v), "scan": float(v)}
+        return v
 
 
 class CIConfig(BaseModel):
@@ -207,7 +234,7 @@ class LoupeConfig(BaseModel):
     )
     limits: LimitsConfig = Field(
         default=LimitsConfig(
-            per_run_max_usd=2.5,
+            per_run_max_usd=PerRunBudget(ci=2.5, scan=5.0),
             per_run_max_tokens_in=500_000,
             per_run_max_steps=30,
         ),

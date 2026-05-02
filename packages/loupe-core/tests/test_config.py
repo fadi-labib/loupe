@@ -11,10 +11,67 @@ def test_loads_valid_config():
     cfg = load_config(FIXTURES / "valid_config.yaml")
     assert cfg.schema_version == 1
     assert cfg.models.default == "anthropic:claude-opus-4-7"
-    assert cfg.limits.per_run_max_usd == 2.50
+    # D-24 / Resolved 3: per_run_max_usd is per-mode. Scalar 2.50 in the
+    # fixture means both ceilings are 2.50 (back-compat path).
+    assert cfg.limits.per_run_max_usd.ci == 2.50
+    assert cfg.limits.per_run_max_usd.scan == 2.50
     assert ".loupe/threats.yaml" in cfg.agent_writable_paths
     assert cfg.lenses["threatlens"].enabled is True
     assert cfg.lenses["threatlens"].minimum_relevance == 0.3
+
+
+def test_per_run_max_usd_scalar_back_compat(tmp_path):
+    """D-24 Resolved 3: a scalar `per_run_max_usd: 2.50` is treated as
+    both ceilings simultaneously (existing config files still load)."""
+    cfg_path = tmp_path / "scalar.yaml"
+    cfg_path.write_text(
+        "schema_version: 1\n"
+        "models:\n  default: anthropic:claude-opus-4-7\n"
+        "limits:\n"
+        "  per_run_max_usd: 1.75\n"
+        "  per_run_max_tokens_in: 100000\n"
+        "  per_run_max_steps: 5\n"
+    )
+    cfg = load_config(cfg_path)
+    assert cfg.limits.per_run_max_usd.ci == 1.75
+    assert cfg.limits.per_run_max_usd.scan == 1.75
+
+
+def test_per_run_max_usd_nested_form(tmp_path):
+    """D-24 Resolved 3: explicit nested form with different defaults for
+    ci and scan. Scan-mode bills more because scoped reads cost more."""
+    cfg_path = tmp_path / "nested.yaml"
+    cfg_path.write_text(
+        "schema_version: 1\n"
+        "models:\n  default: anthropic:claude-opus-4-7\n"
+        "limits:\n"
+        "  per_run_max_usd:\n"
+        "    ci: 2.50\n"
+        "    scan: 5.00\n"
+        "  per_run_max_tokens_in: 100000\n"
+        "  per_run_max_steps: 5\n"
+    )
+    cfg = load_config(cfg_path)
+    assert cfg.limits.per_run_max_usd.ci == 2.50
+    assert cfg.limits.per_run_max_usd.scan == 5.00
+
+
+def test_per_run_max_usd_partial_nested_form_rejected(tmp_path):
+    """Both `ci` and `scan` are required when using the nested form —
+    omitting one is a config-error, not a "default to scalar fallback".
+    Keeps the semantics explicit."""
+    cfg_path = tmp_path / "partial.yaml"
+    cfg_path.write_text(
+        "schema_version: 1\n"
+        "models:\n  default: anthropic:claude-opus-4-7\n"
+        "limits:\n"
+        "  per_run_max_usd:\n"
+        "    ci: 2.50\n"
+        "  per_run_max_tokens_in: 100000\n"
+        "  per_run_max_steps: 5\n"
+    )
+    with pytest.raises(ValidationError):
+        load_config(cfg_path)
 
 
 def test_missing_config_raises(tmp_path):

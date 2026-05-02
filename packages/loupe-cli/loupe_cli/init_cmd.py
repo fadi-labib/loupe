@@ -68,7 +68,13 @@ models:
   # default: ollama:llama-3.3-70b  # local, no API key
 
 limits:
-  per_run_max_usd: 2.50
+  # D-24: per-mode cost ceiling. `ci` covers diff-mode runs (cheap per
+  # call, runs often); `scan` covers scoped/full scans (fewer runs but
+  # each one reads more source bytes, so the envelope is wider). A
+  # scalar `per_run_max_usd: 2.50` is still accepted as back-compat.
+  per_run_max_usd:
+    ci: 2.50
+    scan: 5.00
   per_run_max_tokens_in: 500000
   per_run_max_steps: 30
 
