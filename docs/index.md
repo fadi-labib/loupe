@@ -11,6 +11,13 @@ hide:
 
 </div>
 
+<p align="center" markdown>
+  <picture>
+    <source media="(prefers-reduced-motion: reduce)" srcset="assets/hero-static.svg" />
+    <img src="assets/hero.svg" alt="Loupe pipeline: source code is inspected by five capability lenses (SBOM, CVE, Secret, SAST, ThreatLens), findings flow into a hash-chained .loupe/ artefact pack, then loupe verify confirms each block — the verified state holds in accent green." width="100%" style="max-width:800px;" />
+  </picture>
+</p>
+
 Loupe organised for someone who already knows what an "AI agent for security" is and wants the mental model. If you'd rather jump in, the four cards below are the most common entry points.
 
 <div class="grid cards" markdown>

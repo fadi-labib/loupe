@@ -20,6 +20,15 @@
 
 </div>
 
+<p align="center">
+  <picture>
+    <source media="(prefers-reduced-motion: reduce)" srcset="./docs/assets/hero-static.svg" />
+    <img src="./docs/assets/hero.svg" alt="Loupe pipeline: source code is inspected by five capability lenses (SBOM, CVE, Secret, SAST, ThreatLens), findings flow into a hash-chained .loupe/ artefact pack, then loupe verify confirms each block — the verified state holds in accent green." width="800" />
+  </picture>
+</p>
+
+On every pull request, Loupe runs a Pydantic-typed agent over a composable stack of SBOM, CVE, secret, and SAST scanners; writes the findings as Git-tracked YAML in `.loupe/`; hash-chains the run record; and posts a sticky PR comment. `loupe verify` replays the whole chain from in-repo state alone. No SaaS, no telemetry, no hidden cache. You pick the LLM, you pick the tools, the configuration is the evidence.
+
 ---
 
 <details>
@@ -27,6 +36,7 @@
 
 - [The problem](#the-problem)
 - [The bet](#the-bet)
+- [Compared to what's out there](#compared-to-whats-out-there)
 - [The mental model](#the-mental-model)
 - [Architecture at a glance](#architecture-at-a-glance)
 - [Quickstart](#quickstart) · [GitHub Action](#github-action)
@@ -61,6 +71,19 @@ The EU Cyber Resilience Act (fully applicable December 2027) makes both worse. M
 | AI agents can do the slow, careful, evidence-shaped work | … provided their outputs are structured, auditable, and human-reviewed at the boundaries that matter |
 | A plugin platform with separate domain lenses is the right shape | Threat modelling, safety analysis, privacy review have different methods but share infrastructure (diff parsing, SBOM generation, artefact storage, enforcement, MCP exposure) |
 | The platform must be auditor-credible from day one | Standards-conformant outputs (CycloneDX, OpenVEX, STRIDE), Git-versioned artefacts, hash-chained run records, write-boundary enforcement in code (not policy) |
+| The bet is falsifiable | Hand a Loupe-produced threat model and a senior-engineer-produced one for the same PR to a third-party auditor blinded to authorship. If they can distinguish them on artefact quality, the bet fails. The benchmark methodology is recorded in [D-19](docs/reference/decisions.md#d-19). |
+
+## Compared to what's out there
+
+|                          | Loupe         | StrideGPT     | IriusRisk     | Threat Dragon |
+|--------------------------|:-------------:|:-------------:|:-------------:|:-------------:|
+| In-repo artefacts        | ✓ Git-tracked | ✗ web UI      | ✗ SaaS DB     | ~ JSON export |
+| Hash-chained audit trail | ✓             | ✗             | ✗             | ✗             |
+| Multi-LLM                | ✓ 8 providers | ~ OpenAI-only | n/a           | n/a           |
+| Auditor-replayable       | ✓ `loupe verify` | ✗          | ✗             | ✗             |
+| OSS, no SaaS             | ✓ Apache 2.0  | ~ partial     | ✗ commercial  | ✓ OWASP       |
+
+Row-by-row breakdown, including methodological caveats: [`docs/comparison.md`](docs/comparison.md).
 
 ## The mental model
 
@@ -256,6 +279,8 @@ An auditor reads this and knows the team's posture without grepping any code.
 
 ## Defence in depth (four layers)
 
+Loupe commits to [eleven principles](docs/principles.md), each numbered, non-negotiable, and paired with a mechanical verification recipe in [`docs/reference/verification.md`](docs/reference/verification.md). The four enforcement layers below are how those principles are *kept*.
+
 | Layer | Status | What it protects |
 |:-:|:-:|---|
 | **1** Tool surface | Shipped | Agent has only `write_agent_artifact` (allow-list) + `propose_patch` (writes to `.proposed/`). `PathBoundary` enforced in Python, not in a prompt. Parent-symlink-safe via `dir_fd` + `O_NOFOLLOW`. |
@@ -269,17 +294,19 @@ See [`docs/reference/verification.md`](docs/reference/verification.md) for the m
 
 ### Shipped today
 
-| Surface | What's in it |
-|---|---|
-| Platform | `loupe-core`: coordinator, dispatcher, run context, prompt builder, MCP server, pricing, enforcement |
-| CLI | `loupe init`, `ci`, `verify [--strict]`, `scan`, `mcp`, `chat` (TTY guard only), `lens list`, `cap list` |
-| GitHub Action | PR fetch, `loupe ci` runner, sticky-comment poster (sticky / new / none), retry + rate-limit handling |
-| ThreatLens | PydanticAI agent wired to a live LLM. User runs hit the configured provider; the project's own test suite uses VCR cassettes to keep CI deterministic. STRIDE threats, mitigations, cross-references |
-| MCP server (stdio) | Read tools: `list_threats`, `query_by_severity`, `latest_run`, `threat_model_summary`. Write tools: `propose_threat`, `propose_mitigation` (both Layer-1 gated) |
-| Capability backends | 10 bundled: Syft + cdxgen (SBOM), Grype + osv-scanner (CVE), gitleaks + TruffleHog + detect-secrets (secret), Semgrep + CodeQL + Bandit (SAST) |
-| Composition modes | `single`, `fallback`, `union`, `consensus`, `pipeline` |
-| Audit trail | Hash-chained run records, `loupe verify` Layer 3 checks (chain, schema, cross-refs, authorship) |
-| Cost discipline | Stable-prefix prompt caching, blackboard, dispatch skipping, RunRecord token/cost telemetry, [cost-regression test](packages/loupe-threatlens/tests/test_cost_regression.py) |
+Every row in this table is a claim. The third column is the command that proves it.
+
+| Surface | What's in it | Verified by |
+|---|---|---|
+| Platform | `loupe-core`: coordinator, dispatcher, run context, prompt builder, MCP server, pricing, enforcement | `uv run pytest packages/loupe-core/ -q` |
+| CLI | `loupe init`, `ci`, `verify [--strict]`, `scan`, `mcp`, `chat` (TTY guard only), `lens list`, `cap list`, `doctor` | `uv run loupe --help` |
+| GitHub Action | PR fetch, `loupe ci` runner, sticky-comment poster (sticky / new / none), retry + rate-limit handling | [`packages/loupe-action/action.yml`](packages/loupe-action/action.yml) |
+| ThreatLens | PydanticAI agent wired to a live LLM. User runs hit the configured provider; the project's own test suite uses VCR cassettes to keep CI deterministic. STRIDE threats, mitigations, cross-references | `uv run pytest packages/loupe-threatlens/ -q` |
+| MCP server (stdio) | Read tools: `list_threats`, `query_by_severity`, `latest_run`, `threat_model_summary`. Write tools: `propose_threat`, `propose_mitigation` (both Layer-1 gated) | `uv run loupe mcp` |
+| Capability backends | 10 bundled: Syft + cdxgen (SBOM), Grype + osv-scanner (CVE), gitleaks + TruffleHog + detect-secrets (secret), Semgrep + CodeQL + Bandit (SAST) | `uv run loupe cap list` |
+| Composition modes | `single`, `fallback`, `union`, `consensus`, `pipeline` | [`docs/reference/config.md`](docs/reference/config.md) |
+| Audit trail | Hash-chained run records, `loupe verify` Layer 3 checks (chain, schema, cross-refs, authorship) | `uv run loupe verify --strict .loupe/` |
+| Cost discipline | Stable-prefix prompt caching, blackboard, dispatch skipping, RunRecord token/cost telemetry | [`test_cost_regression.py`](packages/loupe-threatlens/tests/test_cost_regression.py) |
 
 ### In flight (before v0.1 tags)
 
@@ -297,6 +324,8 @@ See [`docs/reference/verification.md`](docs/reference/verification.md) for the m
 
 ## Why now: the CRA timeline
 
+**Up to €15 million or 2.5% of worldwide annual turnover, whichever is higher.** That is the maximum administrative fine under Article 64 of [Regulation 2024/2847](https://eur-lex.europa.eu/eli/reg/2024/2847) for non-compliance with the essential cybersecurity requirements. It applies to every manufacturer of "products with digital elements" placed on the EU market.
+
 ```text
    2024              2026-09-11               2027-12-11
     │                     │                        │
@@ -307,9 +336,9 @@ See [`docs/reference/verification.md`](docs/reference/verification.md) for the m
                                             digital elements"
 ```
 
-The EU Cyber Resilience Act ([Regulation 2024/2847](https://eur-lex.europa.eu/eli/reg/2024/2847)) becomes fully applicable on **11 December 2027**. From **11 September 2026**, manufacturers must report actively-exploited vulnerabilities and severe incidents via ENISA's Single Reporting Platform (SRP), coordinated through their Member State CSIRT.
+From **11 September 2026**, manufacturers must report actively-exploited vulnerabilities and severe incidents via ENISA's Single Reporting Platform, coordinated through their Member State CSIRT. From **11 December 2027**, the full regulation applies.
 
-Both require living risk assessments, living SBOMs, living per-CVE impact statements. Loupe produces all three as in-repo artefacts, on every PR, with audit-grade provenance.
+Both regimes require living risk assessments, living SBOMs, and living per-CVE impact statements. Loupe produces all three as in-repo artefacts, on every PR, with audit-grade provenance.
 
 ## Where to find things
 
@@ -335,22 +364,9 @@ The published docs site is at [fadi-labib.github.io/loupe](https://fadi-labib.gi
 
 ## Built on
 
-Loupe stands on:
+Built on [PydanticAI](https://ai.pydantic.dev/) (multi-provider agent), [Pydantic 2.x](https://docs.pydantic.dev/) (typed I/O), [MCP](https://modelcontextprotocol.io/) (tool protocol), [CycloneDX 1.6](https://cyclonedx.org/) (SBOM), [OpenVEX 0.2](https://openvex.dev/) (vulnerability statements), and [STRIDE](https://learn.microsoft.com/azure/security/develop/threat-modeling-tool-threats) (threat-modelling method). Scanner backends are Syft, cdxgen, Grype, osv-scanner, TruffleHog, gitleaks, detect-secrets, Semgrep, CodeQL, and Bandit. Workspace is [uv](https://docs.astral.sh/uv/); docs are [MkDocs Material](https://squidfunk.github.io/mkdocs-material/); prose is linted with [Vale](https://vale.sh/).
 
-| Layer | Built with |
-|---|---|
-| LLM agent framework | [PydanticAI](https://ai.pydantic.dev/) (multi-provider, typed I/O) |
-| Validation + serialisation | [Pydantic 2.x](https://docs.pydantic.dev/) |
-| LLM tool protocol | [MCP](https://modelcontextprotocol.io/) (official Anthropic SDK, FastMCP API; see [D-21](docs/reference/decisions.md#d-21)) |
-| SBOM | [CycloneDX 1.6](https://cyclonedx.org/) via [Syft](https://github.com/anchore/syft) / [cdxgen](https://github.com/CycloneDX/cdxgen) |
-| Vulnerability matching | [Grype](https://github.com/anchore/grype) · [osv-scanner](https://github.com/google/osv-scanner) |
-| VEX | [OpenVEX 0.2](https://openvex.dev/) |
-| Secret detection | [TruffleHog](https://github.com/trufflesecurity/trufflehog) · [gitleaks](https://github.com/gitleaks/gitleaks) · [detect-secrets](https://github.com/Yelp/detect-secrets) |
-| Static analysis | [Semgrep](https://semgrep.dev/) · [CodeQL](https://codeql.github.com/) · [Bandit](https://github.com/PyCQA/bandit) |
-| Threat-modelling method | [STRIDE](https://learn.microsoft.com/azure/security/develop/threat-modeling-tool-threats) (Microsoft); methodology inspiration from [StrideGPT](https://github.com/mrwadams/stride-gpt) (see [D-16](docs/reference/decisions.md#d-16)) |
-| Docs site | [MkDocs Material](https://squidfunk.github.io/mkdocs-material/) · [mkdocstrings](https://mkdocstrings.github.io/) · [mike](https://github.com/jimporter/mike) versioning |
-| Workspace / packaging | [uv](https://docs.astral.sh/uv/) · [hatchling](https://hatch.pypa.io/) |
-| Prose linting | [Vale](https://vale.sh/) with a custom [`Loupe`](.vale/styles/Loupe/) style |
+Full attribution list, version constraints, and the decision records behind each choice: [`docs/built-on.md`](docs/built-on.md).
 
 ## Contributing
 
@@ -362,7 +378,7 @@ The threat model for Loupe itself is at [`docs/reference/loupe-threat-model.md`]
 
 ## Licence
 
-Apache 2.0. See [`LICENSE`](LICENSE). Use it, fork it, ship it. Attribution appreciated, not required.
+Apache 2.0. Patent grant included (§ 3); attribution preserved under § 4(c). See [`LICENSE`](LICENSE).
 
 ---
 
