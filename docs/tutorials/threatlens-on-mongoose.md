@@ -330,23 +330,10 @@ loupe verify: OK (strict)
 `loupe ci` is the PR-shaped, diff-mode entry point. `loupe scan` is the
 [D-15](../reference/decisions.md#d-15) whole-file (or whole-repo) entry
 point — bypasses the per-lens relevance threshold, used for onboarding and
-re-baselining. Scope it tight on the first run so the cost stays predictable:
-
-> [!WARNING]
-> **Scan-mode is being fixed (F-09).** Until the fix in
-> [D-24](../reference/decisions.md#d-24) lands, `loupe scan --paths <file>`
-> does **not** send the file's bytes to the LLM. The agent receives the
-> system prompt, your `context.md`, and a `"No diff provided"` placeholder
-> — nothing else. The threats it produces are reasoned from `context.md`
-> and the model's pre-existing knowledge of public projects (here:
-> Mongoose), not from a fresh reading of the source you pointed at.
->
-> This is useful for context-grounded brainstorming but is **not a code
-> audit** in the current build. For analysis that requires the model to
-> actually see code, use `loupe ci --diff-file <patch>` (Section 5 above).
-> Track the fix at `docs/plans/2026-05-16-mongoose-validation-gaplog.md`
-> §F-09. Re-run this section after that fix ships to get a real
-> source-grounded scan and a comparable cost number.
+re-baselining. Under [D-24](../reference/decisions.md#d-24), scoped scans
+read the bytes of the files you pointed at and render them into the agent
+prompt under a "## Source files under analysis" section. Scope it tight
+on the first run so the cost stays predictable:
 
 ```bash
 uv run --project /path/to/loupe loupe scan --paths src/mqtt.c
@@ -356,10 +343,22 @@ uv run --project /path/to/loupe loupe scan --paths src/mqtt.c
 > `loupe scan` takes paths through the **`--paths` flag**, repeatable
 > per file — *not* as positional arguments. (`loupe scan src/mqtt.c`
 > currently errors with `Got unexpected extra arguments`. Tracked as
-> F-05 in the validation gap log.)
+> F-05 in the validation gap log; positional support lands in
+> Phase C.)
 
-Wall-time roughly 1–2 minutes; cost roughly **$1.10** for a single file at
-Opus 4.7 prices. The output ends with:
+Optional flags:
+
+- `--max-chars-per-file <N>` (default 50,000) — per-file char cap.
+  Files larger than the cap truncate at the cap with a visible marker.
+  Lower this for a tight budget; raise it for thorough single-file
+  analysis. The scaffolded `per_run_max_usd.scan` ceiling ($5.00) is
+  the matching guardrail for runaway scans.
+
+Wall-time roughly 1–2 minutes; cost typically **$1.50–$2.50** for a
+single C source file at Opus 4.7 prices (the file bytes plus system
+prompt plus `context.md` are around 13–15k input tokens per agent
+round; 12–16 rounds depending on tool-call traffic). The output ends
+with:
 
 ```
 Loupe scan complete. Run: run-ba9c630c (scope=scoped).
@@ -381,20 +380,27 @@ print(f'artifacts_changed_count={len(data[\"artifacts_changed\"])}')
 "
 ```
 
-Expected (numbers will vary with the model's output):
+Expected shape (exact numbers vary with model output and scoped-file size):
 
 ```
-run_id=run-ba9c630c
+run_id=run-<random>
 trigger=manual_scan_scoped
-total_tokens_in=28788
-total_tokens_out=9049
-cost_usd_estimate=1.110495
+total_tokens_in=<roughly 13k–60k depending on file size>
+total_tokens_out=<roughly 3k–10k>
+cost_usd_estimate=<roughly 1.50–2.50 for a single ~2k-line C file at Opus 4.7>
 models_used={'threatlens': 'anthropic:claude-opus-4-7'}
-artifacts_changed_count=16
+artifacts_changed_count=<number of threats proposed>
 ```
 
 `artifacts_changed_count` matches the number of `threat:` entries in
 `threats.yaml`. Run `loupe verify --strict` again — it should still pass.
+
+The pre-D-24 baseline cost (when scan-mode sent zero source bytes) was
+roughly $1.10 for the same `src/mqtt.c` scope; the difference is the
+file's content tokens, which is exactly what changed when D-24 wired
+the source-reading path. Threats produced now anchor to actual code
+the operator pointed at, not to training-data recall of Mongoose's
+public source.
 
 ## What you've validated
 
@@ -402,12 +408,11 @@ If every command above produced the expected output:
 
 1. The CLI surface (`doctor`, `init`, `ci`, `scan`, `verify`) works
    end-to-end from a project root that is *not* the Loupe checkout.
-2. ThreatLens makes a real Anthropic API call and, **in `loupe ci`**,
-   emits threats that reference real source symbols, real CWEs, and
-   real assets from `context.md`. Scan-mode currently produces
-   threats grounded in `context.md` plus training-data recall, not
-   in the bytes of the files you scoped — see the warning at
-   Section 7 and D-24.
+2. ThreatLens makes a real Anthropic API call and emits threats that
+   reference real source symbols, real CWEs, and real assets from
+   `context.md`. Both `loupe ci` (against a diff) and `loupe scan
+   --paths` (against scoped source files) anchor their threats to
+   the actual code bytes you fed in.
 3. The `ci.fail_on` gate fires on the correct severities.
 4. The run record's per-lens telemetry (token counts, cost estimate,
    model id, artefacts changed) survives the round-trip through both
