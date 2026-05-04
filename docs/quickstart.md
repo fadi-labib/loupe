@@ -42,6 +42,20 @@ pip install loupe-cli loupe-threatlens
 
 The GitHub Action wrapper (`loupe-action`) is part of the same workspace; nothing extra to install for it.
 
+## Use it from another project
+
+Pre-PyPI, the CLI runs out of the workspace venv. To invoke it against a *different* project on disk (any directory that is not the Loupe checkout), use `uv run --project` with the absolute path to your Loupe checkout:
+
+```bash
+# From your own project's root, with $LOUPE pointing at the Loupe checkout
+cd ~/projects/my-product
+uv run --project ~/projects/loupe loupe doctor
+uv run --project ~/projects/loupe loupe init
+uv run --project ~/projects/loupe loupe ci --diff-file /tmp/pr.diff --base-sha main --head-sha HEAD
+```
+
+Every `loupe` subcommand works the same way. Once v0.1 publishes to PyPI the `uv run --project` prefix collapses to just `loupe …`.
+
 ## Scaffold the repo
 
 Inside your project root:

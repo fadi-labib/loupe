@@ -61,7 +61,7 @@ _TODO_THRESHOLD = 3
 class CheckResult:
     """One preflight-check outcome."""
 
-    status: Literal["ok", "fail", "warn"]
+    status: Literal["ok", "fail", "warn", "skip"]
     label: str
     detail: str
 
@@ -83,19 +83,32 @@ def doctor_command(loupe_dir: Path | None = None) -> int:
     return USAGE_ERROR if has_failure else 0
 
 
-def _run_checks(loupe: Path) -> list[CheckResult]:
-    """Run the full check battery in order.
+_DEFAULT_PROVIDER = "anthropic:claude-opus-4-7"
 
-    Each check builds on the previous one's invariants (e.g., the
-    capability-binary check assumes config.yaml parsed), so a `fail`
-    on an early check short-circuits later checks to ``warn`` —
-    we can't meaningfully test capability binaries without a parsed
-    config.
+
+def _run_checks(loupe: Path) -> list[CheckResult]:
+    """Run the full check battery, returning one row per check.
+
+    Pre-F-06: a missing `.loupe/` short-circuited the function and the
+    operator never learned whether their API key was set or whether
+    Syft / Grype were on PATH. The full picture only became visible
+    after running `loupe init`, which defeated the point of doctor
+    as a preflight tool.
+
+    Post-F-06: every check runs to completion. Checks that depend on
+    an earlier check's invariant (e.g. config-yaml-parsed before
+    cap-binary-on-PATH) emit a ``skip`` row when the prerequisite
+    failed. Exit code is `fail`-driven; `skip` rows are advisory and
+    don't change the verdict, but they show up in the table so the
+    operator can plan the full remediation in one read.
     """
     results: list[CheckResult] = []
 
     # Check 1: .loupe/ exists.
-    if not loupe.exists():
+    loupe_exists = loupe.exists()
+    if loupe_exists:
+        results.append(CheckResult(status="ok", label=".loupe/ directory", detail=str(loupe)))
+    else:
         results.append(
             CheckResult(
                 status="fail",
@@ -103,45 +116,72 @@ def _run_checks(loupe: Path) -> list[CheckResult]:
                 detail=f"{loupe} not found — run `loupe init` first",
             )
         )
-        return results
-    results.append(CheckResult(status="ok", label=".loupe/ directory", detail=str(loupe)))
 
-    # Check 2: config.yaml parses.
-    config_path = loupe / "config.yaml"
-    try:
-        cfg = load_config(config_path)
-    except Exception as exc:  # noqa: BLE001 — config errors come in many shapes
+    # Check 2: config.yaml parses (skipped if .loupe/ missing).
+    cfg = None
+    if not loupe_exists:
         results.append(
             CheckResult(
-                status="fail",
+                status="skip",
                 label="config.yaml parse",
-                detail=f"{type(exc).__name__}: {exc}",
+                detail="skipped — depends on .loupe/ existing",
             )
         )
-        return results
-    results.append(
-        CheckResult(
-            status="ok",
-            label="config.yaml parse",
-            detail=f"schema_version={cfg.schema_version}",
+    else:
+        config_path = loupe / "config.yaml"
+        try:
+            cfg = load_config(config_path)
+            results.append(
+                CheckResult(
+                    status="ok",
+                    label="config.yaml parse",
+                    detail=f"schema_version={cfg.schema_version}",
+                )
+            )
+        except Exception as exc:  # noqa: BLE001 — config errors come in many shapes
+            results.append(
+                CheckResult(
+                    status="fail",
+                    label="config.yaml parse",
+                    detail=f"{type(exc).__name__}: {exc}",
+                )
+            )
+
+    # Check 3: context.md edited (skipped if .loupe/ missing).
+    if loupe_exists:
+        results.append(_check_context_md(loupe / "context.md"))
+    else:
+        results.append(
+            CheckResult(
+                status="skip",
+                label="context.md",
+                detail="skipped — depends on .loupe/ existing",
+            )
         )
-    )
 
-    # Check 3: context.md edited.
-    results.append(_check_context_md(loupe / "context.md"))
-
-    # Check 4: provider env var.
-    results.append(_check_provider_env_var(cfg.models.default))
+    # Check 4: provider env var. Falls back to the scaffold default
+    # model id when config didn't parse, so the user still sees
+    # whether their ANTHROPIC_API_KEY (or equivalent) is set —
+    # F-06's whole point is that an unparsed config doesn't blind
+    # the rest of the preflight.
+    default_model = cfg.models.default if cfg is not None else _DEFAULT_PROVIDER
+    results.append(_check_provider_env_var(default_model))
 
     # Check 5: required capabilities wired (D-23 / A.10).
-    # Any enabled lens that declares requires_capabilities and has an
-    # unwired matching cap MUST fail this check — the alternative is
-    # the user discovering the contract violation when `loupe ci` exits
-    # 64, which is the wall A.10 exists to push earlier into the flow.
-    results.extend(_check_required_capabilities_wired(cfg))
+    # Skipped if we don't have a parsed config to read lens activations from.
+    if cfg is None:
+        results.append(
+            CheckResult(
+                status="skip",
+                label="required capabilities",
+                detail="skipped — config.yaml didn't parse",
+            )
+        )
+    else:
+        results.extend(_check_required_capabilities_wired(cfg))
 
     # Check 6: capability binaries on PATH (skipped if no capabilities configured).
-    if cfg.capabilities:
+    if cfg is not None and cfg.capabilities:
         registry = CapabilityRegistry.discover()
         for cap_name, activation in sorted(cfg.capabilities.items()):
             for backend in activation.backends:
@@ -305,7 +345,7 @@ def _render(results: list[CheckResult]) -> None:
     The sigils (✓/✗/?) are ASCII-only adjacent so a terminal without
     Unicode rendering still reads correctly.
     """
-    sigils = {"ok": "✓", "fail": "✗", "warn": "?"}
+    sigils = {"ok": "✓", "fail": "✗", "warn": "?", "skip": "-"}
     for r in results:
         typer.echo(f"[{sigils[r.status]}] {r.label}: {r.detail}")
     # Trailing summary line — distinguishes the failure case from a
@@ -313,4 +353,5 @@ def _render(results: list[CheckResult]) -> None:
     n_ok = sum(1 for r in results if r.status == "ok")
     n_fail = sum(1 for r in results if r.status == "fail")
     n_warn = sum(1 for r in results if r.status == "warn")
-    typer.echo(f"\n{n_ok} ok · {n_warn} warn · {n_fail} fail")
+    n_skip = sum(1 for r in results if r.status == "skip")
+    typer.echo(f"\n{n_ok} ok · {n_warn} warn · {n_skip} skip · {n_fail} fail")

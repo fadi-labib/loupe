@@ -207,3 +207,39 @@ def test_doctor_fails_when_capability_binary_missing(tmp_path, monkeypatch):
     assert result.exit_code == 64, result.stdout
     assert "syft" in result.stdout
     assert "not on PATH" in result.stdout
+
+
+# ---------------------------------------------------------------------------
+# F-06: doctor reports the full picture rather than aborting on first failure
+# ---------------------------------------------------------------------------
+
+
+def test_doctor_missing_loupe_dir_still_runs_dependent_checks_as_skipped(tmp_path, monkeypatch):
+    """Pre-F-06, a missing .loupe/ short-circuited the run and the operator
+    never learned whether their API key was set or whether caps were wired.
+    Post-F-06, dependent checks render as [-] skipped and execution continues.
+    Exit code is still 64 because .loupe/ missing is a fail."""
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test-123")
+    result = runner.invoke(app, ["doctor"])
+    assert result.exit_code == 64, result.stdout
+    # The .loupe missing row is the failure, but every other check renders too.
+    assert "[✗] .loupe/ directory" in result.stdout
+    assert "[-] config.yaml parse" in result.stdout
+    assert "[-] context.md" in result.stdout
+    # Check 4 (provider env var) DOESN'T depend on .loupe/ — it runs
+    # against the scaffold-default model id and the env var is set, so it passes.
+    assert "[✓] provider key (anthropic)" in result.stdout
+    # Caps check skipped without a parsed config.
+    assert "[-] required capabilities" in result.stdout
+
+
+def test_doctor_summary_line_includes_skip_count(tmp_path, monkeypatch):
+    """The trailing summary line `N ok · N warn · N skip · N fail` lets
+    a CI integration grep for the verdict at a glance."""
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test-123")
+    result = runner.invoke(app, ["doctor"])
+    assert " skip · " in result.stdout
+    # Three skips on the missing-loupe path: config.yaml, context.md, caps.
+    assert "3 skip" in result.stdout

@@ -149,6 +149,14 @@ def chat_cmd() -> None:
 
 @app.command("scan")
 def scan_cmd(
+    positional_paths: list[str] = typer.Argument(
+        None,
+        metavar="[PATHS...]",
+        help=(
+            "Paths to scan (positional). Equivalent to repeating `--paths`. "
+            "Mix with `--paths` if you want; both inputs merge."
+        ),
+    ),
     paths: list[str] = typer.Option(
         [],
         "--paths",
@@ -171,8 +179,15 @@ def scan_cmd(
     Bypasses the per-lens relevance threshold. Disabled lenses (config-level
     enabled=False) are still skipped. Use when onboarding, re-baselining,
     or doing an architectural review.
+
+    Paths can be supplied positionally (`loupe scan src/mqtt.c src/http.c`)
+    or via `--paths` (repeatable). Both forms merge — `loupe scan src/a.c
+    --paths src/b.c` runs against both. F-05 ergonomic parity with grep/ruff.
     """
-    raise typer.Exit(code=scan_command(paths, config, max_chars_per_file))
+    # Merge positional + --paths. positional_paths defaults to None when
+    # no positional args were given (Typer's nargs=-1 convention).
+    merged = list(positional_paths or []) + list(paths)
+    raise typer.Exit(code=scan_command(merged, config, max_chars_per_file))
 
 
 @app.command("mcp")

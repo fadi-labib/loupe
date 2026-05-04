@@ -354,3 +354,42 @@ def test_scan_truncates_oversize_file_with_visible_marker(tmp_path, monkeypatch)
     src = captured["ctx"].scoped_sources[0]
     assert src.truncated_at == 1000
     assert "[truncated at 1000 chars]" in src.content
+
+
+# ---------------------------------------------------------------------------
+# F-05: positional --paths argument
+# ---------------------------------------------------------------------------
+
+
+def test_scan_accepts_positional_paths(tmp_path, monkeypatch):
+    """`loupe scan src/mqtt.c` works without --paths — grep/ruff ergonomics."""
+    monkeypatch.chdir(tmp_path)
+    _init_project(tmp_path)
+    (tmp_path / "src").mkdir()
+    (tmp_path / "src" / "mqtt.c").write_text("int main(){return 0;}\n")
+
+    result = runner.invoke(app, ["scan", "src/mqtt.c"])
+    assert result.exit_code == 0, result.stdout
+
+
+def test_scan_merges_positional_and_paths_flag(tmp_path, monkeypatch):
+    """Mixed positional + --paths input is merged. The captured ctx must
+    have both files in scoped_sources."""
+    monkeypatch.chdir(tmp_path)
+    _init_project(tmp_path)
+    (tmp_path / "src").mkdir()
+    (tmp_path / "src" / "a.c").write_text("// a\n")
+    (tmp_path / "src" / "b.c").write_text("// b\n")
+
+    captured: dict = {}
+
+    async def _capture(ctx, lenses, boundary, loupe_dir):
+        captured["ctx"] = ctx
+
+    monkeypatch.setattr("loupe_cli.scan_cmd.dispatch_plan", _capture)
+
+    result = runner.invoke(app, ["scan", "src/a.c", "--paths", "src/b.c"])
+    assert result.exit_code == 0, result.stdout
+
+    paths_seen = {s.path for s in captured["ctx"].scoped_sources}
+    assert paths_seen == {"src/a.c", "src/b.c"}

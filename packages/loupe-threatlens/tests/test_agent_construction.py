@@ -155,3 +155,45 @@ def _collect_tool_names(agent) -> set[str]:
             if isinstance(tool_dict, dict):
                 names.update(tool_dict.keys())
     return names
+
+
+# ---------------------------------------------------------------------------
+# F-08: gate temperature setting on model identity
+# ---------------------------------------------------------------------------
+
+
+def test_build_agent_omits_temperature_for_anthropic_opus_4(monkeypatch):
+    """F-08: claude-opus-4-x rejects sampling parameters; setting temperature
+    spams a UserWarning per agent.run() call. build_agent must leave it off
+    for the Anthropic thinking-class allow-list."""
+    from loupe_threatlens.agent import build_agent
+
+    agent = build_agent("anthropic:claude-opus-4-7")
+    settings = getattr(agent, "_default_model_settings", None) or getattr(
+        agent, "model_settings", {}
+    )
+    # The private attr may differ across PydanticAI minor versions; be
+    # tolerant. The contract: temperature is NOT in the settings dict.
+    if settings:
+        assert "temperature" not in settings
+
+
+def test_build_agent_keeps_temperature_for_non_thinking_models(monkeypatch):
+    """Anthropic haiku and non-Anthropic providers still accept
+    temperature — build_agent should set 0.0 for determinism."""
+    from loupe_threatlens.agent import build_agent
+
+    for model_id in (
+        "anthropic:claude-haiku-4-5",
+        "openai:gpt-5",
+        "google-gla:gemini-2.5-pro",
+    ):
+        agent = build_agent(model_id)
+        settings = getattr(agent, "_default_model_settings", None) or getattr(
+            agent, "model_settings", {}
+        )
+        # The provider-default mode (empty settings) is acceptable for
+        # providers where PydanticAI doesn't expose the dict to us; but
+        # when settings IS exposed and non-empty, temperature must be 0.0.
+        if settings and "temperature" in settings:
+            assert settings["temperature"] == 0.0

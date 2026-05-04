@@ -57,6 +57,22 @@ def _load_system_prompt() -> str:
     return _SYSTEM_PROMPT_PATH.read_text()
 
 
+# F-08: Anthropic thinking-class models reject sampling parameters
+# (PydanticAI emits a UserWarning + ignores the setting). Match against
+# the provider:model id prefixes here; new thinking-class models can
+# be added without touching build_agent. Non-Anthropic providers and
+# Anthropic non-thinking models (claude-haiku-4-5, claude-sonnet-3-5
+# etc.) accept temperature normally.
+_REJECTS_TEMPERATURE_PREFIXES: tuple[str, ...] = (
+    "anthropic:claude-opus-4",
+    "anthropic:claude-sonnet-4",  # thinking-mode sonnet variants
+)
+
+
+def _model_rejects_temperature(model_id: str) -> bool:
+    return model_id.startswith(_REJECTS_TEMPERATURE_PREFIXES)
+
+
 def build_agent(model_id: str) -> Agent[AgentDeps, str]:
     """Construct the ThreatLens PydanticAI agent for the given model id.
 
@@ -81,11 +97,23 @@ def build_agent(model_id: str) -> Agent[AgentDeps, str]:
     # once). Three attempts costs at most a few extra request round-trips
     # but lets the model self-correct from validation feedback instead of
     # losing every successfully-proposed threat in the same run.
+    #
+    # F-08: only set `temperature` when the model is known to accept it.
+    # Anthropic's thinking-class models (Opus 4.x, Sonnet 4.x thinking
+    # variants) reject sampling parameters; setting temperature there
+    # produces a UserWarning per agent.run() call (twice per run with
+    # tool_retries=3, four times with retries observed). Empty
+    # model_settings keeps the model on its provider-default temperature
+    # which is already low for Anthropic's reasoning models.
+    model_settings: dict[str, float] = {}
+    if not _model_rejects_temperature(model_id):
+        model_settings["temperature"] = 0.0
+
     agent: Agent[AgentDeps, str] = Agent(
         model=model_id,
         deps_type=AgentDeps,
         system_prompt=_load_system_prompt(),
-        model_settings={"temperature": 0.0},
+        model_settings=model_settings,
         defer_model_check=True,
         tool_retries=3,
     )
