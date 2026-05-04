@@ -682,6 +682,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#use-it-from-another-project" class="md-nav__link">
+    <span class="md-ellipsis">
+      Use it from another project
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#scaffold-the-repo" class="md-nav__link">
     <span class="md-ellipsis">
       Scaffold the repo
@@ -753,6 +762,15 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#see-it-on-a-real-codebase" class="md-nav__link">
+    <span class="md-ellipsis">
+      See it on a real codebase
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -772,6 +790,8 @@
       
         
           
+        
+      
         
       
     
@@ -1200,6 +1220,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#use-it-from-another-project" class="md-nav__link">
+    <span class="md-ellipsis">
+      Use it from another project
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#scaffold-the-repo" class="md-nav__link">
     <span class="md-ellipsis">
       Scaffold the repo
@@ -1266,6 +1295,15 @@
   <a href="#when-something-goes-wrong" class="md-nav__link">
     <span class="md-ellipsis">
       When something goes wrong
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#see-it-on-a-real-codebase" class="md-nav__link">
+    <span class="md-ellipsis">
+      See it on a real codebase
     </span>
   </a>
   
@@ -1344,32 +1382,41 @@
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>pip<span class="w"> </span>install<span class="w"> </span>loupe-cli<span class="w"> </span>loupe-threatlens
 </span></code></pre></div>
 <p>The GitHub Action wrapper (<code>loupe-action</code>) is part of the same workspace; nothing extra to install for it.</p>
+<h2 id="use-it-from-another-project">Use it from another project<a class="headerlink" href="#use-it-from-another-project" title="Permanent link">&para;</a></h2>
+<p>Pre-PyPI, the CLI runs out of the workspace venv. To invoke it against a <em>different</em> project on disk (any directory that is not the <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr> checkout), use <code>uv run --project</code> with the absolute path to your <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr> checkout:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># From your own project&#39;s root, with $LOUPE pointing at the Loupe checkout</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="nb">cd</span><span class="w"> </span>~/projects/my-product
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>uv<span class="w"> </span>run<span class="w"> </span>--project<span class="w"> </span>~/projects/loupe<span class="w"> </span>loupe<span class="w"> </span>doctor
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>uv<span class="w"> </span>run<span class="w"> </span>--project<span class="w"> </span>~/projects/loupe<span class="w"> </span>loupe<span class="w"> </span>init
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>uv<span class="w"> </span>run<span class="w"> </span>--project<span class="w"> </span>~/projects/loupe<span class="w"> </span>loupe<span class="w"> </span>ci<span class="w"> </span>--diff-file<span class="w"> </span>/tmp/pr.diff<span class="w"> </span>--base-sha<span class="w"> </span>main<span class="w"> </span>--head-sha<span class="w"> </span>HEAD
+</span></code></pre></div>
+<p>Every <code>loupe</code> subcommand works the same way. Once v0.1 publishes to PyPI the <code>uv run --project</code> prefix collapses to just <code>loupe …</code>.</p>
 <h2 id="scaffold-the-repo">Scaffold the repo<a class="headerlink" href="#scaffold-the-repo" title="Permanent link">&para;</a></h2>
 <p>Inside your project root:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>loupe<span class="w"> </span>init
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>loupe<span class="w"> </span>init
 </span></code></pre></div>
 <p>This creates <code>.loupe/</code> with the minimum files <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr> expects:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>.loupe/
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>├── config.yaml          # operator settings (capabilities, lenses, CI gates)
-</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>├── context.md           # your product description (human-authored)
-</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>├── knowledge.yaml       # persistent knowledge graph (scaffolded empty)
-</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>├── runs/                # hash-chained run records
-</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>└── decisions/           # ADR-style risk acceptances
+<div class="language-text highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>.loupe/
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>├── config.yaml          # operator settings (capabilities, lenses, CI gates)
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>├── context.md           # your product description (human-authored)
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>├── knowledge.yaml       # persistent knowledge graph (scaffolded empty)
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>├── runs/                # hash-chained run records
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>└── decisions/           # ADR-style risk acceptances
 </span></code></pre></div>
 <p><code>config.yaml</code> ships with sensible defaults: <abbr title="Loupe's v1 lens. STRIDE-based threat modelling.">ThreatLens</abbr> enabled at relevance threshold 0.3, the <code>agent_writable_paths</code> allow-list pointing at the standard <abbr title="Loupe's v1 lens. STRIDE-based threat modelling.">ThreatLens</abbr> artefact locations, a <code>ci.fail_on</code> gate, and a commented-out <code>capabilities:</code> skeleton you can uncomment to wire Syft / Grype / Gitleaks / Semgrep into the run. See <a href="#configure-the-capabilities">Configure the capabilities</a> below for details.</p>
 <p><code>knowledge.yaml</code> is scaffolded as an empty graph (<code>schema_version: 1</code>, empty asset/element/decision lists) with a leading banner comment. Lens runs that promote high-confidence Facts append to it across invocations; you can delete the file at any time to reset.</p>
 <p><code>context.md</code> is your responsibility. Open it in an editor and fill in the marked sections.</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nv">$EDITOR</span><span class="w"> </span>.loupe/context.md
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nv">$EDITOR</span><span class="w"> </span>.loupe/context.md
 </span></code></pre></div>
 <p>It asks for six things: product description, critical assets, users and roles, deployment topology, threat actors of concern, and out-of-scope items. Two or three sentences per section is enough. This file is the anti-hallucination anchor for every agent run; keep it accurate as the project changes.</p>
 <p>The agent cannot edit <code>context.md</code> directly. It can only propose patches into <code>.loupe/.proposed/</code> for you to review. Same for <code>decisions/*.md</code> and <code>config.yaml</code>.</p>
 <h2 id="run-on-a-diff-locally">Run on a diff locally<a class="headerlink" href="#run-on-a-diff-locally" title="Permanent link">&para;</a></h2>
 <p>Compute a diff and feed it to <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr>.</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>git<span class="w"> </span>diff<span class="w"> </span>main...<span class="w"> </span>&gt;<span class="w"> </span>/tmp/pr.diff
-</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>loupe<span class="w"> </span>ci<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span>--diff-file<span class="w"> </span>/tmp/pr.diff<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span>--base-sha<span class="w"> </span><span class="s2">&quot;</span><span class="k">$(</span>git<span class="w"> </span>rev-parse<span class="w"> </span>main<span class="k">)</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
-</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">  </span>--head-sha<span class="w"> </span>HEAD
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>git<span class="w"> </span>diff<span class="w"> </span>main...<span class="w"> </span>&gt;<span class="w"> </span>/tmp/pr.diff
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>loupe<span class="w"> </span>ci<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span>--diff-file<span class="w"> </span>/tmp/pr.diff<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">  </span>--base-sha<span class="w"> </span><span class="s2">&quot;</span><span class="k">$(</span>git<span class="w"> </span>rev-parse<span class="w"> </span>main<span class="k">)</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">  </span>--head-sha<span class="w"> </span>HEAD
 </span></code></pre></div>
 <p>What happens:</p>
 <ol>
@@ -1382,12 +1429,12 @@
 <p>Output ends with the lens names that ran and the path of the new run record.</p>
 <h2 id="read-the-output">Read the output<a class="headerlink" href="#read-the-output" title="Permanent link">&para;</a></h2>
 <p>The run record is the canonical artefact. It captures inputs (diff hash, context hash), which lenses considered the diff and which ran, models used, tokens consumed, cost estimate, artefacts changed, and the hash chain pointer. An auditor can replay history by walking <code>.loupe/runs/*.json</code> in chronological order and verifying each <code>self_hash</code>.</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>loupe<span class="w"> </span>verify
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>loupe<span class="w"> </span>verify
 </span></code></pre></div>
 <p>The command runs the four Layer 3 checks: hash-chain integrity across <code>.loupe/runs/*.json</code>, artefact schema consistency for each <code>threats.yaml</code> / <code>mitigations.yaml</code>, threats-to-mitigations cross-reference integrity, and (when invoked with <code>--strict</code>) protected-path authorship. It exits non-zero on the first failure.</p>
 <p>The threats themselves are in <code>.loupe/threats.yaml</code>. Each threat has a stable ID (<code>T-NNN</code>), a <abbr title="Microsoft's threat-modelling categorisation: Spoofing, Tampering, Repudiation, Information disclosure, Denial of service, Elevation of privilege.">STRIDE</abbr> category, severity, status, links to the diff lines that introduced it, and a list of mitigation IDs.</p>
 <h2 id="run-interactively">Run interactively<a class="headerlink" href="#run-interactively" title="Permanent link">&para;</a></h2>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>loupe<span class="w"> </span>chat
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>loupe<span class="w"> </span>chat
 </span></code></pre></div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
@@ -1396,19 +1443,19 @@
 <p>The TTY guard is in place (the command refuses to run with stdin redirected) but the conversational pipeline that drives lenses with <code>[y/N/edit/skip]</code> confirmation prompts has not been wired. Tracked alongside the <abbr title="Model Context Protocol — Anthropic-originated JSON-RPC protocol for LLM tool/resource exposure.">MCP</abbr> server as part of the second-frontend work.</p>
 <h2 id="wire-up-the-github-action">Wire up the GitHub Action<a class="headerlink" href="#wire-up-the-github-action" title="Permanent link">&para;</a></h2>
 <p>In <code>.github/workflows/loupe.yml</code>:</p>
-<div class="language-yaml highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nt">on</span><span class="p">:</span>
-</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span><span class="nt">pull_request</span><span class="p">:</span>
-</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
-</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="nt">jobs</span><span class="p">:</span>
-</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">  </span><span class="nt">loupe</span><span class="p">:</span>
-</span><span id="__span-8-6"><a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="w">    </span><span class="nt">runs-on</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ubuntu-latest</span>
-</span><span id="__span-8-7"><a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="w">    </span><span class="nt">steps</span><span class="p">:</span>
-</span><span id="__span-8-8"><a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">actions/checkout@v4</span>
-</span><span id="__span-8-9"><a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">loupe-action@v1</span>
-</span><span id="__span-8-10"><a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="w">        </span><span class="nt">with</span><span class="p">:</span>
-</span><span id="__span-8-11"><a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="w">          </span><span class="nt">pr</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${{ github.event.pull_request.number }}</span>
-</span><span id="__span-8-12"><a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="w">        </span><span class="nt">env</span><span class="p">:</span>
-</span><span id="__span-8-13"><a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a><span class="w">          </span><span class="nt">GITHUB_TOKEN</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${{ secrets.GITHUB_TOKEN }}</span>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nt">on</span><span class="p">:</span>
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">  </span><span class="nt">pull_request</span><span class="p">:</span>
+</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
+</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="nt">jobs</span><span class="p">:</span>
+</span><span id="__span-9-5"><a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">  </span><span class="nt">loupe</span><span class="p">:</span>
+</span><span id="__span-9-6"><a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="w">    </span><span class="nt">runs-on</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ubuntu-latest</span>
+</span><span id="__span-9-7"><a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="w">    </span><span class="nt">steps</span><span class="p">:</span>
+</span><span id="__span-9-8"><a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">actions/checkout@v4</span>
+</span><span id="__span-9-9"><a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">loupe-action@v1</span>
+</span><span id="__span-9-10"><a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="w">        </span><span class="nt">with</span><span class="p">:</span>
+</span><span id="__span-9-11"><a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span class="w">          </span><span class="nt">pr</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${{ github.event.pull_request.number }}</span>
+</span><span id="__span-9-12"><a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a><span class="w">        </span><span class="nt">env</span><span class="p">:</span>
+</span><span id="__span-9-13"><a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a><span class="w">          </span><span class="nt">GITHUB_TOKEN</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${{ secrets.GITHUB_TOKEN }}</span>
 </span></code></pre></div>
 <p>The Action fetches the <abbr title="Pull Request — GitHub's term for a proposed change.">PR</abbr>'s base SHA, head SHA, and unified diff through the GitHub API (so it works with shallow clones), runs <code>loupe ci</code>, and posts a sticky comment on the <abbr title="Pull Request — GitHub's term for a proposed change.">PR</abbr> with severity-grouped findings. The comment edits in place across pushes; you do not get a graveyard of stale <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr> comments on long-running branches.</p>
 <p>Six outputs are exposed for downstream steps:</p>
@@ -1446,24 +1493,24 @@
 <h2 id="configure-the-capabilities">Configure the capabilities<a class="headerlink" href="#configure-the-capabilities" title="Permanent link">&para;</a></h2>
 <p><code>config.yaml</code> is where you express the team's audit posture. Two examples.</p>
 <p>Belt-and-braces secret detection:</p>
-<div class="language-yaml highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nt">capabilities</span><span class="p">:</span>
-</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">  </span><span class="nt">secret_detect</span><span class="p">:</span>
-</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">    </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">union</span>
-</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">    </span><span class="nt">backends</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">trufflehog</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">gitleaks</span><span class="p p-Indicator">]</span>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="nt">capabilities</span><span class="p">:</span>
+</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">  </span><span class="nt">secret_detect</span><span class="p">:</span>
+</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">    </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">union</span>
+</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">    </span><span class="nt">backends</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">trufflehog</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">gitleaks</span><span class="p p-Indicator">]</span>
 </span></code></pre></div>
 <p>Consensus-based <abbr title="Static Application Security Testing — analysing source without running it.">SAST</abbr> to suppress false positives:</p>
-<div class="language-yaml highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="nt">capabilities</span><span class="p">:</span>
-</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">  </span><span class="nt">static_analysis</span><span class="p">:</span>
-</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">    </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">consensus</span>
-</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">    </span><span class="nt">consensus_threshold</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
-</span><span id="__span-10-5"><a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="w">    </span><span class="nt">backends</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">semgrep</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">codeql</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">bandit</span><span class="p p-Indicator">]</span>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="nt">capabilities</span><span class="p">:</span>
+</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">  </span><span class="nt">static_analysis</span><span class="p">:</span>
+</span><span id="__span-11-3"><a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">    </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">consensus</span>
+</span><span id="__span-11-4"><a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">    </span><span class="nt">consensus_threshold</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+</span><span id="__span-11-5"><a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="w">    </span><span class="nt">backends</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">semgrep</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">codeql</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">bandit</span><span class="p p-Indicator">]</span>
 </span></code></pre></div>
 <p>Discovery subcommands:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>loupe<span class="w"> </span>lens<span class="w"> </span>list<span class="w">   </span><span class="c1"># show every registered lens</span>
-</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>loupe<span class="w"> </span>cap<span class="w"> </span>list<span class="w">    </span><span class="c1"># show every registered capability + backend pair</span>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>loupe<span class="w"> </span>lens<span class="w"> </span>list<span class="w">   </span><span class="c1"># show every registered lens</span>
+</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>loupe<span class="w"> </span>cap<span class="w"> </span>list<span class="w">    </span><span class="c1"># show every registered capability + backend pair</span>
 </span></code></pre></div>
 <p>For programmatic introspection, you can still use:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>python<span class="w"> </span>-c<span class="w"> </span><span class="s1">&#39;from importlib.metadata import entry_points; print(list(entry_points(group=&quot;loupe.lenses&quot;)))&#39;</span>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>python<span class="w"> </span>-c<span class="w"> </span><span class="s1">&#39;from importlib.metadata import entry_points; print(list(entry_points(group=&quot;loupe.lenses&quot;)))&#39;</span>
 </span></code></pre></div>
 <h2 id="what-to-expect-what-not-to-expect">What to expect, what not to expect<a class="headerlink" href="#what-to-expect-what-not-to-expect" title="Permanent link">&para;</a></h2>
 <p>Expect three to five threats on a typical small <abbr title="Pull Request — GitHub's term for a proposed change.">PR</abbr>, a cost of around $0.07–$0.20 per <abbr title="Pull Request — GitHub's term for a proposed change.">PR</abbr> on Claude Opus, and roughly 30 seconds of wall time per <abbr title="Pull Request — GitHub's term for a proposed change.">PR</abbr>. Cost numbers are illustrative; actual usage depends on diff size and model choice.</p>
@@ -1472,6 +1519,12 @@
 <p><code>.loupe/runs/&lt;latest&gt;.json</code> records every failure mode. If a capability backend fails (Syft not installed, Grype database missing), the run record marks it as <code>backend_error</code> and the lens that requested the capability is skipped. If a lens's tool call hits the path boundary, the run record marks it as <code>enforcement_error</code> and the lens is aborted but the run as a whole continues.</p>
 <p>A richer <code>loupe ci --verbose</code> flag for plan tracing is documented in the CLI design but not yet implemented. Today's <code>loupe ci</code> carries only the flags shown earlier in this page.</p>
 <p>For anything beyond that, <a href="../contributing/"><code>contributing.md</code></a> describes how to file an issue and how to reproduce locally.</p>
+<h2 id="see-it-on-a-real-codebase">See it on a real codebase<a class="headerlink" href="#see-it-on-a-real-codebase" title="Permanent link">&para;</a></h2>
+<p>If you'd rather drive the same flow against an actual third-party project than scaffold against your own, follow the <a href="../tutorials/threatlens-on-mongoose/"><abbr title="Loupe's v1 lens. STRIDE-based threat modelling.">ThreatLens</abbr> on Mongoose</a> tutorial. It walks through <code>loupe init</code>, a real MQTT-parser fix diff, and <code>loupe scan</code> end-to-end with expected outputs at every step — useful for sanity-checking your environment before pointing <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr> at code you actually care about.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><strong>Both <code>ci</code> and <code>scan</code> are source-grounded.</strong> <code>loupe ci --diff-file &lt;patch&gt;</code> sends the diff bytes; <code>loupe scan --paths &lt;file-or-dir&gt;</code> walks the paths, expands directories by <code>CODE_EXTENSIONS</code>, and reads each file via the same Layer-1 boundary that protects writes (see <a href="../reference/decisions/#d-24">D-24</a>). Files larger than the per-file cap truncate with a visible marker; <code>--max-chars-per-file</code> tightens or relaxes the default 50,000.</p>
+</div>
 
 
 
@@ -1494,7 +1547,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 16, 2026 11:58:17 UTC">May 16, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 16, 2026 18:45:14 UTC">May 16, 2026</span>
   </span>
 
     

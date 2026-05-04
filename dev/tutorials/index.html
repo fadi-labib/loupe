@@ -16,7 +16,7 @@
         <link rel="prev" href="../quickstart/">
       
       
-        <link rel="next" href="../how-to/">
+        <link rel="next" href="threatlens-on-mongoose/">
       
       
       <link rel="icon" href="../assets/favicon.svg">
@@ -644,6 +644,8 @@
           
         
       
+        
+      
     
     
     
@@ -678,6 +680,11 @@
 
             </a>
             
+              
+              <label class="md-nav__link md-nav__link--active" for="__nav_3" id="__nav_3_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
           </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
@@ -687,6 +694,29 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="threatlens-on-mongoose/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ThreatLens on Mongoose
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
               
             
           </ul>
@@ -1091,14 +1121,17 @@
 <p>The canonical entry point is the <a href="../quickstart/">Quickstart</a>, which lives at the top level because it's the one tutorial every new user runs first.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p><strong>Pre-alpha:</strong> only the Quickstart exists today. Additional tutorials land here as they're written.</p>
+<p><strong>Pre-alpha:</strong> the Quickstart and the <abbr title="Loupe's v1 lens. STRIDE-based threat modelling.">ThreatLens</abbr>-on-Mongoose tutorial are validated end-to-end against a live <abbr title="Large Language Model.">LLM</abbr>. Additional tutorials land here as they're written.</p>
 </div>
+<p>Available tutorials:</p>
+<ul>
+<li><a href="threatlens-on-mongoose/"><strong><abbr title="Loupe's v1 lens. STRIDE-based threat modelling.">ThreatLens</abbr> on Mongoose</strong></a> — end-to-end walkthrough running <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr> against a real Cesanta Mongoose checkout. Covers <code>loupe doctor</code>, <code>loupe init</code>, <code>loupe ci</code> on a real protocol-parser fix diff, <code>loupe scan</code>, and <code>loupe verify --strict</code>. Doubles as the Tier-1 user-shaped validation for <a href="../reference/decisions/#d-19">D-19</a>.</li>
+</ul>
 <p>Planned tutorials:</p>
 <ul>
 <li><strong>Monorepo walkthrough</strong> — running <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr> across multiple packages in one repo.</li>
 <li><strong>Offline / air-gapped <abbr title="Continuous Integration.">CI</abbr></strong> — wiring local Ollama plus offline <abbr title="Software Bill of Materials. CycloneDX is the format Loupe uses.">SBOM</abbr> and <abbr title="Common Vulnerabilities and Exposures — public catalogue of disclosed security flaws.">CVE</abbr> backends.</li>
 <li><strong>GitLab integration</strong> — using <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr> outside the GitHub Action.</li>
-<li><strong>End-to-end <abbr title="Loupe's v1 lens. STRIDE-based threat modelling.">ThreatLens</abbr></strong> — a single <abbr title="Pull Request — GitHub's term for a proposed change.">PR</abbr> walked from diff through threat-model to <abbr title="Vulnerability EXploitability eXchange — per-CVE impact statements. OpenVEX is the standard.">VEX</abbr>.</li>
 </ul>
 <p>If you already know <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr> and just want to accomplish a specific task, check <a href="../how-to/">how-to</a> instead.</p>
 
@@ -1123,7 +1156,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 15, 2026 20:30:11 UTC">May 15, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 16, 2026 15:26:34 UTC">May 16, 2026</span>
   </span>
 
     
@@ -1187,13 +1220,13 @@
         
         
           
-          <a href="../how-to/" class="md-footer__link md-footer__link--next" aria-label="Next: Overview">
+          <a href="threatlens-on-mongoose/" class="md-footer__link md-footer__link--next" aria-label="Next: ThreatLens on Mongoose">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                Overview
+                ThreatLens on Mongoose
               </div>
             </div>
             <div class="md-footer__button md-icon">

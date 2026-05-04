@@ -1,0 +1,1903 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A platform of analysis lenses for software-engineering risk activities. v1 ships ThreatLens for diff-aware STRIDE threat modelling and EU CRA Annex I evidence.">
+      
+      
+      
+        <link rel="canonical" href="https://fadi-labib.github.io/loupe/dev/tutorials/threatlens-on-mongoose/">
+      
+      
+        <link rel="prev" href="../">
+      
+      
+        <link rel="next" href="../../how-to/">
+      
+      
+      <link rel="icon" href="../../assets/favicon.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.23">
+    
+    
+      
+        <title>ThreatLens on Mongoose - Loupe</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.84d31ad4.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Geist:300,300i,400,400i,700,700i%7CGeist+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Geist";--md-code-font:"Geist Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+      
+        <meta  property="og:type"  content="website" >
+      
+        <meta  property="og:title"  content="ThreatLens on Mongoose - Loupe" >
+      
+        <meta  property="og:description"  content="A platform of analysis lenses for software-engineering risk activities. v1 ships ThreatLens for diff-aware STRIDE threat modelling and EU CRA Annex I evidence." >
+      
+        <meta  property="og:image"  content="https://fadi-labib.github.io/loupe/dev/assets/images/social/tutorials/threatlens-on-mongoose.png" >
+      
+        <meta  property="og:image:type"  content="image/png" >
+      
+        <meta  property="og:image:width"  content="1200" >
+      
+        <meta  property="og:image:height"  content="630" >
+      
+        <meta  property="og:url"  content="https://fadi-labib.github.io/loupe/dev/tutorials/threatlens-on-mongoose/" >
+      
+        <meta  name="twitter:card"  content="summary_large_image" >
+      
+        <meta  name="twitter:title"  content="ThreatLens on Mongoose - Loupe" >
+      
+        <meta  name="twitter:description"  content="A platform of analysis lenses for software-engineering risk activities. v1 ships ThreatLens for diff-aware STRIDE threat modelling and EU CRA Annex I evidence." >
+      
+        <meta  name="twitter:image"  content="https://fadi-labib.github.io/loupe/dev/assets/images/social/tutorials/threatlens-on-mongoose.png" >
+      
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#end-to-end-threatlens-on-cesanta-mongoose" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+        <aside class="md-banner">
+          <div class="md-banner__inner md-grid md-typeset">
+            
+              <button class="md-banner__button md-icon" aria-label="Don't show this again">
+                
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+              </button>
+            
+            
+  <strong>Pre-alpha.</strong>
+  The ThreatLens agent is scaffolded; live-LLM wiring is the next milestone.
+  See the
+  <a href="../../changelog/">changelog</a>
+  for status, or the
+  <a href="../../roadmap/">roadmap</a>
+  for what's coming.
+
+          </div>
+          
+            <script>var el=document.querySelector("[data-md-component=announce]");if(el){var content=el.querySelector(".md-typeset");__md_hash(content.innerHTML)===__md_get("__announce")&&(el.hidden=!0)}</script>
+          
+        </aside>
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Loupe" class="md-header__button md-logo" aria-label="Loupe" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Loupe
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              ThreatLens on Mongoose
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/fadi-labib/loupe" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    fadi-labib/loupe
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../quickstart/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Quickstart
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Tutorials
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../how-to/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  How-to
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../principles/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Principles
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../concepts/architecture/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Concepts
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../reference/cli/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../roadmap/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Roadmap
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../about/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  About
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../comparison/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Comparison
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../contributing/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Contributing
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../changelog/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Changelog
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../tags/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Tags
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Loupe" class="md-nav__button md-logo" aria-label="Loupe" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    Loupe
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/fadi-labib/loupe" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    fadi-labib/loupe
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Quickstart
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    Tutorials
+    
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Tutorials
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    ThreatLens on Mongoose
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    ThreatLens on Mongoose
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-you-need" class="md-nav__link">
+    <span class="md-ellipsis">
+      What you need
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-clone-mongoose-and-pick-a-target-commit" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Clone Mongoose and pick a target commit
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-run-preflight-diagnostics" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Run preflight diagnostics
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-scaffold-loupe" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Scaffold .loupe/
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-author-contextmd-the-anti-hallucination-anchor" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Author context.md — the anti-hallucination anchor
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#45-wire-the-sbom-cve-capability-backends" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.5. Wire the SBOM + CVE capability backends
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-run-loupe-ci-against-the-mqtt-cast-diff" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Run loupe ci against the MQTT-cast diff
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-verify-hash-chain-and-cross-references" class="md-nav__link">
+    <span class="md-ellipsis">
+      6. Verify hash chain and cross-references
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-run-loupe-scan-over-a-single-source-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      7. Run loupe scan over a single source file
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-youve-validated" class="md-nav__link">
+    <span class="md-ellipsis">
+      What you've validated
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#where-to-go-next" class="md-nav__link">
+    <span class="md-ellipsis">
+      Where to go next
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../how-to/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    How-to
+    
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../principles/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Principles
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../concepts/architecture/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    Concepts
+    
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../reference/cli/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    Reference
+    
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Roadmap
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../about/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    About
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../comparison/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Comparison
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Contributing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../changelog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Changelog
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tags/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Tags
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-you-need" class="md-nav__link">
+    <span class="md-ellipsis">
+      What you need
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-clone-mongoose-and-pick-a-target-commit" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Clone Mongoose and pick a target commit
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-run-preflight-diagnostics" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Run preflight diagnostics
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-scaffold-loupe" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Scaffold .loupe/
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-author-contextmd-the-anti-hallucination-anchor" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Author context.md — the anti-hallucination anchor
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#45-wire-the-sbom-cve-capability-backends" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.5. Wire the SBOM + CVE capability backends
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-run-loupe-ci-against-the-mqtt-cast-diff" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Run loupe ci against the MQTT-cast diff
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-verify-hash-chain-and-cross-references" class="md-nav__link">
+    <span class="md-ellipsis">
+      6. Verify hash chain and cross-references
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-run-loupe-scan-over-a-single-source-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      7. Run loupe scan over a single source file
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-youve-validated" class="md-nav__link">
+    <span class="md-ellipsis">
+      What you've validated
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#where-to-go-next" class="md-nav__link">
+    <span class="md-ellipsis">
+      Where to go next
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  <nav class="md-tags" >
+    
+      
+      
+      
+        <span class="md-tag">end-to-end</span>
+      
+    
+      
+      
+      
+        <span class="md-tag">threatlens</span>
+      
+    
+      
+      
+      
+        <span class="md-tag">tutorial</span>
+      
+    
+  </nav>
+
+
+  
+    <a href="https://github.com/fadi-labib/loupe/edit/main/docs/tutorials/threatlens-on-mongoose.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+    
+      
+    
+    <a href="https://github.com/fadi-labib/loupe/raw/main/docs/tutorials/threatlens-on-mongoose.md" title="View source of this page" class="md-content__button md-icon">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 18c.56 0 1 .44 1 1s-.44 1-1 1-1-.44-1-1 .44-1 1-1m0-3c-2.73 0-5.06 1.66-6 4 .94 2.34 3.27 4 6 4s5.06-1.66 6-4c-.94-2.34-3.27-4-6-4m0 6.5a2.5 2.5 0 0 1-2.5-2.5 2.5 2.5 0 0 1 2.5-2.5 2.5 2.5 0 0 1 2.5 2.5 2.5 2.5 0 0 1-2.5 2.5M9.27 20H6V4h7v5h5v4.07c.7.08 1.36.25 2 .49V8l-6-6H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h4.5a8.2 8.2 0 0 1-1.23-2"/></svg>
+    </a>
+  
+
+
+<h1 id="end-to-end-threatlens-on-cesanta-mongoose">End-to-end <abbr title="Loupe's v1 lens. STRIDE-based threat modelling.">ThreatLens</abbr> on Cesanta Mongoose<a class="headerlink" href="#end-to-end-threatlens-on-cesanta-mongoose" title="Permanent link">&para;</a></h1>
+<p>A complete walkthrough from <code>git clone</code> of a real third-party project to a
+verified <code>.loupe/</code> artefact pack with hash-chained run records. Use this when
+you want to <em>see</em> <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr> doing genuine work — the tutorial uses <a href="https://github.com/cesanta/mongoose">Cesanta
+Mongoose</a>, an embedded networking library
+in C, exactly the Tier-1 benchmark candidate identified in
+<a href="../../reference/decisions/#d-19">D-19</a> and
+<a href="../../reference/evaluation/#tier-1-cesanta-mongoose-fast-smoke-test">evaluation.md</a>.</p>
+<p>By the end you will have run:</p>
+<ul>
+<li><code>loupe doctor</code> (preflight)</li>
+<li><code>loupe init</code> (scaffold)</li>
+<li><code>loupe ci</code> against a real fix commit diff (the agent reads the diff +
+  <code>context.md</code> and proposes <abbr title="Microsoft's threat-modelling categorisation: Spoofing, Tampering, Repudiation, Information disclosure, Denial of service, Elevation of privilege.">STRIDE</abbr>-categorised threats)</li>
+<li><code>loupe scan</code> against a single source file (whole-file analysis, scan-mode)</li>
+<li><code>loupe verify --strict</code> (hash-chain integrity + protected-path authorship)</li>
+</ul>
+<p>The whole walkthrough costs roughly <strong>$1–$3</strong> in Anthropic API charges at
+Claude Opus 4.7 prices, and takes <strong>5–10 minutes</strong> of wall time. Pick a
+cheaper model in <code>models.default</code> if you want to dry-run.</p>
+<h2 id="what-you-need">What you need<a class="headerlink" href="#what-you-need" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Requirement</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Python 3.13 + <code>uv</code></td>
+<td><abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr>'s runtime — see <a href="../../quickstart/#install">Quickstart § Install</a></td>
+</tr>
+<tr>
+<td>A <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr> checkout you've run <code>uv sync --all-packages</code> against</td>
+<td>Pre-PyPI, the CLI lives in the workspace venv</td>
+</tr>
+<tr>
+<td><code>ANTHROPIC_API_KEY</code> exported (or another provider key matching <code>models.default</code>)</td>
+<td><abbr title="Loupe's v1 lens. STRIDE-based threat modelling.">ThreatLens</abbr> calls a real <abbr title="Large Language Model.">LLM</abbr></td>
+</tr>
+<tr>
+<td><code>git</code></td>
+<td>We clone Mongoose and check out a real fix commit</td>
+</tr>
+<tr>
+<td>Syft + Grype on PATH (installed in Step 4.5)</td>
+<td><abbr title="Loupe's v1 lens. STRIDE-based threat modelling.">ThreatLens</abbr> declares both as <code>requires_capabilities</code>; <code>loupe ci</code> exits 64 until they're wired (<a href="../../reference/decisions/#d-23">D-23</a>)</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr> is pre-alpha (pre-PyPI), so the CLI runs out of the workspace checkout.
+The cleanest way to invoke it from <em>another</em> project's directory is
+<code>uv run --project /path/to/loupe loupe &lt;cmd&gt;</code>. Replace <code>/path/to/loupe</code>
+with your local checkout's absolute path throughout the rest of this
+tutorial. Once <code>loupe-cli</code> ships on PyPI the prefix collapses to just
+<code>loupe …</code>.</p>
+</div>
+<h2 id="1-clone-mongoose-and-pick-a-target-commit">1. Clone Mongoose and pick a target commit<a class="headerlink" href="#1-clone-mongoose-and-pick-a-target-commit" title="Permanent link">&para;</a></h2>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>mkdir<span class="w"> </span>-p<span class="w"> </span>/tmp/loupe-validation<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">cd</span><span class="w"> </span>/tmp/loupe-validation
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>git<span class="w"> </span>clone<span class="w"> </span>--depth<span class="o">=</span><span class="m">200</span><span class="w"> </span>https://github.com/cesanta/mongoose.git
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="nb">cd</span><span class="w"> </span>mongoose
+</span></code></pre></div>
+<p>We use <code>--depth=200</code> to keep the clone small. Mongoose's recent history
+contains several real protocol-parser fixes. A useful Tier-1-style target is
+the MQTT-cast fix:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>git<span class="w"> </span>log<span class="w"> </span>--oneline<span class="w"> </span>-50<span class="w"> </span>--grep<span class="w"> </span>mqtt
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="c1"># Look for &quot;Fix casting issue in MQTT parsing&quot; — sha may differ on your</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="c1"># pull because the upstream branch updates. Replace &lt;SHA&gt; below with the</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># commit you find.</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="nv">SHA</span><span class="o">=</span><span class="k">$(</span>git<span class="w"> </span>log<span class="w"> </span>-1<span class="w"> </span>--format<span class="o">=</span>%H<span class="w"> </span>--grep<span class="o">=</span><span class="s1">&#39;Fix casting issue in MQTT parsing&#39;</span><span class="k">)</span>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$SHA</span><span class="s2">&quot;</span>
+</span></code></pre></div>
+<p>This commit introduces a <code>decode_varint(... uint32_t *value)</code> signature
+where the caller passes <code>(uint32_t *) &amp;m-&gt;props_size</code> and <code>m-&gt;props_size</code>
+is a <code>size_t</code>. On a 64-bit host that's a partial-write strict-aliasing bug —
+exactly the kind of protocol-state defect <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr> is meant to catch.</p>
+<p>Generate the diff <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr> will analyse:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>git<span class="w"> </span>show<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$SHA</span><span class="s2">&quot;</span><span class="w"> </span>&gt;<span class="w"> </span>/tmp/loupe-validation/mqtt-cast-fix.diff
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>wc<span class="w"> </span>-l<span class="w"> </span>/tmp/loupe-validation/mqtt-cast-fix.diff<span class="w">   </span><span class="c1"># roughly 150-200 lines</span>
+</span></code></pre></div>
+<h2 id="2-run-preflight-diagnostics">2. Run preflight diagnostics<a class="headerlink" href="#2-run-preflight-diagnostics" title="Permanent link">&para;</a></h2>
+<p>Before scaffolding anything, confirm the environment is ready:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>uv<span class="w"> </span>run<span class="w"> </span>--project<span class="w"> </span>/path/to/loupe<span class="w"> </span>loupe<span class="w"> </span>doctor
+</span></code></pre></div>
+<p>Expected output (pre-init):</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>[✗] .loupe/ directory: .loupe not found — run `loupe init` first
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>0 ok · 0 warn · 1 fail
+</span></code></pre></div>
+<p>The <code>.loupe/</code> directory doesn't exist yet, so doctor surfaces that and stops.
+This is the expected failure — fix it in the next step.</p>
+<h2 id="3-scaffold-loupe">3. Scaffold <code>.loupe/</code><a class="headerlink" href="#3-scaffold-loupe" title="Permanent link">&para;</a></h2>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>uv<span class="w"> </span>run<span class="w"> </span>--project<span class="w"> </span>/path/to/loupe<span class="w"> </span>loupe<span class="w"> </span>init
+</span></code></pre></div>
+<p>You should see:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>Initialised /tmp/loupe-validation/mongoose/.loupe.
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>Edit .loupe/context.md to describe your product, then run `loupe ci` or `loupe chat`.
+</span></code></pre></div>
+<p>Inspect what landed:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>ls<span class="w"> </span>.loupe/
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="c1"># config.yaml  context.md  decisions/  knowledge.yaml  runs/</span>
+</span></code></pre></div>
+<p><code>config.yaml</code> ships with <abbr title="Loupe's v1 lens. STRIDE-based threat modelling.">ThreatLens</abbr> enabled, the per-run budget set to
+$2.50, the standard <code>agent_writable_paths</code> allow-list, and a <em>commented-out</em>
+<code>capabilities:</code> skeleton — intentional, so <abbr title="Loupe's v1 lens. STRIDE-based threat modelling.">ThreatLens</abbr> runs without <abbr title="Software Bill of Materials. CycloneDX is the format Loupe uses.">SBOM</abbr>/<abbr title="Common Vulnerabilities and Exposures — public catalogue of disclosed security flaws.">CVE</abbr>
+backends on first try. See
+<a href="../../quickstart/#configure-the-capabilities">Configure the capabilities</a>
+if you want to wire Syft/Grype.</p>
+<h2 id="4-author-contextmd-the-anti-hallucination-anchor">4. Author <code>context.md</code> — the anti-hallucination anchor<a class="headerlink" href="#4-author-contextmd-the-anti-hallucination-anchor" title="Permanent link">&para;</a></h2>
+<p>This is the single most load-bearing artefact for <abbr title="Loupe's v1 lens. STRIDE-based threat modelling.">ThreatLens</abbr> output quality.
+The agent reads it on every run; weak content here produces generic <abbr title="Microsoft's threat-modelling categorisation: Spoofing, Tampering, Repudiation, Information disclosure, Denial of service, Elevation of privilege.">STRIDE</abbr>
+templates instead of code-grounded threats. Open it in your editor and fill
+in all six sections:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nv">$EDITOR</span><span class="w"> </span>.loupe/context.md
+</span></code></pre></div>
+<p>A realistic Mongoose <code>context.md</code> looks like this (abridged — write it in
+your own words, the agent reads everything):</p>
+<div class="language-markdown highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="gu">## Product description</span>
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>Mongoose is an embedded networking library written in portable C. It
+</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>provides HTTP/1.1, HTTP/2, WebSocket, MQTT, CoAP, DNS, and TLS in a
+</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>single-source-file build, targeted at firmware engineers running on
+</span><span id="__span-9-5"><a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>resource-constrained devices.
+</span><span id="__span-9-6"><a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>
+</span><span id="__span-9-7"><a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="gu">## Critical assets</span>
+</span><span id="__span-9-8"><a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="k">-</span><span class="w"> </span>TLS private keys and certificates loaded by the embedding application
+</span><span id="__span-9-9"><a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="k">-</span><span class="w"> </span>Device credentials persisted through Mongoose-facing HTTP/MQTT endpoints
+</span><span id="__span-9-10"><a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="k">-</span><span class="w"> </span>Network message buffers (inbound parser state) — corruption is exploitable
+</span><span id="__span-9-11"><a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span class="k">-</span><span class="w"> </span>Listening sockets and connection state machines
+</span><span id="__span-9-12"><a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a>
+</span><span id="__span-9-13"><a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a><span class="gu">## Users and roles</span>
+</span><span id="__span-9-14"><a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a><span class="k">-</span><span class="w"> </span>firmware-developer: links Mongoose into device firmware; owns cert-loading
+</span><span id="__span-9-15"><a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a><span class="k">-</span><span class="w"> </span>end-user: interacts with the device through Mongoose-served HTTP/MQTT
+</span><span id="__span-9-16"><a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a><span class="k">-</span><span class="w"> </span>ota-update-service: external system publishing firmware via MQTT/HTTPS
+</span><span id="__span-9-17"><a id="__codelineno-9-17" name="__codelineno-9-17" href="#__codelineno-9-17"></a><span class="k">-</span><span class="w"> </span>attacker-on-network: untrusted peer on the LAN with port reachability
+</span><span id="__span-9-18"><a id="__codelineno-9-18" name="__codelineno-9-18" href="#__codelineno-9-18"></a>
+</span><span id="__span-9-19"><a id="__codelineno-9-19" name="__codelineno-9-19" href="#__codelineno-9-19"></a><span class="gu">## Deployment</span>
+</span><span id="__span-9-20"><a id="__codelineno-9-20" name="__codelineno-9-20" href="#__codelineno-9-20"></a>Mongoose ships as source; deployments are heterogeneous. (Resource-
+</span><span id="__span-9-21"><a id="__codelineno-9-21" name="__codelineno-9-21" href="#__codelineno-9-21"></a>constrained MCU running RTOS, Linux/POSIX edge gateway, standalone Linux
+</span><span id="__span-9-22"><a id="__codelineno-9-22" name="__codelineno-9-22" href="#__codelineno-9-22"></a>binary.) Trust boundary is the network socket.
+</span><span id="__span-9-23"><a id="__codelineno-9-23" name="__codelineno-9-23" href="#__codelineno-9-23"></a>
+</span><span id="__span-9-24"><a id="__codelineno-9-24" name="__codelineno-9-24" href="#__codelineno-9-24"></a><span class="gu">## Threat actors of concern</span>
+</span><span id="__span-9-25"><a id="__codelineno-9-25" name="__codelineno-9-25" href="#__codelineno-9-25"></a><span class="k">-</span><span class="w"> </span>Remote unauthenticated LAN attacker (parser-corruption → RCE/DoS)
+</span><span id="__span-9-26"><a id="__codelineno-9-26" name="__codelineno-9-26" href="#__codelineno-9-26"></a><span class="k">-</span><span class="w"> </span>Authenticated MQTT publisher abusing topic ACL gaps
+</span><span id="__span-9-27"><a id="__codelineno-9-27" name="__codelineno-9-27" href="#__codelineno-9-27"></a><span class="k">-</span><span class="w"> </span>Supply-chain: tampered mongoose.c amalgamation in a downstream build
+</span><span id="__span-9-28"><a id="__codelineno-9-28" name="__codelineno-9-28" href="#__codelineno-9-28"></a>
+</span><span id="__span-9-29"><a id="__codelineno-9-29" name="__codelineno-9-29" href="#__codelineno-9-29"></a><span class="gu">## Out of scope</span>
+</span><span id="__span-9-30"><a id="__codelineno-9-30" name="__codelineno-9-30" href="#__codelineno-9-30"></a><span class="k">-</span><span class="w"> </span>Physical-tampering / side-channel attacks against silicon
+</span><span id="__span-9-31"><a id="__codelineno-9-31" name="__codelineno-9-31" href="#__codelineno-9-31"></a><span class="k">-</span><span class="w"> </span>The linked TLS library&#39;s threat model (BearSSL / mbedTLS / OpenSSL)
+</span><span id="__span-9-32"><a id="__codelineno-9-32" name="__codelineno-9-32" href="#__codelineno-9-32"></a><span class="k">-</span><span class="w"> </span>Bugs introduced by an embedding application&#39;s misuse of the C API
+</span></code></pre></div>
+<p>Save the file. Now re-run doctor:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>uv<span class="w"> </span>run<span class="w"> </span>--project<span class="w"> </span>/path/to/loupe<span class="w"> </span>loupe<span class="w"> </span>doctor
+</span></code></pre></div>
+<p>Expected (with <code>capabilities:</code> still commented out):</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>[✓] .loupe/ directory: .loupe
+</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>[✓] config.yaml parse: schema_version=1
+</span><span id="__span-11-3"><a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>[✓] context.md: all sections filled
+</span><span id="__span-11-4"><a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>[✓] provider key (anthropic): ANTHROPIC_API_KEY is set
+</span><span id="__span-11-5"><a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>[✗] capabilities[sbom]: lens &#39;threatlens&#39; requires &#39;sbom&#39; but no backends are wired in config.yaml. Uncomment the `capabilities:` block in `.loupe/config.yaml` and install the backend; `loupe ci` exits 64 otherwise.
+</span><span id="__span-11-6"><a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>[✗] capabilities[cve]: lens &#39;threatlens&#39; requires &#39;cve&#39; but no backends are wired in config.yaml. Uncomment the `capabilities:` block in `.loupe/config.yaml` and install the backend; `loupe ci` exits 64 otherwise.
+</span><span id="__span-11-7"><a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>
+</span><span id="__span-11-8"><a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>4 ok · 0 warn · 2 fail
+</span></code></pre></div>
+<p>Doctor flags both <code>sbom</code> and <code>cve</code> because <abbr title="Loupe's v1 lens. STRIDE-based threat modelling.">ThreatLens</abbr> declares them as
+required (<a href="../../reference/decisions/#d-23">D-23</a>). Wire them in the next
+step, then doctor turns green and <code>loupe ci</code> will work.</p>
+<h2 id="45-wire-the-sbom-cve-capability-backends">4.5. Wire the <abbr title="Software Bill of Materials. CycloneDX is the format Loupe uses.">SBOM</abbr> + <abbr title="Common Vulnerabilities and Exposures — public catalogue of disclosed security flaws.">CVE</abbr> capability backends<a class="headerlink" href="#45-wire-the-sbom-cve-capability-backends" title="Permanent link">&para;</a></h2>
+<p><abbr title="Loupe's v1 lens. STRIDE-based threat modelling.">ThreatLens</abbr> needs an <abbr title="Software Bill of Materials. CycloneDX is the format Loupe uses.">SBOM</abbr> and <abbr title="Common Vulnerabilities and Exposures — public catalogue of disclosed security flaws.">CVE</abbr> provider before it runs. Install Syft
+(<abbr title="Software Bill of Materials. CycloneDX is the format Loupe uses.">SBOM</abbr> generator) and Grype (<abbr title="Common Vulnerabilities and Exposures — public catalogue of disclosed security flaws.">CVE</abbr> matcher):</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># macOS via Homebrew</span>
+</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>brew<span class="w"> </span>install<span class="w"> </span>anchore/syft/syft<span class="w"> </span>anchore/grype/grype
+</span><span id="__span-12-3"><a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>
+</span><span id="__span-12-4"><a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="c1"># Linux (one-line installers from the Anchore releases)</span>
+</span><span id="__span-12-5"><a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>curl<span class="w"> </span>-sSfL<span class="w"> </span>https://raw.githubusercontent.com/anchore/syft/main/install.sh<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-12-6"><a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="w">  </span><span class="p">|</span><span class="w"> </span>sh<span class="w"> </span>-s<span class="w"> </span>--<span class="w"> </span>-b<span class="w"> </span>/usr/local/bin
+</span><span id="__span-12-7"><a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>curl<span class="w"> </span>-sSfL<span class="w"> </span>https://raw.githubusercontent.com/anchore/grype/main/install.sh<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-12-8"><a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a><span class="w">  </span><span class="p">|</span><span class="w"> </span>sh<span class="w"> </span>-s<span class="w"> </span>--<span class="w"> </span>-b<span class="w"> </span>/usr/local/bin
+</span><span id="__span-12-9"><a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a>
+</span><span id="__span-12-10"><a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a><span class="c1"># Verify both are on PATH</span>
+</span><span id="__span-12-11"><a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a>syft<span class="w"> </span>version
+</span><span id="__span-12-12"><a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a>grype<span class="w"> </span>version
+</span></code></pre></div>
+<p>Then uncomment the <code>capabilities:</code> block in <code>.loupe/config.yaml</code> so both
+backends are wired:</p>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="nt">capabilities</span><span class="p">:</span>
+</span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">  </span><span class="nt">sbom</span><span class="p">:</span>
+</span><span id="__span-13-3"><a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">    </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">single</span>
+</span><span id="__span-13-4"><a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="w">    </span><span class="nt">backends</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">syft</span><span class="p p-Indicator">]</span>
+</span><span id="__span-13-5"><a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="w">  </span><span class="nt">cve</span><span class="p">:</span>
+</span><span id="__span-13-6"><a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="w">    </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">single</span>
+</span><span id="__span-13-7"><a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="w">    </span><span class="nt">backends</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">grype</span><span class="p p-Indicator">]</span>
+</span></code></pre></div>
+<p>Re-run doctor to confirm the wall is down:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>uv<span class="w"> </span>run<span class="w"> </span>--project<span class="w"> </span>/path/to/loupe<span class="w"> </span>loupe<span class="w"> </span>doctor
+</span></code></pre></div>
+<p>Expected:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>[✓] .loupe/ directory: .loupe
+</span><span id="__span-15-2"><a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>[✓] config.yaml parse: schema_version=1
+</span><span id="__span-15-3"><a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>[✓] context.md: all sections filled
+</span><span id="__span-15-4"><a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>[✓] provider key (anthropic): ANTHROPIC_API_KEY is set
+</span><span id="__span-15-5"><a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>[✓] required capabilities: 2 required cap(s) wired across enabled lenses
+</span><span id="__span-15-6"><a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>[✓] backend cve.grype: grype on PATH
+</span><span id="__span-15-7"><a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a>[✓] backend sbom.syft: syft on PATH
+</span><span id="__span-15-8"><a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a>
+</span><span id="__span-15-9"><a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a>7 ok · 0 warn · 0 fail
+</span></code></pre></div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><strong>Why required, not optional.</strong> <abbr title="Loupe's v1 lens. STRIDE-based threat modelling.">ThreatLens</abbr> declares <code>sbom</code> and <code>cve</code>
+as <code>requires_capabilities</code>, not <code>prefers_capabilities</code>, per
+<a href="../../reference/decisions/#d-23">D-23</a>. The choice favours audit-trail
+integrity over onboarding ergonomics: every threat ever produced by
+<abbr title="Loupe's v1 lens. STRIDE-based threat modelling.">ThreatLens</abbr> carries a real Grype <abbr title="Common Vulnerabilities and Exposures — public catalogue of disclosed security flaws.">CVE</abbr> cross-reference rather than a
+training-data-recalled <abbr title="Common Weakness Enumeration — taxonomy of software-weakness types.">CWE</abbr>. The one-time cost of wiring Syft + Grype
+buys evidence-grade output from the first run forward.</p>
+</div>
+<h2 id="5-run-loupe-ci-against-the-mqtt-cast-diff">5. Run <code>loupe ci</code> against the MQTT-cast diff<a class="headerlink" href="#5-run-loupe-ci-against-the-mqtt-cast-diff" title="Permanent link">&para;</a></h2>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>uv<span class="w"> </span>run<span class="w"> </span>--project<span class="w"> </span>/path/to/loupe<span class="w"> </span>loupe<span class="w"> </span>ci<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-16-2"><a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="w">  </span>--diff-file<span class="w"> </span>/tmp/loupe-validation/mqtt-cast-fix.diff<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-16-3"><a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="w">  </span>--base-sha<span class="w"> </span><span class="s2">&quot;</span><span class="k">$(</span>git<span class="w"> </span>rev-parse<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$SHA</span><span class="s2">&quot;</span>^<span class="k">)</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-16-4"><a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="w">  </span>--head-sha<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$SHA</span><span class="s2">&quot;</span>
+</span></code></pre></div>
+<p>Wall-time roughly 30–60 seconds. The CLI will print a pydantic-ai warning
+about <code>temperature</code> being ignored on Opus 4.7 (cosmetic, harmless — F-08
+tracks the fix), then run Syft and Grype against the Mongoose checkout
+(the <abbr title="Software Bill of Materials. CycloneDX is the format Loupe uses.">SBOM</abbr> + <abbr title="Common Vulnerabilities and Exposures — public catalogue of disclosed security flaws.">CVE</abbr> results land on <code>ctx.sbom</code> / <code>ctx.cve_findings</code> before
+<abbr title="Loupe's v1 lens. STRIDE-based threat modelling.">ThreatLens</abbr> reads them), and finally:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-17-1"><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>Loupe CI complete. Run: run-7414f333.
+</span><span id="__span-17-2"><a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>Lenses run: [&#39;threatlens&#39;]
+</span><span id="__span-17-3"><a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>Warning: 1 threat(s) at warn_on severities (medium):
+</span><span id="__span-17-4"><a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>  - T-003: medium
+</span><span id="__span-17-5"><a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>Gate failure: 2 threat(s) at fail_on severities (critical, high):
+</span><span id="__span-17-6"><a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a>  - T-001: critical
+</span><span id="__span-17-7"><a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a>  - T-002: high
+</span></code></pre></div>
+<p>Exit code is 1: the <code>ci.fail_on: [critical, high]</code> gate fired on the two
+real bugs <abbr title="Loupe's v1 lens. STRIDE-based threat modelling.">ThreatLens</abbr> spotted. That's the product working as designed.</p>
+<p>Read what was proposed:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-18-1"><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>head<span class="w"> </span>-40<span class="w"> </span>.loupe/threats.yaml
+</span></code></pre></div>
+<p>You should see four entries (<code>T-001..T-004</code>) referencing real symbols —
+<code>mg_mqtt_parse</code>, <code>decode_varint</code>, <code>mg_mqtt_next_prop</code> — with <abbr title="Common Weakness Enumeration — taxonomy of software-weakness types.">CWE</abbr>
+cross-references and rationales that tie back to the assets and threat
+actors you authored in <code>context.md</code>. Total cost was around <strong>$0.94</strong> for
+roughly 33k input tokens; the run record under <code>.loupe/runs/*.json</code>
+captures the exact numbers.</p>
+<h2 id="6-verify-hash-chain-and-cross-references">6. Verify hash chain and cross-references<a class="headerlink" href="#6-verify-hash-chain-and-cross-references" title="Permanent link">&para;</a></h2>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-19-1"><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>uv<span class="w"> </span>run<span class="w"> </span>--project<span class="w"> </span>/path/to/loupe<span class="w"> </span>loupe<span class="w"> </span>verify
+</span></code></pre></div>
+<p>Expected:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-20-1"><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>loupe verify: OK
+</span></code></pre></div>
+<p>Strict mode adds protected-path authorship checks (per
+<a href="../../reference/verification/">verification.md</a>):</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-21-1"><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>uv<span class="w"> </span>run<span class="w"> </span>--project<span class="w"> </span>/path/to/loupe<span class="w"> </span>loupe<span class="w"> </span>verify<span class="w"> </span>--strict
+</span></code></pre></div>
+<p>Expected:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-22-1"><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>loupe verify: OK (strict)
+</span></code></pre></div>
+<h2 id="7-run-loupe-scan-over-a-single-source-file">7. Run <code>loupe scan</code> over a single source file<a class="headerlink" href="#7-run-loupe-scan-over-a-single-source-file" title="Permanent link">&para;</a></h2>
+<p><code>loupe ci</code> is the <abbr title="Pull Request — GitHub's term for a proposed change.">PR</abbr>-shaped, diff-mode entry point. <code>loupe scan</code> is the
+<a href="../../reference/decisions/#d-15">D-15</a> whole-file (or whole-repo) entry
+point — bypasses the per-lens relevance threshold, used for onboarding and
+re-baselining. Under <a href="../../reference/decisions/#d-24">D-24</a>, scoped scans
+read the bytes of the files you pointed at and render them into the agent
+prompt under a "## Source files under analysis" section. Scope it tight
+on the first run so the cost stays predictable:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-23-1"><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>uv<span class="w"> </span>run<span class="w"> </span>--project<span class="w"> </span>/path/to/loupe<span class="w"> </span>loupe<span class="w"> </span>scan<span class="w"> </span>--paths<span class="w"> </span>src/mqtt.c
+</span></code></pre></div>
+<div class="admonition tip">
+<p class="admonition-title">Important</p>
+<p><code>loupe scan</code> takes paths through the <strong><code>--paths</code> flag</strong>, repeatable
+per file — <em>not</em> as positional arguments. (<code>loupe scan src/mqtt.c</code>
+currently errors with <code>Got unexpected extra arguments</code>. Tracked as
+F-05 in the validation gap log; positional support lands in
+Phase C.)</p>
+</div>
+<p>Optional flags:</p>
+<ul>
+<li><code>--max-chars-per-file &lt;N&gt;</code> (default 50,000) — per-file char cap.
+  Files larger than the cap truncate at the cap with a visible marker.
+  Lower this for a tight budget; raise it for thorough single-file
+  analysis. The scaffolded <code>per_run_max_usd.scan</code> ceiling ($5.00) is
+  the matching guardrail for runaway scans.</li>
+</ul>
+<p>Wall-time roughly 1–2 minutes; cost typically <strong>$1.50–$2.50</strong> for a
+single C source file at Opus 4.7 prices (the file bytes plus system
+prompt plus <code>context.md</code> are around 13–15k input tokens per agent
+round; 12–16 rounds depending on tool-call traffic). The output ends
+with:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-24-1"><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>Loupe scan complete. Run: run-ba9c630c (scope=scoped).
+</span><span id="__span-24-2"><a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a>Lenses run: [&#39;threatlens&#39;]
+</span></code></pre></div>
+<p>Inspect the run record telemetry to confirm the scan accounted for tokens
+and cost correctly:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-25-1"><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>python3<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;</span>
+</span><span id="__span-25-2"><a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a><span class="s2">import json</span>
+</span><span id="__span-25-3"><a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a><span class="s2">from pathlib import Path</span>
+</span><span id="__span-25-4"><a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a><span class="s2">runs = sorted(Path(&#39;.loupe/runs&#39;).glob(&#39;*.json&#39;))</span>
+</span><span id="__span-25-5"><a id="__codelineno-25-5" name="__codelineno-25-5" href="#__codelineno-25-5"></a><span class="s2">data = json.loads(runs[-1].read_text())</span>
+</span><span id="__span-25-6"><a id="__codelineno-25-6" name="__codelineno-25-6" href="#__codelineno-25-6"></a><span class="s2">for key in (&#39;run_id&#39;,&#39;trigger&#39;,&#39;total_tokens_in&#39;,&#39;total_tokens_out&#39;,&#39;cost_usd_estimate&#39;,&#39;models_used&#39;):</span>
+</span><span id="__span-25-7"><a id="__codelineno-25-7" name="__codelineno-25-7" href="#__codelineno-25-7"></a><span class="s2">    print(f&#39;{key}={data[key]}&#39;)</span>
+</span><span id="__span-25-8"><a id="__codelineno-25-8" name="__codelineno-25-8" href="#__codelineno-25-8"></a><span class="s2">print(f&#39;artifacts_changed_count={len(data[\&quot;artifacts_changed\&quot;])}&#39;)</span>
+</span><span id="__span-25-9"><a id="__codelineno-25-9" name="__codelineno-25-9" href="#__codelineno-25-9"></a><span class="s2">&quot;</span>
+</span></code></pre></div>
+<p>Expected shape (exact numbers vary with model output and scoped-file size):</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-26-1"><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>run_id=run-&lt;random&gt;
+</span><span id="__span-26-2"><a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>trigger=manual_scan_scoped
+</span><span id="__span-26-3"><a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a>total_tokens_in=&lt;roughly 13k–60k depending on file size&gt;
+</span><span id="__span-26-4"><a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a>total_tokens_out=&lt;roughly 3k–10k&gt;
+</span><span id="__span-26-5"><a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a>cost_usd_estimate=&lt;roughly 1.50–2.50 for a single ~2k-line C file at Opus 4.7&gt;
+</span><span id="__span-26-6"><a id="__codelineno-26-6" name="__codelineno-26-6" href="#__codelineno-26-6"></a>models_used={&#39;threatlens&#39;: &#39;anthropic:claude-opus-4-7&#39;}
+</span><span id="__span-26-7"><a id="__codelineno-26-7" name="__codelineno-26-7" href="#__codelineno-26-7"></a>artifacts_changed_count=&lt;number of threats proposed&gt;
+</span></code></pre></div>
+<p><code>artifacts_changed_count</code> matches the number of <code>threat:</code> entries in
+<code>threats.yaml</code>. Run <code>loupe verify --strict</code> again — it should still pass.</p>
+<p>The pre-D-24 baseline cost (when scan-mode sent zero source bytes) was
+roughly $1.10 for the same <code>src/mqtt.c</code> scope; the difference is the
+file's content tokens, which is exactly what changed when D-24 wired
+the source-reading path. Threats produced now anchor to actual code
+the operator pointed at, not to training-data recall of Mongoose's
+public source.</p>
+<h2 id="what-youve-validated">What you've validated<a class="headerlink" href="#what-youve-validated" title="Permanent link">&para;</a></h2>
+<p>If every command above produced the expected output:</p>
+<ol>
+<li>The CLI surface (<code>doctor</code>, <code>init</code>, <code>ci</code>, <code>scan</code>, <code>verify</code>) works
+   end-to-end from a project root that is <em>not</em> the <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr> checkout.</li>
+<li><abbr title="Loupe's v1 lens. STRIDE-based threat modelling.">ThreatLens</abbr> makes a real Anthropic API call and emits threats that
+   reference real source symbols, real CWEs, and real assets from
+   <code>context.md</code>. Both <code>loupe ci</code> (against a diff) and <code>loupe scan
+   --paths</code> (against scoped source files) anchor their threats to
+   the actual code bytes you fed in.</li>
+<li>The <code>ci.fail_on</code> gate fires on the correct severities.</li>
+<li>The run record's per-lens telemetry (token counts, cost estimate,
+   model id, artefacts changed) survives the round-trip through both
+   <code>loupe ci</code> and <code>loupe scan</code>.</li>
+<li><code>loupe verify --strict</code> confirms the hash chain and protected-path
+   authorship hold under the produced run sequence.</li>
+</ol>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><strong>Capability context.</strong> This walkthrough runs <abbr title="Loupe's v1 lens. STRIDE-based threat modelling.">ThreatLens</abbr> after wiring
+Syft (<abbr title="Software Bill of Materials. CycloneDX is the format Loupe uses.">SBOM</abbr>) and Grype (<abbr title="Common Vulnerabilities and Exposures — public catalogue of disclosed security flaws.">CVE</abbr>) in Step 4.5, so <code>ctx.sbom</code> and
+<code>ctx.cve_findings</code> are populated before the lens reads them. The <abbr title="Common Weakness Enumeration — taxonomy of software-weakness types.">CWE</abbr>
+references in the threats above are anchored to the real Grype scan
+against Mongoose's dependency graph rather than training-data recall.
+Skip Step 4.5 and <code>loupe ci</code> will exit 64 (<a href="../../reference/decisions/#d-23">D-23</a>) — the wall is deliberate.</p>
+</div>
+<h2 id="where-to-go-next">Where to go next<a class="headerlink" href="#where-to-go-next" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Wire <abbr title="Software Bill of Materials. CycloneDX is the format Loupe uses.">SBOM</abbr> + <abbr title="Common Vulnerabilities and Exposures — public catalogue of disclosed security flaws.">CVE</abbr> capability backends to give <abbr title="Loupe's v1 lens. STRIDE-based threat modelling.">ThreatLens</abbr> more context.
+  See <a href="../../concepts/capabilities/">concepts/capabilities.md</a> and uncomment
+  the <code>capabilities:</code> block in <code>.loupe/config.yaml</code>.</li>
+<li>Wire the <a href="../../quickstart/#wire-up-the-github-action">GitHub Action</a> so
+  every <abbr title="Pull Request — GitHub's term for a proposed change.">PR</abbr> gets the same treatment.</li>
+<li>Run <a href="../../how-to/run-mcp-server/"><code>loupe mcp</code></a> and expose <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr>'s read
+  tools to your editor / agent host.</li>
+<li>For the Mosquitto Tier 2 release-evaluation flow,
+  <a href="../../reference/evaluation/#tier-2-eclipse-mosquitto-release-evaluation">evaluation.md</a>
+  has the methodology; the <code>benchmarks/</code> scaffold lands in Phase 10.</li>
+</ul>
+
+
+
+
+
+
+
+  
+    
+  
+  
+    
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Last update">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 16, 2026 18:35:44 UTC">May 16, 2026</span>
+  </span>
+
+    
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Created">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 16, 2026 15:26:34 UTC">May 16, 2026</span>
+  </span>
+
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../" class="md-footer__link md-footer__link--prev" aria-label="Previous: Overview">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Overview
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../../how-to/" class="md-footer__link md-footer__link--next" aria-label="Next: Overview">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Overview
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 Fadi Labib · <a href="https://github.com/fadi-labib/loupe/blob/main/LICENSE">Apache 2.0</a> · <a href="https://github.com/fadi-labib/loupe/blob/main/SECURITY.md">Security</a> · <a href="changelog/">Changelog</a>
+
+    </div>
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+    <a href="https://github.com/fadi-labib/loupe" target="_blank" rel="noopener" title="Source on GitHub" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../..", "features": ["announce.dismiss", "navigation.instant", "navigation.instant.prefetch", "navigation.instant.progress", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.indexes", "navigation.prune", "navigation.top", "navigation.path", "navigation.footer", "toc.follow", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.code.annotate", "content.tabs.link", "content.tooltips", "content.footnote.tooltips", "content.action.edit", "content.action.view"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"alias": true, "default": "latest", "provider": "mike"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      
+    
+  </body>
+</html>

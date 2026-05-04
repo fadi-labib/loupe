@@ -642,6 +642,8 @@
           
         
       
+        
+      
     
     
     
@@ -1082,6 +1084,21 @@
       How a lens declares its needs
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="How a lens declares its needs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-operators-see-the-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      How operators see the contract
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1603,6 +1620,21 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="How a lens declares its needs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-operators-see-the-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      How operators see the contract
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1934,15 +1966,19 @@
 <p>The result types are stable Pydantic models, so pipelines compose safely.</p>
 <hr />
 <h2 id="how-a-lens-declares-its-needs">How a lens declares its needs<a class="headerlink" href="#how-a-lens-declares-its-needs" title="Permanent link">&para;</a></h2>
-<p>The lens contract grows by exactly one field: <code>requires_capabilities</code>.</p>
+<p>A lens distinguishes hard dependencies from soft dependencies via two fields (<a href="../../reference/decisions/#d-23">D-23</a>):</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">LensCapabilities</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
 </span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
 </span><span id="__span-11-3"><a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>    <span class="n">domain</span><span class="p">:</span> <span class="nb">str</span>
 </span><span id="__span-11-4"><a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>    <span class="n">handles_intent_keywords</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
 </span><span id="__span-11-5"><a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>    <span class="n">artifact_paths</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
 </span><span id="__span-11-6"><a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>    <span class="n">requires_lenses</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
-</span><span id="__span-11-7"><a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>    <span class="n">requires_capabilities</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>  <span class="c1"># NEW</span>
+</span><span id="__span-11-7"><a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>    <span class="n">requires_capabilities</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>  <span class="c1"># hard: lens won&#39;t run without these</span>
+</span><span id="__span-11-8"><a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>    <span class="n">prefers_capabilities</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>   <span class="c1"># soft: lens runs degraded if missing</span>
 </span></code></pre></div>
+<p><strong>Required (<code>requires_capabilities</code>).</strong> The lens contract states the lens cannot produce evidence without the capability. If a required capability is unavailable at bootstrap time — operator hasn't wired a backend, the configured backend's binary isn't on <code>PATH</code>, the backend crashes during its <code>run()</code> — <code>bootstrap_capabilities()</code> raises <code>RequiredCapabilityUnavailable</code> and the CLI exits <strong>64</strong> (BSD <code>EX_USAGE</code> — operator-configuration error). The lens never executes. Exit 1 stays reserved for runs where lenses produced findings that tripped <code>ci.fail_on</code>; the distinction matters for <abbr title="Continuous Integration.">CI</abbr> wrappers that switch on exit codes.</p>
+<p><strong>Preferred (<code>prefers_capabilities</code>).</strong> The lens contract states "I work better with this capability, but I can fall back without it." If a preferred capability is unavailable, the bootstrap returns a <code>CapabilityDegradation</code> entry naming the lens, the capability, and the failure kind (<code>unconfigured</code> / <code>backend_error</code> / <code>not_found</code> / <code>entry_point_malformed</code>). The matching slot on <code>RunContext</code> stays <code>None</code>; the lens runs and reads <code>None</code> instead of the typed result. The degradation persists on the run record's <code>capability_degraded</code> field so auditors can replay the run and see exactly which inputs were missing.</p>
+<p><strong>Required wins on disagreement.</strong> If lens A declares <code>sbom</code> in <code>requires_capabilities</code> and lens B declares <code>sbom</code> in <code>prefers_capabilities</code>, <code>sbom</code> is treated as required globally — the strictest contract wins. Implicit transitive dependencies (e.g. <code>cve</code> → <code>sbom</code>) inherit the strictest policy of the capabilities that pulled them in.</p>
 <p>Example for <abbr title="Loupe's v1 lens. STRIDE-based threat modelling.">ThreatLens</abbr> v1.x:</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">ThreatLens</span><span class="p">:</span>
 </span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>    <span class="n">capabilities</span> <span class="o">=</span> <span class="n">LensCapabilities</span><span class="p">(</span>
@@ -1950,17 +1986,26 @@
 </span><span id="__span-12-4"><a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>        <span class="n">domain</span><span class="o">=</span><span class="s2">&quot;security&quot;</span><span class="p">,</span>
 </span><span id="__span-12-5"><a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>        <span class="n">handles_intent_keywords</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;threat&quot;</span><span class="p">,</span> <span class="s2">&quot;STRIDE&quot;</span><span class="p">,</span> <span class="s2">&quot;CRA&quot;</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span>
 </span><span id="__span-12-6"><a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>        <span class="n">artifact_paths</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;.loupe/threats.yaml&quot;</span><span class="p">,</span> <span class="s2">&quot;.loupe/vex.json&quot;</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span>
-</span><span id="__span-12-7"><a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>        <span class="n">requires_capabilities</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;sbom&quot;</span><span class="p">,</span> <span class="s2">&quot;cve&quot;</span><span class="p">,</span> <span class="s2">&quot;secret_detect&quot;</span><span class="p">],</span>   <span class="c1"># ← NEW</span>
+</span><span id="__span-12-7"><a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>        <span class="n">requires_capabilities</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;sbom&quot;</span><span class="p">,</span> <span class="s2">&quot;cve&quot;</span><span class="p">],</span>   <span class="c1"># hard: no LLM call without Grype evidence</span>
 </span><span id="__span-12-8"><a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>    <span class="p">)</span>
 </span><span id="__span-12-9"><a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a>
 </span><span id="__span-12-10"><a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">,</span> <span class="n">plan_entry</span><span class="p">,</span> <span class="n">boundary</span><span class="p">,</span> <span class="n">loupe_dir</span><span class="p">):</span>
 </span><span id="__span-12-11"><a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a>        <span class="c1"># ctx.sbom and ctx.cve_findings are populated by bootstrap_capabilities()</span>
 </span><span id="__span-12-12"><a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a>        <span class="c1"># before any lens runs. Each lens reads typed results off the blackboard.</span>
-</span><span id="__span-12-13"><a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a>        <span class="n">sbom</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">sbom</span>                <span class="c1"># SbomResult, or None if no SBOM backend ran</span>
-</span><span id="__span-12-14"><a id="__codelineno-12-14" name="__codelineno-12-14" href="#__codelineno-12-14"></a>        <span class="n">cves</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">cve_findings</span>        <span class="c1"># CveResult, or None</span>
+</span><span id="__span-12-13"><a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a>        <span class="n">sbom</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">sbom</span>                <span class="c1"># SbomResult — never None, contract enforced upstream</span>
+</span><span id="__span-12-14"><a id="__codelineno-12-14" name="__codelineno-12-14" href="#__codelineno-12-14"></a>        <span class="n">cves</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">cve_findings</span>        <span class="c1"># CveResult — likewise</span>
 </span><span id="__span-12-15"><a id="__codelineno-12-15" name="__codelineno-12-15" href="#__codelineno-12-15"></a>        <span class="c1"># Hand structured results to the agent; no LLM call needed for these inputs.</span>
 </span></code></pre></div>
+<p><abbr title="Loupe's v1 lens. STRIDE-based threat modelling.">ThreatLens</abbr> picks <code>requires</code> over <code>prefers</code> for <code>sbom</code> and <code>cve</code> deliberately: every threat produced anchors a <abbr title="Common Weakness Enumeration — taxonomy of software-weakness types.">CWE</abbr> reference to a real Grype scan rather than to training-data recall. The first-run cost of installing Syft + Grype is one-time; the audit-trail integrity gain has no expiration date. A future lens (e.g. <code>PrivacyLens</code>) might reasonably declare <code>pii_detection</code> as required and <code>static_analysis</code> as preferred — the per-lens choice is recorded in <code>LensCapabilities</code> where code review can see it.</p>
 <p>The lens does not know which backend(s) produced the results. That's the point.</p>
+<h3 id="how-operators-see-the-contract">How operators see the contract<a class="headerlink" href="#how-operators-see-the-contract" title="Permanent link">&para;</a></h3>
+<p>The wall is visible in three places before any <abbr title="Large Language Model.">LLM</abbr> call:</p>
+<ol>
+<li><strong><code>loupe init</code></strong> finishes with a "Next: install Syft + Grype, then uncomment the <code>capabilities:</code> block" message.</li>
+<li><strong><code>loupe doctor</code></strong> emits a <code>[✗]</code> row per unwired required capability: <code>[✗] capabilities[sbom]: lens 'threatlens' requires 'sbom' but no backends are wired …</code>. Doctor exits 64 when any required cap is unwired; this matches what <code>loupe ci</code> would have done one step later.</li>
+<li><strong><code>loupe ci</code> / <code>loupe scan</code></strong> themselves exit 64 with the same diagnostic if the operator skipped doctor.</li>
+</ol>
+<p>After Syft + Grype install and the <code>capabilities:</code> block is uncommented, doctor turns <code>[✓]</code> and <code>loupe ci</code> runs end-to-end. Preferred-capability degradations show up in the run record but never on stderr at exit time, so a <abbr title="Continuous Integration.">CI</abbr> run with one degraded preferred capability still exits 0.</p>
 <hr />
 <h2 id="coordinator-behaviour">Coordinator behaviour<a class="headerlink" href="#coordinator-behaviour" title="Permanent link">&para;</a></h2>
 <p>The coordinator's existing relevance + dependency logic gains one new check: <strong>does the project have backends installed for every capability the selected lenses require?</strong></p>
@@ -2093,7 +2138,7 @@
 </tr>
 <tr>
 <td>Cross-lens capability reuse (SafetyLens can reuse <abbr title="Software Bill of Materials. CycloneDX is the format Loupe uses.">SBOM</abbr>, secret-detect from day one)</td>
-<td>Lens authors must declare <code>requires_capabilities</code> honestly</td>
+<td>Lens authors must pick <code>requires_capabilities</code> vs <code>prefers_capabilities</code> honestly per <a href="../../reference/decisions/#d-23">D-23</a></td>
 </tr>
 <tr>
 <td>Composition modes (<code>union</code>, <code>consensus</code>) the auditor story benefits from</td>
@@ -2154,7 +2199,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 15, 2026 23:50:31 UTC">May 15, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 16, 2026 17:41:59 UTC">May 16, 2026</span>
   </span>
 
     
