@@ -72,6 +72,14 @@ def build_user_prompt(ctx: RunContext, plan_entry: LensRunPlan) -> str:
         _diff_section(ctx),
     ]
 
+    # D-24: scoped source files (from `loupe scan --paths …`). Empty
+    # in diff-mode and full-repo scans — the section is omitted entirely
+    # so ci-mode prompts stay byte-identical to pre-B.5 prompts (cache
+    # breakpoint invariant). Placement between diff and SBOM keeps the
+    # "what code are we looking at" content clustered.
+    if ctx.scoped_sources:
+        sections.append(_sources_section(ctx.scoped_sources))
+
     if ctx.sbom is not None and ctx.sbom.components:
         sections.append(_sbom_section(ctx.sbom))
 
@@ -121,6 +129,53 @@ def _diff_section(ctx: RunContext) -> str:
         f"## Code changes ({path_count} file{plural}: {files_summary})\n\n"
         f"```diff\n{ctx.diff.raw_unified}\n```"
     )
+
+
+def _sources_section(scoped_sources: list) -> str:
+    """D-24 — render scoped source files for `loupe scan --paths`.
+
+    Each file becomes a fenced code block with the path as a header.
+    Files that hit the per-file char cap carry a visible "(truncated
+    at N chars)" subheader so the agent knows the content is partial
+    and can flag findings as needing follow-up beyond the cut.
+
+    Language hint on the fence is derived from the file extension —
+    `.c`/`.cpp` -> c, `.py` -> python, etc. Falls back to plain text
+    for unknown extensions (shouldn't happen given the CODE_EXTENSIONS
+    filter in scan_cmd, but defensive).
+    """
+    blocks: list[str] = []
+    for src in scoped_sources:
+        ext = src.path.rsplit(".", 1)[-1].lower() if "." in src.path else ""
+        lang = _EXT_TO_FENCE_LANG.get(ext, "")
+        header = f"### {src.path}"
+        if src.truncated_at is not None:
+            header += f"\n_(truncated at {src.truncated_at} chars)_"
+        fence = f"```{lang}\n{src.content}\n```"
+        blocks.append(f"{header}\n\n{fence}")
+    body = "\n\n".join(blocks)
+    return f"## Source files under analysis\n\n{body}"
+
+
+# Language-fence hints keyed on file extension. The loupe_core.fs
+# CODE_EXTENSIONS list drives which files we read; this map only
+# affects the fenced-code-block's syntax-highlighting hint.
+_EXT_TO_FENCE_LANG: dict[str, str] = {
+    "c": "c",
+    "cpp": "cpp",
+    "cs": "csharp",
+    "go": "go",
+    "java": "java",
+    "js": "javascript",
+    "jsx": "jsx",
+    "kt": "kotlin",
+    "py": "python",
+    "rb": "ruby",
+    "rs": "rust",
+    "swift": "swift",
+    "ts": "typescript",
+    "tsx": "tsx",
+}
 
 
 def _sbom_section(sbom: SbomResult) -> str:

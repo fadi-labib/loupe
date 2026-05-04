@@ -271,3 +271,91 @@ def test_user_prompt_prefix_stable_across_subprompts():
     assert a[:pos_a] == b[:pos_b], (
         "stable prefix content must be byte-identical when only sub_prompt differs"
     )
+
+
+# ---------------------------------------------------------------------------
+# B.5: scoped_sources rendering (D-24)
+# ---------------------------------------------------------------------------
+
+
+def test_sources_section_omitted_when_scoped_sources_empty():
+    """ci-mode and full-repo scans produce empty scoped_sources; the
+    section must disappear entirely so existing prompt-cache breakpoints
+    aren't busted by an unexpected "## Source files under analysis" header."""
+    out = build_user_prompt(_ctx(), _plan())
+    assert "Source files under analysis" not in out
+
+
+def test_sources_section_renders_file_path_and_content():
+    """D-24 / B.5: `loupe scan --paths src/mqtt.c` puts the file into the
+    prompt as a fenced code block under a "## Source files under analysis"
+    section so the LLM actually reads the bytes."""
+    from loupe_core.run_context import ScopedSource
+
+    ctx = _ctx()
+    ctx.scoped_sources = [
+        ScopedSource(
+            path="src/mqtt.c",
+            content="int decode_varint(){\n  return 0;\n}\n",
+            truncated_at=None,
+        )
+    ]
+    out = build_user_prompt(ctx, _plan())
+    assert "## Source files under analysis" in out
+    assert "### src/mqtt.c" in out
+    assert "decode_varint" in out
+    # Language hint on the fence — .c gets "c"
+    assert "```c" in out
+
+
+def test_sources_section_marks_truncated_files():
+    """Files that hit --max-chars-per-file render with a visible
+    "(truncated at N chars)" subheader so the agent flags findings that
+    might live past the cut as needing follow-up."""
+    from loupe_core.run_context import ScopedSource
+
+    ctx = _ctx()
+    ctx.scoped_sources = [
+        ScopedSource(
+            path="big.py",
+            content="x = 1\n" * 100 + "\n... [truncated at 600 chars]\n",
+            truncated_at=600,
+        )
+    ]
+    out = build_user_prompt(ctx, _plan())
+    assert "truncated at 600 chars" in out
+    assert "```python" in out
+
+
+def test_sources_section_falls_between_diff_and_sbom():
+    """The section's placement matters for prompt-cache stability:
+    diff first, sources next, then SBOM. Two scans with the same
+    scoped_sources must produce a byte-identical prefix."""
+    from loupe_core.run_context import ScopedSource
+
+    ctx = _ctx()
+    ctx.scoped_sources = [ScopedSource(path="src/a.py", content="pass\n", truncated_at=None)]
+    ctx.sbom = SbomResult(
+        components=[SbomComponent(name="requests", version="2.31.0")],
+        backend_name="syft",
+    )
+    out = build_user_prompt(ctx, _plan())
+    diff_idx = out.find("## Code changes")
+    sources_idx = out.find("## Source files under analysis")
+    sbom_idx = out.find("## SBOM components")
+    assert diff_idx < sources_idx < sbom_idx
+
+
+def test_two_identical_scoped_sources_produce_identical_prefix():
+    """Stable-prefix invariant: same ctx + same plan_entry => byte-identical
+    prompt prefix. Required so Anthropic prompt-cache breakpoints don't
+    miss across consecutive calls in the same agentic loop."""
+    from loupe_core.run_context import ScopedSource
+
+    ctx_a = _ctx()
+    ctx_a.scoped_sources = [ScopedSource(path="src/a.py", content="pass\n", truncated_at=None)]
+    ctx_b = _ctx()
+    ctx_b.scoped_sources = [ScopedSource(path="src/a.py", content="pass\n", truncated_at=None)]
+    out_a = build_user_prompt(ctx_a, _plan())
+    out_b = build_user_prompt(ctx_b, _plan())
+    assert out_a == out_b
