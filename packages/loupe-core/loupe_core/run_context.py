@@ -91,6 +91,29 @@ class ProposedPatch(BaseModel):
     rationale: str
 
 
+class ScopedSource(BaseModel):
+    """D-24 — one source file the operator scoped via `loupe scan --paths`.
+
+    `content` is UTF-8-decoded text (with replacement on invalid bytes) so
+    the prompt builder can drop it into a fenced code block directly.
+    `truncated_at` is `None` for files that fit within the per-file cap;
+    otherwise it's the character index at which truncation happened (the
+    cap value), and a truncation marker is appended to `content`. The
+    prompt builder uses the field to render an honest "(truncated at N
+    chars)" header rather than silently presenting partial code.
+    """
+
+    path: str = Field(description="Project-root-relative POSIX path.")
+    content: str = Field(description="UTF-8 text. May end with a truncation marker.")
+    truncated_at: int | None = Field(
+        default=None,
+        description=(
+            "Character count at which the file was truncated, or None if the "
+            "full content fit within the per-file cap."
+        ),
+    )
+
+
 class LensUsage(BaseModel):
     """Per-lens token / cost record captured after the agent run completes.
 
@@ -128,6 +151,13 @@ class RunContext(BaseModel):
     # repo; "scoped" runs every enabled lens against scope_paths only.
     scope: Literal["diff", "full", "scoped"] = "diff"
     scope_paths: list[str] = Field(default_factory=list)
+    # D-24: source files the operator scoped via `loupe scan --paths`,
+    # read into memory by scan_cmd through safe_read_under. The prompt
+    # builder renders these in a `_sources_section` between the diff
+    # section and the SBOM section so the LLM actually sees the code
+    # the user pointed at. Empty in ci-mode and on full-repo scans
+    # (those don't pre-load source bytes).
+    scoped_sources: list[ScopedSource] = Field(default_factory=list)
 
     # D-18: typed capability results, populated once before lenses run
     # so every lens reads the same cached output (VALUES §4).

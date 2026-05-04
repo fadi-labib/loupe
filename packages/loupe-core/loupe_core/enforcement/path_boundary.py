@@ -107,6 +107,7 @@ def safe_read_under(
     project_root: Path,
     target: Path,
     max_bytes: int,
+    on_oversize: str = "raise",
 ) -> bytes:
     """Read `target` bytes after verifying every component is non-symlink.
 
@@ -121,9 +122,14 @@ def safe_read_under(
     the relative-to-root check raise `BoundaryViolation` from
     `loupe_core.tools` to match the write-side error type.
 
-    Size cap: reads up to `max_bytes + 1` and raises `ReadTooLarge` if
-    the file contains more than `max_bytes`. Callers truncate to
-    `max_bytes` themselves so they control the truncation marker shape.
+    Size handling (`on_oversize`):
+    - "raise" (default) — fstat the open fd, raise ReadTooLarge if the
+      file exceeds max_bytes. Use this for the audit-grade path where
+      you want a loud failure on unexpectedly large inputs.
+    - "truncate" — read up to max_bytes bytes and return whatever fit;
+      caller compares len(returned) == max_bytes to detect truncation.
+      Use this for scan_cmd's source-reading where partial-content with
+      a visible truncation marker is the right UX.
     """
     # Import locally to avoid a circular dependency: tools.py imports
     # path_boundary, and BoundaryViolation logically belongs alongside
@@ -185,12 +191,20 @@ def safe_read_under(
             raise BoundaryViolation(f"refused to follow symlink at target {target_str!r}") from exc
         # fstat on the already-open fd gives the real size with no TOCTOU
         # window (anything that swaps the file after this point won't be
-        # seen — we hold the inode through the fd). Use it to report
-        # actual_bytes accurately on overflow.
+        # seen — we hold the inode through the fd). Use it to decide
+        # between raise and truncate modes.
         actual_size = os.fstat(fd).st_size
         if actual_size > max_bytes:
-            os.close(fd)
-            raise ReadTooLarge(target=target_str, actual_bytes=actual_size, max_bytes=max_bytes)
+            if on_oversize == "raise":
+                os.close(fd)
+                raise ReadTooLarge(target=target_str, actual_bytes=actual_size, max_bytes=max_bytes)
+            if on_oversize != "truncate":
+                os.close(fd)
+                raise ValueError(f"on_oversize must be 'raise' or 'truncate', got {on_oversize!r}")
+            # Truncation mode: return exactly max_bytes bytes. Caller
+            # compares len(result) == max_bytes to detect the cut.
+            with os.fdopen(fd, "rb", closefd=True) as f:
+                return f.read(max_bytes)
         with os.fdopen(fd, "rb", closefd=True) as f:
             return f.read(max_bytes + 1)  # +1 only as a safety margin
     finally:

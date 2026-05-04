@@ -155,6 +155,16 @@ def scan_cmd(
         help="Limit scan to these paths (repeatable). Empty = full-repo scan.",
     ),
     config: Path = typer.Option(Path(".loupe/config.yaml"), "--config"),
+    max_chars_per_file: int = typer.Option(
+        50_000,
+        "--max-chars-per-file",
+        help=(
+            "Per-file source-byte cap for scoped scans (D-24). Files larger "
+            "than this truncate at the cap with a visible marker. Lower this "
+            "for tight budgets; raise it (and the scan budget) for thorough "
+            "single-file analysis."
+        ),
+    ),
 ) -> None:
     """Run Loupe over the whole repo (or a subset) — D-15 scan mode.
 
@@ -162,7 +172,7 @@ def scan_cmd(
     enabled=False) are still skipped. Use when onboarding, re-baselining,
     or doing an architectural review.
     """
-    raise typer.Exit(code=scan_command(paths, config))
+    raise typer.Exit(code=scan_command(paths, config, max_chars_per_file))
 
 
 @app.command("mcp")

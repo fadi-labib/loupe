@@ -60,6 +60,12 @@ def test_scan_scoped_with_paths(tmp_path, monkeypatch):
     """`loupe scan --paths src/payments/` runs in scoped mode (D-15)."""
     monkeypatch.chdir(tmp_path)
     loupe = _init_project(tmp_path)
+    # B.4: scoped scan reads source files; create real ones under
+    # project root so _assemble_scoped_sources finds them.
+    (tmp_path / "src" / "payments").mkdir(parents=True)
+    (tmp_path / "src" / "payments" / "checkout.py").write_text("def pay(): ...\n")
+    (tmp_path / "src" / "api").mkdir(parents=True)
+    (tmp_path / "src" / "api" / "handlers.py").write_text("def handle(): ...\n")
 
     result = runner.invoke(
         app,
@@ -247,3 +253,104 @@ def test_scan_run_record_artifacts_changed_reflects_proposed_findings(
     record = load_run_records(scan_loupe_dir / "runs")[0]
     assert "threat:T-001" in record.artifacts_changed
     assert "threat:T-002" in record.artifacts_changed
+
+
+# ---------------------------------------------------------------------------
+# B.4: scan_cmd source assembly (D-24)
+# ---------------------------------------------------------------------------
+
+
+def test_scan_paths_nonexistent_exits_64(tmp_path, monkeypatch):
+    """A --paths entry that doesn't exist under project root is a config
+    error, not a silent skip. Exits 64 with a stderr message naming the
+    missing path."""
+    monkeypatch.chdir(tmp_path)
+    _init_project(tmp_path)
+
+    result = runner.invoke(app, ["scan", "--paths", "src/does_not_exist.c"])
+    assert result.exit_code == 64, result.stdout
+    combined = (result.stdout or "") + (result.stderr or "")
+    assert "does_not_exist" in combined
+    assert "not found" in combined.lower()
+
+
+def test_scan_paths_outside_project_root_rejected(tmp_path, monkeypatch):
+    """A --paths entry outside project root is refused via the same
+    containment check used by safe_read_under. Defends against
+    `loupe scan --paths ../../etc/passwd` exfiltration."""
+    monkeypatch.chdir(tmp_path)
+    _init_project(tmp_path)
+    # Create a target outside the project root that exists.
+    (tmp_path.parent / "outside.c").write_text("secret\n")
+
+    result = runner.invoke(app, ["scan", "--paths", "../outside.c"])
+    assert result.exit_code == 64, result.stdout
+    combined = (result.stdout or "") + (result.stderr or "")
+    # Either the assembly check or the boundary check rejects it.
+    assert "outside" in combined.lower() or "project" in combined.lower()
+
+
+def test_scan_paths_unsupported_extension_rejected(tmp_path, monkeypatch):
+    """Single-file --paths with an unsupported extension is rejected
+    explicitly so the operator notices when they pointed at the wrong
+    file. (Directory expansions silently skip unsupported files instead.)
+    """
+    monkeypatch.chdir(tmp_path)
+    _init_project(tmp_path)
+    (tmp_path / "README.md").write_text("# readme\n")
+
+    result = runner.invoke(app, ["scan", "--paths", "README.md"])
+    assert result.exit_code == 64, result.stdout
+
+
+def test_scan_populates_scoped_sources_on_runcontext(tmp_path, monkeypatch):
+    """The scoped-source bytes must land on ctx.scoped_sources before the
+    lens dispatches. We patch dispatch_plan to capture ctx and verify the
+    contents — the lens-side prompt rendering is tested separately in
+    user_prompt tests."""
+    monkeypatch.chdir(tmp_path)
+    _init_project(tmp_path)
+    target = tmp_path / "src" / "mqtt.c"
+    target.parent.mkdir()
+    target.write_text("int decode_varint(){\n  return 0;\n}\n")
+
+    captured: dict = {}
+
+    async def _capture(ctx, lenses, boundary, loupe_dir):
+        captured["ctx"] = ctx
+
+    monkeypatch.setattr("loupe_cli.scan_cmd.dispatch_plan", _capture)
+
+    result = runner.invoke(app, ["scan", "--paths", "src/mqtt.c"])
+    assert result.exit_code == 0, result.stdout
+
+    ctx = captured["ctx"]
+    assert len(ctx.scoped_sources) == 1
+    src = ctx.scoped_sources[0]
+    assert src.path == "src/mqtt.c"
+    assert "decode_varint" in src.content
+    assert src.truncated_at is None
+
+
+def test_scan_truncates_oversize_file_with_visible_marker(tmp_path, monkeypatch):
+    """Files larger than --max-chars-per-file truncate at the cap and emit
+    a visible marker so the LLM (and the human reading the run record) can
+    see that more code exists beyond the cut."""
+    monkeypatch.chdir(tmp_path)
+    _init_project(tmp_path)
+    target = tmp_path / "big.py"
+    target.write_text("x = 1\n" * 5_000)  # ~30k chars
+
+    captured: dict = {}
+
+    async def _capture(ctx, lenses, boundary, loupe_dir):
+        captured["ctx"] = ctx
+
+    monkeypatch.setattr("loupe_cli.scan_cmd.dispatch_plan", _capture)
+
+    result = runner.invoke(app, ["scan", "--paths", "big.py", "--max-chars-per-file", "1000"])
+    assert result.exit_code == 0, result.stdout
+
+    src = captured["ctx"].scoped_sources[0]
+    assert src.truncated_at == 1000
+    assert "[truncated at 1000 chars]" in src.content
