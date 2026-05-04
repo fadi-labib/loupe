@@ -66,7 +66,9 @@ ADR-style records for risks the team has explicitly chosen to accept, defer, or 
 
 ### `runs/<timestamp>-<id>.json` — hash-chained audit trail
 
-One file per Loupe invocation. Records inputs (hashed diff, hashed `context.md`), which lenses were considered and which ran, models used, tokens consumed, cost estimate, artefacts written, and the SHA-256 hash chain pointer. Filename uses microsecond-precision UTC so lexical sort matches chain order.
+One file per Loupe invocation. Records inputs (hashed diff, hashed `context.md`), which lenses were considered and which ran, models used, tokens consumed, cost estimate, artefacts written, structured lens crashes (`errors`), preferred-capability degradations (`capability_degraded`, [D-23](decisions.md#d-23)), and the SHA-256 hash chain pointer. Filename uses microsecond-precision UTC so lexical sort matches chain order.
+
+Both `errors` and `capability_degraded` are part of the canonical hash — a run that crashed a lens (or degraded gracefully on a preferred-but-unwired capability) gets a different `self_hash` from an otherwise-identical clean run, so an auditor can spot the distinction by walking the chain alone.
 
 `loupe verify` walks the chain and exits non-zero if any record's `prev_run_hash` doesn't match the previous record's `self_hash`. Schema: see [RunRecord](schemas/run-record.md). Verification recipe: see [Verification](verification.md).
 

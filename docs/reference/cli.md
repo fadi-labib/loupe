@@ -192,7 +192,9 @@ A small set of flags are part of the design but not yet implemented:
 | Flag | Status | Source of truth in the meantime |
 |---|---|---|
 | `loupe ci --verbose` | Plan tracing, designed | None |
-| `loupe scan --budget-usd <N>` | Cost cap for full-repo runs, designed in D-15 | None |
+| `loupe scan --budget-usd <N>` | One-off cost-cap override, designed in D-15 | None |
+
+The split per-mode budget — `limits.per_run_max_usd.ci` (default $2.50) and `limits.per_run_max_usd.scan` (default $5.00), see [D-24](decisions.md#d-24) — is parsed and validated today, but the budget-cap *enforcement* (aborting a run that exceeds the ceiling) lands with the `--budget-usd` flag above. Until then, the ceilings are documentation of intent; the per-run cost is observable on the run record's `cost_usd_estimate` field after the fact.
 
 ## Environment variables
 

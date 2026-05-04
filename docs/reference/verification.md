@@ -114,6 +114,8 @@ mv /tmp/tampered.json .loupe/runs/<some-record>.json
 loupe verify                   # should exit non-zero and name the broken record
 ```
 
+The hash covers every persisted field, including the post-D-23 `errors` (structured lens crashes) and `capability_degraded` (preferred-but-unavailable capability records — see [`decisions.md` D-23](decisions.md#d-23)) lists. A run that degraded gracefully on a preferred capability gets a distinct `self_hash` from an otherwise-identical clean run, so an auditor walking the chain can spot the degradation without inspecting the contents.
+
 ### §7: Humans stay in the decision seat
 
 The claim: agent drafts, humans decide.

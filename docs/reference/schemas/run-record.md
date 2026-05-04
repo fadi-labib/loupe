@@ -60,10 +60,23 @@ Microsecond precision means two runs in the same wall-clock second still sort ch
   "artifacts_changed": [".loupe/threats.yaml"],
   "proposed_patches": [],
   "pending_decisions": [],
+  "errors": [],
+  "capability_degraded": [],
   "prev_run_hash": "aa11bb22...",
   "self_hash": "cc33dd44..."
 }
 ```
+
+`errors` carries structured lens crashes from `dispatch_plan`'s
+error-isolation handler. `capability_degraded` (added in [D-23](../decisions.md#d-23))
+carries preferred-but-unavailable capability records — one entry per
+`(lens_name, capability)` pair where the lens's `prefers_capabilities`
+declaration couldn't be satisfied and the lens ran with the matching
+`RunContext` slot at `None`. Required-but-unavailable capabilities
+never reach this list: they raise `RequiredCapabilityUnavailable`
+at bootstrap and the CLI exits 64 before `dispatch_plan` runs. Both
+fields are part of the canonical hash so a degraded run is
+distinguishable from a clean one by `self_hash` alone.
 
 ## Validation
 
