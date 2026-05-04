@@ -2126,10 +2126,22 @@ chain that <code>loupe verify</code> walks.</p>
 </span><span id="__span-2-20"><a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a><span class="w">  </span><span class="nt">&quot;artifacts_changed&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;.loupe/threats.yaml&quot;</span><span class="p">],</span>
 </span><span id="__span-2-21"><a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a><span class="w">  </span><span class="nt">&quot;proposed_patches&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span>
 </span><span id="__span-2-22"><a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a><span class="w">  </span><span class="nt">&quot;pending_decisions&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span>
-</span><span id="__span-2-23"><a id="__codelineno-2-23" name="__codelineno-2-23" href="#__codelineno-2-23"></a><span class="w">  </span><span class="nt">&quot;prev_run_hash&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;aa11bb22...&quot;</span><span class="p">,</span>
-</span><span id="__span-2-24"><a id="__codelineno-2-24" name="__codelineno-2-24" href="#__codelineno-2-24"></a><span class="w">  </span><span class="nt">&quot;self_hash&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;cc33dd44...&quot;</span>
-</span><span id="__span-2-25"><a id="__codelineno-2-25" name="__codelineno-2-25" href="#__codelineno-2-25"></a><span class="p">}</span>
+</span><span id="__span-2-23"><a id="__codelineno-2-23" name="__codelineno-2-23" href="#__codelineno-2-23"></a><span class="w">  </span><span class="nt">&quot;errors&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span>
+</span><span id="__span-2-24"><a id="__codelineno-2-24" name="__codelineno-2-24" href="#__codelineno-2-24"></a><span class="w">  </span><span class="nt">&quot;capability_degraded&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span>
+</span><span id="__span-2-25"><a id="__codelineno-2-25" name="__codelineno-2-25" href="#__codelineno-2-25"></a><span class="w">  </span><span class="nt">&quot;prev_run_hash&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;aa11bb22...&quot;</span><span class="p">,</span>
+</span><span id="__span-2-26"><a id="__codelineno-2-26" name="__codelineno-2-26" href="#__codelineno-2-26"></a><span class="w">  </span><span class="nt">&quot;self_hash&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;cc33dd44...&quot;</span>
+</span><span id="__span-2-27"><a id="__codelineno-2-27" name="__codelineno-2-27" href="#__codelineno-2-27"></a><span class="p">}</span>
 </span></code></pre></div>
+<p><code>errors</code> carries structured lens crashes from <code>dispatch_plan</code>'s
+error-isolation handler. <code>capability_degraded</code> (added in <a href="../../decisions/#d-23">D-23</a>)
+carries preferred-but-unavailable capability records — one entry per
+<code>(lens_name, capability)</code> pair where the lens's <code>prefers_capabilities</code>
+declaration couldn't be satisfied and the lens ran with the matching
+<code>RunContext</code> slot at <code>None</code>. Required-but-unavailable capabilities
+never reach this list: they raise <code>RequiredCapabilityUnavailable</code>
+at bootstrap and the CLI exits 64 before <code>dispatch_plan</code> runs. Both
+fields are part of the canonical hash so a degraded run is
+distinguishable from a clean one by <code>self_hash</code> alone.</p>
 <h2 id="validation">Validation<a class="headerlink" href="#validation" title="Permanent link">&para;</a></h2>
 <p><code>load_run_records(runs_dir)</code> returns the chronologically-sorted list. <code>loupe verify</code> walks the chain and exits non-zero on the first record whose <code>prev_run_hash</code> does not match the previous record's <code>self_hash</code>. See <a href="../../verification/"><code>verification.md</code></a> for the audit recipe.</p>
 
@@ -2154,7 +2166,7 @@ chain that <code>loupe verify</code> walks.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 15, 2026 08:00:00 UTC">May 15, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 16, 2026 18:53:46 UTC">May 16, 2026</span>
   </span>
 
     
