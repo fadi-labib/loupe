@@ -29,6 +29,7 @@ from pathlib import Path
 from pydantic import ValidationError
 from ruamel.yaml.error import YAMLError
 
+from loupe_core.artifacts.merkle import compute_artefact_merkle_root
 from loupe_core.artifacts.mitigation import MitigationsFile
 from loupe_core.artifacts.run_record import load_run_records
 from loupe_core.artifacts.threat import ThreatsFile
@@ -90,6 +91,42 @@ def check_run_record_chain(runs_dir: Path) -> list[VerifyFailure]:
                 )
             )
         expected_prev = r.self_hash
+    return failures
+
+
+# ---------------------------------------------------------------------------
+# Merkle root consistency
+# ---------------------------------------------------------------------------
+
+
+def check_artefacts_merkle_root(runs_dir: Path) -> list[VerifyFailure]:
+    """Each run's stored `artifacts_merkle_root` must equal the recomputed root.
+
+    Records with empty `artifact_hashes` are skipped — they belong to
+    legacy runs (pre-D-25) or runs that wrote no artefacts; in both
+    cases `artifacts_merkle_root` is `None` and there is nothing to
+    check. We do NOT rehash the on-disk artefact files — they
+    legitimately change between runs. This check only proves the run
+    record's internal commitment is consistent: the stored root matches
+    the leaves the record itself names.
+    """
+    records = load_run_records(runs_dir)
+    failures: list[VerifyFailure] = []
+    for r in records:
+        if not r.artifact_hashes:
+            continue
+        expected = compute_artefact_merkle_root(r.artifact_hashes)
+        if r.artifacts_merkle_root != expected:
+            failures.append(
+                VerifyFailure(
+                    kind="artefacts_merkle_root_mismatch",
+                    run_id=r.run_id,
+                    detail=(
+                        f"stored artifacts_merkle_root={r.artifacts_merkle_root!r} "
+                        f"but recomputed={expected!r}"
+                    ),
+                )
+            )
     return failures
 
 
@@ -281,6 +318,7 @@ def verify_repo(repo_root: Path, *, strict: bool = False) -> list[VerifyFailure]
     loupe = repo_root / ".loupe"
     failures: list[VerifyFailure] = []
     failures.extend(check_run_record_chain(loupe / "runs"))
+    failures.extend(check_artefacts_merkle_root(loupe / "runs"))
     failures.extend(check_artefact_schemas(loupe))
     failures.extend(check_threats_mitigations_cross_refs(loupe))
     if strict:

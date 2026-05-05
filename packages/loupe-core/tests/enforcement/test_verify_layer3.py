@@ -13,6 +13,7 @@ from datetime import date
 from pathlib import Path
 
 from loupe_core.artifacts.mitigation import Evidence, Mitigation, MitigationsFile
+from loupe_core.artifacts.run_record import RunRecord
 from loupe_core.artifacts.threat import Threat, ThreatsFile
 from loupe_core.artifacts.types import (
     MitigationStatus,
@@ -304,3 +305,123 @@ def test_verify_repo_runs_strict_checks_only_when_requested(tmp_path):
     # Strict: authorship check fires.
     strict_failures = verify_repo(tmp_path, strict=True)
     assert any(f.kind == "protected_path_agent_author" for f in strict_failures)
+
+
+# ---------------------------------------------------------------------------
+# Merkle root consistency (D-25)
+# ---------------------------------------------------------------------------
+
+
+class TestCheckArtefactsMerkleRoot:
+    """Layer-3 default check added in D-25: stored artifacts_merkle_root
+    must equal the root recomputed from artifact_hashes. Records with
+    empty hashes / null root are skipped (legacy or no-artefact runs)."""
+
+    def _record_with_hashes(self, hashes: dict[str, str], *, prev: str | None = None) -> RunRecord:
+        """Build a record carrying the given artefact hashes."""
+        from datetime import UTC, datetime
+
+        return RunRecord(
+            run_id=f"run-merkle-{len(hashes)}-{prev or 'first'}",
+            timestamp=datetime.now(UTC),
+            mode="ci",
+            invoked_by="test@example.com",
+            trigger="manual_ci",
+            base_sha=None,
+            head_sha=None,
+            diff_hash="0" * 64,
+            context_md_hash="0" * 64,
+            lenses_considered=[],
+            lenses_run=[],
+            models_used={},
+            total_tokens_in=0,
+            total_tokens_out=0,
+            cost_usd_estimate=0.0,
+            cache_hit_rate=None,
+            artifacts_changed=sorted(hashes),
+            proposed_patches=[],
+            pending_decisions=[],
+            prev_run_hash=prev,
+            self_hash="",
+            artifact_hashes=hashes,
+        )
+
+    def test_matching_root_passes(self, tmp_path):
+        from loupe_core.artifacts.run_record import save_run_record
+        from loupe_core.enforcement.verify import check_artefacts_merkle_root
+
+        runs = tmp_path / "runs"
+        save_run_record(runs, self._record_with_hashes({"x.json": "a" * 64}))
+        assert check_artefacts_merkle_root(runs) == []
+
+    def test_empty_hashes_skipped(self, tmp_path):
+        from loupe_core.artifacts.run_record import save_run_record
+        from loupe_core.enforcement.verify import check_artefacts_merkle_root
+
+        runs = tmp_path / "runs"
+        save_run_record(runs, self._record_with_hashes({}))
+        assert check_artefacts_merkle_root(runs) == []
+
+    def test_tampered_root_is_detected(self, tmp_path):
+        import json as _json
+
+        from loupe_core.artifacts.run_record import save_run_record
+        from loupe_core.enforcement.verify import check_artefacts_merkle_root
+
+        runs = tmp_path / "runs"
+        saved = save_run_record(runs, self._record_with_hashes({"x.json": "a" * 64}))
+
+        # Tamper: overwrite the stored root with a wrong value AND recompute
+        # self_hash so the chain check would still pass. This simulates an
+        # attacker who knew about the chain but not about the Merkle check.
+        files = sorted(runs.glob("*.json"))
+        assert len(files) == 1
+        tampered = saved.model_copy(update={"artifacts_merkle_root": "0" * 64})
+        tampered.self_hash = tampered.compute_self_hash()
+        files[0].write_text(_json.dumps(tampered.model_dump(mode="json"), indent=2, sort_keys=True))
+
+        failures = check_artefacts_merkle_root(runs)
+        assert len(failures) == 1
+        assert failures[0].kind == "artefacts_merkle_root_mismatch"
+        assert failures[0].run_id == tampered.run_id
+
+    def test_tampered_hash_value_is_detected(self, tmp_path):
+        """If an attacker swaps a leaf hash but leaves the stored root
+        unchanged, the recompute catches it."""
+        import json as _json
+
+        from loupe_core.artifacts.run_record import save_run_record
+        from loupe_core.enforcement.verify import check_artefacts_merkle_root
+
+        runs = tmp_path / "runs"
+        saved = save_run_record(runs, self._record_with_hashes({"x.json": "a" * 64}))
+
+        files = sorted(runs.glob("*.json"))
+        tampered = saved.model_copy(update={"artifact_hashes": {"x.json": "b" * 64}})
+        tampered.self_hash = tampered.compute_self_hash()
+        files[0].write_text(_json.dumps(tampered.model_dump(mode="json"), indent=2, sort_keys=True))
+
+        failures = check_artefacts_merkle_root(runs)
+        assert len(failures) == 1
+        assert failures[0].kind == "artefacts_merkle_root_mismatch"
+
+    def test_runs_by_default_in_verify_repo(self, tmp_path):
+        import json as _json
+
+        from loupe_core.artifacts.run_record import save_run_record
+        from loupe_core.enforcement.verify import verify_repo
+
+        loupe = tmp_path / ".loupe"
+        runs = loupe / "runs"
+        runs.mkdir(parents=True)
+        # context.md is required by some downstream checks; create empty.
+        (loupe / "context.md").write_text("")
+
+        saved = save_run_record(runs, self._record_with_hashes({"x.json": "a" * 64}))
+        files = sorted(runs.glob("*.json"))
+        tampered = saved.model_copy(update={"artifacts_merkle_root": "0" * 64})
+        tampered.self_hash = tampered.compute_self_hash()
+        files[0].write_text(_json.dumps(tampered.model_dump(mode="json"), indent=2, sort_keys=True))
+
+        kinds = {f.kind for f in verify_repo(tmp_path)}
+        assert "artefacts_merkle_root_mismatch" in kinds
