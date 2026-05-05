@@ -122,13 +122,13 @@ class RunRecord(BaseModel):
             "content hash captured at write time. Empty on legacy records."
         ),
     )
-    artifacts_merkle_root: str = Field(
-        default="",
+    artifacts_merkle_root: str | None = Field(
+        default=None,
         description=(
             "SHA-256 Merkle root over the sorted (path, sha256) leaves in "
-            "`artifact_hashes`. Empty string when no artefacts were written "
-            "(or on legacy records). Computed by `save_run_record` so "
-            "callers cannot forget."
+            "`artifact_hashes`. Null when no artefacts were written this run "
+            "(matches `prev_run_hash`'s null-on-first-run convention). "
+            "Computed by `save_run_record` so callers cannot forget."
         ),
     )
     prev_run_hash: str | None = Field(
@@ -157,7 +157,17 @@ class RunRecord(BaseModel):
         return v.astimezone(UTC)
 
     def compute_self_hash(self) -> str:
-        data = self.model_dump(mode="json", exclude={"self_hash"})
+        # Exclude fields that hold their pre-Merkle default sentinel so legacy
+        # records (written before D-25 added artifact_hashes / artifacts_merkle_root)
+        # still hash to the same value. Once a record carries artefacts, the new
+        # fields land in the canonical JSON and self_hash covers them. This is
+        # the only carve-out — adding more is a schema-version concern (deferred).
+        exclude: set[str] = {"self_hash"}
+        if self.artifact_hashes == {}:
+            exclude.add("artifact_hashes")
+        if self.artifacts_merkle_root is None:
+            exclude.add("artifacts_merkle_root")
+        data = self.model_dump(mode="json", exclude=exclude)
         canonical = json.dumps(data, sort_keys=True, separators=(",", ":"))
         return hashlib.sha256(canonical.encode()).hexdigest()
 
@@ -195,10 +205,15 @@ def extract_lens_errors(findings: dict[str, dict[str, Finding]]) -> list[LensErr
 
 
 def save_run_record(runs_dir: Path, record: RunRecord) -> RunRecord:
+    try:
+        root = compute_artefact_merkle_root(record.artifact_hashes)
+    except ValueError as exc:
+        # Wrap with run_id so the operator can identify which record failed.
+        raise ValueError(f"cannot compute Merkle root for run {record.run_id!r}: {exc}") from exc
     record = record.model_copy(
         update={
             "self_hash": "",
-            "artifacts_merkle_root": compute_artefact_merkle_root(record.artifact_hashes),
+            "artifacts_merkle_root": root or None,
         }
     )
     record.self_hash = record.compute_self_hash()

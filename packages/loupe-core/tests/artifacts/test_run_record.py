@@ -296,21 +296,28 @@ class TestArtefactMerkleFields:
     def test_defaults_are_empty(self) -> None:
         r = _record("run-defaults", prev=None)
         assert r.artifact_hashes == {}
-        assert r.artifacts_merkle_root == ""
+        assert r.artifacts_merkle_root is None
 
     def test_record_accepts_populated_hashes(self) -> None:
         hashes = {"sbom.cdx.json": "a" * 64, "threats.yaml": "b" * 64}
         r = _record("run-with-hashes", prev=None).model_copy(update={"artifact_hashes": hashes})
         assert r.artifact_hashes == hashes
 
-    def test_old_record_json_still_loads(self) -> None:
-        """JSON written by a pre-Merkle Loupe lacks the new fields entirely.
-        The defaults must accept that and keep loading working."""
+    def test_legacy_self_hash_still_verifies_after_merkle_fields_added(self) -> None:
+        """D-12 contract: a record written by pre-Merkle Loupe must still
+        chain-verify after the schema gained `artifact_hashes` and
+        `artifacts_merkle_root`. Build the legacy canonical JSON, hash it
+        the pre-Merkle way, then load through the new schema and confirm
+        `compute_self_hash` returns the same value."""
+        import hashlib as _hashlib
         import json as _json
 
-        legacy = {
+        # Pydantic serialises a UTC datetime as "...Z" in JSON mode; the
+        # legacy on-disk JSON used the same Pydantic serialisation, so the
+        # canonical bytes we hash here must use the "Z" form too.
+        legacy_fields = {
             "run_id": "run-legacy",
-            "timestamp": "2026-01-01T00:00:00.000000+00:00",
+            "timestamp": "2026-01-01T00:00:00Z",
             "mode": "ci",
             "invoked_by": "test@example.com",
             "trigger": "manual_ci",
@@ -331,11 +338,22 @@ class TestArtefactMerkleFields:
             "errors": [],
             "capability_degraded": [],
             "prev_run_hash": None,
-            "self_hash": "deadbeef",
         }
-        r = RunRecord.model_validate_json(_json.dumps(legacy))
-        assert r.artifact_hashes == {}
-        assert r.artifacts_merkle_root == ""
+        # Compute the pre-Merkle self_hash exactly as the old Loupe did:
+        # canonical JSON over every field except self_hash.
+        canonical = _json.dumps(legacy_fields, sort_keys=True, separators=(",", ":"))
+        legacy_self_hash = _hashlib.sha256(canonical.encode()).hexdigest()
+
+        # Now load through the new schema (which adds two fields with defaults)
+        # and recompute the hash. Must match.
+        on_disk = {**legacy_fields, "self_hash": legacy_self_hash}
+        loaded = RunRecord.model_validate_json(_json.dumps(on_disk))
+        assert loaded.artifact_hashes == {}
+        assert loaded.artifacts_merkle_root is None
+        assert loaded.compute_self_hash() == legacy_self_hash, (
+            "post-Merkle compute_self_hash must produce the same hash as "
+            "pre-Merkle Loupe did for a record with no artefacts"
+        )
 
 
 class TestSaveRunRecordComputesMerkleRoot:
@@ -347,11 +365,11 @@ class TestSaveRunRecordComputesMerkleRoot:
         saved = save_run_record(tmp_path, r)
         assert saved.artifacts_merkle_root == compute_artefact_merkle_root(hashes)
 
-    def test_empty_hashes_yield_empty_root(self, tmp_path) -> None:
+    def test_empty_hashes_yield_null_root(self, tmp_path) -> None:
         r = _record("run-empty", prev=None)
         saved = save_run_record(tmp_path, r)
         assert saved.artifact_hashes == {}
-        assert saved.artifacts_merkle_root == ""
+        assert saved.artifacts_merkle_root is None
 
     def test_self_hash_covers_merkle_root(self, tmp_path) -> None:
         """If an attacker rewrites artifacts_merkle_root post-hoc, the
