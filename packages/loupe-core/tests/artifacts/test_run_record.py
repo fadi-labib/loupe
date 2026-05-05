@@ -285,3 +285,79 @@ def test_save_is_atomic_on_crash(tmp_path, monkeypatch):
     # No visible JSON at the destination — only (possibly) a leftover .tmp.
     visible = list(tmp_path.glob("*.json"))
     assert visible == [], f"partial file leaked: {visible}"
+
+
+# ---------------------------------------------------------------------------
+# Merkle root fields (Task 2)
+# ---------------------------------------------------------------------------
+
+
+class TestArtefactMerkleFields:
+    def test_defaults_are_empty(self) -> None:
+        r = _record("run-defaults", prev=None)
+        assert r.artifact_hashes == {}
+        assert r.artifacts_merkle_root == ""
+
+    def test_record_accepts_populated_hashes(self) -> None:
+        hashes = {"sbom.cdx.json": "a" * 64, "threats.yaml": "b" * 64}
+        r = _record("run-with-hashes", prev=None).model_copy(update={"artifact_hashes": hashes})
+        assert r.artifact_hashes == hashes
+
+    def test_old_record_json_still_loads(self) -> None:
+        """JSON written by a pre-Merkle Loupe lacks the new fields entirely.
+        The defaults must accept that and keep loading working."""
+        import json as _json
+
+        legacy = {
+            "run_id": "run-legacy",
+            "timestamp": "2026-01-01T00:00:00.000000+00:00",
+            "mode": "ci",
+            "invoked_by": "test@example.com",
+            "trigger": "manual_ci",
+            "base_sha": None,
+            "head_sha": None,
+            "diff_hash": "0" * 64,
+            "context_md_hash": "0" * 64,
+            "lenses_considered": [],
+            "lenses_run": [],
+            "models_used": {},
+            "total_tokens_in": 0,
+            "total_tokens_out": 0,
+            "cost_usd_estimate": 0.0,
+            "cache_hit_rate": None,
+            "artifacts_changed": [],
+            "proposed_patches": [],
+            "pending_decisions": [],
+            "errors": [],
+            "capability_degraded": [],
+            "prev_run_hash": None,
+            "self_hash": "deadbeef",
+        }
+        r = RunRecord.model_validate_json(_json.dumps(legacy))
+        assert r.artifact_hashes == {}
+        assert r.artifacts_merkle_root == ""
+
+
+class TestSaveRunRecordComputesMerkleRoot:
+    def test_root_is_filled_in_at_save(self, tmp_path) -> None:
+        from loupe_core.artifacts.merkle import compute_artefact_merkle_root
+
+        hashes = {"sbom.cdx.json": "a" * 64, "threats.yaml": "b" * 64}
+        r = _record("run-save", prev=None).model_copy(update={"artifact_hashes": hashes})
+        saved = save_run_record(tmp_path, r)
+        assert saved.artifacts_merkle_root == compute_artefact_merkle_root(hashes)
+
+    def test_empty_hashes_yield_empty_root(self, tmp_path) -> None:
+        r = _record("run-empty", prev=None)
+        saved = save_run_record(tmp_path, r)
+        assert saved.artifact_hashes == {}
+        assert saved.artifacts_merkle_root == ""
+
+    def test_self_hash_covers_merkle_root(self, tmp_path) -> None:
+        """If an attacker rewrites artifacts_merkle_root post-hoc, the
+        canonical-JSON self_hash must reveal the tampering."""
+        hashes = {"a.json": "1" * 64}
+        r = _record("run-coverage", prev=None).model_copy(update={"artifact_hashes": hashes})
+        saved = save_run_record(tmp_path, r)
+        tampered = saved.model_copy(update={"artifacts_merkle_root": "0" * 64})
+        assert tampered.compute_self_hash() != saved.self_hash

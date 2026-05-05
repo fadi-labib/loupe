@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Literal
 
 from pydantic import BaseModel, Field, field_validator
 
+from loupe_core.artifacts.merkle import compute_artefact_merkle_root
 from loupe_core.capabilities.degradation import CapabilityDegradation
 
 if TYPE_CHECKING:
@@ -113,6 +114,23 @@ class RunRecord(BaseModel):
             "degraded gracefully gets a different self_hash from one that did not."
         ),
     )
+    artifact_hashes: dict[str, str] = Field(
+        default_factory=dict,
+        description=(
+            "Map of path → SHA-256 (lowercase hex) for every artefact this "
+            "run wrote. Keys are paths relative to `.loupe/`; values are the "
+            "content hash captured at write time. Empty on legacy records."
+        ),
+    )
+    artifacts_merkle_root: str = Field(
+        default="",
+        description=(
+            "SHA-256 Merkle root over the sorted (path, sha256) leaves in "
+            "`artifact_hashes`. Empty string when no artefacts were written "
+            "(or on legacy records). Computed by `save_run_record` so "
+            "callers cannot forget."
+        ),
+    )
     prev_run_hash: str | None = Field(
         description="Previous record's `self_hash`; null on first run."
     )
@@ -177,7 +195,12 @@ def extract_lens_errors(findings: dict[str, dict[str, Finding]]) -> list[LensErr
 
 
 def save_run_record(runs_dir: Path, record: RunRecord) -> RunRecord:
-    record = record.model_copy(update={"self_hash": ""})
+    record = record.model_copy(
+        update={
+            "self_hash": "",
+            "artifacts_merkle_root": compute_artefact_merkle_root(record.artifact_hashes),
+        }
+    )
     record.self_hash = record.compute_self_hash()
     runs_dir.mkdir(parents=True, exist_ok=True)
     # Microsecond precision ensures two runs in the same wall-clock second
