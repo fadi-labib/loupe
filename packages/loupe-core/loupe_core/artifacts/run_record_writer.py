@@ -29,6 +29,43 @@ from loupe_core.artifacts.run_record import (
 from loupe_core.lens_api import Lens
 from loupe_core.run_context import RunContext
 
+# Files under `.loupe/` whose content the auditor reviews. Everything
+# else (binary by-products, draft directories, the chain itself) is
+# excluded so the Merkle commitment is stable across reruns that don't
+# touch artefacts.
+_ARTEFACT_SUFFIXES = (".yaml", ".yml", ".json", ".md")
+_EXCLUDED_DIRS = frozenset({"runs", ".proposed"})
+
+
+def enumerate_artefact_files(loupe_dir: Path) -> list[Path]:
+    """Return every artefact file under `.loupe/`, sorted by relative path.
+
+    Hash leaves are derived from this list. Excludes the run-record
+    directory (would be self-referential) and the `.proposed/` drafts
+    directory (drafts are not yet artefacts). File-type filter keeps
+    binary by-products out of the commitment.
+    """
+    out: list[Path] = []
+    for path in sorted(loupe_dir.rglob("*")):
+        if not path.is_file():
+            continue
+        rel = path.relative_to(loupe_dir)
+        if any(part in _EXCLUDED_DIRS for part in rel.parts):
+            continue
+        if path.suffix.lower() not in _ARTEFACT_SUFFIXES:
+            continue
+        out.append(path)
+    return out
+
+
+def _hash_file_sha256(path: Path) -> str:
+    """Compute SHA-256 of file contents."""
+    h = hashlib.sha256()
+    with path.open("rb") as f:
+        for chunk in iter(lambda: f.read(65536), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
 
 def build_run_record(
     ctx: RunContext,
@@ -91,6 +128,11 @@ def build_run_record(
         | {p.location for p in ctx.proposed_patches}
     )
 
+    artifact_hashes = {
+        path.relative_to(loupe_dir).as_posix(): _hash_file_sha256(path)
+        for path in enumerate_artefact_files(loupe_dir)
+    }
+
     record = RunRecord(
         run_id=ctx.run_id,
         timestamp=ctx.started_at,
@@ -109,6 +151,7 @@ def build_run_record(
         cost_usd_estimate=cost_total,
         cache_hit_rate=cache_hit,
         artifacts_changed=artifacts_changed,
+        artifact_hashes=artifact_hashes,
         proposed_patches=[p.location for p in ctx.proposed_patches],
         pending_decisions=[d.id for d in ctx.pending_decisions],
         errors=extract_lens_errors(ctx.findings),

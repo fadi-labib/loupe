@@ -12,12 +12,17 @@ caught at the helper layer, not after rotting in two places.
 from __future__ import annotations
 
 import hashlib
+import json
 from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
+from loupe_core.artifacts.merkle import compute_artefact_merkle_root
 from loupe_core.artifacts.run_record import load_run_records
-from loupe_core.artifacts.run_record_writer import build_run_record
+from loupe_core.artifacts.run_record_writer import (
+    build_run_record,
+    enumerate_artefact_files,
+)
 from loupe_core.run_context import LensUsage, RunContext
 
 
@@ -261,3 +266,152 @@ def test_chain_link_pickup_across_invocations(loupe_dir: Path):
 
     assert second.prev_run_hash == first.self_hash
     assert first.prev_run_hash is None
+
+
+class TestEnumerateArtefactFiles:
+    """Tests for enumerate_artefact_files filesystem walk + filter logic."""
+
+    def test_includes_yaml_json_md_at_root(self, loupe_dir: Path) -> None:
+        (loupe_dir / "threats.yaml").write_text("threats: []\n")
+        (loupe_dir / "sbom.cdx.json").write_text("{}")
+        # context.md is created implicitly
+        (loupe_dir / "context.md").write_text("# context\n")
+        found = {p.name for p in enumerate_artefact_files(loupe_dir)}
+        assert found == {"context.md", "threats.yaml", "sbom.cdx.json"}
+
+    def test_excludes_runs_directory(self, loupe_dir: Path) -> None:
+        (loupe_dir / "context.md").write_text("# context\n")
+        (loupe_dir / "runs" / "old.json").write_text("{}")
+        found = {p.name for p in enumerate_artefact_files(loupe_dir)}
+        assert "old.json" not in found
+
+    def test_excludes_proposed_directory(self, loupe_dir: Path) -> None:
+        (loupe_dir / "context.md").write_text("# context\n")
+        proposed = loupe_dir / ".proposed"
+        proposed.mkdir()
+        (proposed / "draft.yaml").write_text("")
+        found = {p.name for p in enumerate_artefact_files(loupe_dir)}
+        assert "draft.yaml" not in found
+
+    def test_includes_decisions_subdirectory(self, loupe_dir: Path) -> None:
+        (loupe_dir / "context.md").write_text("# context\n")
+        decisions = loupe_dir / "decisions"
+        decisions.mkdir()
+        (decisions / "D-001.md").write_text("# accept\n")
+        found = {p.relative_to(loupe_dir).as_posix() for p in enumerate_artefact_files(loupe_dir)}
+        assert "decisions/D-001.md" in found
+
+    def test_excludes_non_artefact_extensions(self, loupe_dir: Path) -> None:
+        (loupe_dir / "context.md").write_text("# context\n")
+        (loupe_dir / "scratch.log").write_text("noise")
+        (loupe_dir / "temp.tmp").write_text("temp")
+        found = {p.name for p in enumerate_artefact_files(loupe_dir)}
+        assert "scratch.log" not in found
+        assert "temp.tmp" not in found
+
+    def test_results_sorted_by_relative_path(self, loupe_dir: Path) -> None:
+        (loupe_dir / "context.md").write_text("# context\n")
+        (loupe_dir / "z.yaml").write_text("")
+        (loupe_dir / "a.json").write_text("{}")
+        rels = [p.relative_to(loupe_dir).as_posix() for p in enumerate_artefact_files(loupe_dir)]
+        assert rels == sorted(rels)
+
+    def test_includes_yml_extension(self, loupe_dir: Path) -> None:
+        (loupe_dir / "context.md").write_text("# context\n")
+        (loupe_dir / "mitigations.yml").write_text("")
+        found = {p.name for p in enumerate_artefact_files(loupe_dir)}
+        assert "mitigations.yml" in found
+
+
+class TestBuildRunRecordPopulatesArtefactHashes:
+    """Tests for artifact_hashes population in build_run_record."""
+
+    def test_hashes_present_for_every_enumerated_file(self, loupe_dir: Path) -> None:
+        (loupe_dir / "context.md").write_text("# context\n")
+        (loupe_dir / "threats.yaml").write_text("threats: []\n")
+        (loupe_dir / "sbom.cdx.json").write_text("{}")
+
+        ctx = _ctx_with_usage(loupe_dir)
+        record = build_run_record(
+            ctx,
+            loupe_dir,
+            considered=[],
+            trigger="manual_ci",
+            base_sha=None,
+            head_sha=None,
+            diff_hash="0" * 64,
+        )
+
+        expected_paths = {"context.md", "threats.yaml", "sbom.cdx.json"}
+        assert set(record.artifact_hashes.keys()) == expected_paths
+        # Hashes are 64-char lowercase hex
+        for sha in record.artifact_hashes.values():
+            assert len(sha) == 64
+            assert all(c in "0123456789abcdef" for c in sha)
+
+    def test_merkle_root_matches_recomputed(self, loupe_dir: Path) -> None:
+        (loupe_dir / "context.md").write_text("# context\n")
+        (loupe_dir / "threats.yaml").write_text("threats: []\n")
+        ctx = _ctx_with_usage(loupe_dir)
+        record = build_run_record(
+            ctx,
+            loupe_dir,
+            considered=[],
+            trigger="manual_ci",
+            base_sha=None,
+            head_sha=None,
+            diff_hash="0" * 64,
+        )
+        assert record.artifacts_merkle_root == compute_artefact_merkle_root(record.artifact_hashes)
+        assert record.artifacts_merkle_root is not None  # non-null when files exist
+
+    def test_empty_loupe_yields_only_context(self, loupe_dir: Path) -> None:
+        # Fixture only created context.md implicitly via _ctx_with_usage
+        ctx = _ctx_with_usage(loupe_dir)
+        record = build_run_record(
+            ctx,
+            loupe_dir,
+            considered=[],
+            trigger="manual_ci",
+            base_sha=None,
+            head_sha=None,
+            diff_hash="0" * 64,
+        )
+        assert set(record.artifact_hashes.keys()) == {"context.md"}
+
+    def test_record_persisted_with_hashes_on_disk(self, loupe_dir: Path) -> None:
+        (loupe_dir / "context.md").write_text("# context\n")
+        (loupe_dir / "threats.yaml").write_text("threats: []\n")
+        ctx = _ctx_with_usage(loupe_dir)
+        record = build_run_record(
+            ctx,
+            loupe_dir,
+            considered=[],
+            trigger="manual_ci",
+            base_sha=None,
+            head_sha=None,
+            diff_hash="0" * 64,
+        )
+        runs = sorted((loupe_dir / "runs").glob("*.json"))
+        assert len(runs) == 1
+        on_disk = json.loads(runs[0].read_text())
+        assert on_disk["artifact_hashes"] == record.artifact_hashes
+        assert on_disk["artifacts_merkle_root"] == record.artifacts_merkle_root
+
+    def test_hash_values_match_file_content(self, loupe_dir: Path) -> None:
+        """Verify hashes are actually computed from file contents, not just placeholders."""
+        (loupe_dir / "context.md").write_text("# context\n")
+        content1 = "threat_a: severity-high\n"
+        (loupe_dir / "threats.yaml").write_text(content1)
+        ctx = _ctx_with_usage(loupe_dir)
+        record = build_run_record(
+            ctx,
+            loupe_dir,
+            considered=[],
+            trigger="manual_ci",
+            base_sha=None,
+            head_sha=None,
+            diff_hash="0" * 64,
+        )
+        expected_hash = hashlib.sha256(content1.encode()).hexdigest()
+        assert record.artifact_hashes["threats.yaml"] == expected_hash
