@@ -425,3 +425,60 @@ class TestCheckArtefactsMerkleRoot:
 
         kinds = {f.kind for f in verify_repo(tmp_path)}
         assert "artefacts_merkle_root_mismatch" in kinds
+
+    def test_empty_hashes_with_non_null_root_is_detected(self, tmp_path):
+        """Writer invariant: empty artifact_hashes always pairs with
+        artifacts_merkle_root=None. An attacker who hand-rewrites a
+        record to claim 'no artefacts' but leaves a non-null stored
+        root creates a contradiction the verifier must surface."""
+        import json as _json
+
+        from loupe_core.artifacts.run_record import save_run_record
+        from loupe_core.enforcement.verify import check_artefacts_merkle_root
+
+        runs = tmp_path / "runs"
+        saved = save_run_record(runs, self._record_with_hashes({}))
+        assert saved.artifacts_merkle_root is None  # confirms writer invariant
+
+        # Tamper: keep artifact_hashes={} but set artifacts_merkle_root
+        # to a plausible-looking hex string, then reroll self_hash so the
+        # chain check still passes.
+        files = sorted(runs.glob("*.json"))
+        assert len(files) == 1
+        tampered = saved.model_copy(update={"artifacts_merkle_root": "0" * 64})
+        tampered.self_hash = tampered.compute_self_hash()
+        files[0].write_text(_json.dumps(tampered.model_dump(mode="json"), indent=2, sort_keys=True))
+
+        failures = check_artefacts_merkle_root(runs)
+        assert len(failures) == 1
+        assert failures[0].kind == "artefacts_merkle_root_mismatch"
+        assert failures[0].run_id == tampered.run_id
+
+    def test_per_record_failure_in_multi_record_dir(self, tmp_path):
+        """Multiple records in one runs/ dir — the verifier must report
+        per-record failures, not short-circuit on first."""
+        import json as _json
+
+        from loupe_core.artifacts.run_record import save_run_record
+        from loupe_core.enforcement.verify import check_artefacts_merkle_root
+
+        runs = tmp_path / "runs"
+        clean = save_run_record(runs, self._record_with_hashes({"clean.json": "a" * 64}))
+        # Chain: second record's prev_run_hash is the first's self_hash.
+        bad = save_run_record(
+            runs,
+            self._record_with_hashes({"bad.json": "b" * 64}, prev=clean.self_hash),
+        )
+
+        # Tamper only the second record.
+        files = sorted(runs.glob("*.json"))
+        assert len(files) == 2
+        bad_file = files[-1]  # microsecond filename sorts second
+        tampered = bad.model_copy(update={"artifacts_merkle_root": "0" * 64})
+        tampered.self_hash = tampered.compute_self_hash()
+        bad_file.write_text(_json.dumps(tampered.model_dump(mode="json"), indent=2, sort_keys=True))
+
+        failures = check_artefacts_merkle_root(runs)
+        assert len(failures) == 1
+        assert failures[0].run_id == tampered.run_id
+        assert failures[0].kind == "artefacts_merkle_root_mismatch"

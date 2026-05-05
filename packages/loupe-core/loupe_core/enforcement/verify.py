@@ -102,21 +102,26 @@ def check_run_record_chain(runs_dir: Path) -> list[VerifyFailure]:
 def check_artefacts_merkle_root(runs_dir: Path) -> list[VerifyFailure]:
     """Each run's stored `artifacts_merkle_root` must equal the recomputed root.
 
-    Records with empty `artifact_hashes` are skipped — they belong to
-    legacy runs (pre-D-25) or runs that wrote no artefacts; in both
-    cases `artifacts_merkle_root` is `None` and there is nothing to
-    check. We do NOT rehash the on-disk artefact files — they
-    legitimately change between runs. This check only proves the run
-    record's internal commitment is consistent: the stored root matches
-    the leaves the record itself names.
+    `compute_artefact_merkle_root` returns the empty string for an empty
+    hash dict; the stored root is `None` in the same case (see
+    `save_run_record`'s `root or None` writer invariant). Coercing the
+    stored value via `or ""` makes the no-artefacts case a logical
+    no-op (`"" == ""`) without an early-skip, which means a malformed
+    record where `artifact_hashes={}` but `artifacts_merkle_root` is a
+    non-None hex string is now caught — the contradiction inside the
+    record is exactly what `loupe verify` should surface.
+
+    We do NOT rehash the on-disk artefact files — they legitimately
+    change between runs. This check only proves the run record's
+    internal commitment is consistent: the stored root matches the
+    leaves the record itself names.
     """
     records = load_run_records(runs_dir)
     failures: list[VerifyFailure] = []
     for r in records:
-        if not r.artifact_hashes:
-            continue
         expected = compute_artefact_merkle_root(r.artifact_hashes)
-        if r.artifacts_merkle_root != expected:
+        stored = r.artifacts_merkle_root or ""
+        if stored != expected:
             failures.append(
                 VerifyFailure(
                     kind="artefacts_merkle_root_mismatch",
