@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 752" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="lt ld">
+<title id="lt">Loupe — compose, inspect, verify</title>
+<desc id="ld">A magnifying lens centred on source code. Five capability stages — SBOM (Syft, cdxgen), CVE (Grype, osv-scanner), ThreatLens (Claude, LLM consensus), Secret (gitleaks, TruffleHog), and SAST (Semgrep, CodeQL) — feed into a Merkle-linked run pack at .loupe/runs/01HKXY7Z3F containing five blocks. The pack is then verified end-to-end, and a synthesised REPORT.MD reports PASS, 5 of 5, SHA-256, verified, with 3 high CVEs, 7 threat notes, 12 lints, and zero leaks.</desc>
+<style>
+/* Direct hex values — no CSS custom properties, for librsvg / older renderer compat */
+.ink{stroke:#1A1A1A;} .soft{stroke:#6B7280;} .acc{stroke:#00875A;}
+.pf{fill:#FAFAF9;} .if{fill:#1A1A1A;} .af{fill:#00875A;} .ink-fill{fill:#1A1A1A;}
+.dot-amber{fill:#B45309;} .dot-red{fill:#B91C1C;}
+.block-fill{fill:#1A1A1A;fill-opacity:0.04;}
+.pack-fill{fill:#1A1A1A;fill-opacity:0.03;}
+text{font-family:ui-monospace,"SF Mono","Cascadia Code",Menlo,Consolas,monospace;}
+.lbl{font-size:12px;font-weight:600;letter-spacing:0.10em;fill:#1A1A1A;}
+.lbl-num{font-size:9px;font-weight:400;letter-spacing:0.06em;fill:#4B5563;}
+.lbl-sm{font-size:10px;letter-spacing:0.06em;fill:#4B5563;text-anchor:middle;}
+.lbl-tiny{font-size:9.5px;letter-spacing:0.04em;fill:#4B5563;}
+.lbl-path{font-size:10px;letter-spacing:0.04em;fill:#4B5563;}
+.lbl-blockid{font-size:8px;font-weight:600;letter-spacing:0.06em;fill:#1A1A1A;}
+.lbl-hash{font-size:8.5px;letter-spacing:0;fill:#4B5563;}
+.lbl-blockres-ok{font-size:8.5px;letter-spacing:0.02em;fill:#4B5563;}
+.lbl-blockres-bad{font-size:8.5px;font-weight:600;letter-spacing:0.02em;fill:#1A1A1A;}
+.report-prose{font-size:9.5px;letter-spacing:0.04em;fill:#1A1A1A;}
+.chrome{font-size:9px;letter-spacing:0.18em;fill:#4B5563;}
+.chrome-cmd{font-size:9px;letter-spacing:0.06em;fill:#4B5563;}
+.chrome-acc{fill:#00875A;font-weight:600;}
+.counter{font-size:8.5px;letter-spacing:0.04em;fill:#4B5563;font-variant-numeric:tabular-nums;}
+.hdr-l{font-size:9px;letter-spacing:0.04em;fill:#FAFAF9;font-weight:600;}
+.hdr-r{font-size:9px;letter-spacing:0.08em;fill:#FAFAF9;opacity:0.8;}
+.bg{fill:#FAFAF9;}
+@media (prefers-color-scheme:dark){
+  .ink{stroke:#E5E7EB;} .soft{stroke:#9CA3AF;} .acc{stroke:#4ADE80;}
+  .pf{fill:#0D0D0D;} .if{fill:#E5E7EB;} .af{fill:#4ADE80;} .ink-fill{fill:#E5E7EB;}
+  .dot-amber{fill:#F59E0B;} .dot-red{fill:#EF4444;}
+  .block-fill{fill:#E5E7EB;fill-opacity:0.06;}
+  .pack-fill{fill:#E5E7EB;fill-opacity:0.04;}
+  .lbl,.lbl-blockid,.lbl-blockres-bad,.report-prose{fill:#E5E7EB;}
+  .lbl-num,.lbl-sm,.lbl-tiny,.lbl-path,.lbl-hash,.lbl-blockres-ok,.chrome,.chrome-cmd,.counter{fill:#D1D5DB;}
+  .chrome-acc{fill:#4ADE80;}
+  .hdr-l,.hdr-r{fill:#0D0D0D;}
+  .bg{fill:#0D0D0D;}
+}
+</style>
+
+<defs>
+  <g id="check-badge">
+    <circle r="6.5" class="af"/>
+    <path d="M -3 0 l 2.4 2.4 l 4 -4.6" class="pf" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</defs>
+
+<rect class="bg" x="0" y="0" width="800" height="752"/>
+
+<g opacity="0"><animate attributeName="opacity" values="0;0;1;1" keyTimes="0;0.015;0.045;1" dur="12s" repeatCount="1" fill="freeze"/>
+<rect x="22" y="22" width="756" height="708" rx="3" class="ink" stroke-width="0.6" opacity="0.35" fill="none"/>
+<text x="400" y="42" class="chrome-cmd" text-anchor="middle">$ loupe run &amp;&amp; loupe verify</text>
+<text x="760" y="42" class="chrome" text-anchor="end">v0.1.0</text>
+<circle cx="400" cy="260" r="152" class="ink pf" stroke-width="8"/>
+<path d="M 414.22 124.75 A 136 136 0 0 1 524.24 204.68" class="ink" stroke-width="5" stroke-linecap="round" fill="none" opacity="0.15"/>
+<path d="M 533.03 231.72 A 136 136 0 0 1 491.00 361.07" class="ink" stroke-width="5" stroke-linecap="round" fill="none" opacity="0.15"/>
+<path d="M 468.00 377.78 A 136 136 0 0 1 332.00 377.78" class="ink" stroke-width="5" stroke-linecap="round" fill="none" opacity="0.15"/>
+<path d="M 309.00 361.07 A 136 136 0 0 1 266.97 231.72" class="ink" stroke-width="5" stroke-linecap="round" fill="none" opacity="0.15"/>
+<path d="M 275.76 204.68 A 136 136 0 0 1 385.78 124.75" class="ink" stroke-width="5" stroke-linecap="round" fill="none" opacity="0.15"/>
+<rect x="370" y="389" width="60" height="9" rx="2" class="if"/>
+<path d="M 376 398 L 386 502 L 414 502 L 424 398 Z" class="ink pf" stroke-width="1.4" stroke-linejoin="round"/>
+<line x1="395" y1="402" x2="391" y2="498" class="ink" stroke-width="0.5" opacity="0.18"/>
+<line x1="405" y1="402" x2="409" y2="498" class="ink" stroke-width="0.5" opacity="0.18"/>
+<rect x="384" y="501" width="32" height="8" rx="2" class="if"/>
+
+<!-- Lens interior detail: faint inner dashed focusing ring + crosshair tick marks -->
+<circle cx="400" cy="260" r="118" class="ink" fill="none" stroke-width="0.5" opacity="0.18" stroke-dasharray="2 3"/>
+<line x1="400" y1="140" x2="400" y2="150" class="ink" stroke-width="0.5" opacity="0.3"/>
+<line x1="400" y1="370" x2="400" y2="380" class="ink" stroke-width="0.5" opacity="0.3"/>
+<line x1="280" y1="260" x2="290" y2="260" class="ink" stroke-width="0.5" opacity="0.3"/>
+<line x1="510" y1="260" x2="520" y2="260" class="ink" stroke-width="0.5" opacity="0.3"/>
+
+<!-- Handle rivets at rim attachment points -->
+<circle cx="376" cy="398" r="1.8" class="ink pf" stroke-width="0.7"/>
+<circle cx="424" cy="398" r="1.8" class="ink pf" stroke-width="0.7"/>
+<circle cx="376" cy="398" r="0.7" class="if"/>
+<circle cx="424" cy="398" r="0.7" class="if"/>
+
+<!-- Handle grip texture (knurled lines near the bottom) -->
+<line x1="391" y1="485" x2="409" y2="485" class="ink" stroke-width="0.4" opacity="0.45"/>
+<line x1="391" y1="490" x2="409" y2="490" class="ink" stroke-width="0.4" opacity="0.45"/>
+<line x1="391" y1="495" x2="409" y2="495" class="ink" stroke-width="0.4" opacity="0.45"/>
+</g>
+
+<!-- Source preview: flies into the lens during the inspection phase -->
+<g opacity="0"><animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="0;0.025;0.08;0.16;0.20;1" dur="12s" repeatCount="1" fill="freeze"/><animateTransform attributeName="transform" type="translate" values="0 0;0 0;0 110;0 110" keyTimes="0;0.08;0.16;1" dur="12s" repeatCount="1" fill="freeze" calcMode="spline" keySplines="0 0 1 1;0.25 0.1 0.25 1;0 0 1 1"/>
+<rect x="378" y="68" width="44" height="62" rx="2" class="ink pf" stroke-width="0.9"/>
+<line x1="384" y1="82"  x2="408" y2="82"  class="soft" stroke-width="0.9"/>
+<line x1="384" y1="90"  x2="416" y2="90"  class="soft" stroke-width="0.9"/>
+<line x1="388" y1="98"  x2="414" y2="98"  class="soft" stroke-width="0.9"/>
+<line x1="388" y1="106" x2="412" y2="106" class="soft" stroke-width="0.9"/>
+<line x1="384" y1="114" x2="408" y2="114" class="soft" stroke-width="0.9"/>
+<line x1="384" y1="122" x2="404" y2="122" class="soft" stroke-width="0.9"/>
+</g>
+
+<!-- ASCII source lines inside the lens: persist through the final poster -->
+<g opacity="0"><animate attributeName="opacity" values="0;0;0.9;0.9;0.9" keyTimes="0;0.16;0.20;0.95;1" dur="12s" repeatCount="1" fill="freeze" calcMode="spline" keySplines="0 0 1 1;0.25 0.1 0.25 1;0 0 1 1;0 0 1 1"/>
+<line x1="346" y1="236" x2="454" y2="236" class="ink" stroke-width="1.4"/>
+<line x1="346" y1="252" x2="438" y2="252" class="ink" stroke-width="1.4"/>
+<line x1="358" y1="268" x2="450" y2="268" class="ink" stroke-width="1.4"/>
+<line x1="346" y1="284" x2="432" y2="284" class="ink" stroke-width="1.4"/>
+</g>
+
+<!-- Scan line: sweeps across source preview during the inspection phase -->
+<g opacity="0">
+  <animate attributeName="opacity" values="0;0;0.55;0.55;0;0" keyTimes="0;0.19;0.22;0.29;0.30;1" dur="12s" repeatCount="1" fill="freeze"/>
+  <animateTransform attributeName="transform" type="translate" values="0 -60;0 -60;0 60;0 60" keyTimes="0;0.19;0.30;1" dur="12s" repeatCount="1" fill="freeze" calcMode="spline" keySplines="0 0 1 1;0.4 0 0.6 1;0 0 1 1"/>
+  <line x1="282" y1="260" x2="518" y2="260" class="ink" stroke-width="0.8" opacity="0.7"/>
+  <circle cx="282" cy="260" r="1.5" class="if"/>
+  <circle cx="518" cy="260" r="1.5" class="if"/>
+</g>
+
+<!-- Five capability spokes light up in sequence -->
+<path d="M 414.22 124.75 A 136 136 0 0 1 524.24 204.68" class="ink" stroke-width="6" stroke-linecap="round" fill="none" opacity="0"><animate attributeName="opacity" values="0;0;1;0.95;0.95;0.95" keyTimes="0;0.19;0.20;0.22;0.95;1" dur="12s" repeatCount="1" fill="freeze"/></path>
+<path d="M 533.03 231.72 A 136 136 0 0 1 491.00 361.07" class="ink" stroke-width="6" stroke-linecap="round" fill="none" opacity="0"><animate attributeName="opacity" values="0;0;1;0.95;0.95;0.95" keyTimes="0;0.21;0.22;0.24;0.95;1" dur="12s" repeatCount="1" fill="freeze"/></path>
+<path d="M 468.00 377.78 A 136 136 0 0 1 332.00 377.78" class="ink" stroke-width="6" stroke-linecap="round" fill="none" opacity="0"><animate attributeName="opacity" values="0;0;1;0.95;0.95;0.95" keyTimes="0;0.23;0.24;0.26;0.95;1" dur="12s" repeatCount="1" fill="freeze"/></path>
+<path d="M 309.00 361.07 A 136 136 0 0 1 266.97 231.72" class="ink" stroke-width="6" stroke-linecap="round" fill="none" opacity="0"><animate attributeName="opacity" values="0;0;1;0.95;0.95;0.95" keyTimes="0;0.25;0.26;0.28;0.95;1" dur="12s" repeatCount="1" fill="freeze"/></path>
+<path d="M 275.76 204.68 A 136 136 0 0 1 385.78 124.75" class="ink" stroke-width="6" stroke-linecap="round" fill="none" opacity="0"><animate attributeName="opacity" values="0;0;1;0.95;0.95;0.95" keyTimes="0;0.27;0.28;0.30;0.95;1" dur="12s" repeatCount="1" fill="freeze"/></path>
+
+<!-- Pulses at each spoke terminus -->
+<circle cx="479.94" cy="149.97" r="4" class="ink" fill="none" stroke-width="1.3" opacity="0"><animate attributeName="opacity" values="0;0;0.55;0;0" keyTimes="0;0.19;0.20;0.23;1" dur="12s" repeatCount="1" fill="freeze"/><animate attributeName="r" values="4;4;22;22" keyTimes="0;0.19;0.23;1" dur="12s" repeatCount="1" fill="freeze" calcMode="spline" keySplines="0 0 1 1;0.25 0.1 0.25 1;0 0 1 1"/></circle>
+<circle cx="529.34" cy="302.03" r="4" class="ink" fill="none" stroke-width="1.3" opacity="0"><animate attributeName="opacity" values="0;0;0.55;0;0" keyTimes="0;0.21;0.22;0.25;1" dur="12s" repeatCount="1" fill="freeze"/><animate attributeName="r" values="4;4;22;22" keyTimes="0;0.21;0.25;1" dur="12s" repeatCount="1" fill="freeze" calcMode="spline" keySplines="0 0 1 1;0.25 0.1 0.25 1;0 0 1 1"/></circle>
+<circle cx="400.00" cy="396" r="4" class="ink" fill="none" stroke-width="1.3" opacity="0"><animate attributeName="opacity" values="0;0;0.55;0;0" keyTimes="0;0.23;0.24;0.27;1" dur="12s" repeatCount="1" fill="freeze"/><animate attributeName="r" values="4;4;22;22" keyTimes="0;0.23;0.27;1" dur="12s" repeatCount="1" fill="freeze" calcMode="spline" keySplines="0 0 1 1;0.25 0.1 0.25 1;0 0 1 1"/></circle>
+<circle cx="270.66" cy="302.03" r="4" class="ink" fill="none" stroke-width="1.3" opacity="0"><animate attributeName="opacity" values="0;0;0.55;0;0" keyTimes="0;0.25;0.26;0.29;1" dur="12s" repeatCount="1" fill="freeze"/><animate attributeName="r" values="4;4;22;22" keyTimes="0;0.25;0.29;1" dur="12s" repeatCount="1" fill="freeze" calcMode="spline" keySplines="0 0 1 1;0.25 0.1 0.25 1;0 0 1 1"/></circle>
+<circle cx="320.06" cy="149.97" r="4" class="ink" fill="none" stroke-width="1.3" opacity="0"><animate attributeName="opacity" values="0;0;0.55;0;0" keyTimes="0;0.27;0.28;0.31;1" dur="12s" repeatCount="1" fill="freeze"/><animate attributeName="r" values="4;4;22;22" keyTimes="0;0.27;0.31;1" dur="12s" repeatCount="1" fill="freeze" calcMode="spline" keySplines="0 0 1 1;0.25 0.1 0.25 1;0 0 1 1"/></circle>
+
+<!-- Capability labels (persist into the final poster) -->
+<g opacity="0"><animate attributeName="opacity" values="0;0;1;1;1" keyTimes="0;0.19;0.22;0.95;1" dur="12s" repeatCount="1" fill="freeze"/><text x="516.50" y="111.9" class="lbl" text-anchor="start">SBOM</text><text x="516.50" y="124.9" class="lbl-tiny" text-anchor="start">Syft · cdxgen</text><text x="516.50" y="135.9" class="counter" text-anchor="start" opacity="0"><animate attributeName="opacity" values="0;0;1;1;1;1" keyTimes="0;0.185;0.19;0.235;0.255;1" dur="12s" repeatCount="1" fill="freeze"/>→ 142 / 142 deps</text></g>
+<g opacity="0"><animate attributeName="opacity" values="0;0;1;1;1" keyTimes="0;0.21;0.24;0.95;1" dur="12s" repeatCount="1" fill="freeze"/><text x="584.80" y="322.1" class="lbl" text-anchor="start">CVE</text><text x="584.80" y="335.1" class="lbl-tiny" text-anchor="start">Grype · osv-scanner</text><text x="584.80" y="346.1" class="counter" text-anchor="start" opacity="0"><animate attributeName="opacity" values="0;0;1;1;1;1" keyTimes="0;0.205;0.21;0.255;0.275;1" dur="12s" repeatCount="1" fill="freeze"/>→ 3 / 3 high</text></g>
+<g opacity="0"><animate attributeName="opacity" values="0;0;1;1;1" keyTimes="0;0.23;0.26;0.95;1" dur="12s" repeatCount="1" fill="freeze"/>
+<rect x="340.00" y="451" width="120" height="45" rx="4" class="pf"/>
+<rect x="340.00" y="451" width="120" height="45" rx="4" class="ink" stroke-width="0.8" fill="none"/><text x="400.00" y="464" class="lbl" text-anchor="middle">ThreatLens</text><text x="400.00" y="477" class="lbl-tiny" text-anchor="middle">Claude · LLM consensus</text><text x="400.00" y="488" class="counter" text-anchor="middle" opacity="0"><animate attributeName="opacity" values="0;0;1;1;1;1" keyTimes="0;0.225;0.23;0.275;0.295;1" dur="12s" repeatCount="1" fill="freeze"/>→ 7 / 7 threats</text></g>
+<g opacity="0"><animate attributeName="opacity" values="0;0;1;1;1" keyTimes="0;0.25;0.28;0.95;1" dur="12s" repeatCount="1" fill="freeze"/><text x="215.20" y="322.1" class="lbl" text-anchor="end">Secret</text><text x="215.20" y="335.1" class="lbl-tiny" text-anchor="end">gitleaks · TruffleHog</text><text x="215.20" y="346.1" class="counter" text-anchor="end" opacity="0"><animate attributeName="opacity" values="0;0;1;1;1;1" keyTimes="0;0.245;0.25;0.295;0.315;1" dur="12s" repeatCount="1" fill="freeze"/>→ 0 / 0 leaks</text></g>
+<g opacity="0"><animate attributeName="opacity" values="0;0;1;1;1" keyTimes="0;0.27;0.30;0.95;1" dur="12s" repeatCount="1" fill="freeze"/><text x="283.50" y="111.9" class="lbl" text-anchor="end">SAST</text><text x="283.50" y="124.9" class="lbl-tiny" text-anchor="end">Semgrep · CodeQL</text><text x="283.50" y="135.9" class="counter" text-anchor="end" opacity="0"><animate attributeName="opacity" values="0;0;1;1;1;1" keyTimes="0;0.265;0.27;0.315;0.335;1" dur="12s" repeatCount="1" fill="freeze"/>→ 12 / 12 issues</text></g>
+
+<!-- Scan beams from each capability terminus toward the run pack -->
+<line class="ink" stroke-width="2.2" stroke-linecap="round" x1="479.94" y1="149.97" x2="479.94" y2="149.97" opacity="0"><animate attributeName="x1" values="479.94;479.94;400;276;276" keyTimes="0;0.33;0.36;0.44;1" dur="12s" repeatCount="1" fill="freeze" calcMode="spline" keySplines="0 0 1 1;0.25 0.1 0.25 1;0.25 0.1 0.25 1;0 0 1 1"/><animate attributeName="y1" values="179.97;179.97;449;602;602" keyTimes="0;0.33;0.36;0.44;1" dur="12s" repeatCount="1" fill="freeze" calcMode="spline" keySplines="0 0 1 1;0.25 0.1 0.25 1;0.25 0.1 0.25 1;0 0 1 1"/><animate attributeName="x2" values="479.94;479.94;400;276;276" keyTimes="0;0.32;0.35;0.43;1" dur="12s" repeatCount="1" fill="freeze" calcMode="spline" keySplines="0 0 1 1;0.25 0.1 0.25 1;0.25 0.1 0.25 1;0 0 1 1"/><animate attributeName="y2" values="179.97;179.97;449;602;602" keyTimes="0;0.32;0.35;0.43;1" dur="12s" repeatCount="1" fill="freeze" calcMode="spline" keySplines="0 0 1 1;0.25 0.1 0.25 1;0.25 0.1 0.25 1;0 0 1 1"/><animate attributeName="opacity" values="0;0;0.45;0.45;0;0" keyTimes="0;0.32;0.34;0.40;0.43;1" dur="12s" repeatCount="1" fill="freeze"/></line>
+<line class="ink" stroke-width="2.2" stroke-linecap="round" x1="529.34" y1="302.03" x2="529.34" y2="302.03" opacity="0"><animate attributeName="x1" values="529.34;529.34;400;338;338" keyTimes="0;0.35;0.38;0.46;1" dur="12s" repeatCount="1" fill="freeze" calcMode="spline" keySplines="0 0 1 1;0.25 0.1 0.25 1;0.25 0.1 0.25 1;0 0 1 1"/><animate attributeName="y1" values="332.03;332.03;449;602;602" keyTimes="0;0.35;0.38;0.46;1" dur="12s" repeatCount="1" fill="freeze" calcMode="spline" keySplines="0 0 1 1;0.25 0.1 0.25 1;0.25 0.1 0.25 1;0 0 1 1"/><animate attributeName="x2" values="529.34;529.34;400;338;338" keyTimes="0;0.34;0.37;0.45;1" dur="12s" repeatCount="1" fill="freeze" calcMode="spline" keySplines="0 0 1 1;0.25 0.1 0.25 1;0.25 0.1 0.25 1;0 0 1 1"/><animate attributeName="y2" values="332.03;332.03;449;602;602" keyTimes="0;0.34;0.37;0.45;1" dur="12s" repeatCount="1" fill="freeze" calcMode="spline" keySplines="0 0 1 1;0.25 0.1 0.25 1;0.25 0.1 0.25 1;0 0 1 1"/><animate attributeName="opacity" values="0;0;0.45;0.45;0;0" keyTimes="0;0.34;0.36;0.42;0.45;1" dur="12s" repeatCount="1" fill="freeze"/></line>
+<line class="ink" stroke-width="2.2" stroke-linecap="round" x1="400.00" y1="396" x2="400.00" y2="396" opacity="0"><animate attributeName="x1" values="400;400;400;400;400" keyTimes="0;0.37;0.40;0.48;1" dur="12s" repeatCount="1" fill="freeze" calcMode="spline" keySplines="0 0 1 1;0.25 0.1 0.25 1;0.25 0.1 0.25 1;0 0 1 1"/><animate attributeName="y1" values="450;450;450;602;602" keyTimes="0;0.37;0.40;0.48;1" dur="12s" repeatCount="1" fill="freeze" calcMode="spline" keySplines="0 0 1 1;0.25 0.1 0.25 1;0.25 0.1 0.25 1;0 0 1 1"/><animate attributeName="x2" values="400;400;400;400;400" keyTimes="0;0.36;0.39;0.47;1" dur="12s" repeatCount="1" fill="freeze" calcMode="spline" keySplines="0 0 1 1;0.25 0.1 0.25 1;0.25 0.1 0.25 1;0 0 1 1"/><animate attributeName="y2" values="450;450;450;602;602" keyTimes="0;0.36;0.39;0.47;1" dur="12s" repeatCount="1" fill="freeze" calcMode="spline" keySplines="0 0 1 1;0.25 0.1 0.25 1;0.25 0.1 0.25 1;0 0 1 1"/><animate attributeName="opacity" values="0;0;0.45;0.45;0;0" keyTimes="0;0.36;0.38;0.44;0.47;1" dur="12s" repeatCount="1" fill="freeze"/></line>
+<line class="ink" stroke-width="2.2" stroke-linecap="round" x1="270.66" y1="302.03" x2="270.66" y2="302.03" opacity="0"><animate attributeName="x1" values="270.66;270.66;400;462;462" keyTimes="0;0.38;0.41;0.49;1" dur="12s" repeatCount="1" fill="freeze" calcMode="spline" keySplines="0 0 1 1;0.25 0.1 0.25 1;0.25 0.1 0.25 1;0 0 1 1"/><animate attributeName="y1" values="332.03;332.03;449;602;602" keyTimes="0;0.38;0.41;0.49;1" dur="12s" repeatCount="1" fill="freeze" calcMode="spline" keySplines="0 0 1 1;0.25 0.1 0.25 1;0.25 0.1 0.25 1;0 0 1 1"/><animate attributeName="x2" values="270.66;270.66;400;462;462" keyTimes="0;0.37;0.40;0.48;1" dur="12s" repeatCount="1" fill="freeze" calcMode="spline" keySplines="0 0 1 1;0.25 0.1 0.25 1;0.25 0.1 0.25 1;0 0 1 1"/><animate attributeName="y2" values="332.03;332.03;449;602;602" keyTimes="0;0.37;0.40;0.48;1" dur="12s" repeatCount="1" fill="freeze" calcMode="spline" keySplines="0 0 1 1;0.25 0.1 0.25 1;0.25 0.1 0.25 1;0 0 1 1"/><animate attributeName="opacity" values="0;0;0.45;0.45;0;0" keyTimes="0;0.37;0.39;0.45;0.48;1" dur="12s" repeatCount="1" fill="freeze"/></line>
+<line class="ink" stroke-width="2.2" stroke-linecap="round" x1="320.06" y1="149.97" x2="320.06" y2="149.97" opacity="0"><animate attributeName="x1" values="320.06;320.06;400;524;524" keyTimes="0;0.40;0.43;0.51;1" dur="12s" repeatCount="1" fill="freeze" calcMode="spline" keySplines="0 0 1 1;0.25 0.1 0.25 1;0.25 0.1 0.25 1;0 0 1 1"/><animate attributeName="y1" values="179.97;179.97;449;602;602" keyTimes="0;0.40;0.43;0.51;1" dur="12s" repeatCount="1" fill="freeze" calcMode="spline" keySplines="0 0 1 1;0.25 0.1 0.25 1;0.25 0.1 0.25 1;0 0 1 1"/><animate attributeName="x2" values="320.06;320.06;400;524;524" keyTimes="0;0.39;0.42;0.50;1" dur="12s" repeatCount="1" fill="freeze" calcMode="spline" keySplines="0 0 1 1;0.25 0.1 0.25 1;0.25 0.1 0.25 1;0 0 1 1"/><animate attributeName="y2" values="179.97;179.97;449;602;602" keyTimes="0;0.39;0.42;0.50;1" dur="12s" repeatCount="1" fill="freeze" calcMode="spline" keySplines="0 0 1 1;0.25 0.1 0.25 1;0.25 0.1 0.25 1;0 0 1 1"/><animate attributeName="opacity" values="0;0;0.45;0.45;0;0" keyTimes="0;0.39;0.41;0.47;0.50;1" dur="12s" repeatCount="1" fill="freeze"/></line>
+
+<!-- Travelling particle along each beam -->
+<circle r="3" class="if" cx="479.94" cy="149.97" opacity="0"><animate attributeName="cx" values="479.94;479.94;400;276;276" keyTimes="0;0.32;0.35;0.43;1" dur="12s" repeatCount="1" fill="freeze" calcMode="spline" keySplines="0 0 1 1;0.25 0.1 0.25 1;0.25 0.1 0.25 1;0 0 1 1"/><animate attributeName="cy" values="179.97;179.97;449;602;602" keyTimes="0;0.32;0.35;0.43;1" dur="12s" repeatCount="1" fill="freeze" calcMode="spline" keySplines="0 0 1 1;0.25 0.1 0.25 1;0.25 0.1 0.25 1;0 0 1 1"/><animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="0;0.32;0.34;0.40;0.43;1" dur="12s" repeatCount="1" fill="freeze"/></circle>
+<circle r="3" class="if" cx="529.34" cy="302.03" opacity="0"><animate attributeName="cx" values="529.34;529.34;400;338;338" keyTimes="0;0.34;0.37;0.45;1" dur="12s" repeatCount="1" fill="freeze" calcMode="spline" keySplines="0 0 1 1;0.25 0.1 0.25 1;0.25 0.1 0.25 1;0 0 1 1"/><animate attributeName="cy" values="332.03;332.03;449;602;602" keyTimes="0;0.34;0.37;0.45;1" dur="12s" repeatCount="1" fill="freeze" calcMode="spline" keySplines="0 0 1 1;0.25 0.1 0.25 1;0.25 0.1 0.25 1;0 0 1 1"/><animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="0;0.34;0.36;0.42;0.45;1" dur="12s" repeatCount="1" fill="freeze"/></circle>
+<circle r="3" class="if" cx="400.00" cy="396" opacity="0"><animate attributeName="cx" values="400;400;400;400;400" keyTimes="0;0.36;0.39;0.47;1" dur="12s" repeatCount="1" fill="freeze" calcMode="spline" keySplines="0 0 1 1;0.25 0.1 0.25 1;0.25 0.1 0.25 1;0 0 1 1"/><animate attributeName="cy" values="450;450;450;602;602" keyTimes="0;0.36;0.39;0.47;1" dur="12s" repeatCount="1" fill="freeze" calcMode="spline" keySplines="0 0 1 1;0.25 0.1 0.25 1;0.25 0.1 0.25 1;0 0 1 1"/><animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="0;0.36;0.38;0.44;0.47;1" dur="12s" repeatCount="1" fill="freeze"/></circle>
+<circle r="3" class="if" cx="270.66" cy="302.03" opacity="0"><animate attributeName="cx" values="270.66;270.66;400;462;462" keyTimes="0;0.37;0.40;0.48;1" dur="12s" repeatCount="1" fill="freeze" calcMode="spline" keySplines="0 0 1 1;0.25 0.1 0.25 1;0.25 0.1 0.25 1;0 0 1 1"/><animate attributeName="cy" values="332.03;332.03;449;602;602" keyTimes="0;0.37;0.40;0.48;1" dur="12s" repeatCount="1" fill="freeze" calcMode="spline" keySplines="0 0 1 1;0.25 0.1 0.25 1;0.25 0.1 0.25 1;0 0 1 1"/><animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="0;0.37;0.39;0.45;0.48;1" dur="12s" repeatCount="1" fill="freeze"/></circle>
+<circle r="3" class="if" cx="320.06" cy="149.97" opacity="0"><animate attributeName="cx" values="320.06;320.06;400;524;524" keyTimes="0;0.39;0.42;0.50;1" dur="12s" repeatCount="1" fill="freeze" calcMode="spline" keySplines="0 0 1 1;0.25 0.1 0.25 1;0.25 0.1 0.25 1;0 0 1 1"/><animate attributeName="cy" values="179.97;179.97;449;602;602" keyTimes="0;0.39;0.42;0.50;1" dur="12s" repeatCount="1" fill="freeze" calcMode="spline" keySplines="0 0 1 1;0.25 0.1 0.25 1;0.25 0.1 0.25 1;0 0 1 1"/><animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="0;0.39;0.41;0.47;0.50;1" dur="12s" repeatCount="1" fill="freeze"/></circle>
+
+<!-- Pre-Merkle pack shell (dark border) — replaced by acc border once verified -->
+<g opacity="0"><animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="0;0.50;0.51;0.68;0.71;1" dur="12s" repeatCount="1" fill="freeze"/>
+<rect x="240" y="534" width="320" height="116" rx="4" class="pack-fill"/>
+<rect x="240" y="534" width="320" height="116" rx="4" class="ink" stroke-width="1.25" fill="none"/>
+<path d="M 240 538 A 4 4 0 0 1 244 534 L 556 534 A 4 4 0 0 1 560 538 L 560 560 L 240 560 Z" class="if"/>
+<text x="252" y="552" class="hdr-l">.loupe/runs/01HKXY7Z3F</text>
+<text x="548" y="552" class="hdr-r" text-anchor="end">5 · MERKLE</text>
+</g>
+
+<!-- Verified pack shell (accent border) — persists into the poster -->
+<g opacity="0"><animate attributeName="opacity" values="0;0;1;1;1" keyTimes="0;0.68;0.71;0.95;1" dur="12s" repeatCount="1" fill="freeze" calcMode="spline" keySplines="0 0 1 1;0.25 0.1 0.25 1;0 0 1 1;0 0 1 1"/>
+<rect x="240" y="534" width="320" height="116" rx="4" class="pack-fill"/>
+<rect x="240" y="534" width="320" height="116" rx="4" class="acc" stroke-width="1.5" fill="none"/>
+<path d="M 240 538 A 4 4 0 0 1 244 534 L 556 534 A 4 4 0 0 1 560 538 L 560 560 L 240 560 Z" class="af"/>
+<text x="252" y="552" class="hdr-l">.loupe/runs/01HKXY7Z3F</text>
+<text x="548" y="552" class="hdr-r" text-anchor="end">5 · MERKLE</text>
+</g>
+
+<!-- Five Merkle-linked blocks inside the run pack -->
+<g opacity="0"><animate attributeName="opacity" values="0;0;1;1;1" keyTimes="0;0.50;0.51;0.95;1" dur="12s" repeatCount="1" fill="freeze"/><rect x="251" y="572" width="50" height="50" rx="3" class="block-fill"/><rect x="251" y="572" width="50" height="50" rx="3" class="ink" stroke-width="0.9" fill="none"/><text x="276" y="584" class="lbl-blockid" text-anchor="middle">SBOM</text><line x1="256" y1="589" x2="296" y2="589" class="ink" stroke-width="0.5" opacity="0.35"/><text x="276" y="601" class="lbl-hash" text-anchor="middle">#a3f2c1</text><text x="276" y="614" class="lbl-blockres-ok" text-anchor="middle">142 deps</text></g>
+<g opacity="0"><animate attributeName="opacity" values="0;0;1;1;1" keyTimes="0;0.52;0.53;0.95;1" dur="12s" repeatCount="1" fill="freeze"/><rect x="313" y="572" width="50" height="50" rx="3" class="block-fill"/><rect x="313" y="572" width="50" height="50" rx="3" class="ink" stroke-width="0.9" fill="none"/><text x="338" y="584" class="lbl-blockid" text-anchor="middle">CVE</text><line x1="318" y1="589" x2="358" y2="589" class="ink" stroke-width="0.5" opacity="0.35"/><text x="338" y="601" class="lbl-hash" text-anchor="middle">#b7e1d4</text><text x="338" y="614" class="lbl-blockres-bad" text-anchor="middle">3 high</text><circle cx="358" cy="577" r="3" class="dot-amber"/></g>
+<g opacity="0"><animate attributeName="opacity" values="0;0;1;1;1" keyTimes="0;0.54;0.55;0.95;1" dur="12s" repeatCount="1" fill="freeze"/><rect x="375" y="572" width="50" height="50" rx="3" class="block-fill"/><rect x="375" y="572" width="50" height="50" rx="3" class="ink" stroke-width="0.9" fill="none"/><text x="400" y="584" class="lbl-blockid" text-anchor="middle">TL</text><line x1="380" y1="589" x2="420" y2="589" class="ink" stroke-width="0.5" opacity="0.35"/><text x="400" y="601" class="lbl-hash" text-anchor="middle">#c9d3f8</text><text x="400" y="614" class="lbl-blockres-bad" text-anchor="middle">7 threats</text><circle cx="420" cy="577" r="3" class="dot-amber"/></g>
+<g opacity="0"><animate attributeName="opacity" values="0;0;1;1;1" keyTimes="0;0.56;0.57;0.95;1" dur="12s" repeatCount="1" fill="freeze"/><rect x="437" y="572" width="50" height="50" rx="3" class="block-fill"/><rect x="437" y="572" width="50" height="50" rx="3" class="ink" stroke-width="0.9" fill="none"/><text x="462" y="584" class="lbl-blockid" text-anchor="middle">SECRET</text><line x1="442" y1="589" x2="482" y2="589" class="ink" stroke-width="0.5" opacity="0.35"/><text x="462" y="601" class="lbl-hash" text-anchor="middle">#d4a8e2</text><text x="462" y="614" class="lbl-blockres-ok" text-anchor="middle">0 leaks</text></g>
+<g opacity="0"><animate attributeName="opacity" values="0;0;1;1;1" keyTimes="0;0.57;0.59;0.95;1" dur="12s" repeatCount="1" fill="freeze"/><rect x="499" y="572" width="50" height="50" rx="3" class="block-fill"/><rect x="499" y="572" width="50" height="50" rx="3" class="ink" stroke-width="0.9" fill="none"/><text x="524" y="584" class="lbl-blockid" text-anchor="middle">SAST</text><line x1="504" y1="589" x2="544" y2="589" class="ink" stroke-width="0.5" opacity="0.35"/><text x="524" y="601" class="lbl-hash" text-anchor="middle">#e5b6a9</text><text x="524" y="614" class="lbl-blockres-bad" text-anchor="middle">12 issues</text><circle cx="544" cy="577" r="3" class="dot-red"/></g>
+
+<!-- Inter-block chain links -->
+<g opacity="0"><animate attributeName="opacity" values="0;0;1;1;1" keyTimes="0;0.53;0.54;0.95;1" dur="12s" repeatCount="1" fill="freeze"/><circle cx="304.50" cy="597" r="3" class="ink" stroke-width="0.85" fill="none"/><circle cx="309.50" cy="597" r="3" class="ink" stroke-width="0.85" fill="none"/></g>
+<g opacity="0"><animate attributeName="opacity" values="0;0;1;1;1" keyTimes="0;0.55;0.56;0.95;1" dur="12s" repeatCount="1" fill="freeze"/><circle cx="366.50" cy="597" r="3" class="ink" stroke-width="0.85" fill="none"/><circle cx="371.50" cy="597" r="3" class="ink" stroke-width="0.85" fill="none"/></g>
+<g opacity="0"><animate attributeName="opacity" values="0;0;1;1;1" keyTimes="0;0.56;0.58;0.95;1" dur="12s" repeatCount="1" fill="freeze"/><circle cx="428.50" cy="597" r="3" class="ink" stroke-width="0.85" fill="none"/><circle cx="433.50" cy="597" r="3" class="ink" stroke-width="0.85" fill="none"/></g>
+<g opacity="0"><animate attributeName="opacity" values="0;0;1;1;1" keyTimes="0;0.58;0.60;0.95;1" dur="12s" repeatCount="1" fill="freeze"/><circle cx="490.50" cy="597" r="3" class="ink" stroke-width="0.85" fill="none"/><circle cx="495.50" cy="597" r="3" class="ink" stroke-width="0.85" fill="none"/></g>
+
+<!-- Verification flash -->
+<rect x="228" y="522" width="344" height="140" rx="10" class="af" opacity="0"><animate attributeName="opacity" values="0;0;0.2;0;0" keyTimes="0;0.68;0.71;0.76;1" dur="12s" repeatCount="1" fill="freeze" calcMode="spline" keySplines="0 0 1 1;0.25 0.1 0.25 1;0.25 0.1 0.25 1;0 0 1 1"/></rect>
+
+<!-- Pre-verification spinner (transient) -->
+<g opacity="0"><animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="0;0.58;0.60;0.70;0.71;1" dur="12s" repeatCount="1" fill="freeze"/><animateTransform attributeName="transform" type="translate" values="0 0;0 0;248 0;248 0" keyTimes="0;0.59;0.70;1" dur="12s" repeatCount="1" fill="freeze" calcMode="spline" keySplines="0 0 1 1;0.25 0.1 0.25 1;0 0 1 1"/>
+<circle cx="276" cy="597" r="24" class="acc pf" stroke-width="2.5"/>
+<line x1="272" y1="597" x2="280" y2="597" class="acc" stroke-width="0.9" stroke-linecap="round"/>
+<line x1="276" y1="593" x2="276" y2="601" class="acc" stroke-width="0.9" stroke-linecap="round"/>
+<line x1="293.5" y1="614.5" x2="304" y2="625" class="acc" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="302" y1="623" x2="312" y2="633" class="acc" stroke-width="4" stroke-linecap="round"/>
+</g>
+
+<!-- Verified check badges (persist into the poster) -->
+<g opacity="0"><animate attributeName="opacity" values="0;0;1;1;1" keyTimes="0;0.61;0.62;0.95;1" dur="12s" repeatCount="1" fill="freeze"/><use href="#check-badge" x="276" y="636"/></g>
+<g opacity="0"><animate attributeName="opacity" values="0;0;1;1;1" keyTimes="0;0.63;0.64;0.95;1" dur="12s" repeatCount="1" fill="freeze"/><use href="#check-badge" x="338" y="636"/></g>
+<g opacity="0"><animate attributeName="opacity" values="0;0;1;1;1" keyTimes="0;0.65;0.66;0.95;1" dur="12s" repeatCount="1" fill="freeze"/><use href="#check-badge" x="400" y="636"/></g>
+<g opacity="0"><animate attributeName="opacity" values="0;0;1;1;1" keyTimes="0;0.67;0.68;0.95;1" dur="12s" repeatCount="1" fill="freeze"/><use href="#check-badge" x="462" y="636"/></g>
+<g opacity="0"><animate attributeName="opacity" values="0;0;1;1;1" keyTimes="0;0.69;0.70;0.95;1" dur="12s" repeatCount="1" fill="freeze"/><use href="#check-badge" x="524" y="636"/></g>
+
+<!-- Report bar (persists into the poster) -->
+<g opacity="0"><animate attributeName="opacity" values="0;0;1;1;1" keyTimes="0;0.71;0.74;0.95;1" dur="12s" repeatCount="1" fill="freeze" calcMode="spline" keySplines="0 0 1 1;0.25 0.1 0.25 1;0 0 1 1;0 0 1 1"/>
+<line x1="46" y1="686" x2="754" y2="686" class="ink" stroke-width="0.5" opacity="0.25"/>
+<text x="46" y="704" class="chrome">↳ REPORT.MD · synthesised by Claude</text>
+<text x="754" y="704" class="chrome" text-anchor="end">PASS · 5/5 · SHA-256 · <tspan class="chrome-acc">✓ VERIFIED</tspan></text>
+<text x="400" y="722" class="report-prose" text-anchor="middle">3 high CVEs · 7 threat notes · 12 lints · 0 leaks · merkle-sealed</text>
+</g>
+
+</svg>
