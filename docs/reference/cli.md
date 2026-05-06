@@ -92,7 +92,7 @@ Flags:
 Today's checks (all wired in `loupe_core/enforcement/verify.py`):
 
 1. **Hash-chain integrity** across `.loupe/runs/*.json`. Each record's `self_hash` must match the SHA-256 of its content (excluding the `self_hash` field), and `prev_run_hash` must match the previous record's `self_hash`.
-2. **Per-run artefact Merkle root.** Every `RunRecord` with non-empty `artifact_hashes` must store an `artifacts_merkle_root` equal to the SHA-256 Merkle root recomputed from those leaves. Detects tampering with the artefact-hash dict that the chain check alone would miss. Records with empty hashes (legacy / no-artefact runs) are skipped.
+2. **Per-run artefact Merkle root.** Every `RunRecord` with non-empty `artifact_hashes` must store an `artifacts_merkle_root` equal to the SHA-256 Merkle root recomputed from those leaves. Detects tampering with the artefact-hash dict that the chain check alone would miss. Records with empty `artifact_hashes` pass trivially: the recomputed empty-set root is the empty string and the stored `null` is coerced to the empty string for comparison, so legacy and no-artefact runs match without an early skip. A record that combines `artifact_hashes={}` with a non-null `artifacts_merkle_root` is still caught — that contradiction inside the record is itself evidence of tampering.
 3. **Artefact schema consistency**: every `threats.yaml` / `mitigations.yaml` parses with its Pydantic model.
 4. **Threats-to-mitigations cross-references**: every `mitigation_ids` entry on a threat resolves to a real mitigation, and every `threats_addressed` on a mitigation resolves to a real threat.
 5. **Protected-path authorship** (strict mode): `context.md`, `decisions/*.md`, `config.yaml` must not have been last touched by an agent-identity author.

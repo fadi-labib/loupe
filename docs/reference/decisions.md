@@ -364,39 +364,19 @@ The reason this is its own decision (not folded into D-15): D-15 fixed the *shap
 
 ## D-25: per-run artefact Merkle root { #d-25 }
 
-**Status:** Accepted, 2026-05-16. Supersedes nothing; extends [D-12](#d-12).
+Status: accepted 2026-05-16; extends [D-12](#d-12), supersedes nothing.
 
-**Context.** [D-12](#d-12) commits to a linear SHA-256 hash chain across
-run records. That gives whole-history tamper detection but forces an
-auditor verifying a single artefact to walk every record from origin to
-the run in question. The hero image promised a "Merkle" seal that the
-code did not implement.
+[D-12](#d-12) commits to a linear SHA-256 hash chain across run records. That gives whole-history tamper detection but forces an auditor verifying a single artefact to walk every record from origin to the run in question. The hero image promised a "Merkle" seal that the code did not implement; this decision records the fix and pins down the shape.
 
-**Decision.** Each `RunRecord` carries `artifact_hashes` (path → SHA-256
-of file content at write time) plus `artifacts_merkle_root` (SHA-256
-Merkle root over those leaves). Both fields are additive with defaults,
-so existing records load and chain-verify without change. `loupe verify`
-gains a fourth default check: stored root must equal recomputed root.
+The fix: each `RunRecord` carries `artifact_hashes` (path → SHA-256 of file content at write time) plus `artifacts_merkle_root` (SHA-256 Merkle root over those leaves). Both fields are additive with defaults, so existing records load and chain-verify without change. `loupe verify` gains a fourth default check: stored root must equal recomputed root.
 
-**Why not Cert-Transparency-style external anchoring?** Because external
-anchoring (Sigstore Rekor, OpenTimestamps) remains deferred per
-[D-14](#d-14). The Merkle root is structurally what those anchors expect,
-so this change is forward-compatible: when D-14 lands, the root is
-already the right shape to publish externally.
+External anchoring (Sigstore Rekor, OpenTimestamps) remains deferred per [D-14](#d-14), so this change does not publish the root outside the repo. The Merkle root is structurally what those anchors would expect, so the change is forward-compatible: when D-14 lands, the root is already the right shape to publish externally.
 
-**Why duplicate-last** rather than RFC-6962 promote-tail? Simpler,
-adequate for in-repo verification. An external transparency log would
-need promote-tail to match RFC-6962 exactly; revisit at that time.
+The tree construction uses duplicate-last for odd levels rather than RFC-6962's promote-tail. Duplicate-last is simpler and adequate for in-repo verification. An external transparency log would need promote-tail to match RFC-6962 exactly; revisit at that time, alongside D-14.
 
-**Why** `b"\x00"` **/** `b"\x01"` **domain separators?** Prevents the
-second-preimage attack where a leaf hash is substituted for an internal
-hash. Standard countermeasure, trivial cost.
+Leaves and internal nodes are domain-separated by prefixing the hash input with `b"\x00"` for leaves and `b"\x01"` for internal nodes. This prevents the second-preimage attack where a leaf hash is substituted for an internal hash. Standard countermeasure, trivial cost.
 
-**Backward compatibility.** `compute_self_hash` excludes the new fields
-from canonical JSON when they hold their default sentinel values
-(`artifact_hashes == {}`, `artifacts_merkle_root is None`). Legacy
-records loaded fresh hash byte-identically to their pre-D-25 form, so the
-chain check continues to pass on them.
+Backward compatibility with the existing D-12 hash chain holds because `compute_self_hash` excludes the new fields from canonical JSON when they hold their default sentinel values (`artifact_hashes == {}`, `artifacts_merkle_root is None`). Legacy records loaded fresh hash byte-identically to their pre-D-25 form, so the chain check continues to pass on them.
 
 ---
 
