@@ -92,13 +92,14 @@ Flags:
 Today's checks (all wired in `loupe_core/enforcement/verify.py`):
 
 1. **Hash-chain integrity** across `.loupe/runs/*.json`. Each record's `self_hash` must match the SHA-256 of its content (excluding the `self_hash` field), and `prev_run_hash` must match the previous record's `self_hash`.
-2. **Artefact schema consistency**: every `threats.yaml` / `mitigations.yaml` parses with its Pydantic model.
-3. **Threats-to-mitigations cross-references**: every `mitigation_ids` entry on a threat resolves to a real mitigation, and every `threats_addressed` on a mitigation resolves to a real threat.
-4. **Protected-path authorship** (strict mode): `context.md`, `decisions/*.md`, `config.yaml` must not have been last touched by an agent-identity author.
+2. **Per-run artefact Merkle root.** Every `RunRecord` with non-empty `artifact_hashes` must store an `artifacts_merkle_root` equal to the SHA-256 Merkle root recomputed from those leaves. Detects tampering with the artefact-hash dict that the chain check alone would miss. Records with empty hashes (legacy / no-artefact runs) are skipped.
+3. **Artefact schema consistency**: every `threats.yaml` / `mitigations.yaml` parses with its Pydantic model.
+4. **Threats-to-mitigations cross-references**: every `mitigation_ids` entry on a threat resolves to a real mitigation, and every `threats_addressed` on a mitigation resolves to a real threat.
+5. **Protected-path authorship** (strict mode): `context.md`, `decisions/*.md`, `config.yaml` must not have been last touched by an agent-identity author.
 
 Exit codes: `0` if all checks pass; non-zero on the first failure.
 
-Without `--strict`, the three default checks (hash chain, artefact schemas, threats↔mitigations cross-references) run. With `--strict`, the additional protected-path authorship check also runs.
+Without `--strict`, the four default checks (hash chain, artefact Merkle root, artefact schemas, threats↔mitigations cross-references) run. With `--strict`, the additional protected-path authorship check also runs.
 
 ## `loupe chat`
 

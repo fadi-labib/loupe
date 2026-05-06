@@ -36,6 +36,13 @@ The pre-alpha working set, in flight toward v0.1.
 - Typed `Finding` model with provenance (capability backend, rule, location) replacing free-form dicts in capability results.
 - Typed `UpgradedPackage` model for diff-derived upgrade hints consumed by ThreatLens.
 - `mypy --strict` pre-commit hook on `loupe-core`.
+- `RunRecord.artifact_hashes` and `RunRecord.artifacts_merkle_root` — every
+  run now carries an SHA-256 Merkle root over its written artefacts. See
+  [D-25](docs/reference/decisions.md#d-25). `loupe verify` checks the root
+  by default.
+- `loupe_core.artifacts.merkle.compute_artefact_merkle_root` and
+  `leaf_hash` — public helpers for downstream tooling and external
+  verifiers.
 
 ### Changed
 

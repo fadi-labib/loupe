@@ -27,6 +27,37 @@ Two properties matter:
 
 `prev_run_hash` points at the previous record's `self_hash`. To break the chain, an attacker would have to recompute every record forward from the modified one, which `loupe verify` detects by comparing stored vs computed hashes record-by-record.
 
+## Artefact Merkle root construction
+
+`artifact_hashes` maps each path written under `.loupe/` during this run to
+its SHA-256 content hash (lowercase hex, 64 chars). `artifacts_merkle_root`
+is the SHA-256 Merkle root over those leaves, computed in `save_run_record`
+so callers cannot forget. The root is `null` when the run wrote no
+artefacts and on legacy records that pre-date this field.
+
+Construction details an external auditor needs to reproduce:
+
+1. Sort `artifact_hashes` items by path (lexical, UTF-8). Paths are stored
+   in POSIX form (`as_posix()`) so Windows and Linux auditors see identical
+   keys.
+2. Leaf hash: `SHA-256(b"\x00" + path_utf8 + b":" + sha256_hex_ascii)`.
+3. Internal hash: `SHA-256(b"\x01" + left_bytes + right_bytes)` where each
+   operand is the 32-byte binary form of the child hex digest.
+4. On a level with an odd number of nodes, duplicate the last node before
+   pairing.
+5. The single remaining node is the root. Empty input collapses to the
+   `null` sentinel rather than a fixed hash, so "no artefacts in this run"
+   reads differently from "artefacts present, root computed".
+
+The `b"\x00"` and `b"\x01"` domain separators prevent the second-preimage
+attack where an attacker substitutes a leaf hash for an internal hash.
+Reference implementation: `loupe_core.artifacts.merkle`.
+
+`artifacts_merkle_root` is part of the record's canonical content, so
+`self_hash` covers it. Tampering with the root after the fact breaks both
+the chain check and the Merkle check. The two checks are independent and
+both run by default in `loupe verify`.
+
 ## Filename convention
 
 ```

@@ -12,7 +12,7 @@ The principles that emerged from these decisions are at [`principles.md`](../pri
 
 ## Index
 
-[D-01](#d-01) Scope · [D-02](#d-02) CI + interactive · [D-03](#d-03) PydanticAI · [D-04](#d-04) Plugin architecture · [D-05](#d-05) Name = Loupe · [D-06](#d-06) Ten artefacts · [D-07](#d-07) Blackboard + knowledge graph · [D-08](#d-08) Four-layer write boundary · [D-09](#d-09) MCP · [D-10](#d-10) Three cost levers · [D-11](#d-11) Lens contract · [D-12](#d-12) Hash chain · [D-13](#d-13) VCR · [D-14](#d-14) Deferred signing · [D-15](#d-15) `loupe scan` · [D-16](#d-16) StrideGPT lineage · [D-17](#d-17) Apache 2.0 · [D-18](#d-18) Capability abstraction · [D-19](#d-19) Benchmark tiers · [D-20](#d-20) MkDocs Material · [D-21](#d-21) MCP SDK choice · [D-22](#d-22) MCP write layer · [D-23](#d-23) Required vs preferred capabilities · [D-24](#d-24) Scoped scan reads sources · [Open decisions](#open-decisions)
+[D-01](#d-01) Scope · [D-02](#d-02) CI + interactive · [D-03](#d-03) PydanticAI · [D-04](#d-04) Plugin architecture · [D-05](#d-05) Name = Loupe · [D-06](#d-06) Ten artefacts · [D-07](#d-07) Blackboard + knowledge graph · [D-08](#d-08) Four-layer write boundary · [D-09](#d-09) MCP · [D-10](#d-10) Three cost levers · [D-11](#d-11) Lens contract · [D-12](#d-12) Hash chain · [D-13](#d-13) VCR · [D-14](#d-14) Deferred signing · [D-15](#d-15) `loupe scan` · [D-16](#d-16) StrideGPT lineage · [D-17](#d-17) Apache 2.0 · [D-18](#d-18) Capability abstraction · [D-19](#d-19) Benchmark tiers · [D-20](#d-20) MkDocs Material · [D-21](#d-21) MCP SDK choice · [D-22](#d-22) MCP write layer · [D-23](#d-23) Required vs preferred capabilities · [D-24](#d-24) Scoped scan reads sources · [D-25](#d-25) Per-run artefact Merkle root · [Open decisions](#open-decisions)
 
 ---
 
@@ -154,7 +154,7 @@ Six methods, one declared attribute. Anything else is implementation detail.
 
 Each `runs/*.json` contains a `self_hash` (SHA-256 of its own content, excluding the `self_hash` field) and a `prev_run_hash` (the previous record's `self_hash`). `loupe verify` walks the chain.
 
-Auditors need to detect history rewriting. Without the chain, a malicious actor could insert a fake "we considered this CVE and decided not_affected" run record. The chain is implemented in `loupe_core/artifacts/run_record.py` via deterministic JSON canonicalisation (sorted keys, no whitespace). This is part of Layer 3 enforcement; combined with Layer 2 (CODEOWNERS and branch protection) it is hard to bypass undetectably.
+Auditors need to detect history rewriting. Without the chain, a malicious actor could insert a fake "we considered this CVE and decided not_affected" run record. The chain is implemented in `loupe_core/artifacts/run_record.py` via deterministic JSON canonicalisation (sorted keys, no whitespace). This is part of Layer 3 enforcement; combined with Layer 2 (CODEOWNERS and branch protection) it is hard to bypass undetectably. See also [D-25](#d-25), which adds a per-run artefact Merkle root on top of the linear chain.
 
 ---
 
@@ -359,6 +359,44 @@ Implementation surface: new `ScopedSource(path, content, truncated_at)` dataclas
 Cost note: a scoped scan of `src/mqtt.c` (~10k tokens of code) + system prompt + context.md ≈ 13–15k input tokens per agent round; 16 rounds at Opus pricing ≈ $1.50–$2.50, brushing the previous flat default `per_run_max_usd: 2.50`. The fix splits the budget envelope by mode: `per_run_max_usd.ci` stays at $2.50 (per-PR ergonomics — many small PRs per month, cost discipline matters most here) and `per_run_max_usd.scan` defaults to $5.00 (fewer invocations, scoped reads cost more, the cost shape is genuinely different). The scalar form `per_run_max_usd: <N>` remains accepted for backwards compatibility and is treated as both ceilings simultaneously. The `--budget-usd <N>` one-off override flag designed in D-15 still applies to either mode, but no longer needs to be the primary mechanism — operators get a sensible per-mode default without needing to remember the flag for every scan invocation.
 
 The reason this is its own decision (not folded into D-15): D-15 fixed the *shape* of scan-mode (explicit command, scope field on `RunContext`, same dispatcher) but described scan as analysing "the whole codebase from scratch (or a subset specified by `--paths`)" — a behavioural promise that turned out to be unimplemented. D-24 records both the gap and the resolution so a future maintainer can see the design intent of D-15 was preserved across the fix, not silently rewritten.
+
+---
+
+## D-25: per-run artefact Merkle root { #d-25 }
+
+**Status:** Accepted, 2026-05-16. Supersedes nothing; extends [D-12](#d-12).
+
+**Context.** [D-12](#d-12) commits to a linear SHA-256 hash chain across
+run records. That gives whole-history tamper detection but forces an
+auditor verifying a single artefact to walk every record from origin to
+the run in question. The hero image promised a "Merkle" seal that the
+code did not implement.
+
+**Decision.** Each `RunRecord` carries `artifact_hashes` (path → SHA-256
+of file content at write time) plus `artifacts_merkle_root` (SHA-256
+Merkle root over those leaves). Both fields are additive with defaults,
+so existing records load and chain-verify without change. `loupe verify`
+gains a fourth default check: stored root must equal recomputed root.
+
+**Why not Cert-Transparency-style external anchoring?** Because external
+anchoring (Sigstore Rekor, OpenTimestamps) remains deferred per
+[D-14](#d-14). The Merkle root is structurally what those anchors expect,
+so this change is forward-compatible: when D-14 lands, the root is
+already the right shape to publish externally.
+
+**Why duplicate-last** rather than RFC-6962 promote-tail? Simpler,
+adequate for in-repo verification. An external transparency log would
+need promote-tail to match RFC-6962 exactly; revisit at that time.
+
+**Why** `b"\x00"` **/** `b"\x01"` **domain separators?** Prevents the
+second-preimage attack where a leaf hash is substituted for an internal
+hash. Standard countermeasure, trivial cost.
+
+**Backward compatibility.** `compute_self_hash` excludes the new fields
+from canonical JSON when they hold their default sentinel values
+(`artifact_hashes == {}`, `artifacts_merkle_root is None`). Legacy
+records loaded fresh hash byte-identically to their pre-D-25 form, so the
+chain check continues to pass on them.
 
 ---
 

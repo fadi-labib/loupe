@@ -101,7 +101,7 @@ The claim: four enforcement layers, no single one load-bearing.
 |---|---|---|
 | Layer 1 (tool surface) | Shipped | See §5 above |
 | Layer 2 (branch namespace) | Designed, not enforced | The Action uses the default `GITHUB_TOKEN`; the fine-grained PAT scope is recorded in [`decisions.md` D-08](decisions.md#d-08) and as a header comment in `packages/loupe-action/action.yml`. See also [`data-handling.md` § CI data flow](data-handling.md#ci-data-flow). |
-| Layer 3 (`loupe verify`) | Shipped | `loupe verify` checks (1) hash-chain integrity, (2) artefact schema consistency, (3) threats-to-mitigations cross-references on every run, and (4) protected-path authorship under `--strict` (also reachable as `verify_repo(..., strict=True)` from the library). |
+| Layer 3 (`loupe verify`) | Shipped | `loupe verify` checks (1) hash-chain integrity, (2) per-run artefact Merkle root ([D-25](decisions.md#d-25)), (3) artefact schema consistency, (4) threats-to-mitigations cross-references on every run, and (5) protected-path authorship under `--strict` (also reachable as `verify_repo(..., strict=True)` from the library). |
 | Layer 4 (interactive UX gate) | Designed | `loupe chat` is a placeholder. The `[y/N/edit/skip]` prompt logic is not yet wired |
 
 To prove the hash-chain detector works, deliberately corrupt a record:
@@ -115,6 +115,27 @@ loupe verify                   # should exit non-zero and name the broken record
 ```
 
 The hash covers every persisted field, including the post-D-23 `errors` (structured lens crashes) and `capability_degraded` (preferred-but-unavailable capability records — see [`decisions.md` D-23](decisions.md#d-23)) lists. A run that degraded gracefully on a preferred capability gets a distinct `self_hash` from an otherwise-identical clean run, so an auditor walking the chain can spot the degradation without inspecting the contents.
+
+### Verifying single-artefact inclusion in a run
+
+You receive a `RunRecord` JSON and want to prove that one specific artefact
+(say `threats.yaml` at SHA-256 `b7e1d4...`) was part of run X without
+recomputing every other artefact's hash.
+
+1. Compute the leaf:
+   `SHA-256(b"\x00" + b"threats.yaml" + b":" + b"b7e1d4...")`.
+2. Walk the Merkle tree from this leaf up using the audit path. (Each
+   step combines your current hash with its sibling: left and right go
+   into `SHA-256(b"\x01" + left + right)`. A future `loupe
+   inclusion-proof <run-id> <path>` will emit the audit path; for now,
+   construct it by hand from `record.artifact_hashes`.)
+3. The final hash must equal `record.artifacts_merkle_root`.
+
+Tampering with `record.artifact_hashes` after the fact is detected two
+ways: by the Merkle root no longer matching, and by `self_hash` no longer
+matching (since the dict is part of the record's hashed content). The
+Merkle structure exists for the **inclusion-proof shape**, not for
+additional tamper detection beyond what `self_hash` already provides.
 
 ### §7: Humans stay in the decision seat
 
@@ -189,6 +210,6 @@ If any of those fail, the run record was tampered with.
 
 ## What this page deliberately does not promise
 
-- That `loupe verify` is exhaustive today. The four planned checks are wired (chain, schema, cross-references, authorship under strict mode). New Layer 3 checks added later will not change the exit-code contract; they extend the failure list.
+- That `loupe verify` is exhaustive today. The five planned checks are wired (chain, artefact Merkle root, schema, cross-references, authorship under strict mode). New Layer 3 checks added later will not change the exit-code contract; they extend the failure list.
 - That an auditor can verify quality of LLM analysis without an LLM. They cannot; LLM output reasoning is a separate question from artefact integrity. Loupe's claim is that the *evidence pack is genuine*, not that the analysis is correct.
 - That every standard validator listed above is currently installed in CI. Some auditors will want to run them themselves; others will trust the format. The point of standards is that either path works.
