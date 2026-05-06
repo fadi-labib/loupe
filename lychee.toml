@@ -23,9 +23,6 @@ exclude = [
   # These will never resolve from a CI runner.
   '^http://127\.0\.0\.1:',
   '^http://localhost:',
-  # The Pages site does not exist yet (the repo is private and Pages is not
-  # configured). Remove this exclusion once `mike deploy` has published.
-  '^https://fadi-labib\.github\.io/loupe/?$',
   # DOI redirects to publisher sites (ACM, Springer, etc.) that anti-crawler
   # 403 anonymous crawlers. The DOI itself is canonical; if it's wrong, the
   # citation context will catch it.

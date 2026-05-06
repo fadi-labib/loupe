@@ -16,18 +16,22 @@
 [![Vale](https://github.com/fadi-labib/loupe/actions/workflows/prose-check.yml/badge.svg)](https://github.com/fadi-labib/loupe/actions/workflows/prose-check.yml)
 [![Links](https://github.com/fadi-labib/loupe/actions/workflows/link-check.yml/badge.svg)](https://github.com/fadi-labib/loupe/actions/workflows/link-check.yml)
 
-[Docs](https://fadi-labib.github.io/loupe/) · [Quickstart](docs/quickstart.md) · [Architecture](docs/concepts/architecture.md) · [Verification](docs/reference/verification.md) · [Decisions](docs/reference/decisions.md) · [Changelog](CHANGELOG.md)
+[Docs](docs/index.md) · [Quickstart](docs/quickstart.md) · [Architecture](docs/concepts/architecture.md) · [Verification](docs/reference/verification.md) · [Decisions](docs/reference/decisions.md) · [Changelog](CHANGELOG.md)
 
 </div>
 
 <p align="center">
   <picture>
     <source media="(prefers-reduced-motion: reduce)" srcset="./docs/assets/hero-static.svg" />
-    <img src="./docs/assets/hero.svg" alt="Loupe pipeline: source code is inspected by five capability lenses (SBOM, CVE, Secret, SAST, ThreatLens), findings flow into a hash-chained .loupe/ artefact pack, then loupe verify confirms each block — the verified state holds in accent green." width="800" />
+    <img src="./docs/assets/hero.svg" alt="Loupe pipeline diagram." width="800" />
   </picture>
+  <br />
+  <sub>Source code is inspected by capability lenses (SBOM, CVE, Secret, SAST, ThreatLens); findings flow into a hash-chained <code>.loupe/</code> artefact pack; <code>loupe verify</code> confirms each block.</sub>
 </p>
 
-On every pull request, Loupe runs a Pydantic-typed agent over a composable stack of SBOM, CVE, secret, and SAST scanners; writes the findings as Git-tracked YAML in `.loupe/`; hash-chains the run record; and posts a sticky PR comment. `loupe verify` replays the whole chain from in-repo state alone. No SaaS, no telemetry, no hidden cache. You pick the LLM, you pick the tools, the configuration is the evidence.
+On every pull request, Loupe runs a Pydantic-typed agent over a composable stack of SBOM, CVE, secret, and SAST scanners. Findings land as Git-tracked YAML in `.loupe/`, the run record is hash-chained, and a sticky PR comment posts the summary.
+
+`loupe verify` replays the whole chain from in-repo state alone. No SaaS, no telemetry, no hidden cache. You pick the LLM, you pick the tools; the configuration is the evidence.
 
 ---
 
@@ -83,7 +87,7 @@ The EU Cyber Resilience Act (fully applicable December 2027) makes both worse. M
 | Auditor-replayable       | ✓ `loupe verify` | ✗          | ✗             | ✗             |
 | OSS, no SaaS             | ✓ Apache 2.0  | ~ partial     | ✗ commercial  | ✓ OWASP       |
 
-Row-by-row breakdown, including methodological caveats: [`docs/comparison.md`](docs/comparison.md).
+<sub>Snapshot dated 2026-05-16. Row-by-row breakdown with version-pinned sources and methodological caveats: [`docs/comparison.md`](docs/comparison.md).</sub>
 
 ## The mental model
 
@@ -175,7 +179,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: fadi-labib/loupe@main          # post-v0.1: fadi-labib/loupe-action@v0.1
+      - uses: fadi-labib/loupe/packages/loupe-action@main   # post-v0.1: fadi-labib/loupe-action@v0.1
         with:
           pr: ${{ github.event.pull_request.number }}
           comment_mode: sticky                # or 'new' or 'none'
@@ -213,8 +217,7 @@ Full schemas in [`docs/reference/schemas/`](docs/reference/schemas/index.md).
 
 ## Sample output
 
-<details>
-<summary>What ThreatLens actually writes to <code>.loupe/threats.yaml</code></summary>
+What ThreatLens actually writes to `.loupe/threats.yaml`:
 
 ```yaml
 schema_version: 1
@@ -230,7 +233,6 @@ threats:
     status: proposed              # human moves it through accepted / mitigated / accepted_risk / rejected
     mitigation_ids: [M-005]
     cwe_refs: [CWE-209]
-    attack_pattern_refs: []
     introduced_in_pr: "1234"
     last_reviewed: 2026-05-15
     review_due: 2026-08-15
@@ -240,11 +242,7 @@ threats:
     proposed_by: threatlens
 ```
 
-Every threat carries a stable `T-NNN` ID, an element it applies to (`E-NNN`), a STRIDE category (single letter), severity, lifecycle status, mitigation cross-references (`M-NNN`), CWE/CAPEC references, and a rationale the LLM is required to produce. Mitigations (`mitigations.yaml`), VEX statements (`vex.json`), and run records (`runs/*.json`) share the same shape: Pydantic-validated, stable IDs, no prose-only fields.
-
-See [`docs/reference/schemas/`](docs/reference/schemas/index.md) for every artefact's schema.
-
-</details>
+Every threat carries a stable `T-NNN` ID, an element (`E-NNN`), a STRIDE category, severity, lifecycle status, mitigation cross-references (`M-NNN`), CWE references, and a rationale the LLM is required to produce. Mitigations, VEX statements, and run records share the same shape: Pydantic-validated, stable IDs, no prose-only fields. Schemas: [`docs/reference/schemas/`](docs/reference/schemas/index.md).
 
 ## You pick the LLM. You pick the tools.
 
@@ -302,7 +300,7 @@ Every row in this table is a claim. The third column is the command that proves 
 | CLI | `loupe init`, `ci`, `verify [--strict]`, `scan`, `mcp`, `chat` (TTY guard only), `lens list`, `cap list`, `doctor` | `uv run loupe --help` |
 | GitHub Action | PR fetch, `loupe ci` runner, sticky-comment poster (sticky / new / none), retry + rate-limit handling | [`packages/loupe-action/action.yml`](packages/loupe-action/action.yml) |
 | ThreatLens | PydanticAI agent wired to a live LLM. User runs hit the configured provider; the project's own test suite uses VCR cassettes to keep CI deterministic. STRIDE threats, mitigations, cross-references | `uv run pytest packages/loupe-threatlens/ -q` |
-| MCP server (stdio) | Read tools: `list_threats`, `query_by_severity`, `latest_run`, `threat_model_summary`. Write tools: `propose_threat`, `propose_mitigation` (both Layer-1 gated) | `uv run loupe mcp` |
+| MCP server (stdio, 11 tools) | Core read: `list_threats`, `get_threat`, `list_mitigations`, `get_mitigation`, `list_elements`, `latest_run`. ThreatLens read: `threatlens_query_by_stride`, `threatlens_query_by_severity`, `threatlens_summary`. ThreatLens write (Layer-1 gated): `threatlens_propose_threat`, `threatlens_propose_mitigation` | `uv run loupe mcp` |
 | Capability backends | 10 bundled: Syft + cdxgen (SBOM), Grype + osv-scanner (CVE), gitleaks + TruffleHog + detect-secrets (secret), Semgrep + CodeQL + Bandit (SAST) | `uv run loupe cap list` |
 | Composition modes | `single`, `fallback`, `union`, `consensus`, `pipeline` | [`docs/reference/config.md`](docs/reference/config.md) |
 | Audit trail | Hash-chained run records, `loupe verify` Layer 3 checks (chain, schema, cross-refs, authorship) | `uv run loupe verify --strict .loupe/` |
@@ -326,23 +324,14 @@ Every row in this table is a claim. The third column is the command that proves 
 
 **Up to €15 million or 2.5% of worldwide annual turnover, whichever is higher.** That is the maximum administrative fine under Article 64 of [Regulation 2024/2847](https://eur-lex.europa.eu/eli/reg/2024/2847) for non-compliance with the essential cybersecurity requirements. It applies to every manufacturer of "products with digital elements" placed on the EU market.
 
-```text
-   2024              2026-09-11               2027-12-11
-    │                     │                        │
-    ●─────────────────────●────────────────────────●─────►
-   CRA adopted    Reporting obligations    Full applicability
-                  begin (ENISA SRP)        for every manufacturer
-                                            of "products with
-                                            digital elements"
-```
-
-From **11 September 2026**, manufacturers must report actively-exploited vulnerabilities and severe incidents via ENISA's Single Reporting Platform, coordinated through their Member State CSIRT. From **11 December 2027**, the full regulation applies.
+- **11 September 2026** — manufacturers must report actively-exploited vulnerabilities and severe incidents via ENISA's Single Reporting Platform, coordinated through their Member State CSIRT.
+- **11 December 2027** — the full regulation applies.
 
 Both regimes require living risk assessments, living SBOMs, and living per-CVE impact statements. Loupe produces all three as in-repo artefacts, on every PR, with audit-grade provenance.
 
 ## Where to find things
 
-The published docs site is at [fadi-labib.github.io/loupe](https://fadi-labib.github.io/loupe/) (search, navigation, social previews). The fallback for in-tree browsing:
+Docs render in-tree on GitHub today; a hosted MkDocs site will go up once the repo is public. In-tree map:
 
 | If you want to … | Read |
 |---|---|
@@ -364,9 +353,20 @@ The published docs site is at [fadi-labib.github.io/loupe](https://fadi-labib.gi
 
 ## Built on
 
-Built on [PydanticAI](https://ai.pydantic.dev/) (multi-provider agent), [Pydantic 2.x](https://docs.pydantic.dev/) (typed I/O), [MCP](https://modelcontextprotocol.io/) (tool protocol), [CycloneDX 1.6](https://cyclonedx.org/) (SBOM), [OpenVEX 0.2](https://openvex.dev/) (vulnerability statements), and [STRIDE](https://learn.microsoft.com/azure/security/develop/threat-modeling-tool-threats) (threat-modelling method). Scanner backends are Syft, cdxgen, Grype, osv-scanner, TruffleHog, gitleaks, detect-secrets, Semgrep, CodeQL, and Bandit. Workspace is [uv](https://docs.astral.sh/uv/); docs are [MkDocs Material](https://squidfunk.github.io/mkdocs-material/); prose is linted with [Vale](https://vale.sh/).
+| Role | Project |
+|---|---|
+| Multi-provider agent | [PydanticAI](https://ai.pydantic.dev/) |
+| Typed I/O | [Pydantic 2.x](https://docs.pydantic.dev/) |
+| Tool protocol | [Model Context Protocol](https://modelcontextprotocol.io/) |
+| SBOM format | [CycloneDX 1.6](https://cyclonedx.org/) |
+| Vulnerability statements | [OpenVEX 0.2](https://openvex.dev/) |
+| Threat-modelling method | [STRIDE](https://learn.microsoft.com/azure/security/develop/threat-modeling-tool-threats) |
+| Scanner backends | Syft, cdxgen, Grype, osv-scanner, TruffleHog, gitleaks, detect-secrets, Semgrep, CodeQL, Bandit |
+| Workspace + packaging | [uv](https://docs.astral.sh/uv/) |
+| Docs site | [MkDocs Material](https://squidfunk.github.io/mkdocs-material/) |
+| Prose linter | [Vale](https://vale.sh/) |
 
-Full attribution list, version constraints, and the decision records behind each choice: [`docs/built-on.md`](docs/built-on.md).
+Full attribution, version pins, and the decision record behind each choice: [`docs/built-on.md`](docs/built-on.md).
 
 ## Contributing
 
@@ -383,5 +383,5 @@ Apache 2.0. Patent grant included (§ 3); attribution preserved under § 4(c). S
 ---
 
 <div align="center">
-<sub>Copyright © 2026 Fadi Labib · <a href="https://fadi-labib.github.io/loupe/">Docs</a> · <a href="LICENSE">Apache 2.0</a> · <a href="SECURITY.md">Security</a> · <a href="CHANGELOG.md">Changelog</a></sub>
+<sub>Copyright © 2026 Fadi Labib · <a href="docs/index.md">Docs</a> · <a href="LICENSE">Apache 2.0</a> · <a href="SECURITY.md">Security</a> · <a href="CHANGELOG.md">Changelog</a></sub>
 </div>
