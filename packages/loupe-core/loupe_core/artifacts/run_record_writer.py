@@ -38,7 +38,14 @@ _EXCLUDED_DIRS = frozenset({"runs", ".proposed"})
 
 
 def enumerate_artefact_files(loupe_dir: Path) -> list[Path]:
-    """Return every artefact file under `.loupe/`, sorted by relative path.
+    """Return every artefact file under `.loupe/`, sorted by relative POSIX path.
+
+    The sort key matches the canonical key form used by `artifact_hashes`
+    (`path.relative_to(loupe_dir).as_posix()`), so a downstream caller
+    iterating this list and a verifier re-sorting `artifact_hashes` keys
+    see the same order. That alignment matters for future direct
+    consumers (CLI listings, transparency-log feeds per D-14) and is
+    cheap insurance against drift now.
 
     Hash leaves are derived from this list. Excludes the run-record
     directory (would be self-referential) and the `.proposed/` drafts
@@ -46,7 +53,7 @@ def enumerate_artefact_files(loupe_dir: Path) -> list[Path]:
     binary by-products out of the commitment.
     """
     out: list[Path] = []
-    for path in sorted(loupe_dir.rglob("*")):
+    for path in loupe_dir.rglob("*"):
         if not path.is_file():
             continue
         rel = path.relative_to(loupe_dir)
@@ -55,6 +62,7 @@ def enumerate_artefact_files(loupe_dir: Path) -> list[Path]:
         if path.suffix.lower() not in _ARTEFACT_SUFFIXES:
             continue
         out.append(path)
+    out.sort(key=lambda p: p.relative_to(loupe_dir).as_posix())
     return out
 
 

@@ -316,6 +316,25 @@ class TestEnumerateArtefactFiles:
         rels = [p.relative_to(loupe_dir).as_posix() for p in enumerate_artefact_files(loupe_dir)]
         assert rels == sorted(rels)
 
+    def test_sort_order_matches_posix_path_strings(self, loupe_dir: Path) -> None:
+        """`enumerate_artefact_files` must sort by relative POSIX path,
+        not by `Path` component order, so a future direct caller (e.g.,
+        a CLI listing or an external transparency-log feed per D-14)
+        sees the same order auditors get when re-sorting `artifact_hashes`
+        keys. Concrete divergence: with `decisions.md` and
+        `decisions/D-001.md` both present, POSIX-string sort puts
+        `decisions.md` first (`.` < `/` in ASCII) but `Path` sort puts
+        the directory contents first."""
+        (loupe_dir / "decisions.md").write_text("# brief\n")
+        decisions = loupe_dir / "decisions"
+        decisions.mkdir()
+        (decisions / "D-001.md").write_text("# accept\n")
+
+        rels = [p.relative_to(loupe_dir).as_posix() for p in enumerate_artefact_files(loupe_dir)]
+        # Expected POSIX-string order: 'decisions.md' comes before
+        # 'decisions/D-001.md' (`.` < `/` in ASCII).
+        assert rels.index("decisions.md") < rels.index("decisions/D-001.md")
+
     def test_includes_yml_extension(self, loupe_dir: Path) -> None:
         (loupe_dir / "context.md").write_text("# context\n")
         (loupe_dir / "mitigations.yml").write_text("")
