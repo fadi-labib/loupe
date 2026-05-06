@@ -6,10 +6,12 @@ logic. ThreatLens's stub `run()` is a no-op, so we verify everything
 writing, exit codes.
 """
 
+import json
 import shutil
 from pathlib import Path
 
 from loupe_cli.__main__ import app
+from loupe_core.artifacts.merkle import compute_artefact_merkle_root
 from loupe_core.artifacts.run_record import load_run_records
 from typer.testing import CliRunner
 
@@ -64,6 +66,25 @@ def test_ci_writes_run_record(tmp_path, monkeypatch):
     assert {lc.name for lc in record.lenses_considered} == {"threatlens"}
     # ThreatLens should have been planned (relevance ≥ threshold)
     assert "threatlens" in record.lenses_run
+
+    # Merkle invariants: artifact_hashes populated, root non-null, and verifiable
+    run_file = sorted((loupe / "runs").glob("*.json"))[0]
+    record_data = json.loads(run_file.read_text())
+
+    # (1) artifact_hashes populated when the run wrote artefacts
+    assert record_data["artifact_hashes"], (
+        f"expected artifact_hashes to be populated, got {record_data['artifact_hashes']!r}"
+    )
+
+    # (2) artifacts_merkle_root is non-null when artifact_hashes is non-empty
+    assert record_data["artifacts_merkle_root"] is not None, (
+        "expected artifacts_merkle_root to be set when artefacts were hashed"
+    )
+
+    # (3) stored root matches a fresh recomputation
+    assert record_data["artifacts_merkle_root"] == compute_artefact_merkle_root(
+        record_data["artifact_hashes"]
+    ), "stored Merkle root must match a fresh recomputation"
 
 
 def test_ci_run_records_chain(tmp_path, monkeypatch):
