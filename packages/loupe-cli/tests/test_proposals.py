@@ -68,3 +68,35 @@ def test_load_proposals_empty_when_no_proposed_dir(tmp_path):
     loupe = tmp_path / ".loupe"
     loupe.mkdir()
     assert load_proposals(loupe) == []
+
+
+def test_load_proposals_raises_on_missing_separator(tmp_path):
+    loupe = tmp_path / ".loupe"
+    proposal_dir = loupe / ".proposed" / "_loupe_context.md"
+    proposal_dir.mkdir(parents=True)
+    (proposal_dir / "abc.patch").write_text(
+        "# Proposed patch for .loupe/context.md\n"
+        "# Rationale: missing separator below\n"
+        "# Run: abc\n"
+        "no separator follows\n"
+    )
+    import pytest
+
+    with pytest.raises(ValueError, match="missing '---' separator"):
+        load_proposals(loupe)
+
+
+def test_load_proposals_raises_on_missing_target_header(tmp_path):
+    loupe = tmp_path / ".loupe"
+    proposal_dir = loupe / ".proposed" / "_loupe_context.md"
+    proposal_dir.mkdir(parents=True)
+    (proposal_dir / "abc.patch").write_text(
+        "# Rationale: missing target line\n"
+        "# Run: abc\n"
+        "---\n"
+        "diff body here\n"
+    )
+    import pytest
+
+    with pytest.raises(ValueError, match="header missing line starting with"):
+        load_proposals(loupe)
