@@ -49,4 +49,22 @@ jobs:
           ANTHROPIC_API_KEY: ""
           OPENAI_API_KEY: ""
           GOOGLE_API_KEY: ""
-        run: uv run pytest packages/ -q
+        run: |
+          set -o pipefail
+          uv run pytest packages/ -q | tee /tmp/pytest.out
+
+      - name: Test summary
+        # `if: always()` so the summary appears even when pytest failed —
+        # operators triaging a red run want the counts and the last few
+        # lines without scrolling the full log. pytest-github-actions-
+        # annotate-failures (declared in pyproject.toml dev group) handles
+        # the inline-on-PR annotations side of test visibility.
+        if: always()
+        run: |
+          {
+            echo '## pytest'
+            echo
+            echo '```'
+            tail -n 3 /tmp/pytest.out
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
