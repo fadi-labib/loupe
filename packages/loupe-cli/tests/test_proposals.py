@@ -165,8 +165,10 @@ def test_move_proposal_refuses_collision(tmp_path):
         rationale="r",
     )
     # Pre-create the destination so the move would collide.
-    (loupe / ".applied" / "_loupe_context.md").mkdir(parents=True)
-    (loupe / ".applied" / "_loupe_context.md" / "abc.patch").write_text("existing")
+    # propose_patch encodes "/" → "_" but preserves leading dot, so
+    # ".loupe/context.md" becomes ".loupe_context.md".
+    (loupe / ".applied" / ".loupe_context.md").mkdir(parents=True)
+    (loupe / ".applied" / ".loupe_context.md" / "abc.patch").write_text("existing")
 
     subprocess.run(["git", "add", ".loupe"], cwd=tmp_path, check=True)
     subprocess.run(["git", "commit", "-qm", "stage"], cwd=tmp_path, check=True)
