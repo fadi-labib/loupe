@@ -1,8 +1,11 @@
 """Tests for the `.loupe/.proposed/` lifecycle helpers used by `loupe chat`."""
 
+import subprocess
 from pathlib import Path
 
-from loupe_cli.proposals import Proposal, load_proposals
+import pytest
+
+from loupe_cli.proposals import Proposal, load_proposals, move_proposal
 
 
 def test_proposal_dataclass_round_trips_all_fields():
@@ -80,8 +83,6 @@ def test_load_proposals_raises_on_missing_separator(tmp_path):
         "# Run: abc\n"
         "no separator follows\n"
     )
-    import pytest
-
     with pytest.raises(ValueError, match="missing '---' separator"):
         load_proposals(loupe)
 
@@ -96,7 +97,36 @@ def test_load_proposals_raises_on_missing_target_header(tmp_path):
         "---\n"
         "diff body here\n"
     )
-    import pytest
-
     with pytest.raises(ValueError, match="header missing line starting with"):
         load_proposals(loupe)
+
+
+def _init_git_repo(path: Path) -> None:
+    """Init a real git repo in path. Used so `git mv` operates on tracked files."""
+    subprocess.run(["git", "init", "-q", "-b", "main"], cwd=path, check=True)
+    subprocess.run(["git", "config", "user.email", "test@example.com"], cwd=path, check=True)
+    subprocess.run(["git", "config", "user.name", "Test"], cwd=path, check=True)
+
+
+def test_move_proposal_to_applied(tmp_path):
+    """An accepted proposal is git-mv'd from .proposed/ to .applied/."""
+    _init_git_repo(tmp_path)
+    loupe = tmp_path / ".loupe"
+    patch_path = _write_patch_file(
+        loupe,
+        target=".loupe/context.md",
+        run_id="abc",
+        diff="--- a/.loupe/context.md\n+++ b/.loupe/context.md\n",
+        rationale="r",
+    )
+    subprocess.run(["git", "add", ".loupe"], cwd=tmp_path, check=True)
+    subprocess.run(["git", "commit", "-qm", "stage"], cwd=tmp_path, check=True)
+
+    proposals = load_proposals(loupe)
+    assert len(proposals) == 1
+
+    moved = move_proposal(proposals[0], to_state="applied", repo_root=tmp_path)
+
+    assert moved.exists()
+    assert ".applied" in str(moved)
+    assert not patch_path.exists()  # original .proposed/ entry is gone

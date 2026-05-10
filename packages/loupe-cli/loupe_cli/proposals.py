@@ -7,8 +7,10 @@ followed by the unified diff body. See tools.py:108-138.
 
 from __future__ import annotations
 
+import subprocess
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Literal
 
 
 @dataclass(frozen=True)
@@ -66,3 +68,37 @@ def _extract_header_value(lines: list[str], *, prefix: str, path: Path) -> str:
     raise ValueError(
         f"malformed proposal {path}: header missing line starting with {prefix!r}"
     )
+
+
+def move_proposal(
+    proposal: Proposal,
+    *,
+    to_state: Literal["applied", "skipped"],
+    repo_root: Path,
+) -> Path:
+    """`git mv` the proposal's .patch file from .proposed/ to .applied/ or .skipped/.
+
+    Requires the .patch file to be tracked in git (caller must have committed it
+    via the user's normal `git add .loupe/ && git commit` workflow after
+    `loupe ci`). The move is staged; the caller is responsible for committing it.
+
+    Returns the new path. Raises FileExistsError if the destination already
+    contains a file with the same encoded-target + run-id (means the user
+    manually re-staged a previously-reviewed proposal; refuse rather than clobber).
+    """
+    src = proposal.patch_file_path
+    rel = src.relative_to(repo_root / ".loupe" / ".proposed")
+    dest_root = repo_root / ".loupe" / f".{to_state}"
+    dest = dest_root / rel
+    if dest.exists():
+        raise FileExistsError(
+            f"Refusing to overwrite {dest}; remove or rename it first."
+        )
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    subprocess.run(
+        ["git", "mv", str(src), str(dest)],
+        cwd=repo_root,
+        check=True,
+        capture_output=True,
+    )
+    return dest
