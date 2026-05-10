@@ -130,3 +130,49 @@ def test_move_proposal_to_applied(tmp_path):
     assert moved.exists()
     assert ".applied" in str(moved)
     assert not patch_path.exists()  # original .proposed/ entry is gone
+
+
+def test_move_proposal_to_skipped(tmp_path):
+    """A rejected proposal is git-mv'd from .proposed/ to .skipped/."""
+    _init_git_repo(tmp_path)
+    loupe = tmp_path / ".loupe"
+    _write_patch_file(
+        loupe,
+        target=".loupe/context.md",
+        run_id="xyz",
+        diff="--- a/.loupe/context.md\n+++ b/.loupe/context.md\n",
+        rationale="r",
+    )
+    subprocess.run(["git", "add", ".loupe"], cwd=tmp_path, check=True)
+    subprocess.run(["git", "commit", "-qm", "stage"], cwd=tmp_path, check=True)
+
+    proposals = load_proposals(loupe)
+    moved = move_proposal(proposals[0], to_state="skipped", repo_root=tmp_path)
+
+    assert moved.exists()
+    assert ".skipped" in str(moved)
+
+
+def test_move_proposal_refuses_collision(tmp_path):
+    """Moving to a destination that already exists raises FileExistsError."""
+    _init_git_repo(tmp_path)
+    loupe = tmp_path / ".loupe"
+    _write_patch_file(
+        loupe,
+        target=".loupe/context.md",
+        run_id="abc",
+        diff="--- a/.loupe/context.md\n+++ b/.loupe/context.md\n",
+        rationale="r",
+    )
+    # Pre-create the destination so the move would collide.
+    (loupe / ".applied" / "_loupe_context.md").mkdir(parents=True)
+    (loupe / ".applied" / "_loupe_context.md" / "abc.patch").write_text("existing")
+
+    subprocess.run(["git", "add", ".loupe"], cwd=tmp_path, check=True)
+    subprocess.run(["git", "commit", "-qm", "stage"], cwd=tmp_path, check=True)
+
+    proposals = load_proposals(loupe)
+    assert len(proposals) == 1  # only the .proposed/ one
+
+    with pytest.raises(FileExistsError, match="Refusing to overwrite"):
+        move_proposal(proposals[0], to_state="applied", repo_root=tmp_path)
