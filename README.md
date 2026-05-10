@@ -155,14 +155,15 @@ cd loupe
 uv sync --all-packages
 ```
 
-Then in your project:
+Pre-PyPI, the CLI lives in the workspace venv. Invoke it against your project with `uv run --project /path/to/loupe`; post-v0.1 the prefix collapses to bare `loupe`.
 
 ```bash
-cd your-repo
-uv run loupe init                    # scaffold .loupe/
-$EDITOR .loupe/context.md            # describe your product (anti-hallucination anchor)
-export ANTHROPIC_API_KEY="sk-ant-…"  # or OPENAI_API_KEY / GOOGLE_API_KEY / etc.
-uv run loupe ci --diff-file <(git diff main...)
+cd ~/projects/your-repo
+uv run --project /path/to/loupe loupe init                       # scaffold .loupe/
+$EDITOR .loupe/context.md                                        # describe your product (anti-hallucination anchor)
+export ANTHROPIC_API_KEY="sk-ant-…"                              # or OPENAI_API_KEY / GOOGLE_API_KEY / etc.
+uv run --project /path/to/loupe loupe doctor                     # preflight: keys, binaries, config
+uv run --project /path/to/loupe loupe ci --diff-file <(git diff main...)
 ```
 
 A full walk-through with screenshots is in the [Quickstart](docs/quickstart.md).

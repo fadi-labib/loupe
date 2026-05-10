@@ -49,10 +49,12 @@ Pre-PyPI, the CLI runs out of the workspace venv. To invoke it against a *differ
 ```bash
 # From your own project's root, with $LOUPE pointing at the Loupe checkout
 cd ~/projects/my-product
-uv run --project ~/projects/loupe loupe doctor
-uv run --project ~/projects/loupe loupe init
+uv run --project ~/projects/loupe loupe init                                                 # scaffold .loupe/
+uv run --project ~/projects/loupe loupe doctor                                               # preflight after scaffolding
 uv run --project ~/projects/loupe loupe ci --diff-file /tmp/pr.diff --base-sha main --head-sha HEAD
 ```
+
+`loupe doctor` runs after `init` so its `.loupe/ exists` check passes; doctor itself never writes and is safe to re-run at any time.
 
 Every `loupe` subcommand works the same way. Once v0.1 publishes to PyPI the `uv run --project` prefix collapses to just `loupe …`.
 
