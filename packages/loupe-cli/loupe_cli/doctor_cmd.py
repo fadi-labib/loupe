@@ -104,6 +104,20 @@ def _run_checks(loupe: Path) -> list[CheckResult]:
     """
     results: list[CheckResult] = []
 
+    # Check 0: git binary on PATH. Required by `loupe chat` (apply, mv).
+    if shutil.which("git") is None:
+        results.append(
+            CheckResult(
+                status="fail",
+                label="git binary",
+                detail="git not found on PATH; required by `loupe chat`",
+            )
+        )
+    else:
+        results.append(
+            CheckResult(status="ok", label="git binary", detail="found on PATH")
+        )
+
     # Check 1: .loupe/ exists.
     loupe_exists = loupe.exists()
     if loupe_exists:

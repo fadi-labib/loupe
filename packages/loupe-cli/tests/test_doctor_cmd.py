@@ -243,3 +243,21 @@ def test_doctor_summary_line_includes_skip_count(tmp_path, monkeypatch):
     assert " skip · " in result.stdout
     # Three skips on the missing-loupe path: config.yaml, context.md, caps.
     assert "3 skip" in result.stdout
+
+
+def test_doctor_fails_when_git_missing(tmp_path, monkeypatch):
+    """git is required for `loupe chat`; doctor must surface a missing git as a fail."""
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test-123")
+    _make_loupe_dir(tmp_path)
+
+    def fake_which(binary: str) -> str | None:
+        if binary == "git":
+            return None
+        return f"/usr/local/bin/{binary}"
+
+    monkeypatch.setattr("loupe_cli.doctor_cmd.shutil.which", fake_which)
+    result = runner.invoke(app, ["doctor"])
+    assert "git" in result.stdout.lower()
+    assert "[✗]" in result.stdout
+    assert result.exit_code == 64
