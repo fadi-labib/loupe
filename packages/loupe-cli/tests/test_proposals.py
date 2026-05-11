@@ -4,7 +4,6 @@ import subprocess
 from pathlib import Path
 
 import pytest
-
 from loupe_cli.proposals import Proposal, load_proposals, move_proposal
 
 
@@ -29,13 +28,7 @@ def _write_patch_file(loupe_dir: Path, target: str, run_id: str, diff: str, rati
     proposal_dir = loupe_dir / ".proposed" / encoded
     proposal_dir.mkdir(parents=True, exist_ok=True)
     patch_path = proposal_dir / f"{run_id}.patch"
-    body = (
-        f"# Proposed patch for {target}\n"
-        f"# Rationale: {rationale}\n"
-        f"# Run: {run_id}\n"
-        f"---\n"
-        f"{diff}"
-    )
+    body = f"# Proposed patch for {target}\n# Rationale: {rationale}\n# Run: {run_id}\n---\n{diff}"
     patch_path.write_text(body)
     return patch_path
 
@@ -92,10 +85,7 @@ def test_load_proposals_raises_on_missing_target_header(tmp_path):
     proposal_dir = loupe / ".proposed" / "_loupe_context.md"
     proposal_dir.mkdir(parents=True)
     (proposal_dir / "abc.patch").write_text(
-        "# Rationale: missing target line\n"
-        "# Run: abc\n"
-        "---\n"
-        "diff body here\n"
+        "# Rationale: missing target line\n# Run: abc\n---\ndiff body here\n"
     )
     with pytest.raises(ValueError, match="header missing line starting with"):
         load_proposals(loupe)

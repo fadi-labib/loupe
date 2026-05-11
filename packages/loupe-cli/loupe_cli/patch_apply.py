@@ -32,17 +32,13 @@ class ApplyResult:
     stderr: str
 
 
-def apply_unified_diff(
-    *, repo_root: Path, diff_text: str, dry_run: bool = False
-) -> ApplyResult:
+def apply_unified_diff(*, repo_root: Path, diff_text: str, dry_run: bool = False) -> ApplyResult:
     """Run `git apply --check` then (unless dry_run) `git apply` on the diff.
 
     Two-step so the working tree is never partially modified: --check is a
     pure dry-run that fails the same way the real apply would.
     """
-    with tempfile.NamedTemporaryFile(
-        mode="w", suffix=".patch", delete=False, dir=repo_root
-    ) as tf:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".patch", delete=False, dir=repo_root) as tf:
         tf.write(diff_text)
         patch_path = Path(tf.name)
     try:

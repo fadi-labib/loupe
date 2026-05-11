@@ -64,10 +64,8 @@ def _parse_patch_file(patch_path: Path) -> Proposal:
 def _extract_header_value(lines: list[str], *, prefix: str, path: Path) -> str:
     for line in lines:
         if line.startswith(prefix):
-            return line[len(prefix):]
-    raise ValueError(
-        f"malformed proposal {path}: header missing line starting with {prefix!r}"
-    )
+            return line[len(prefix) :]
+    raise ValueError(f"malformed proposal {path}: header missing line starting with {prefix!r}")
 
 
 def move_proposal(
@@ -91,9 +89,7 @@ def move_proposal(
     dest_root = repo_root / ".loupe" / f".{to_state}"
     dest = dest_root / rel
     if dest.exists():
-        raise FileExistsError(
-            f"Refusing to overwrite {dest}; remove or rename it first."
-        )
+        raise FileExistsError(f"Refusing to overwrite {dest}; remove or rename it first.")
     dest.parent.mkdir(parents=True, exist_ok=True)
     subprocess.run(
         ["git", "mv", str(src), str(dest)],

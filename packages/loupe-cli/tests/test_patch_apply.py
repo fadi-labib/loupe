@@ -74,13 +74,7 @@ def test_apply_unified_diff_refuses_path_escape(tmp_path):
     _init_repo_with_file(tmp_path, ".loupe/context.md", "x\n")
 
     # A malicious diff trying to escape the repo root.
-    diff = (
-        "--- a/../etc/passwd\n"
-        "+++ b/../etc/passwd\n"
-        "@@ -1 +1 @@\n"
-        "-old\n"
-        "+pwned\n"
-    )
+    diff = "--- a/../etc/passwd\n+++ b/../etc/passwd\n@@ -1 +1 @@\n-old\n+pwned\n"
 
     result = apply_unified_diff(repo_root=tmp_path, diff_text=diff)
 

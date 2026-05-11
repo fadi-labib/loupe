@@ -142,9 +142,52 @@ def verify_cmd(
 
 
 @app.command("chat")
-def chat_cmd() -> None:
-    """Interactive Loupe chat session (requires TTY)."""
-    raise typer.Exit(code=chat_command())
+def chat_cmd(
+    review_only: bool = typer.Option(
+        False,
+        "--review-only",
+        help="Skip the in-process ci run; review existing .loupe/.proposed/ patches only.",
+    ),
+    diff: str = typer.Option(
+        "",
+        "--diff",
+        help="Unified diff text (passed to ci_command when not --review-only).",
+    ),
+    diff_file: Path | None = typer.Option(
+        None,
+        "--diff-file",
+        help="Path to a unified diff (passed to ci_command when not --review-only).",
+    ),
+    base_sha: str | None = typer.Option(None, "--base-sha", help="Base commit SHA."),
+    head_sha: str | None = typer.Option(None, "--head-sha", help="Head commit SHA."),
+    config: Path | None = typer.Option(
+        None,
+        "--config",
+        help="Path to .loupe/config.yaml.",
+    ),
+) -> None:
+    """Interactive review of staged proposals (Layer 4 enforcement)."""
+    if not review_only:
+        if diff and diff_file is not None:
+            typer.echo(
+                "error: --diff and --diff-file are mutually exclusive",
+                err=True,
+            )
+            raise typer.Exit(code=USAGE_ERROR)
+    diff_text = ""
+    if diff_file is not None:
+        diff_text = diff_file.read_text()
+    elif diff:
+        diff_text = diff
+    raise typer.Exit(
+        code=chat_command(
+            review_only=review_only,
+            diff_text=diff_text,
+            base_sha=base_sha,
+            head_sha=head_sha,
+            config_path=config,
+        )
+    )
 
 
 @app.command("scan")
