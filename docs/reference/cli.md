@@ -103,22 +103,48 @@ Without `--strict`, the four default checks (hash chain, artefact Merkle root, a
 
 ## `loupe chat`
 
-Interactive Loupe session.
+Interactive TTY-required review of staged `.loupe/.proposed/<...>.patch` files. Layer 4 enforcement (see [verification.md](verification.md)).
 
 ```
-loupe chat
+loupe chat [--review-only] [--diff <text> | --diff-file <path>]
+           [--base-sha <sha>] [--head-sha <sha>] [--config <path>]
 ```
 
-No flags today.
+| Flag | Effect |
+|---|---|
+| `--review-only` | Skip the in-process `loupe ci` run; review only what's already in `.loupe/.proposed/`. |
+| `--diff <text>` / `--diff-file <path>` | Unified diff source passed to the in-process `ci_command` (when not `--review-only`). Mutually exclusive. |
+| `--base-sha`, `--head-sha` | Recorded in the run record produced by the in-process ci. |
+| `--config <path>` | Path to `.loupe/config.yaml` (defaults to `<cwd>/.loupe/config.yaml`). |
 
-Currently prints a placeholder message that the conversational REPL is a v1.x feature and exits. The TTY guard is in place: the command refuses to run with stdin redirected, so accidental unattended runs cannot happen.
+**Preconditions** (checked in this order; fail with exit 64):
 
-Once implemented, the design is:
+1. Running in a TTY (use `loupe ci` for headless).
+2. `.loupe/` exists in cwd (`loupe init` first if not).
+3. `git` is on PATH.
+4. `.loupe/.proposed/` is clean against `HEAD`. Commit any staged proposals first.
 
-- Same pipeline as `loupe ci`, but every protected-path proposal pauses for a `[y/N/edit/skip]` confirmation with default-N.
-- No `--auto-confirm` flag and no environment variable that lowers the bar.
+**Review-loop behaviour per prompt:**
 
-Exit codes today: `0` on the placeholder exit; `2` if not a TTY.
+- `y` — `git apply --check` then `git apply`; on success, `git mv` the `.patch` from `.proposed/` to `.applied/`. On failure, offer `Re-edit? [y/N]`.
+- `<Enter>` / `N` / anything unmatched — deferred (Layer 4 default-N). `.patch` stays in `.proposed/`.
+- `edit` — open the diff in `$EDITOR` (via `click.edit()`). On save, dry-run-check the modified diff; if it applies, prompt `Apply edited? [y/N]` (still default-N).
+- `skip` — `git mv` to `.skipped/`.
+
+The default is intentionally "N" — Enter means "do not apply." No `--auto-confirm` flag; no environment variable lowers the bar (see [decisions.md D-26](decisions.md#d-26) for the related `.loupe/`-only git-write exception).
+
+**Carry-over detection** — when not `--review-only` and `.proposed/` contains pre-existing patches from a prior ci run, chat prompts `Include in this review session? [Y/n]` before running ci. The default-Y here is the one principled exception to default-N: inclusion only *shows* proposals, it never applies them.
+
+**Exit codes:**
+
+| Code | Meaning |
+|---|---|
+| `0` | Clean session (any mix of apply / skip / defer) |
+| `1` | At least one apply failed (user said `N` to re-edit after a conflict) |
+| `64` | Usage / precondition error |
+| `130` | SIGINT (Ctrl-C) |
+
+**After chat exits:** applied changes modify your working tree but are not committed. Inspect with `git diff` and `git commit` when ready (or `git restore <path>` to abort a specific file). Chat itself never makes a git commit — it only stages moves and applies for your review.
 
 ## `loupe scan`
 

@@ -131,10 +131,14 @@ The threats themselves are in `.loupe/threats.yaml`. Each threat has a stable ID
 loupe chat
 ```
 
-> [!NOTE]
-> **Not yet shipped.** The command currently prints a placeholder saying the conversational REPL is a v1.x feature.
+Runs in two modes:
 
-The TTY guard is in place (the command refuses to run with stdin redirected) but the conversational pipeline that drives lenses with `[y/N/edit/skip]` confirmation prompts has not been wired. Tracked alongside the MCP server as part of the second-frontend work.
+- **Default** — runs the same in-process `loupe ci` pipeline first (so the session reviews fresh proposals), then walks each staged `.loupe/.proposed/<...>.patch` through a `[y/N/edit/skip]` prompt.
+- **`--review-only`** — skips the ci run; reviews whatever is already in `.proposed/`.
+
+For each proposal: `y` applies the patch via `git apply` and moves the `.patch` from `.proposed/` to `.applied/`. `skip` moves it to `.skipped/`. `edit` opens the diff in `$EDITOR`; on save, the modified diff is dry-run-checked and you confirm a second time before it applies. `N` (default) leaves the proposal in `.proposed/` for the next session.
+
+Precondition: `.loupe/.proposed/` must be clean against `HEAD` before chat starts — commit your staged proposals with `git add .loupe/.proposed/ && git commit` first. See [D-26](reference/decisions.md#d-26) for why chat is the one documented git-write exception.
 
 ## Wire up the GitHub Action
 

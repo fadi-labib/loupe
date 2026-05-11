@@ -109,7 +109,7 @@ What is deliberately not stored:
 ```
 Your repo (local working tree)
         │
-        │  loupe ci / loupe scan / loupe mcp  (loupe chat still a placeholder)
+        │  loupe ci / loupe scan / loupe mcp / loupe chat
         │
         ▼
 .loupe/  (in-repo, version-controlled)

@@ -285,7 +285,7 @@ Loupe commits to [eleven principles](docs/principles.md), each numbered, non-neg
 | **1** Tool surface | Shipped | Agent has only `write_agent_artifact` (allow-list) + `propose_patch` (writes to `.proposed/`). `PathBoundary` enforced in Python, not in a prompt. Parent-symlink-safe via `dir_fd` + `O_NOFOLLOW`. |
 | **2** Branch namespace | Designed | Fine-grained GitHub PAT scoped to `loupe/proposal-*`; CODEOWNERS gates protected paths |
 | **3** `loupe verify` | Shipped | Four checks: hash chain, artefact schemas, cross-references, protected-path authorship (`--strict`) |
-| **4** Interactive UX gate | Designed | `loupe chat` `[y/N/edit/skip]` confirmation; no `--auto-confirm` |
+| **4** Interactive UX gate | Shipped | `loupe chat` walks each staged `.loupe/.proposed/<...>.patch` through a `[y/N/edit/skip]` prompt (default-N); `.proposed/` → `.applied/` / `.skipped/` via `git mv`. No `--auto-confirm` |
 
 See [`docs/reference/verification.md`](docs/reference/verification.md) for the mechanical recipes an auditor runs against each principle.
 
@@ -309,7 +309,6 @@ Every row in this table is a claim. The third column is the command that proves 
 
 ### In flight (before v0.1 tags)
 
-- `loupe chat` conversational pipeline (TTY guard wired, `[y/N/edit/skip]` not)
 - HTTP+SSE remote MCP transport (stdio works today)
 - Layer 2 fine-grained-PAT branch namespace enforcement
 - `--verbose`, `--budget-usd` flags
