@@ -308,6 +308,62 @@ def _looks_like_agent(identity: str) -> bool:
 
 
 # ---------------------------------------------------------------------------
+# VCR cassette auth-header defence-in-depth
+# ---------------------------------------------------------------------------
+
+# Header names that, if present in any VCR cassette, indicate an auth-token
+# leak the conftest.py `filter_headers` should have scrubbed. The check is
+# header-name-only (not value-based) — even a placeholder value means the
+# header survived the filter, which is the bug we're catching.
+_AUTH_HEADER_NAMES_LOWERCASE = frozenset({
+    "authorization",
+    "x-api-key",
+    "anthropic-version",
+    "openai-api-key",
+    "api-key",
+})
+
+
+def check_cassette_auth_headers(repo_root: Path) -> list[VerifyFailure]:
+    """Walk every VCR cassette under `repo_root` and refuse any with auth headers.
+
+    The conftest.py `filter_headers` strips these before write, so any header
+    surviving into a committed cassette is the bug this check catches. Returns
+    one VerifyFailure per offending cassette.
+
+    No-op (empty list) when no cassettes directory exists yet.
+    """
+    failures: list[VerifyFailure] = []
+    for cassette_path in sorted(repo_root.rglob("cassettes/**/*.yaml")):
+        text = cassette_path.read_text()
+        if "headers:" not in text.lower():
+            continue
+        offending = _scan_for_auth_header_lines(text)
+        if offending:
+            failures.append(VerifyFailure(
+                kind="cassette_auth_header",
+                detail=(
+                    f"{cassette_path} contains auth header(s): {', '.join(sorted(offending))}. "
+                    f"conftest.py filter_headers should have stripped them; re-record the cassette."
+                ),
+            ))
+    return failures
+
+
+def _scan_for_auth_header_lines(yaml_text: str) -> set[str]:
+    """Return the set of auth-header names that appear as keys in the YAML text."""
+    found: set[str] = set()
+    for line in yaml_text.splitlines():
+        stripped = line.strip()
+        if not stripped or ":" not in stripped:
+            continue
+        key = stripped.split(":", 1)[0].strip().strip("'\"")
+        if key.lower() in _AUTH_HEADER_NAMES_LOWERCASE:
+            found.add(key)
+    return found
+
+
+# ---------------------------------------------------------------------------
 # Top-level entry point
 # ---------------------------------------------------------------------------
 
