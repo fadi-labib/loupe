@@ -114,9 +114,7 @@ def _run_checks(loupe: Path) -> list[CheckResult]:
             )
         )
     else:
-        results.append(
-            CheckResult(status="ok", label="git binary", detail="found on PATH")
-        )
+        results.append(CheckResult(status="ok", label="git binary", detail="found on PATH"))
 
     # Check 1: .loupe/ exists.
     loupe_exists = loupe.exists()

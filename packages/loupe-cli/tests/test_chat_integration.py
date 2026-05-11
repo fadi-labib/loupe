@@ -25,9 +25,7 @@ def _write_patch(loupe: Path, target: str, run_id: str, diff: str, rationale: st
     d = loupe / ".proposed" / encoded
     d.mkdir(parents=True, exist_ok=True)
     (d / f"{run_id}.patch").write_text(
-        f"# Proposed patch for {target}\n"
-        f"# Rationale: {rationale}\n"
-        f"# Run: {run_id}\n---\n{diff}"
+        f"# Proposed patch for {target}\n# Rationale: {rationale}\n# Run: {run_id}\n---\n{diff}"
     )
 
 
@@ -99,9 +97,7 @@ def test_full_happy_path_accept_and_skip(tmp_path, monkeypatch):
 
     # Lifecycle: applied + skipped directories present, .proposed/ empty of .patch files.
     assert (tmp_path / ".loupe" / ".applied" / ".loupe_context.md" / "abc.patch").exists()
-    assert (
-        tmp_path / ".loupe" / ".skipped" / ".loupe_decisions_D-12.md" / "def.patch"
-    ).exists()
+    assert (tmp_path / ".loupe" / ".skipped" / ".loupe_decisions_D-12.md" / "def.patch").exists()
     proposed_remaining = list((tmp_path / ".loupe" / ".proposed").rglob("*.patch"))
     assert proposed_remaining == []
 
