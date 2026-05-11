@@ -10,11 +10,11 @@ A snapshot of where Loupe is heading. This page is editable and expected to drif
 
 ## Now <span class="section-label">Shipped</span>
 
-The platform, capability registry with ten bundled backends, CLI (including `loupe mcp`, `loupe lens list`, `loupe cap list`), GitHub Action, and ThreatLens are in place. The PydanticAI agent inside ThreatLens is wired to a live LLM and exercised in CI through a VCR cassette; the cost-regression fixture replays it without keys.
+The platform, capability registry with ten bundled backends, CLI (including `loupe mcp`, `loupe chat`, `loupe lens list`, `loupe cap list`), GitHub Action, and ThreatLens are in place. The PydanticAI agent inside ThreatLens is wired to a live LLM and exercised in CI through a VCR cassette; the cost-regression fixture replays it without keys. `loupe chat` lands the Layer 4 interactive UX gate ([y/N/edit/skip] default-N on every staged `.proposed/` patch, edit-the-diff via `$EDITOR`, `.proposed/` → `.applied/` / `.skipped/` lifecycle via `git mv`).
 
-## Next: chat REPL + remote MCP transport <span class="section-label">In progress</span> { #next-agent-wiring }
+## Next: remote MCP transport <span class="section-label">In progress</span> { #next-agent-wiring }
 
-Two strands remain before v0.1: the `loupe chat` conversational REPL (the TTY guard is wired; the `[y/N/edit/skip]` confirmation pipeline is not), and the HTTP+SSE remote MCP transport (stdio works today). Neither is load-bearing for CI usage.
+One strand remains before v0.1: the HTTP+SSE remote MCP transport (stdio works today). Not load-bearing for CI usage.
 
 ## Capability layer phased plan
 
@@ -31,7 +31,7 @@ Tracked under [D-18](reference/decisions.md#d-18). Each phase produced working, 
 
 ## Frontends still in flight
 
-- `loupe chat` (Designed) — interactive REPL with `[y/N/edit/skip]` confirmation prompts on protected paths. The TTY guard is in place; the conversational pipeline is not.
+- `loupe chat` (Shipped) — TTY-required interactive REPL with `[y/N/edit/skip]` confirmation prompts on every staged `.loupe/.proposed/` patch (Layer 4 enforcement). Default-N; no `--auto-confirm`. See [D-26](reference/decisions.md#d-26) for the `.loupe/` git-write exception that chat operates under.
 - `loupe mcp` (Shipped, partial) — Model Context Protocol server. Stdio transport with read tools (`list_threats`, `query_by_severity`, `latest_run`) and write tools (`propose_threat`, `propose_mitigation`, both gated by Layer 1) works today; the HTTP+SSE remote transport is still designed-not-wired. See [D-09](reference/decisions.md#d-09), [D-21](reference/decisions.md#d-21), and [D-22](reference/decisions.md#d-22).
 - GitLab / Gitea / Bitbucket adapters (Designed) — the GitHub Action exists; other VCS hosts are scoped for follow-ups.
 

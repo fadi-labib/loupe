@@ -12,9 +12,9 @@ Two diagrams. The first shows what Loupe is made of and where the plugin slots a
 
 ```mermaid
 flowchart TB
-    subgraph frontends["Three frontends, one shipping"]
-        ci["loupe ci (shipping)"]
-        chat["loupe chat (placeholder)"]
+    subgraph frontends["Three frontends, all shipped"]
+        ci["loupe ci (shipped)"]
+        chat["loupe chat (shipped)"]
         mcp["loupe mcp (shipped)"]
     end
 
@@ -74,7 +74,7 @@ sequenceDiagram
 
 `is_relevant()` is pure Python and decides whether the lens runs at all. The SBOM and CVE scans run once per invocation regardless of how many lenses ask for the results. Writes to `.loupe/` go through `write_agent_artifact()`, which enforces the path allow-list from `config.yaml`. Anything outside the allow-list goes to `.loupe/.proposed/` for human review.
 
-The interactive (`loupe chat`) and MCP (`loupe mcp`) flows are the same sequence with different shells. `loupe mcp` is shipped (stdio transport, read tools plus `propose_threat` / `propose_mitigation` write tools) and exposes operations as JSON-RPC tools and workflows. `loupe chat` is still a placeholder: the TTY guard is wired but the conversational `[y/N/edit/skip]` pipeline is not.
+The interactive (`loupe chat`) and MCP (`loupe mcp`) flows are the same sequence with different shells. `loupe mcp` is shipped (stdio transport, read tools plus `propose_threat` / `propose_mitigation` write tools) and exposes operations as JSON-RPC tools and workflows. `loupe chat` is shipped: TTY-required, runs the same in-process ci pipeline, then walks each staged `.loupe/.proposed/<...>.patch` through a `[y/N/edit/skip]` prompt with default-N (Layer 4 enforcement); accepted patches `git apply` to their target and `git mv` from `.proposed/` to `.applied/`.
 
 ## Keeping the diagrams honest
 

@@ -298,7 +298,7 @@ Every row in this table is a claim. The third column is the command that proves 
 | Surface | What's in it | Verified by |
 |---|---|---|
 | Platform | `loupe-core`: coordinator, dispatcher, run context, prompt builder, MCP server, pricing, enforcement | `uv run pytest packages/loupe-core/ -q` |
-| CLI | `loupe init`, `ci`, `verify [--strict]`, `scan`, `mcp`, `chat` (TTY guard only), `lens list`, `cap list`, `doctor` | `uv run loupe --help` |
+| CLI | `loupe init`, `ci`, `verify [--strict]`, `scan`, `mcp`, `chat`, `lens list`, `cap list`, `doctor` | `uv run loupe --help` |
 | GitHub Action | PR fetch, `loupe ci` runner, sticky-comment poster (sticky / new / none), retry + rate-limit handling | [`packages/loupe-action/action.yml`](packages/loupe-action/action.yml) |
 | ThreatLens | PydanticAI agent wired to a live LLM. User runs hit the configured provider; the project's own test suite uses VCR cassettes to keep CI deterministic. STRIDE threats, mitigations, cross-references | `uv run pytest packages/loupe-threatlens/ -q` |
 | MCP server (stdio, 11 tools) | Core read: `list_threats`, `get_threat`, `list_mitigations`, `get_mitigation`, `list_elements`, `latest_run`. ThreatLens read: `threatlens_query_by_stride`, `threatlens_query_by_severity`, `threatlens_summary`. ThreatLens write (Layer-1 gated): `threatlens_propose_threat`, `threatlens_propose_mitigation` | `uv run loupe mcp` |

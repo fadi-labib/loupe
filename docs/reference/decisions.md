@@ -12,7 +12,7 @@ The principles that emerged from these decisions are at [`principles.md`](../pri
 
 ## Index
 
-[D-01](#d-01) Scope · [D-02](#d-02) CI + interactive · [D-03](#d-03) PydanticAI · [D-04](#d-04) Plugin architecture · [D-05](#d-05) Name = Loupe · [D-06](#d-06) Ten artefacts · [D-07](#d-07) Blackboard + knowledge graph · [D-08](#d-08) Four-layer write boundary · [D-09](#d-09) MCP · [D-10](#d-10) Three cost levers · [D-11](#d-11) Lens contract · [D-12](#d-12) Hash chain · [D-13](#d-13) VCR · [D-14](#d-14) Deferred signing · [D-15](#d-15) `loupe scan` · [D-16](#d-16) StrideGPT lineage · [D-17](#d-17) Apache 2.0 · [D-18](#d-18) Capability abstraction · [D-19](#d-19) Benchmark tiers · [D-20](#d-20) MkDocs Material · [D-21](#d-21) MCP SDK choice · [D-22](#d-22) MCP write layer · [D-23](#d-23) Required vs preferred capabilities · [D-24](#d-24) Scoped scan reads sources · [D-25](#d-25) Per-run artefact Merkle root · [Open decisions](#open-decisions)
+[D-01](#d-01) Scope · [D-02](#d-02) CI + interactive · [D-03](#d-03) PydanticAI · [D-04](#d-04) Plugin architecture · [D-05](#d-05) Name = Loupe · [D-06](#d-06) Ten artefacts · [D-07](#d-07) Blackboard + knowledge graph · [D-08](#d-08) Four-layer write boundary · [D-09](#d-09) MCP · [D-10](#d-10) Three cost levers · [D-11](#d-11) Lens contract · [D-12](#d-12) Hash chain · [D-13](#d-13) VCR · [D-14](#d-14) Deferred signing · [D-15](#d-15) `loupe scan` · [D-16](#d-16) StrideGPT lineage · [D-17](#d-17) Apache 2.0 · [D-18](#d-18) Capability abstraction · [D-19](#d-19) Benchmark tiers · [D-20](#d-20) MkDocs Material · [D-21](#d-21) MCP SDK choice · [D-22](#d-22) MCP write layer · [D-23](#d-23) Required vs preferred capabilities · [D-24](#d-24) Scoped scan reads sources · [D-25](#d-25) Per-run artefact Merkle root · [D-26](#d-26) `.loupe/` git-write exception · [Open decisions](#open-decisions)
 
 ---
 
@@ -377,6 +377,25 @@ The tree construction uses duplicate-last for odd levels rather than RFC-6962's 
 Leaves and internal nodes are domain-separated by prefixing the hash input with `b"\x00"` for leaves and `b"\x01"` for internal nodes. This prevents the second-preimage attack where a leaf hash is substituted for an internal hash. Standard countermeasure, trivial cost.
 
 Backward compatibility with the existing D-12 hash chain holds because `compute_self_hash` excludes the new fields from canonical JSON when they hold their default sentinel values (`artifact_hashes == {}`, `artifacts_merkle_root is None`). Legacy records loaded fresh hash byte-identically to their pre-D-25 form, so the chain check continues to pass on them.
+
+---
+
+## D-26: `.loupe/` is the documented exception to "runtime never touches git" { #d-26 }
+
+The Loupe runtime makes zero git writes today — `grep -r "subprocess.*git\|git add\|git_commit" packages/` returns no hits across `loupe-core`, `loupe-cli`, and `loupe-action`. This is a load-bearing audit property: every git operation in the repo has a human author identity, which is what [Layer 3 protected-path authorship](verification.md) relies on.
+
+`loupe chat` (Layer 4) introduces one documented exception:
+
+- `git apply` (and `git apply --check`) on staged unified diffs from `.loupe/.proposed/<...>.patch`, modifying the file the diff targets.
+- `git mv` on the .patch file itself, moving it from `.proposed/` to `.applied/` (accepted) or `.skipped/` (explicitly rejected).
+
+Both are scoped to `.loupe/` paths only, run under the user's git identity, and only fire from an interactive TTY (the TTY guard at `chat_cmd.py:_stdin_is_tty()` blocks non-interactive callers). The user reviews the move in their working tree and commits it with their own `git commit` — chat itself never makes a commit.
+
+Why this is OK: chat IS the human-interactive frontend. The human is at the TTY. `git apply` of an explicitly approved diff and `git mv` of a `.patch` file are functionally equivalent to the user typing the commands by hand. The exception is single-purpose, scoped to `.loupe/`, and documented here so an auditor can locate it.
+
+Separately, the GitHub Action will gain an opt-in `auto_commit_loupe_dir: false` input (separate v1.x feature, not part of this decision) that pushes `.loupe/` updates back to the PR branch. Same `.loupe/`-only restriction; same configurability story; same human-equivalent justification (the workflow author opted in by setting the input).
+
+What this rules out: extending the git-write exception to any path outside `.loupe/`, or any code path in `loupe-core`. The exception lives entirely in `loupe-cli/chat_cmd.py` and `loupe-cli/proposals.py` (and, when shipped, `loupe-action/auto_commit.py`). Loupe-core's git-free property is unconditional.
 
 ---
 
