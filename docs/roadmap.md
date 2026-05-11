@@ -32,7 +32,7 @@ Tracked under [D-18](reference/decisions.md#d-18). Each phase produced working, 
 ## Frontends still in flight
 
 - `loupe chat` (Shipped) — TTY-required interactive REPL with `[y/N/edit/skip]` confirmation prompts on every staged `.loupe/.proposed/` patch (Layer 4 enforcement). Default-N; no `--auto-confirm`. See [D-26](reference/decisions.md#d-26) for the `.loupe/` git-write exception that chat operates under.
-- `loupe mcp` (Shipped, partial) — Model Context Protocol server. Stdio transport with read tools (`list_threats`, `query_by_severity`, `latest_run`) and write tools (`propose_threat`, `propose_mitigation`, both gated by Layer 1) works today; the HTTP+SSE remote transport is still designed-not-wired. See [D-09](reference/decisions.md#d-09), [D-21](reference/decisions.md#d-21), and [D-22](reference/decisions.md#d-22).
+- `loupe mcp` (Shipped, partial) — Model Context Protocol server, stdio transport, 11 tools today: 6 core read (`list_threats`, `get_threat`, `list_mitigations`, `get_mitigation`, `list_elements`, `latest_run`), 3 ThreatLens read (`threatlens_query_by_stride`, `threatlens_query_by_severity`, `threatlens_summary`), 2 ThreatLens write (`threatlens_propose_threat`, `threatlens_propose_mitigation`, both gated by Layer 1). The HTTP+SSE remote transport is still designed-not-wired. See [D-09](reference/decisions.md#d-09), [D-21](reference/decisions.md#d-21), and [D-22](reference/decisions.md#d-22).
 - GitLab / Gitea / Bitbucket adapters (Designed) — the GitHub Action exists; other VCS hosts are scoped for follow-ups.
 
 ## Lenses beyond ThreatLens <span class="section-label">Anticipated</span>

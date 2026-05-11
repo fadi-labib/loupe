@@ -61,7 +61,7 @@ You can hand these files to an auditor, or to a CRA submission platform that ing
 ## Trade-offs worth stating
 
 > [!WARNING]
-> **Pre-alpha.** The platform, capability registry, CLI, and GitHub Action exist; the ThreatLens PydanticAI agent is scaffolded but not yet wired to a live LLM. Quality of threat-modelling output is unproven until that lands.
+> **Pre-alpha.** The platform, capability registry, CLI (including `loupe chat` Layer 4 enforcement), and GitHub Action are in place. The ThreatLens PydanticAI agent is wired to a live LLM and exercised in CI through a VCR cassette. Quality of threat-modelling output across diverse codebases is unproven until the Mongoose / Mosquitto benchmarks ([D-19](reference/decisions.md#d-19)) run.
 
 One lens at v1. The multi-domain design is real, but the second lens has not been built.
 
