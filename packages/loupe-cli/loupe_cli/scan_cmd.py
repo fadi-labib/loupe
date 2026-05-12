@@ -44,8 +44,6 @@ from typing import Literal
 
 import typer
 from loupe_core.artifacts.run_record_writer import build_run_record
-from loupe_core.pricing import estimate_cost_usd
-from loupe_core.run_context import LensUsage
 from loupe_core.capabilities.bootstrap import bootstrap_capabilities
 from loupe_core.capabilities.errors import RequiredCapabilityUnavailable
 from loupe_core.capabilities.registry import CapabilityRegistry
@@ -60,7 +58,8 @@ from loupe_core.fs import CODE_EXTENSIONS
 from loupe_core.gating import check_lens_liveness, format_liveness_failure
 from loupe_core.lens_api import Lens
 from loupe_core.lens_registry import discover_lenses
-from loupe_core.run_context import BootstrapInputs, RunContext, ScopedSource
+from loupe_core.pricing import estimate_cost_usd
+from loupe_core.run_context import BootstrapInputs, LensUsage, RunContext, ScopedSource
 from loupe_core.tools import BoundaryViolation
 
 # BSD sysexits.h EX_USAGE — operator-config / usage errors.

@@ -315,13 +315,15 @@ def _looks_like_agent(identity: str) -> bool:
 # leak the conftest.py `filter_headers` should have scrubbed. The check is
 # header-name-only (not value-based) — even a placeholder value means the
 # header survived the filter, which is the bug we're catching.
-_AUTH_HEADER_NAMES_LOWERCASE = frozenset({
-    "authorization",
-    "x-api-key",
-    "anthropic-version",
-    "openai-api-key",
-    "api-key",
-})
+_AUTH_HEADER_NAMES_LOWERCASE = frozenset(
+    {
+        "authorization",
+        "x-api-key",
+        "anthropic-version",
+        "openai-api-key",
+        "api-key",
+    }
+)
 
 
 def check_cassette_auth_headers(repo_root: Path) -> list[VerifyFailure]:
@@ -340,13 +342,15 @@ def check_cassette_auth_headers(repo_root: Path) -> list[VerifyFailure]:
             continue
         offending = _scan_for_auth_header_lines(text)
         if offending:
-            failures.append(VerifyFailure(
-                kind="cassette_auth_header",
-                detail=(
-                    f"{cassette_path} contains auth header(s): {', '.join(sorted(offending))}. "
-                    f"conftest.py filter_headers should have stripped them; re-record the cassette."
-                ),
-            ))
+            failures.append(
+                VerifyFailure(
+                    kind="cassette_auth_header",
+                    detail=(
+                        f"{cassette_path} contains auth header(s): {', '.join(sorted(offending))}. "
+                        f"conftest.py filter_headers should have stripped them; re-record the cassette."
+                    ),
+                )
+            )
     return failures
 
 

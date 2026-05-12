@@ -102,9 +102,7 @@ def ci_command(
         planned_names = {lens.capabilities.name for lens in planned_lenses}
         for name in considered_names:
             verdict = (
-                "dispatching"
-                if name in planned_names
-                else "skipped (below relevance threshold)"
+                "dispatching" if name in planned_names else "skipped (below relevance threshold)"
             )
             typer.echo(f"[verbose] Considering lens {name}: {verdict}")
 
@@ -157,9 +155,7 @@ def ci_command(
             if usage is not None:
                 tokens = usage.input_tokens + usage.output_tokens + usage.cache_read_tokens
                 cost = usage.cost_usd_estimate
-                typer.echo(
-                    f"[verbose] Lens {name} complete ({tokens} tokens, ${cost:.4f})"
-                )
+                typer.echo(f"[verbose] Lens {name} complete ({tokens} tokens, ${cost:.4f})")
             else:
                 typer.echo(f"[verbose] Lens {name} complete")
 

@@ -4,7 +4,7 @@ this check is the safety net that runs at `loupe verify` time."""
 
 from pathlib import Path
 
-from loupe_core.enforcement.verify import VerifyFailure, check_cassette_auth_headers
+from loupe_core.enforcement.verify import check_cassette_auth_headers
 
 
 def _write_cassette(path: Path, content: str) -> None:
