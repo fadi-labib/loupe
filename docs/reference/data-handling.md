@@ -156,7 +156,7 @@ Loupe's tests use `pytest-vcr` to record HTTP fixtures for LLM calls and replay 
 
 `filter_headers` in `conftest.py` strips `Authorization`, `x-api-key`, `anthropic-version`, and a few other auth-adjacent headers before any cassette is written to disk. Before committing a new cassette, run `grep -i 'sk-\|bearer\|api_key'` over the cassette to verify nothing slipped through.
 
-A `loupe verify` check that fails the build if a cassette contains an `Authorization` header is documented as a planned check; not yet implemented.
+A `loupe verify` check (`check_cassette_auth_headers` in `loupe_core/enforcement/verify.py`) fails the build if any committed VCR cassette contains an `Authorization`, `x-api-key`, or `anthropic-version` header — header-name-only, run on every `loupe verify` (not gated by `--strict`). This is defence-in-depth on top of the primary scrub via `filter_headers` in `conftest.py`.
 
 ## Data retention
 
