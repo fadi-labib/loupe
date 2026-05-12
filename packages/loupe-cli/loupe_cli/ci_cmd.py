@@ -96,6 +96,18 @@ def ci_command(
     # ctx.secrets, ctx.static_findings — every lens reads the same cached
     # values off the shared blackboard. Cost-discipline lever (D-10 §2).
     planned_lenses = _planned_lenses(lenses, ctx)
+
+    if verbose:
+        considered_names = sorted({lens.capabilities.name for lens in lenses})
+        planned_names = {lens.capabilities.name for lens in planned_lenses}
+        for name in considered_names:
+            verdict = (
+                "dispatching"
+                if name in planned_names
+                else "skipped (below relevance threshold)"
+            )
+            typer.echo(f"[verbose] Considering lens {name}: {verdict}")
+
     needs_caps = any(
         getattr(lens.capabilities, "requires_capabilities", [])
         or getattr(lens.capabilities, "prefers_capabilities", [])
@@ -137,6 +149,20 @@ def ci_command(
             )
 
     asyncio.run(dispatch_plan(ctx, lenses, boundary, loupe))
+
+    if verbose:
+        for lens in planned_lenses:
+            name = lens.capabilities.name
+            usage = ctx.lens_usage.get(name)
+            if usage is not None:
+                tokens = usage.input_tokens + usage.output_tokens + usage.cache_read_tokens
+                cost = usage.cost_usd_estimate
+                typer.echo(
+                    f"[verbose] Lens {name} complete ({tokens} tokens, ${cost:.4f})"
+                )
+            else:
+                typer.echo(f"[verbose] Lens {name} complete")
+
     _write_run_record(ctx, loupe, considered=lenses, cfg=cfg)
 
     typer.echo(f"Loupe CI complete. Run: {run_id}.")
