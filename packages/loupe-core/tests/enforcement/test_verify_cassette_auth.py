@@ -90,3 +90,22 @@ def test_no_failures_when_no_cassettes_exist(tmp_path):
     been recorded), the check is a no-op — not a failure."""
     failures = check_cassette_auth_headers(tmp_path)
     assert failures == []
+
+
+def test_verify_repo_includes_cassette_check(tmp_path):
+    """verify_repo() must include the cassette-auth check on every invocation,
+    not only --strict — auth-token leakage is critical regardless of mode."""
+    from loupe_core.enforcement.verify import verify_repo
+
+    (tmp_path / ".loupe").mkdir()
+    (tmp_path / ".loupe" / "runs").mkdir()
+
+    cassette = tmp_path / "packages" / "cassettes" / "leak.yaml"
+    cassette.parent.mkdir(parents=True)
+    cassette.write_text(
+        "interactions:\n- request:\n    headers:\n      Authorization: ['Bearer leaked']\n"
+    )
+
+    failures = verify_repo(tmp_path)
+    cassette_failures = [f for f in failures if f.kind == "cassette_auth_header"]
+    assert len(cassette_failures) == 1

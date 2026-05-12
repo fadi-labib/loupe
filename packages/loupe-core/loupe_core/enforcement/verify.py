@@ -382,6 +382,7 @@ def verify_repo(repo_root: Path, *, strict: bool = False) -> list[VerifyFailure]
     failures.extend(check_artefacts_merkle_root(loupe / "runs"))
     failures.extend(check_artefact_schemas(loupe))
     failures.extend(check_threats_mitigations_cross_refs(loupe))
+    failures.extend(check_cassette_auth_headers(repo_root))
     if strict:
         failures.extend(check_protected_path_authorship(repo_root))
     return failures
