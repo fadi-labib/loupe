@@ -69,6 +69,8 @@ def scan_command(
     paths: list[str],
     config_path: Path,
     max_chars_per_file: int = 50_000,
+    *,
+    budget_usd: float | None = None,
 ) -> int:
     cwd = Path.cwd().resolve()
     loupe = cwd / ".loupe"

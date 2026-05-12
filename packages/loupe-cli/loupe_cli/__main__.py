@@ -226,6 +226,15 @@ def scan_cmd(
             "single-file analysis."
         ),
     ),
+    budget_usd: float | None = typer.Option(
+        None,
+        "--budget-usd",
+        help=(
+            "Hard cap on estimated cost for this scan in USD. If the pre-flight "
+            "worst-case estimate (per-lens × per_run_max_tokens_in) exceeds the "
+            "cap, scan refuses with exit 64. Default: no cap."
+        ),
+    ),
 ) -> None:
     """Run Loupe over the whole repo (or a subset) — D-15 scan mode.
 
@@ -240,7 +249,7 @@ def scan_cmd(
     # Merge positional + --paths. positional_paths defaults to None when
     # no positional args were given (Typer's nargs=-1 convention).
     merged = list(positional_paths or []) + list(paths)
-    raise typer.Exit(code=scan_command(merged, config, max_chars_per_file))
+    raise typer.Exit(code=scan_command(merged, config, max_chars_per_file, budget_usd=budget_usd))
 
 
 @app.command("mcp")
