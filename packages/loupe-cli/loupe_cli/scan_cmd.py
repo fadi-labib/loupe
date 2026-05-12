@@ -23,8 +23,8 @@ Tier-2-scale codebases.
 Cost note: scoped scans are materially more expensive than diff-mode
 runs. The per-mode `per_run_max_usd.scan` ceiling (default $5.00 in
 the scaffold) is wider than the `.ci` ceiling for that reason
-(D-24 / Resolved 3). A `--budget-usd` override flag is designed in
-D-15 but not yet wired.
+(D-24 / Resolved 3). Use `--budget-usd <N>` to set a hard cap; the
+pre-flight worst-case estimate refuses the run if it would exceed N.
 
 When to use:
 - First-time onboarding to an existing codebase (`loupe scan`)
@@ -44,6 +44,8 @@ from typing import Literal
 
 import typer
 from loupe_core.artifacts.run_record_writer import build_run_record
+from loupe_core.pricing import estimate_cost_usd
+from loupe_core.run_context import LensUsage
 from loupe_core.capabilities.bootstrap import bootstrap_capabilities
 from loupe_core.capabilities.errors import RequiredCapabilityUnavailable
 from loupe_core.capabilities.registry import CapabilityRegistry
@@ -138,6 +140,30 @@ def scan_command(
     # under D-23 a required-miss exits 64 (operator must wire Syft/Grype)
     # rather than the silently-degraded run the platform used to produce.
     planned_lenses = _planned_lenses(lenses, ctx)
+
+    if budget_usd is not None:
+        # Worst-case pre-flight estimate: assume each planned lens hits its
+        # configured per_run_max_tokens_in. Real usage is typically far less;
+        # this gates the worst case.
+        per_run_max = cfg.limits.per_run_max_tokens_in
+        total_estimate = 0.0
+        for _planned_lens in planned_lenses:
+            worst_case_usage = LensUsage(
+                model_id=cfg.models.default,
+                input_tokens=per_run_max,
+                output_tokens=4096,  # typical output ceiling for an agentic run
+                cache_read_tokens=0,
+            )
+            total_estimate += estimate_cost_usd(worst_case_usage)
+        if total_estimate > budget_usd:
+            typer.echo(
+                f"Refusing scan: estimated worst-case cost ${total_estimate:.4f} "
+                f"exceeds budget ${budget_usd:.2f}.\n"
+                f"Either raise --budget-usd or narrow --paths to reduce scope.",
+                err=True,
+            )
+            return USAGE_ERROR
+
     needs_caps = any(
         getattr(lens.capabilities, "requires_capabilities", [])
         or getattr(lens.capabilities, "prefers_capabilities", [])
