@@ -17,7 +17,7 @@ loupe <command> [OPTIONS]
 The six top-level commands today: `init`, `ci`, `verify`, `chat`, `scan`, `mcp`. Two command groups provide discovery: `loupe lens list` and `loupe cap list`.
 
 > [!NOTE]
-> A handful of flags remain designed but not yet implemented (`loupe ci --verbose`, `loupe scan --budget-usd <N>`). See [Flags not yet wired](#flags-not-yet-wired) at the bottom.
+> A handful of flags remain designed but not yet implemented (`loupe scan --budget-usd <N>`). See [Flags not yet wired](#flags-not-yet-wired) at the bottom.
 
 ## `loupe init`
 
@@ -73,7 +73,7 @@ Exit codes:
 | 1 | Gate failure: at least one threat at a `ci.fail_on` severity was reported |
 | 2 | Usage or environment error (e.g., `.loupe/` not found in cwd) |
 
-`--verbose` for plan tracing is documented in the design but not yet implemented.
+`--verbose` emits `[verbose] Considering lens X: dispatching` lines per planned lens and `[verbose] Lens X complete (<tokens>, $<cost>)` lines per completed run. Same information the run record (`runs/<id>.json`) carries; `--verbose` surfaces it during the run for debugging.
 
 ## `loupe verify`
 
@@ -218,7 +218,6 @@ A small set of flags are part of the design but not yet implemented:
 
 | Flag | Status | Source of truth in the meantime |
 |---|---|---|
-| `loupe ci --verbose` | Plan tracing, designed | None |
 | `loupe scan --budget-usd <N>` | One-off cost-cap override, designed in D-15 | None |
 
 The split per-mode budget — `limits.per_run_max_usd.ci` (default $2.50) and `limits.per_run_max_usd.scan` (default $5.00), see [D-24](decisions.md#d-24) — is parsed and validated today, but the budget-cap *enforcement* (aborting a run that exceeds the ceiling) lands with the `--budget-usd` flag above. Until then, the ceilings are documentation of intent; the per-run cost is observable on the run record's `cost_usd_estimate` field after the fact.
