@@ -47,6 +47,8 @@ def ci_command(
     base_sha: str | None,
     head_sha: str | None,
     config_path: Path,
+    *,
+    verbose: bool = False,
 ) -> int:
     cwd = Path.cwd()
     loupe = cwd / ".loupe"

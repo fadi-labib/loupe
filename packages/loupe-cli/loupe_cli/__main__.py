@@ -93,6 +93,16 @@ def ci_cmd(
         "--config",
         help="Path to the Loupe config file.",
     ),
+    verbose: bool = typer.Option(
+        False,
+        "--verbose",
+        help=(
+            "Print plan-trace output: which lenses were considered, their relevance "
+            "scores, which were dispatched, and per-lens token / cost telemetry as "
+            "each finishes. Default off — the run record (`runs/<id>.json`) carries "
+            "the same information."
+        ),
+    ),
 ) -> None:
     """Run Loupe in CI mode on a unified diff.
 
@@ -114,7 +124,7 @@ def ci_cmd(
         )
         raise typer.Exit(code=USAGE_ERROR)
     text = diff_file.read_text() if diff_file is not None else diff
-    raise typer.Exit(code=ci_command(text, base_sha, head_sha, config))
+    raise typer.Exit(code=ci_command(text, base_sha, head_sha, config, verbose=verbose))
 
 
 @app.command("doctor")
