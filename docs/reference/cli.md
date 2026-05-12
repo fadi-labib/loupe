@@ -16,9 +16,6 @@ loupe <command> [OPTIONS]
 
 The six top-level commands today: `init`, `ci`, `verify`, `chat`, `scan`, `mcp`. Two command groups provide discovery: `loupe lens list` and `loupe cap list`.
 
-> [!NOTE]
-> A handful of flags remain designed but not yet implemented (`loupe scan --budget-usd <N>`). See [Flags not yet wired](#flags-not-yet-wired) at the bottom.
-
 ## `loupe init`
 
 Scaffold a `.loupe/` directory in the current working directory.
@@ -163,7 +160,7 @@ Behaviour:
 
 - Sets `RunContext.scope` to `"full"` (no `--paths`) or `"scoped"` (with `--paths`). See D-15 in the decision log.
 - When scope is not `"diff"`, the coordinator overrides each lens's relevance score and includes every enabled lens. Each lens's `is_relevant()` still gets called for the reason string but does not affect inclusion.
-- Cost: full-repo runs are significantly more expensive than diff runs. The `--budget-usd <N>` flag described in D-15 is planned but not yet wired.
+- Cost: full-repo runs are significantly more expensive than diff runs. Use `--budget-usd <N>` to set a hard cap; scan refuses with exit 64 if the pre-flight worst-case estimate (sum across planned lenses, each assuming `per_run_max_tokens_in`) exceeds the budget. Conservative estimate, so real-run cost is typically lower than the gate threshold.
 
 Exit codes: same scheme as `loupe ci`.
 
@@ -211,16 +208,6 @@ loupe cap list
 No flags today. Output is grouped by category (`sbom`, `cve`, `secret_detect`, `static_analysis`) with one indented line per backend (`NAME`, dotted import path). Backends whose underlying tool is missing from `PATH` still appear; only the runtime registry's `is_available()` filter hides them at run time.
 
 Exit codes: same scheme as `loupe lens list`.
-
-## Flags not yet wired
-
-A small set of flags are part of the design but not yet implemented:
-
-| Flag | Status | Source of truth in the meantime |
-|---|---|---|
-| `loupe scan --budget-usd <N>` | One-off cost-cap override, designed in D-15 | None |
-
-The split per-mode budget — `limits.per_run_max_usd.ci` (default $2.50) and `limits.per_run_max_usd.scan` (default $5.00), see [D-24](decisions.md#d-24) — is parsed and validated today, but the budget-cap *enforcement* (aborting a run that exceeds the ceiling) lands with the `--budget-usd` flag above. Until then, the ceilings are documentation of intent; the per-run cost is observable on the run record's `cost_usd_estimate` field after the fact.
 
 ## Environment variables
 
