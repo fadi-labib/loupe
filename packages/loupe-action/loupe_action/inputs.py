@@ -38,6 +38,10 @@ class ActionInputs(BaseModel):
     github_api_url: str = "https://api.github.com"
     github_output_path: str | None = None
     github_workspace: str | None = None
+    # Track A — Layer 2 + auto-commit (v0.1).
+    auto_commit_loupe_dir: bool = False
+    commit_author: str = "loupe-agent <noreply@loupe.security>"
+    loupe_pat: str | None = None
 
 
 def parse_inputs(env: dict[str, str]) -> ActionInputs:
@@ -68,6 +72,18 @@ def parse_inputs(env: dict[str, str]) -> ActionInputs:
     if not owner or not name:
         raise InputError(f"GITHUB_REPOSITORY must be 'owner/repo', got: {repo!r}")
 
+    auto_commit_raw = env.get("INPUT_AUTO_COMMIT_LOUPE_DIR", "false").strip().lower()
+    auto_commit_loupe_dir = auto_commit_raw == "true"
+
+    commit_author = env.get("INPUT_COMMIT_AUTHOR", "").strip() or "loupe-agent <noreply@loupe.security>"
+
+    # PAT can come from either an Action input or an env var (e.g.,
+    # `env: LOUPE_PAT: ${{ secrets.LOUPE_PAT }}` in the workflow).
+    # Input takes precedence over env when both are set.
+    loupe_pat: str | None = (
+        env.get("INPUT_LOUPE_PAT", "").strip() or env.get("LOUPE_PAT", "").strip() or None
+    )
+
     return ActionInputs(
         pr_number=pr_number,
         config_path=config_path,
@@ -79,6 +95,9 @@ def parse_inputs(env: dict[str, str]) -> ActionInputs:
         or "https://api.github.com",
         github_output_path=env.get("GITHUB_OUTPUT") or None,
         github_workspace=env.get("GITHUB_WORKSPACE") or None,
+        auto_commit_loupe_dir=auto_commit_loupe_dir,
+        commit_author=commit_author,
+        loupe_pat=loupe_pat,
     )
 
 

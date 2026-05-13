@@ -93,3 +93,22 @@ def test_api_url_defaults_for_github_dotcom():
 def test_api_url_used_for_github_enterprise():
     inputs = parse_inputs(_env(GITHUB_API_URL="https://ghe.acme.internal/api/v3"))
     assert inputs.github_api_url == "https://ghe.acme.internal/api/v3"
+
+
+def test_action_inputs_accepts_new_auto_commit_fields():
+    """New v0.1 fields: auto_commit_loupe_dir, commit_author, loupe_pat."""
+    env = _env(INPUT_AUTO_COMMIT_LOUPE_DIR="false")
+    result = parse_inputs(env)
+    assert result.auto_commit_loupe_dir is False
+    assert result.commit_author == "loupe-agent <noreply@loupe.security>"
+    assert result.loupe_pat is None
+
+
+def test_action_inputs_auto_commit_loupe_dir_parses_true():
+    env = _env(
+        INPUT_AUTO_COMMIT_LOUPE_DIR="true",
+        INPUT_LOUPE_PAT="github_pat_xxx",
+    )
+    result = parse_inputs(env)
+    assert result.auto_commit_loupe_dir is True
+    assert result.loupe_pat == "github_pat_xxx"
