@@ -146,3 +146,27 @@ def test_action_inputs_opt_out_no_pat_ok():
     result = parse_inputs(env)
     assert result.auto_commit_loupe_dir is False
     assert result.loupe_pat is None
+
+
+def test_action_inputs_default_commit_author():
+    env = _env()
+    result = parse_inputs(env)
+    assert result.commit_author == "loupe-agent <noreply@loupe.security>"
+
+
+def test_action_inputs_custom_commit_author_roundtrips():
+    env = _env(INPUT_COMMIT_AUTHOR="MyBot <bot@example.com>")
+    result = parse_inputs(env)
+    assert result.commit_author == "MyBot <bot@example.com>"
+
+
+def test_action_inputs_malformed_commit_author_raises():
+    env = _env(INPUT_COMMIT_AUTHOR="just a name no email")
+    with pytest.raises(InputError, match="invalid commit_author"):
+        parse_inputs(env)
+
+
+def test_action_inputs_commit_author_must_have_name():
+    env = _env(INPUT_COMMIT_AUTHOR="<bot@example.com>")
+    with pytest.raises(InputError, match="invalid commit_author"):
+        parse_inputs(env)

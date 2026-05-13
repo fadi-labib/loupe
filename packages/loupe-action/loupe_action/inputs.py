@@ -15,6 +15,7 @@ ever invokes it directly without the shell wrapper.
 
 from __future__ import annotations
 
+import re
 from typing import Literal
 
 from pydantic import BaseModel, Field
@@ -75,7 +76,9 @@ def parse_inputs(env: dict[str, str]) -> ActionInputs:
     auto_commit_raw = env.get("INPUT_AUTO_COMMIT_LOUPE_DIR", "false").strip().lower()
     auto_commit_loupe_dir = auto_commit_raw == "true"
 
-    commit_author = env.get("INPUT_COMMIT_AUTHOR", "").strip() or "loupe-agent <noreply@loupe.security>"
+    default_author = "loupe-agent <noreply@loupe.security>"
+    commit_author = env.get("INPUT_COMMIT_AUTHOR", "").strip() or default_author
+    _validate_commit_author(commit_author)
 
     # PAT can come from either an Action input or an env var (e.g.,
     # `env: LOUPE_PAT: ${{ secrets.LOUPE_PAT }}` in the workflow).
@@ -115,3 +118,17 @@ def _validate_config_path(path: str) -> None:
         raise InputError(f"config path must be relative to the workspace, got absolute: {path!r}")
     if ".." in path.split("/"):
         raise InputError(f"config path must not contain parent-directory traversal, got: {path!r}")
+
+
+_COMMIT_AUTHOR_PATTERN = re.compile(r"^.+\s+<[^<>@\s]+@[^<>@\s]+>$")
+
+
+def _validate_commit_author(author: str) -> None:
+    """Verify commit_author matches `Name <email>` shape.
+
+    git requires both name and email parts; passing a malformed string
+    via `--author=` produces a cryptic git error. Validate at parse time
+    so the operator sees the problem before any subprocess fires.
+    """
+    if not _COMMIT_AUTHOR_PATTERN.match(author):
+        raise InputError(f"invalid commit_author: {author!r}. Expected `Name <email>` shape.")
