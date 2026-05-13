@@ -112,3 +112,37 @@ def test_action_inputs_auto_commit_loupe_dir_parses_true():
     result = parse_inputs(env)
     assert result.auto_commit_loupe_dir is True
     assert result.loupe_pat == "github_pat_xxx"
+
+
+def test_action_inputs_opt_in_without_pat_raises():
+    """auto_commit_loupe_dir=true MUST have a PAT supplied via input or env."""
+    env = _env(INPUT_AUTO_COMMIT_LOUPE_DIR="true")
+    with pytest.raises(InputError, match="requires LOUPE_PAT"):
+        parse_inputs(env)
+
+
+def test_action_inputs_opt_in_with_env_pat_only_succeeds():
+    """LOUPE_PAT env var is sufficient (no Action input needed)."""
+    env = _env(INPUT_AUTO_COMMIT_LOUPE_DIR="true", LOUPE_PAT="github_pat_from_env")
+    result = parse_inputs(env)
+    assert result.loupe_pat == "github_pat_from_env"
+
+
+def test_action_inputs_opt_in_input_pat_takes_precedence():
+    """When both INPUT_LOUPE_PAT and LOUPE_PAT are set, input wins."""
+    env = _env(
+        INPUT_AUTO_COMMIT_LOUPE_DIR="true",
+        INPUT_LOUPE_PAT="github_pat_from_input",
+        LOUPE_PAT="github_pat_from_env",
+    )
+    result = parse_inputs(env)
+    assert result.loupe_pat == "github_pat_from_input"
+
+
+def test_action_inputs_opt_out_no_pat_ok():
+    """opt-out + no PAT is fine; loupe_pat stays None."""
+    env = _env()
+    env.pop("INPUT_COMMENT_MODE")  # remove optional field
+    result = parse_inputs(env)
+    assert result.auto_commit_loupe_dir is False
+    assert result.loupe_pat is None

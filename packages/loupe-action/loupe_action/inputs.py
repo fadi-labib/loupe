@@ -84,6 +84,12 @@ def parse_inputs(env: dict[str, str]) -> ActionInputs:
         env.get("INPUT_LOUPE_PAT", "").strip() or env.get("LOUPE_PAT", "").strip() or None
     )
 
+    if auto_commit_loupe_dir and loupe_pat is None:
+        raise InputError(
+            "auto_commit_loupe_dir=true requires LOUPE_PAT env var or loupe_pat input. "
+            "See docs/reference/data-handling.md for PAT setup."
+        )
+
     return ActionInputs(
         pr_number=pr_number,
         config_path=config_path,
