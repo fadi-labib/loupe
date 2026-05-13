@@ -342,12 +342,14 @@ def check_cassette_auth_headers(repo_root: Path) -> list[VerifyFailure]:
             continue
         offending = _scan_for_auth_header_lines(text)
         if offending:
+            joined = ", ".join(sorted(offending))
             failures.append(
                 VerifyFailure(
                     kind="cassette_auth_header",
                     detail=(
-                        f"{cassette_path} contains auth header(s): {', '.join(sorted(offending))}. "
-                        f"conftest.py filter_headers should have stripped them; re-record the cassette."
+                        f"{cassette_path} contains auth header(s): {joined}. "
+                        "conftest.py filter_headers should have stripped them; "
+                        "re-record the cassette."
                     ),
                 )
             )
