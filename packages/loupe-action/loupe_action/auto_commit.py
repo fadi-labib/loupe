@@ -65,3 +65,58 @@ def _side_branch_exists(workspace: Path, branch: str) -> bool:
     raise subprocess.CalledProcessError(
         result.returncode, result.args, result.stdout, result.stderr
     )
+
+
+def _commit_loupe_changes(
+    *,
+    workspace: Path,
+    pr_number: int,
+    run_id: str,
+    lenses: list[str],
+    findings_summary: str,
+    commit_author: str,
+) -> bool:
+    """Stage .loupe/ and create a commit with the given author.
+
+    Returns True if a commit was created, False if `.loupe/` had no
+    changes vs HEAD (defensive guard — every run produces a unique
+    runs/<id>.json so this should not fire in production).
+    """
+    subprocess.run(
+        ["git", "add", ".loupe/"],
+        cwd=workspace,
+        check=True,
+        capture_output=True,
+    )
+    status = subprocess.run(
+        ["git", "status", "--porcelain", "--", ".loupe/"],
+        cwd=workspace,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    if not status.stdout.strip():
+        return False
+
+    message = (
+        f"chore(loupe): {run_id} analysis on PR-{pr_number}\n\n"
+        f"Lenses: {', '.join(lenses) or '(none)'}. Findings: {findings_summary}.\n"
+        f"Run record: .loupe/runs/{run_id}.json"
+    )
+    subprocess.run(
+        [
+            "git",
+            "-c",
+            "user.email=noreply@loupe.security",
+            "-c",
+            "user.name=loupe-agent",
+            "commit",
+            "-m",
+            message,
+            f"--author={commit_author}",
+        ],
+        cwd=workspace,
+        check=True,
+        capture_output=True,
+    )
+    return True

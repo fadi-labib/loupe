@@ -81,3 +81,66 @@ def test_side_branch_exists_returns_true_when_present(tmp_path):
 
     exists = _side_branch_exists(work, "loupe/proposal-1234")
     assert exists is True
+
+
+from loupe_action.auto_commit import _commit_loupe_changes
+
+
+def test_commit_loupe_changes_happy_path(tmp_path):
+    """Stages .loupe/ and creates a commit with the specified author."""
+    remote = _make_bare_remote(tmp_path)
+    work = _init_working_repo(tmp_path, remote)
+    subprocess.run(["git", "commit", "-q", "--allow-empty", "-m", "init"], cwd=work, check=True)
+
+    loupe = work / ".loupe"
+    loupe.mkdir()
+    (loupe / "threats.yaml").write_text("threats: []\n")
+    (loupe / "runs").mkdir()
+    (loupe / "runs" / "run-aaa.json").write_text('{"run_id": "aaa"}')
+
+    committed = _commit_loupe_changes(
+        workspace=work,
+        pr_number=1234,
+        run_id="aaa",
+        lenses=["threatlens"],
+        findings_summary="1 high, 2 medium",
+        commit_author="MyBot <bot@example.com>",
+    )
+
+    assert committed is True
+
+    log = subprocess.run(
+        ["git", "log", "-1", "--format=%an|%ae|%s"],
+        cwd=work,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    name, email, subject = log.stdout.strip().split("|", 2)
+    assert name == "MyBot"
+    assert email == "bot@example.com"
+    assert "aaa" in subject
+    assert "1234" in subject
+
+
+def test_commit_loupe_changes_skips_empty(tmp_path):
+    """If .loupe/ has no changes vs HEAD, returns False without committing."""
+    remote = _make_bare_remote(tmp_path)
+    work = _init_working_repo(tmp_path, remote)
+
+    loupe = work / ".loupe"
+    loupe.mkdir()
+    (loupe / "threats.yaml").write_text("threats: []\n")
+    subprocess.run(["git", "add", "."], cwd=work, check=True)
+    subprocess.run(["git", "commit", "-qm", "init"], cwd=work, check=True)
+
+    committed = _commit_loupe_changes(
+        workspace=work,
+        pr_number=1234,
+        run_id="aaa",
+        lenses=["threatlens"],
+        findings_summary="no findings",
+        commit_author="MyBot <bot@example.com>",
+    )
+
+    assert committed is False
