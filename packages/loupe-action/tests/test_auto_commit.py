@@ -265,3 +265,64 @@ async def test_find_existing_sub_pr_403_raises():
                 base_branch="feature/x",
                 token="bad_token",
             )
+
+
+from loupe_action.auto_commit import _create_sub_pr, format_sub_pr_body
+
+
+@pytest.mark.asyncio
+async def test_create_sub_pr_posts_with_correct_body():
+    """Create-PR call uses the right title/head/base/body shape."""
+    captured: list[dict] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        import json
+        captured.append(json.loads(request.content))
+        return httpx.Response(201, json={"html_url": "https://github.com/fadi-labib/loupe/pull/5678"})
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        url = await _create_sub_pr(
+            client=client,
+            api_url="https://api.github.com",
+            repo_owner="fadi-labib",
+            repo_name="loupe",
+            pr_number=1234,
+            head_branch="loupe/proposal-1234",
+            base_branch="feature/x",
+            head_sha="abc123def",
+            findings_summary="2 high, 1 medium",
+            run_id="run-bbb",
+            run_hash="4f0cb9d2",
+            lenses=["threatlens"],
+            cost_usd=0.12,
+            cache_hit_rate=0.78,
+            token="github_pat_xxx",
+        )
+    assert url == "https://github.com/fadi-labib/loupe/pull/5678"
+    body = captured[0]
+    assert body["title"] == "loupe: analysis for PR-1234"
+    assert body["head"] == "loupe/proposal-1234"
+    assert body["base"] == "feature/x"
+    assert "2 high, 1 medium" in body["body"]
+    assert "PR #1234" in body["body"]
+    assert "run-bbb" in body["body"]
+
+
+def test_format_sub_pr_body_includes_pat_scope_quote():
+    """The body verbatim-quotes the PAT scope for audit-credibility."""
+    body = format_sub_pr_body(
+        repo_owner="fadi-labib",
+        repo_name="loupe",
+        pr_number=1234,
+        head_sha="abc123",
+        findings_summary="1 high",
+        run_id="run-aaa",
+        run_hash="deadbeef",
+        lenses=["threatlens"],
+        cost_usd=0.05,
+        cache_hit_rate=0.0,
+    )
+    assert "contents: write" in body
+    assert "loupe/proposal-*" in body
+    assert "[D-08]" in body
+    assert "[D-27]" in body

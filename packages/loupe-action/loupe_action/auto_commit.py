@@ -183,3 +183,98 @@ async def _find_existing_sub_pr(
     if not prs:
         return None
     return prs[0]["html_url"]
+
+
+def format_sub_pr_body(
+    *,
+    repo_owner: str,
+    repo_name: str,
+    pr_number: int,
+    head_sha: str,
+    findings_summary: str,
+    run_id: str,
+    run_hash: str,
+    lenses: list[str],
+    cost_usd: float,
+    cache_hit_rate: float,
+) -> str:
+    """Render the sub-PR body markdown.
+
+    The body verbatim-quotes the PAT scope so an auditor reading any
+    past sub-PR sees the security property in-place. Future maintainers
+    changing the scope leave a footprint in every sub-PR ever created.
+    """
+    lenses_str = ", ".join(lenses) if lenses else "(none)"
+    cache_str = f"{cache_hit_rate * 100:.0f}%" if cache_hit_rate else "n/a"
+    return (
+        f"## Loupe analysis for PR #{pr_number}\n\n"
+        f"This PR contains the `.loupe/` artefacts produced by Loupe's CI run "
+        f"against [PR #{pr_number}](https://github.com/{repo_owner}/{repo_name}/pull/{pr_number}) "
+        f"at commit `{head_sha}`.\n\n"
+        f"**Findings:** {findings_summary}.\n\n"
+        f"Merge this PR to integrate the analysis into the original PR's branch.\n\n"
+        f"<details>\n<summary>Run details</summary>\n\n"
+        f"- **Run id:** `{run_id}`\n"
+        f"- **Run hash:** `{run_hash}`\n"
+        f"- **Lenses run:** {lenses_str}\n"
+        f"- **Cost (estimate):** ${cost_usd:.2f}\n"
+        f"- **Prompt-cache hit rate:** {cache_str}\n\n"
+        f"</details>\n\n"
+        f"---\n\n"
+        f"🤖 This PR was opened by the Loupe GitHub Action with the `LOUPE_PAT` "
+        f"token, scoped `contents: write` only on refs matching "
+        f"`loupe/proposal-*`. See [D-08](../docs/reference/decisions.md#d-08) "
+        f"and [D-27](../docs/reference/decisions.md#d-27) for the audit story.\n"
+    )
+
+
+async def _create_sub_pr(
+    *,
+    client: httpx.AsyncClient,
+    api_url: str,
+    repo_owner: str,
+    repo_name: str,
+    pr_number: int,
+    head_branch: str,
+    base_branch: str,
+    head_sha: str,
+    findings_summary: str,
+    run_id: str,
+    run_hash: str,
+    lenses: list[str],
+    cost_usd: float,
+    cache_hit_rate: float,
+    token: str,
+) -> str:
+    """POST /repos/.../pulls. Returns the new PR's html_url.
+
+    Raises httpx.HTTPStatusError on non-2xx (caller maps to AutoCommitResult).
+    """
+    body = format_sub_pr_body(
+        repo_owner=repo_owner,
+        repo_name=repo_name,
+        pr_number=pr_number,
+        head_sha=head_sha,
+        findings_summary=findings_summary,
+        run_id=run_id,
+        run_hash=run_hash,
+        lenses=lenses,
+        cost_usd=cost_usd,
+        cache_hit_rate=cache_hit_rate,
+    )
+    response = await client.post(
+        f"{api_url}/repos/{repo_owner}/{repo_name}/pulls",
+        json={
+            "title": f"loupe: analysis for PR-{pr_number}",
+            "head": head_branch,
+            "base": base_branch,
+            "body": body,
+        },
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Accept": "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28",
+        },
+    )
+    response.raise_for_status()
+    return response.json()["html_url"]
