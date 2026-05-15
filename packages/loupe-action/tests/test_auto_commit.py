@@ -193,3 +193,75 @@ def test_push_side_branch_rejects_non_fast_forward(tmp_path):
 
     assert result.success is False
     assert "non-fast-forward" in result.error.lower() or "rejected" in result.error.lower()
+
+
+import httpx
+import pytest
+
+from loupe_action.auto_commit import _find_existing_sub_pr
+
+
+@pytest.mark.asyncio
+async def test_find_existing_sub_pr_returns_none_when_no_pr():
+    """If the GitHub PR list is empty, returns None."""
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.url.path == "/repos/fadi-labib/loupe/pulls"
+        assert request.url.params["head"] == "fadi-labib:loupe/proposal-1234"
+        assert request.url.params["base"] == "feature/x"
+        assert request.url.params["state"] == "open"
+        return httpx.Response(200, json=[])
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        url = await _find_existing_sub_pr(
+            client=client,
+            api_url="https://api.github.com",
+            repo_owner="fadi-labib",
+            repo_name="loupe",
+            head_branch="loupe/proposal-1234",
+            base_branch="feature/x",
+            token="github_pat_xxx",
+        )
+    assert url is None
+
+
+@pytest.mark.asyncio
+async def test_find_existing_sub_pr_returns_url_when_present():
+    """If the PR list has one entry, returns its html_url."""
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json=[
+            {"html_url": "https://github.com/fadi-labib/loupe/pull/9999"}
+        ])
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        url = await _find_existing_sub_pr(
+            client=client,
+            api_url="https://api.github.com",
+            repo_owner="fadi-labib",
+            repo_name="loupe",
+            head_branch="loupe/proposal-1234",
+            base_branch="feature/x",
+            token="github_pat_xxx",
+        )
+    assert url == "https://github.com/fadi-labib/loupe/pull/9999"
+
+
+@pytest.mark.asyncio
+async def test_find_existing_sub_pr_403_raises():
+    """403 means the PAT lacks pull-requests:read; surface to caller."""
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(403, json={"message": "Resource not accessible"})
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        with pytest.raises(httpx.HTTPStatusError):
+            await _find_existing_sub_pr(
+                client=client,
+                api_url="https://api.github.com",
+                repo_owner="fadi-labib",
+                repo_name="loupe",
+                head_branch="loupe/proposal-1234",
+                base_branch="feature/x",
+                token="bad_token",
+            )

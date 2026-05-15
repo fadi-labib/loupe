@@ -148,3 +148,38 @@ def _push_side_branch(workspace: Path, branch: str) -> PushResult:
     if result.returncode == 0:
         return PushResult(success=True, error=None)
     return PushResult(success=False, error=result.stderr.strip())
+
+
+async def _find_existing_sub_pr(
+    *,
+    client: httpx.AsyncClient,
+    api_url: str,
+    repo_owner: str,
+    repo_name: str,
+    head_branch: str,
+    base_branch: str,
+    token: str,
+) -> str | None:
+    """GET /repos/.../pulls?head=<owner>:<head>&base=<base>&state=open.
+
+    Returns the first matching PR's html_url, or None if no open PR
+    matches. Raises httpx.HTTPStatusError on non-2xx responses.
+    """
+    response = await client.get(
+        f"{api_url}/repos/{repo_owner}/{repo_name}/pulls",
+        params={
+            "head": f"{repo_owner}:{head_branch}",
+            "base": base_branch,
+            "state": "open",
+        },
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Accept": "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28",
+        },
+    )
+    response.raise_for_status()
+    prs = response.json()
+    if not prs:
+        return None
+    return prs[0]["html_url"]
