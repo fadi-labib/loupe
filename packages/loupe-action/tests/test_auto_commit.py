@@ -144,3 +144,52 @@ def test_commit_loupe_changes_skips_empty(tmp_path):
     )
 
     assert committed is False
+
+
+from loupe_action.auto_commit import PushResult, _push_side_branch
+
+
+def test_push_side_branch_happy_path(tmp_path):
+    """Push succeeds; result reports success and no stderr."""
+    remote = _make_bare_remote(tmp_path)
+    work = _init_working_repo(tmp_path, remote)
+    (work / "f").write_text("x")
+    subprocess.run(["git", "add", "."], cwd=work, check=True)
+    subprocess.run(["git", "commit", "-qm", "init"], cwd=work, check=True)
+    subprocess.run(["git", "checkout", "-q", "-b", "loupe/proposal-1234"], cwd=work, check=True)
+
+    result = _push_side_branch(work, "loupe/proposal-1234")
+
+    assert result.success is True
+    assert result.error is None
+
+
+def test_push_side_branch_rejects_non_fast_forward(tmp_path):
+    """If the remote side branch diverged, push is rejected (no force)."""
+    remote = _make_bare_remote(tmp_path)
+    work = _init_working_repo(tmp_path, remote)
+
+    (work / "a").write_text("a")
+    subprocess.run(["git", "add", "."], cwd=work, check=True)
+    subprocess.run(["git", "commit", "-qm", "a"], cwd=work, check=True)
+    subprocess.run(["git", "checkout", "-q", "-b", "loupe/proposal-1234"], cwd=work, check=True)
+    subprocess.run(["git", "push", "-q", "origin", "loupe/proposal-1234"], cwd=work, check=True)
+
+    work2 = tmp_path / "work2"
+    subprocess.run(["git", "clone", "-q", str(remote), str(work2)], check=True)
+    subprocess.run(["git", "config", "user.email", "t2@e.com"], cwd=work2, check=True)
+    subprocess.run(["git", "config", "user.name", "T2"], cwd=work2, check=True)
+    subprocess.run(["git", "checkout", "-q", "loupe/proposal-1234"], cwd=work2, check=True)
+    (work2 / "b").write_text("b")
+    subprocess.run(["git", "add", "."], cwd=work2, check=True)
+    subprocess.run(["git", "commit", "-qm", "b"], cwd=work2, check=True)
+    subprocess.run(["git", "push", "-q", "origin", "loupe/proposal-1234"], cwd=work2, check=True)
+
+    (work / "c").write_text("c")
+    subprocess.run(["git", "add", "."], cwd=work, check=True)
+    subprocess.run(["git", "commit", "-qm", "c"], cwd=work, check=True)
+
+    result = _push_side_branch(work, "loupe/proposal-1234")
+
+    assert result.success is False
+    assert "non-fast-forward" in result.error.lower() or "rejected" in result.error.lower()

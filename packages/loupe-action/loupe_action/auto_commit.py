@@ -120,3 +120,31 @@ def _commit_loupe_changes(
         capture_output=True,
     )
     return True
+
+
+@dataclass(frozen=True)
+class PushResult:
+    """Outcome of a single `git push` invocation."""
+
+    success: bool
+    error: str | None
+
+
+def _push_side_branch(workspace: Path, branch: str) -> PushResult:
+    """`git push origin <branch>`. No --force, no --force-with-lease.
+
+    Returns PushResult(success=True) on exit 0.
+    Returns PushResult(success=False, error=<git stderr>) on any non-zero
+    exit. The side branch is bot-owned per the design spec; a non-fast-
+    forward push is treated as an error to be investigated, never auto-
+    resolved by force-pushing over a human's work.
+    """
+    result = subprocess.run(
+        ["git", "push", "origin", branch],
+        cwd=workspace,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode == 0:
+        return PushResult(success=True, error=None)
+    return PushResult(success=False, error=result.stderr.strip())
