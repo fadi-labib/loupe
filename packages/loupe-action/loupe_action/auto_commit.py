@@ -42,3 +42,26 @@ class AutoCommitResult:
     created_new_pr: bool
     failed: bool
     error: str | None
+
+
+def _side_branch_exists(workspace: Path, branch: str) -> bool:
+    """Return True iff `branch` exists on `origin`.
+
+    Uses `git fetch origin <branch>` and distinguishes the missing-ref
+    case from real failures by inspecting stderr. The missing-ref case
+    has exit code 128 with stderr containing `couldn't find remote ref`;
+    other failures (network, auth) get propagated as a subprocess error.
+    """
+    result = subprocess.run(
+        ["git", "fetch", "origin", branch],
+        cwd=workspace,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode == 0:
+        return True
+    if "couldn't find remote ref" in result.stderr:
+        return False
+    raise subprocess.CalledProcessError(
+        result.returncode, result.args, result.stdout, result.stderr
+    )
