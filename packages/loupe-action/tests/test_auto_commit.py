@@ -326,3 +326,161 @@ def test_format_sub_pr_body_includes_pat_scope_quote():
     assert "loupe/proposal-*" in body
     assert "[D-08]" in body
     assert "[D-27]" in body
+
+
+from loupe_action.auto_commit import commit_and_open_sub_pr
+
+
+@pytest.mark.asyncio
+async def test_commit_and_open_sub_pr_first_run_creates_pr(tmp_path):
+    """First run: branch doesn't exist, sub-PR doesn't exist. Creates both."""
+    remote = _make_bare_remote(tmp_path)
+    work = _init_working_repo(tmp_path, remote)
+    (work / "f").write_text("baseline")
+    (work / ".loupe").mkdir()
+    (work / ".loupe" / "threats.yaml").write_text("threats: []\n")
+    subprocess.run(["git", "add", "."], cwd=work, check=True)
+    subprocess.run(["git", "commit", "-qm", "baseline"], cwd=work, check=True)
+    (work / ".loupe" / "threats.yaml").write_text("threats:\n  - id: T-001\n")
+
+    create_calls: list[dict] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        import json
+        if request.method == "GET":
+            return httpx.Response(200, json=[])
+        if request.method == "POST":
+            create_calls.append(json.loads(request.content))
+            return httpx.Response(201, json={"html_url": "https://github.com/x/y/pull/99"})
+        return httpx.Response(500)
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        result = await commit_and_open_sub_pr(
+            workspace=work,
+            api_url="https://api.github.com",
+            repo_owner="fadi-labib",
+            repo_name="loupe",
+            pr_number=1234,
+            original_pr_branch="feature/x",
+            head_sha="abc123",
+            run_id="run-aaa",
+            run_hash="deadbeef",
+            lenses=["threatlens"],
+            findings_summary="1 high",
+            cost_usd=0.05,
+            cache_hit_rate=0.5,
+            commit_author="MyBot <bot@example.com>",
+            pat="github_pat_xxx",
+            client=client,
+        )
+
+    assert result.failed is False
+    assert result.branch_pushed == "loupe/proposal-1234"
+    assert result.sub_pr_url == "https://github.com/x/y/pull/99"
+    assert result.created_new_pr is True
+    assert len(create_calls) == 1
+    assert create_calls[0]["base"] == "feature/x"
+
+
+@pytest.mark.asyncio
+async def test_commit_and_open_sub_pr_subsequent_run_updates_existing(tmp_path):
+    """Subsequent run: branch and PR both exist. Pushes but doesn't create."""
+    remote = _make_bare_remote(tmp_path)
+    work = _init_working_repo(tmp_path, remote)
+    (work / "f").write_text("x")
+    subprocess.run(["git", "add", "."], cwd=work, check=True)
+    subprocess.run(["git", "commit", "-qm", "main"], cwd=work, check=True)
+    subprocess.run(["git", "checkout", "-q", "-b", "loupe/proposal-1234"], cwd=work, check=True)
+    (work / ".loupe").mkdir()
+    (work / ".loupe" / "threats.yaml").write_text("threats: []\n")
+    subprocess.run(["git", "add", "."], cwd=work, check=True)
+    subprocess.run(["git", "commit", "-qm", "prior run"], cwd=work, check=True)
+    subprocess.run(["git", "push", "-q", "origin", "loupe/proposal-1234"], cwd=work, check=True)
+    subprocess.run(["git", "checkout", "-q", "main"], cwd=work, check=True)
+    (work / ".loupe").mkdir(exist_ok=True)
+    (work / ".loupe" / "threats.yaml").write_text("threats:\n  - id: T-002\n")
+
+    create_calls: list[dict] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        import json
+        if request.method == "GET":
+            return httpx.Response(200, json=[
+                {"html_url": "https://github.com/x/y/pull/77"}
+            ])
+        if request.method == "POST":
+            create_calls.append(json.loads(request.content))
+            return httpx.Response(500)
+        return httpx.Response(500)
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        result = await commit_and_open_sub_pr(
+            workspace=work,
+            api_url="https://api.github.com",
+            repo_owner="fadi-labib",
+            repo_name="loupe",
+            pr_number=1234,
+            original_pr_branch="main",
+            head_sha="abc123",
+            run_id="run-bbb",
+            run_hash="cafebabe",
+            lenses=["threatlens"],
+            findings_summary="no findings",
+            cost_usd=0.01,
+            cache_hit_rate=0.9,
+            commit_author="MyBot <bot@example.com>",
+            pat="github_pat_xxx",
+            client=client,
+        )
+
+    assert result.failed is False
+    assert result.sub_pr_url == "https://github.com/x/y/pull/77"
+    assert result.created_new_pr is False
+    assert len(create_calls) == 0
+
+
+@pytest.mark.asyncio
+async def test_commit_and_open_sub_pr_push_failure_returns_failed_result(tmp_path):
+    """If the push fails, returns failed=True with the git error in `error`."""
+    work = tmp_path / "work"
+    subprocess.run(["git", "init", "-q", "-b", "main", str(work)], check=True)
+    subprocess.run(["git", "config", "user.email", "t@e.com"], cwd=work, check=True)
+    subprocess.run(["git", "config", "user.name", "T"], cwd=work, check=True)
+    subprocess.run(
+        ["git", "remote", "add", "origin", str(tmp_path / "nonexistent.git")],
+        cwd=work,
+        check=True,
+    )
+    (work / "f").write_text("x")
+    (work / ".loupe").mkdir()
+    (work / ".loupe" / "threats.yaml").write_text("threats: []\n")
+    subprocess.run(["git", "add", "."], cwd=work, check=True)
+    subprocess.run(["git", "commit", "-qm", "init"], cwd=work, check=True)
+    (work / ".loupe" / "threats.yaml").write_text("threats:\n  - id: T-001\n")
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(500)
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        result = await commit_and_open_sub_pr(
+            workspace=work,
+            api_url="https://api.github.com",
+            repo_owner="x",
+            repo_name="y",
+            pr_number=1234,
+            original_pr_branch="main",
+            head_sha="abc",
+            run_id="run-aaa",
+            run_hash="def",
+            lenses=["threatlens"],
+            findings_summary="",
+            cost_usd=0.0,
+            cache_hit_rate=0.0,
+            commit_author="MyBot <bot@example.com>",
+            pat="x",
+            client=client,
+        )
+
+    assert result.failed is True
+    assert result.error is not None
+    assert result.sub_pr_url is None

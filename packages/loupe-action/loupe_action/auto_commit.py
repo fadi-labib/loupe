@@ -16,7 +16,9 @@ falsifiable: revoke the PAT, attempt a push, watch GitHub refuse.
 
 from __future__ import annotations
 
+import shutil
 import subprocess
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -278,3 +280,176 @@ async def _create_sub_pr(
     )
     response.raise_for_status()
     return response.json()["html_url"]
+
+
+async def commit_and_open_sub_pr(
+    *,
+    workspace: Path,
+    api_url: str,
+    repo_owner: str,
+    repo_name: str,
+    pr_number: int,
+    original_pr_branch: str,
+    head_sha: str,
+    run_id: str,
+    run_hash: str,
+    lenses: list[str],
+    findings_summary: str,
+    cost_usd: float,
+    cache_hit_rate: float,
+    commit_author: str,
+    pat: str,
+    client: httpx.AsyncClient,
+) -> AutoCommitResult:
+    """Auto-commit .loupe/ to a side branch and open (or update) a sub-PR.
+
+    See docs/plans/2026-05-17-track-a-layer2-autocommit-design.md §4 for
+    the full sequence. Summary:
+
+    1. Fetch `loupe/proposal-<pr_number>` from origin (does it exist?).
+    2. Checkout / create the side branch (from head_sha if new).
+    3. Stage + commit .loupe/ (skip if empty diff).
+    4. Push (no force). Conflict is an error, not a recovery.
+    5. List existing open PRs with this head/base; create one if missing.
+
+    Returns AutoCommitResult capturing the outcome.
+    """
+    side_branch = f"loupe/proposal-{pr_number}"
+
+    try:
+        exists = _side_branch_exists(workspace, side_branch)
+    except subprocess.CalledProcessError as exc:
+        return AutoCommitResult(
+            branch_pushed=None,
+            sub_pr_url=None,
+            created_new_pr=False,
+            failed=True,
+            error=f"git fetch failed: {exc.stderr or exc.stdout}",
+        )
+
+    loupe_dir = workspace / ".loupe"
+    if exists:
+        # The workspace may have untracked or locally-modified .loupe/ files
+        # (freshly produced by the current CI run). Stash them to a temp dir,
+        # force-checkout the side branch (which may carry an older .loupe/),
+        # then restore the new content so _commit_loupe_changes picks it up.
+        with tempfile.TemporaryDirectory() as _tmp:
+            tmp = Path(_tmp)
+            if loupe_dir.exists():
+                shutil.copytree(str(loupe_dir), str(tmp / ".loupe"))
+            subprocess.run(
+                ["git", "checkout", "-f", side_branch],
+                cwd=workspace,
+                check=True,
+                capture_output=True,
+            )
+            if (tmp / ".loupe").exists():
+                if loupe_dir.exists():
+                    shutil.rmtree(str(loupe_dir))
+                shutil.copytree(str(tmp / ".loupe"), str(loupe_dir))
+    else:
+        subprocess.run(
+            ["git", "checkout", "-b", side_branch],
+            cwd=workspace,
+            check=True,
+            capture_output=True,
+        )
+
+    try:
+        committed = _commit_loupe_changes(
+            workspace=workspace,
+            pr_number=pr_number,
+            run_id=run_id,
+            lenses=lenses,
+            findings_summary=findings_summary,
+            commit_author=commit_author,
+        )
+    except subprocess.CalledProcessError as exc:
+        return AutoCommitResult(
+            branch_pushed=None,
+            sub_pr_url=None,
+            created_new_pr=False,
+            failed=True,
+            error=f"git commit failed: {exc.stderr or exc.stdout}",
+        )
+    if not committed:
+        return AutoCommitResult(
+            branch_pushed=side_branch,
+            sub_pr_url=None,
+            created_new_pr=False,
+            failed=False,
+            error=None,
+        )
+
+    push = _push_side_branch(workspace, side_branch)
+    if not push.success:
+        return AutoCommitResult(
+            branch_pushed=None,
+            sub_pr_url=None,
+            created_new_pr=False,
+            failed=True,
+            error=f"git push failed: {push.error}",
+        )
+
+    try:
+        existing_url = await _find_existing_sub_pr(
+            client=client,
+            api_url=api_url,
+            repo_owner=repo_owner,
+            repo_name=repo_name,
+            head_branch=side_branch,
+            base_branch=original_pr_branch,
+            token=pat,
+        )
+    except httpx.HTTPStatusError as exc:
+        return AutoCommitResult(
+            branch_pushed=side_branch,
+            sub_pr_url=None,
+            created_new_pr=False,
+            failed=True,
+            error=f"GitHub PR list failed: {exc.response.status_code} {exc.response.text}",
+        )
+
+    if existing_url is not None:
+        return AutoCommitResult(
+            branch_pushed=side_branch,
+            sub_pr_url=existing_url,
+            created_new_pr=False,
+            failed=False,
+            error=None,
+        )
+
+    try:
+        new_url = await _create_sub_pr(
+            client=client,
+            api_url=api_url,
+            repo_owner=repo_owner,
+            repo_name=repo_name,
+            pr_number=pr_number,
+            head_branch=side_branch,
+            base_branch=original_pr_branch,
+            head_sha=head_sha,
+            findings_summary=findings_summary,
+            run_id=run_id,
+            run_hash=run_hash,
+            lenses=lenses,
+            cost_usd=cost_usd,
+            cache_hit_rate=cache_hit_rate,
+            token=pat,
+        )
+    except httpx.HTTPStatusError as exc:
+        return AutoCommitResult(
+            branch_pushed=side_branch,
+            sub_pr_url=None,
+            created_new_pr=False,
+            failed=True,
+            error=f"GitHub PR create failed: {exc.response.status_code} {exc.response.text}",
+        )
+
+    return AutoCommitResult(
+        branch_pushed=side_branch,
+        sub_pr_url=new_url,
+        created_new_pr=True,
+        failed=False,
+        error=None,
+    )
