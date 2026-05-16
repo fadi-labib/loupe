@@ -38,6 +38,7 @@ from loupe_core.artifacts.types import Severity
 from loupe_core.config import load_config
 from ruamel.yaml import YAML
 
+from loupe_action.auto_commit import AutoCommitResult, commit_and_open_sub_pr
 from loupe_action.comment_poster import (
     FreshCommentPoster,
     GitHubAPIError,
@@ -74,6 +75,53 @@ async def run(*, env: dict[str, str], client: httpx.AsyncClient, cwd: Path) -> i
     record = _latest_run_record(workspace / ".loupe" / "runs")
     threats = _load_threats(workspace / ".loupe" / "threats.yaml")
     body = format_pr_comment(record=record, threats=threats)
+
+    auto_commit_result: AutoCommitResult | None = None
+    if inputs.auto_commit_loupe_dir:
+        assert inputs.loupe_pat is not None  # Validated in parse_inputs.
+        sev_counts = Counter(t.severity.value for t in threats)
+        findings_summary = (
+            ", ".join(
+                f"{sev_counts[s]} {s}"
+                for s in ("critical", "high", "medium", "low")
+                if sev_counts.get(s)
+            )
+            or "no findings"
+        )
+        auto_commit_result = await commit_and_open_sub_pr(
+            workspace=workspace,
+            api_url=inputs.github_api_url,
+            repo_owner=inputs.repo_owner,
+            repo_name=inputs.repo_name,
+            pr_number=inputs.pr_number,
+            original_pr_branch=pr.head_branch,
+            head_sha=pr.head_sha,
+            run_id=record.run_id,
+            run_hash=record.self_hash,
+            lenses=record.lenses_run,
+            findings_summary=findings_summary,
+            cost_usd=record.cost_usd_estimate or 0.0,
+            cache_hit_rate=record.cache_hit_rate or 0.0,
+            commit_author=inputs.commit_author,
+            pat=inputs.loupe_pat,
+            client=client,
+        )
+        if auto_commit_result.failed:
+            banner = (
+                f"> ⚠️ **Layer 2 auto-commit failed.** Findings below are accurate, but "
+                f"`.loupe/` artefacts were not pushed to "
+                f"`loupe/proposal-{inputs.pr_number}` "
+                f"and no sub-PR was opened. Reason: `{auto_commit_result.error}`. "
+                f"The runner's workspace will be discarded; re-run the workflow once the "
+                f"cause is fixed.\n\n"
+            )
+            body = banner + body
+        elif auto_commit_result.sub_pr_url:
+            body = body.replace(
+                "## Loupe analysis",
+                f"## Loupe analysis\n\nFull artefacts available at {auto_commit_result.sub_pr_url}",
+                1,
+            )
 
     # action.yml documents three modes; pick the matching poster.
     # "new" historically fell through to StickyCommentPoster and silently
@@ -113,6 +161,7 @@ async def run(*, env: dict[str, str], client: httpx.AsyncClient, cwd: Path) -> i
         record=record,
         threats=threats,
         exit_code=final_exit,
+        auto_commit_result=auto_commit_result,
     )
     return final_exit
 
@@ -151,6 +200,7 @@ def _write_outputs(
     record: RunRecord,
     threats: list[Threat],
     exit_code: int,
+    auto_commit_result: AutoCommitResult | None,
 ) -> None:
     if inputs.github_output_path is None:
         return
@@ -164,6 +214,11 @@ def _write_outputs(
         "run_id": record.run_id,
         "run_hash": record.self_hash,
         "exit_code": str(exit_code),
+        "sub_pr_url": (
+            auto_commit_result.sub_pr_url
+            if auto_commit_result and auto_commit_result.sub_pr_url
+            else ""
+        ),
     }
     with Path(inputs.github_output_path).open("a", encoding="utf-8") as f:
         for key, value in pairs.items():

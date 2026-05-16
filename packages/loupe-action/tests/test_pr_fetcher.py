@@ -26,13 +26,18 @@ async def test_fetch_returns_base_head_and_diff():
             return httpx.Response(200, text="diff --git a/x b/x\n+x\n")
         return httpx.Response(
             200,
-            json={"base": {"sha": "b" * 40}, "head": {"sha": "h" * 40}},
+            json={
+                "base": {"sha": "b" * 40, "ref": "main"},
+                "head": {"sha": "h" * 40, "ref": "feature/x"},
+            },
         )
 
     async with _async_client(handler) as client:
         data = await _fetcher(client).fetch()
     assert data.base_sha == "b" * 40
     assert data.head_sha == "h" * 40
+    assert data.head_branch == "feature/x"
+    assert data.base_branch == "main"
     assert "diff --git" in data.unified_diff
 
 
@@ -53,7 +58,10 @@ async def test_fetch_raises_on_diff_failure():
             return httpx.Response(422, text="diff too large")
         return httpx.Response(
             200,
-            json={"base": {"sha": "x" * 40}, "head": {"sha": "y" * 40}},
+            json={
+                "base": {"sha": "x" * 40, "ref": "main"},
+                "head": {"sha": "y" * 40, "ref": "feature/x"},
+            },
         )
 
     async with _async_client(handler) as client:
@@ -95,7 +103,10 @@ async def test_fetch_retries_on_502_and_succeeds(monkeypatch):
             return httpx.Response(502, text="bad gateway")
         return httpx.Response(
             200,
-            json={"base": {"sha": "b" * 40}, "head": {"sha": "h" * 40}},
+            json={
+                "base": {"sha": "b" * 40, "ref": "main"},
+                "head": {"sha": "h" * 40, "ref": "feature/x"},
+            },
         )
 
     async with _async_client(handler) as client:
@@ -128,7 +139,10 @@ async def test_fetch_retries_on_rate_limited_403(monkeypatch):
             )
         return httpx.Response(
             200,
-            json={"base": {"sha": "b" * 40}, "head": {"sha": "h" * 40}},
+            json={
+                "base": {"sha": "b" * 40, "ref": "main"},
+                "head": {"sha": "h" * 40, "ref": "feature/x"},
+            },
         )
 
     async with _async_client(handler) as client:

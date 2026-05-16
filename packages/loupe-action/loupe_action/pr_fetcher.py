@@ -37,6 +37,8 @@ class PullRequestData:
     base_sha: str
     head_sha: str
     unified_diff: str
+    head_branch: str
+    base_branch: str
 
 
 async def _request_with_retry(
@@ -111,6 +113,8 @@ class PRFetcher:
             base_sha=meta["base"]["sha"],
             head_sha=meta["head"]["sha"],
             unified_diff=diff,
+            head_branch=meta["head"]["ref"],
+            base_branch=meta["base"]["ref"],
         )
 
     async def _fetch_metadata(self) -> dict[str, Any]:

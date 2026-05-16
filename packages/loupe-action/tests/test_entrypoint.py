@@ -3,11 +3,12 @@ from __future__ import annotations
 import json
 from datetime import UTC, datetime
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 import httpx
 import pytest
 from loupe_action import entrypoint
+from loupe_action.auto_commit import AutoCommitResult
 from loupe_action.formatter import COMMENT_SENTINEL
 
 # Fixed timestamp for run-record fixtures. The action's behaviour under test
@@ -109,7 +110,10 @@ def _api_handler(*, posted_bodies: list[str]):
         if "/pulls/42" in url:
             return httpx.Response(
                 200,
-                json={"base": {"sha": "b" * 40}, "head": {"sha": "h" * 40}},
+                json={
+                    "base": {"sha": "b" * 40, "ref": "main"},
+                    "head": {"sha": "h" * 40, "ref": "feature/my-pr"},
+                },
             )
         if "/comments" in url and request.method == "GET":
             return httpx.Response(200, json=[])
@@ -188,7 +192,10 @@ async def test_entrypoint_skips_comment_when_mode_is_none(tmp_path: Path):
         if "/pulls/42" in url:
             return httpx.Response(
                 200,
-                json={"base": {"sha": "b" * 40}, "head": {"sha": "h" * 40}},
+                json={
+                    "base": {"sha": "b" * 40, "ref": "main"},
+                    "head": {"sha": "h" * 40, "ref": "feature/my-pr"},
+                },
             )
         raise AssertionError(f"unexpected: {request.method} {url}")
 
@@ -227,7 +234,10 @@ async def test_entrypoint_uses_fresh_poster_when_comment_mode_is_new(tmp_path: P
         if "/pulls/42" in url:
             return httpx.Response(
                 200,
-                json={"base": {"sha": "b" * 40}, "head": {"sha": "h" * 40}},
+                json={
+                    "base": {"sha": "b" * 40, "ref": "main"},
+                    "head": {"sha": "h" * 40, "ref": "feature/my-pr"},
+                },
             )
         # Fresh mode: GET /comments and PATCH must NEVER fire.
         if "/comments" in url and request.method == "GET":
@@ -344,7 +354,10 @@ def test_main_returns_1_for_unexpected_exception(monkeypatch, tmp_path: Path):
         if "/pulls/42" in url:
             return httpx.Response(
                 200,
-                json={"base": {"sha": "b" * 40}, "head": {"sha": "h" * 40}},
+                json={
+                    "base": {"sha": "b" * 40, "ref": "main"},
+                    "head": {"sha": "h" * 40, "ref": "feature/my-pr"},
+                },
             )
         return httpx.Response(200, json=[])
 
@@ -381,3 +394,155 @@ async def test_entrypoint_writes_severity_counts_to_outputs(tmp_path: Path):
     assert "findings_high=2" in output_text
     assert "findings_medium=1" in output_text
     assert "findings_low=0" in output_text
+
+
+# ---------------------------------------------------------------------------
+# Task 11: wire auto_commit into entrypoint
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_entrypoint_skips_auto_commit_when_opted_out(tmp_path: Path):
+    """auto_commit_loupe_dir absent (defaults false) → commit_and_open_sub_pr not called."""
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    _seed_workspace(workspace)
+    output = tmp_path / "gh_output"
+    handler = _api_handler(posted_bodies=[])
+
+    with patch("loupe_action.entrypoint.ci_command", return_value=0):
+        with patch(
+            "loupe_action.entrypoint.commit_and_open_sub_pr",
+            new_callable=AsyncMock,
+        ) as mock_auto_commit:
+            async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+                result = await entrypoint.run(
+                    env=_env(workspace, output), client=client, cwd=workspace
+                )
+
+    mock_auto_commit.assert_not_called()
+    assert result == 0
+
+
+@pytest.mark.asyncio
+async def test_entrypoint_calls_auto_commit_when_opted_in_with_pat(tmp_path: Path):
+    """auto_commit_loupe_dir=true + LOUPE_PAT → commit_and_open_sub_pr called once."""
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    _seed_workspace(workspace)
+    output = tmp_path / "gh_output"
+    env = _env(workspace, output)
+    env["INPUT_AUTO_COMMIT_LOUPE_DIR"] = "true"
+    env["LOUPE_PAT"] = "ghp_fake_pat"
+    handler = _api_handler(posted_bodies=[])
+
+    success_result = AutoCommitResult(
+        branch_pushed="loupe/proposal-42",
+        sub_pr_url="https://github.com/acme/widgets/pull/99",
+        created_new_pr=True,
+        failed=False,
+        error=None,
+    )
+
+    with patch("loupe_action.entrypoint.ci_command", return_value=0):
+        with patch(
+            "loupe_action.entrypoint.commit_and_open_sub_pr",
+            new_callable=AsyncMock,
+            return_value=success_result,
+        ) as mock_auto_commit:
+            async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+                result = await entrypoint.run(env=env, client=client, cwd=workspace)
+
+    mock_auto_commit.assert_called_once()
+    assert result == 0
+
+
+@pytest.mark.asyncio
+async def test_entrypoint_auto_commit_failure_adds_banner_to_sticky(tmp_path: Path):
+    """auto_commit failure → sticky comment body contains the Layer-2-failure banner."""
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    _seed_workspace(workspace)
+    output = tmp_path / "gh_output"
+    env = _env(workspace, output)
+    env["INPUT_AUTO_COMMIT_LOUPE_DIR"] = "true"
+    env["LOUPE_PAT"] = "ghp_fake_pat"
+
+    posted_bodies: list[str] = []
+    handler = _api_handler(posted_bodies=posted_bodies)
+
+    failure_result = AutoCommitResult(
+        branch_pushed=None,
+        sub_pr_url=None,
+        created_new_pr=False,
+        failed=True,
+        error="non-fast-forward",
+    )
+
+    with patch("loupe_action.entrypoint.ci_command", return_value=0):
+        with patch(
+            "loupe_action.entrypoint.commit_and_open_sub_pr",
+            new_callable=AsyncMock,
+            return_value=failure_result,
+        ):
+            async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+                await entrypoint.run(env=env, client=client, cwd=workspace)
+
+    assert posted_bodies, "expected at least one comment to be posted"
+    assert "Layer 2 auto-commit failed" in posted_bodies[0]
+    assert "non-fast-forward" in posted_bodies[0]
+
+
+# ---------------------------------------------------------------------------
+# Task 12: expose sub_pr_url as GitHub Actions output
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_entrypoint_writes_sub_pr_url_output_on_success(tmp_path: Path):
+    """auto-commit success → sub_pr_url appears in GITHUB_OUTPUT."""
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    _seed_workspace(workspace)
+    output = tmp_path / "gh_output"
+    env = _env(workspace, output)
+    env["INPUT_AUTO_COMMIT_LOUPE_DIR"] = "true"
+    env["LOUPE_PAT"] = "ghp_fake_pat"
+    handler = _api_handler(posted_bodies=[])
+
+    success_result = AutoCommitResult(
+        branch_pushed="loupe/proposal-42",
+        sub_pr_url="https://github.com/acme/widgets/pull/99",
+        created_new_pr=True,
+        failed=False,
+        error=None,
+    )
+
+    with patch("loupe_action.entrypoint.ci_command", return_value=0):
+        with patch(
+            "loupe_action.entrypoint.commit_and_open_sub_pr",
+            new_callable=AsyncMock,
+            return_value=success_result,
+        ):
+            async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+                await entrypoint.run(env=env, client=client, cwd=workspace)
+
+    output_content = output.read_text()
+    assert "sub_pr_url=https://github.com/acme/widgets/pull/99" in output_content
+
+
+@pytest.mark.asyncio
+async def test_entrypoint_writes_empty_sub_pr_url_when_opted_out(tmp_path: Path):
+    """Opt-out (default) → sub_pr_url= empty value, key still present."""
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    _seed_workspace(workspace)
+    output = tmp_path / "gh_output"
+    handler = _api_handler(posted_bodies=[])
+
+    with patch("loupe_action.entrypoint.ci_command", return_value=0):
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+            await entrypoint.run(env=_env(workspace, output), client=client, cwd=workspace)
+
+    output_content = output.read_text()
+    assert "sub_pr_url=" in output_content
