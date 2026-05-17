@@ -61,6 +61,9 @@ outputs:
   exit_code:
     description: 'Final exit code (0 clean, 1 gate failed, 64 usage / configuration error)'
     value: ${{ steps.loupe.outputs.exit_code }}
+  sub_pr_url:
+    description: 'URL of the auto-commit sub-PR (empty when auto_commit_loupe_dir is false or push failed).'
+    value: ${{ steps.loupe.outputs.sub_pr_url }}
 runs:
   using: 'composite'
   steps:
