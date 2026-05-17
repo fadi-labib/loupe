@@ -1,0 +1,30 @@
+# Loupe Layer 2 — protected-path CODEOWNERS template
+# https://github.com/fadi-labib/loupe/blob/main/docs/reference/decisions.md#d-08
+#
+# The Action's PAT is scoped `contents: write` only on refs matching
+# `loupe/proposal-*` — so the agent CANNOT push directly to main or to
+# user PR branches. The mechanism: a fine-grained GitHub PAT supplied
+# via the LOUPE_PAT secret. See data-handling.md for the full setup.
+#
+# CODEOWNERS is the second leg of Layer 2: even though the agent's
+# pushes are confined to side branches, the sub-PRs those branches
+# generate must NOT be merge-able into protected paths without explicit
+# human approval. This file enforces that property at merge time, not
+# at push time.
+#
+# Replace @your-org/security-reviewers with the team or user that
+# should approve protected-path changes in your repo.
+
+# Files the agent must never write directly.
+# The agent uses propose_patch → .loupe/.proposed/ for these; a human
+# applies them via `loupe chat`. Sub-PRs that contain changes to any of
+# these need explicit security-reviewer approval before merge.
+/.loupe/context.md          @your-org/security-reviewers
+/.loupe/decisions/          @your-org/security-reviewers
+/.loupe/config.yaml         @your-org/security-reviewers
+/.loupe/knowledge.yaml      @your-org/security-reviewers
+
+# OPTIONAL: stricter audit posture — gate ALL of .loupe/ under
+# CODEOWNERS, requiring explicit reviewer approval for every Loupe
+# sub-PR before merge. Trades adoption friction for audit signal.
+# /.loupe/                  @your-org/security-reviewers
