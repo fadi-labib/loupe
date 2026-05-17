@@ -1,22 +1,22 @@
-# Layer 2 (branch-namespace enforcement) design note:
+# Layer 2 (branch-namespace enforcement) — SHIPPED in v0.1.
 #
-# Today this Action authenticates with the default `GITHUB_TOKEN` GitHub provides
-# to the workflow. That token has whatever scope the workflow grants it and is
-# NOT scoped to `loupe/proposal-*` branches.
-#
-# The Layer 2 commitment (see decisions.md D-08 and reference/verification.md
-# § Defence in depth) is that a fine-grained PAT will eventually replace
-# `GITHUB_TOKEN` here, scoped to:
+# When `auto_commit_loupe_dir: true`, the Action authenticates with the
+# fine-grained PAT supplied via `LOUPE_PAT` env or `loupe_pat` input.
+# The PAT MUST be scoped:
 #   - `contents: write` only on refs matching `loupe/proposal-*`
-#   - `pull-requests: write` only for issue comments
-#   - `contents: read` on the default branch (for diff/SHA fetch)
-# Combined with CODEOWNERS guarding `context.md`, `decisions/`, and
-# `config.yaml`, this gives Layer 2 its branch-namespace property regardless
-# of what the in-process Layer 1 boundary lets through.
+#   - `pull-requests: write` for sticky comment + sub-PR creation
+#   - `contents: read` on the default branch (diff/SHA fetch)
+#   - `metadata: read` (always required by GitHub for fine-grained PATs)
 #
-# Until that PAT lands, treat Layer 2 as documented-intent, not runtime
-# enforcement. Layer 1 (in-process PathBoundary) and Layer 3 (`loupe verify`
-# hash chain) carry the load.
+# Combined with CODEOWNERS guarding `.loupe/context.md`, `.loupe/decisions/`,
+# `.loupe/config.yaml`, and `.loupe/knowledge.yaml`, this gives Layer 2 its
+# branch-namespace property regardless of what the in-process Layer 1
+# boundary lets through.
+#
+# When `auto_commit_loupe_dir: false` (the default), the Action only reads
+# the repo (PR fetch) and posts the sticky comment via the default
+# GITHUB_TOKEN — no PAT required and no Layer-2 enforcement is exercised
+# because no pushes happen. See decisions.md D-08, D-26, and D-27.
 
 name: 'Loupe'
 description: 'Run Loupe lenses on a pull request and post a sticky threat-model comment (pre-alpha; install from source until v0.1 ships)'
@@ -36,6 +36,27 @@ inputs:
         none              — do not post any comment
     required: false
     default: 'sticky'
+  auto_commit_loupe_dir:
+    description: |
+      Push .loupe/ artefacts to a `loupe/proposal-<pr-id>` side branch
+      and open a sub-PR targeting the original PR's branch. Requires
+      LOUPE_PAT env or loupe_pat input. Default: false (no push happens;
+      sticky comment is the only output).
+    required: false
+    default: 'false'
+  commit_author:
+    description: |
+      Author identity for auto-commits on the side branch.
+      Format: `Name <email>`. Default: `loupe-agent <noreply@loupe.security>`.
+    required: false
+    default: 'loupe-agent <noreply@loupe.security>'
+  loupe_pat:
+    description: |
+      Fine-grained PAT scoped to push to refs matching `loupe/proposal-*`.
+      Required when auto_commit_loupe_dir=true unless LOUPE_PAT env is set.
+      See docs/reference/data-handling.md for PAT setup.
+    required: false
+    default: ''
 outputs:
   findings_count:
     description: 'Total number of threats reported by this run'
@@ -73,6 +94,9 @@ runs:
         INPUT_PR: ${{ inputs.pr }}
         INPUT_CONFIG: ${{ inputs.config }}
         INPUT_COMMENT_MODE: ${{ inputs.comment_mode }}
+        INPUT_AUTO_COMMIT_LOUPE_DIR: ${{ inputs.auto_commit_loupe_dir }}
+        INPUT_COMMIT_AUTHOR: ${{ inputs.commit_author }}
+        INPUT_LOUPE_PAT: ${{ inputs.loupe_pat }}
       run: |
         set -euo pipefail
 
@@ -124,5 +148,10 @@ runs:
         INPUT_PR: ${{ inputs.pr }}
         INPUT_CONFIG: ${{ inputs.config }}
         INPUT_COMMENT_MODE: ${{ inputs.comment_mode }}
+        INPUT_AUTO_COMMIT_LOUPE_DIR: ${{ inputs.auto_commit_loupe_dir }}
+        INPUT_COMMIT_AUTHOR: ${{ inputs.commit_author }}
+        INPUT_LOUPE_PAT: ${{ inputs.loupe_pat }}
+        GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
+        LOUPE_PAT: ${{ env.LOUPE_PAT }}
       run: |
         python -m loupe_action.entrypoint
