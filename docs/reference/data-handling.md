@@ -71,6 +71,7 @@ What is not in the prompt:
 |---|---|
 | Local CLI | Provider env vars: `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GOOGLE_API_KEY`, `AI_GATEWAY_API_KEY`. Read from `os.environ` at agent startup. |
 | GitHub Action | `env: ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}`. GitHub redacts secret values in workflow logs. The Action's own `GITHUB_TOKEN` is the API auth for the four GitHub API calls described above. |
+| GitHub Action with Layer 2 auto-commit | `env: LOUPE_PAT: ${{ secrets.LOUPE_PAT }}`. The PAT is a fine-grained token with `contents: write` only on refs matching `loupe/proposal-*`. See [Layer 2 PAT setup](#layer-2-pat-setup) for the full scope and the GitHub UI procedure. |
 | Tests | Never require keys. VCR cassettes record responses once with a key and replay without one. Cassettes are scrubbed of `Authorization` and `x-api-key` headers via `filter_headers` in `conftest.py`. |
 
 API keys are never written to any artefact in `.loupe/`, never logged in `runs/*.json` (the model identifier is logged, the key is not), never echoed by the CLI even in verbose modes, and never stored in the prompt cache (cache keys are content hashes, not auth headers).
@@ -104,6 +105,55 @@ What is deliberately not stored:
 - API keys.
 - PII not already in your repo. If `context.md` mentions a person, it is in your repo; Loupe does not add new PII.
 
+## Layer 2 PAT setup
+
+Set up once per repo to enable `auto_commit_loupe_dir: true`.
+
+**1. Create the fine-grained PAT.**
+
+GitHub UI → Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token. Settings:
+
+- **Resource owner:** the org or user that owns the repo.
+- **Repository access:** Only select repositories → pick the repo.
+- **Permissions:**
+    - **Contents:** Read and write. Then under "Restrict access to specific branches", add the pattern `loupe/proposal-*` for write access (the UI calls this "Branch and tag rules").
+    - **Pull requests:** Read and write.
+    - **Metadata:** Read-only (auto-selected).
+- **Expiration:** 90 days recommended. Plan a quarterly rotation.
+
+**2. Add the PAT as a repo secret.**
+
+Repo Settings → Secrets and variables → Actions → New repository secret. Name `LOUPE_PAT`, value is the PAT from step 1.
+
+**3. Wire the workflow.**
+
+```yaml
+- uses: fadi-labib/loupe/packages/loupe-action@main
+  with:
+    pr: ${{ github.event.pull_request.number }}
+    auto_commit_loupe_dir: true
+  env:
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+    LOUPE_PAT: ${{ secrets.LOUPE_PAT }}
+```
+
+**4. Add `.github/CODEOWNERS` from the template.**
+
+Copy `docs/templates/CODEOWNERS.example` (from the Loupe repo) to `.github/CODEOWNERS` in your repo. Replace `@your-org/security-reviewers` with your team or user handle.
+
+**5. Verify the PAT scope.**
+
+```bash
+gh api /repos/<owner>/<repo>/branches/main -H "Authorization: token <LOUPE_PAT>"
+# Read-only access works.
+
+gh api /repos/<owner>/<repo>/git/refs/heads/main -X DELETE -H "Authorization: token <LOUPE_PAT>"
+# Should return 403 — PAT cannot delete main.
+```
+
+The first call succeeds (`contents: read`). The second fails with 403 (`contents: write` is restricted to `loupe/proposal-*`). If the second succeeds, your PAT scope is too broad — regenerate.
+
 ## Local data flow
 
 ```
@@ -136,9 +186,23 @@ The agent makes outbound calls only to:
 
 The GitHub Action runs the same `loupe ci` pipeline inside an ephemeral runner. The differences from local:
 
-- The GitHub Action's GitHub token (whatever scope the workflow grants it) authenticates the four `api.github.com` calls described above. The token is what GitHub Actions provides via `${{ secrets.GITHUB_TOKEN }}`.
-- The runner is ephemeral; nothing Loupe writes persists outside the proposal branch and the run record committed there.
-- Once branch-namespace enforcement (Layer 2 in the principles) is implemented, the token will be a fine-grained PAT scoped to `loupe/proposal-*` branches only. Today the Action uses the standard `GITHUB_TOKEN` and the branch restriction is a documented Layer 2 commitment, not yet enforced.
+**When `auto_commit_loupe_dir: false` (default):**
+
+- Runner fetches PR diff via GitHub API.
+- Runs ci_command, writes `.loupe/` to runner filesystem (ephemeral).
+- Posts sticky comment to PR.
+- Runner is destroyed; `.loupe/` artefacts vanish.
+
+**When `auto_commit_loupe_dir: true`:**
+
+- Runner fetches PR diff via GitHub API.
+- Runs ci_command, writes `.loupe/` to runner filesystem.
+- Pushes `.loupe/` via `LOUPE_PAT` to `loupe/proposal-<pr-id>` side branch (Layer 2 enforcement: `LOUPE_PAT` is scoped `contents: write` only on refs matching `loupe/proposal-*`).
+- Opens sub-PR targeting the original PR's branch.
+- Posts sticky comment (with sub-PR URL) to the original PR.
+- Runner is destroyed; `.loupe/` persists on the side branch.
+
+The `GITHUB_TOKEN` (standard Actions token) authenticates the four `api.github.com` calls for PR metadata, diff fetch, comment list, and sticky-comment post/patch. It is never used for git pushes when `auto_commit_loupe_dir: true` — that path uses `LOUPE_PAT` exclusively.
 
 There is no Loupe-managed CI state. Everything Loupe needs between runs lives in your repo's `.loupe/`.
 
