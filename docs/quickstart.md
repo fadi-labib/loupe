@@ -220,7 +220,7 @@ If `ANTHROPIC_API_KEY` (or the matching key for your `models.default`) is not se
 
 `.loupe/runs/<latest>.json` records every failure mode. If a capability backend fails (Syft not installed, Grype database missing), the run record marks it as `backend_error` and the lens that requested the capability is skipped. If a lens's tool call hits the path boundary, the run record marks it as `enforcement_error` and the lens is aborted but the run as a whole continues.
 
-A richer `loupe ci --verbose` flag for plan tracing is documented in the CLI design but not yet implemented. Today's `loupe ci` carries only the flags shown earlier in this page.
+For live plan tracing during a run, add `--verbose` to `loupe ci` — the flag emits `[verbose] Considering lens X: dispatching` and `[verbose] Lens X complete (<tokens>, $<cost>)` lines as each lens runs. See [`reference/cli.md`](reference/cli.md#loupe-ci) for the full flag list.
 
 For anything beyond that, [`contributing.md`](contributing.md) describes how to file an issue and how to reproduce locally.
 
