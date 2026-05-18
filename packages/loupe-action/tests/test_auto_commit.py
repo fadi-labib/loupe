@@ -5,7 +5,21 @@ Pattern follows existing loupe-action tests:
 - file-based git remotes (git init --bare) for push tests; no live HTTPS
 """
 
-from loupe_action.auto_commit import AutoCommitResult
+import subprocess
+from pathlib import Path
+
+import httpx
+import pytest
+from loupe_action.auto_commit import (
+    AutoCommitResult,
+    _commit_loupe_changes,
+    _create_sub_pr,
+    _find_existing_sub_pr,
+    _push_side_branch,
+    _side_branch_exists,
+    commit_and_open_sub_pr,
+    format_sub_pr_body,
+)
 
 
 def test_auto_commit_result_dataclass():
@@ -29,12 +43,6 @@ def test_auto_commit_result_dataclass():
     )
     assert failure.failed is True
     assert "non-fast-forward" in failure.error
-
-
-import subprocess
-from pathlib import Path
-
-from loupe_action.auto_commit import _side_branch_exists
 
 
 def _make_bare_remote(tmp_path: Path) -> Path:
@@ -81,9 +89,6 @@ def test_side_branch_exists_returns_true_when_present(tmp_path):
 
     exists = _side_branch_exists(work, "loupe/proposal-1234")
     assert exists is True
-
-
-from loupe_action.auto_commit import _commit_loupe_changes
 
 
 def test_commit_loupe_changes_happy_path(tmp_path):
@@ -146,9 +151,6 @@ def test_commit_loupe_changes_skips_empty(tmp_path):
     assert committed is False
 
 
-from loupe_action.auto_commit import PushResult, _push_side_branch
-
-
 def test_push_side_branch_happy_path(tmp_path):
     """Push succeeds; result reports success and no stderr."""
     remote = _make_bare_remote(tmp_path)
@@ -195,12 +197,6 @@ def test_push_side_branch_rejects_non_fast_forward(tmp_path):
     assert "non-fast-forward" in result.error.lower() or "rejected" in result.error.lower()
 
 
-import httpx
-import pytest
-
-from loupe_action.auto_commit import _find_existing_sub_pr
-
-
 @pytest.mark.asyncio
 async def test_find_existing_sub_pr_returns_none_when_no_pr():
     """If the GitHub PR list is empty, returns None."""
@@ -230,9 +226,9 @@ async def test_find_existing_sub_pr_returns_url_when_present():
     """If the PR list has one entry, returns its html_url."""
 
     def handler(request: httpx.Request) -> httpx.Response:
-        return httpx.Response(200, json=[
-            {"html_url": "https://github.com/fadi-labib/loupe/pull/9999"}
-        ])
+        return httpx.Response(
+            200, json=[{"html_url": "https://github.com/fadi-labib/loupe/pull/9999"}]
+        )
 
     async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
         url = await _find_existing_sub_pr(
@@ -267,9 +263,6 @@ async def test_find_existing_sub_pr_403_raises():
             )
 
 
-from loupe_action.auto_commit import _create_sub_pr, format_sub_pr_body
-
-
 @pytest.mark.asyncio
 async def test_create_sub_pr_posts_with_correct_body():
     """Create-PR call uses the right title/head/base/body shape."""
@@ -277,8 +270,11 @@ async def test_create_sub_pr_posts_with_correct_body():
 
     def handler(request: httpx.Request) -> httpx.Response:
         import json
+
         captured.append(json.loads(request.content))
-        return httpx.Response(201, json={"html_url": "https://github.com/fadi-labib/loupe/pull/5678"})
+        return httpx.Response(
+            201, json={"html_url": "https://github.com/fadi-labib/loupe/pull/5678"}
+        )
 
     async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
         url = await _create_sub_pr(
@@ -328,9 +324,6 @@ def test_format_sub_pr_body_includes_pat_scope_quote():
     assert "[D-27]" in body
 
 
-from loupe_action.auto_commit import commit_and_open_sub_pr
-
-
 @pytest.mark.asyncio
 async def test_commit_and_open_sub_pr_first_run_creates_pr(tmp_path):
     """First run: branch doesn't exist, sub-PR doesn't exist. Creates both."""
@@ -347,6 +340,7 @@ async def test_commit_and_open_sub_pr_first_run_creates_pr(tmp_path):
 
     def handler(request: httpx.Request) -> httpx.Response:
         import json
+
         if request.method == "GET":
             return httpx.Response(200, json=[])
         if request.method == "POST":
@@ -404,10 +398,9 @@ async def test_commit_and_open_sub_pr_subsequent_run_updates_existing(tmp_path):
 
     def handler(request: httpx.Request) -> httpx.Response:
         import json
+
         if request.method == "GET":
-            return httpx.Response(200, json=[
-                {"html_url": "https://github.com/x/y/pull/77"}
-            ])
+            return httpx.Response(200, json=[{"html_url": "https://github.com/x/y/pull/77"}])
         if request.method == "POST":
             create_calls.append(json.loads(request.content))
             return httpx.Response(500)
