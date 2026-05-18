@@ -310,7 +310,6 @@ Every row in this table is a claim. The third column is the command that proves 
 ### In flight (before v0.1 tags)
 
 - HTTP+SSE remote MCP transport (stdio works today)
-- Layer 2 fine-grained PAT branch-namespace enforcement. See [D-08](docs/reference/decisions.md#d-08) — the Action currently uses the default `GITHUB_TOKEN`
 - Benchmarks against Cesanta Mongoose (Tier 1) and Eclipse Mosquitto (Tier 2). See [D-19](docs/reference/decisions.md#d-19)
 
 ### Anticipated
