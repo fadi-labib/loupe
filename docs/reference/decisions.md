@@ -12,7 +12,7 @@ The principles that emerged from these decisions are at [`principles.md`](../pri
 
 ## Index
 
-[D-01](#d-01) Scope · [D-02](#d-02) CI + interactive · [D-03](#d-03) PydanticAI · [D-04](#d-04) Plugin architecture · [D-05](#d-05) Name = Loupe · [D-06](#d-06) Ten artefacts · [D-07](#d-07) Blackboard + knowledge graph · [D-08](#d-08) Four-layer write boundary · [D-09](#d-09) MCP · [D-10](#d-10) Three cost levers · [D-11](#d-11) Lens contract · [D-12](#d-12) Hash chain · [D-13](#d-13) VCR · [D-14](#d-14) Deferred signing · [D-15](#d-15) `loupe scan` · [D-16](#d-16) StrideGPT lineage · [D-17](#d-17) Apache 2.0 · [D-18](#d-18) Capability abstraction · [D-19](#d-19) Benchmark tiers · [D-20](#d-20) MkDocs Material · [D-21](#d-21) MCP SDK choice · [D-22](#d-22) MCP write layer · [D-23](#d-23) Required vs preferred capabilities · [D-24](#d-24) Scoped scan reads sources · [D-25](#d-25) Per-run artefact Merkle root · [D-26](#d-26) `.loupe/` git-write exception · [Open decisions](#open-decisions)
+[D-01](#d-01) Scope · [D-02](#d-02) CI + interactive · [D-03](#d-03) PydanticAI · [D-04](#d-04) Plugin architecture · [D-05](#d-05) Name = Loupe · [D-06](#d-06) Ten artefacts · [D-07](#d-07) Blackboard + knowledge graph · [D-08](#d-08) Four-layer write boundary · [D-09](#d-09) MCP · [D-10](#d-10) Three cost levers · [D-11](#d-11) Lens contract · [D-12](#d-12) Hash chain · [D-13](#d-13) VCR · [D-14](#d-14) Deferred signing · [D-15](#d-15) `loupe scan` · [D-16](#d-16) StrideGPT lineage · [D-17](#d-17) Apache 2.0 · [D-18](#d-18) Capability abstraction · [D-19](#d-19) Benchmark tiers · [D-20](#d-20) MkDocs Material · [D-21](#d-21) MCP SDK choice · [D-22](#d-22) MCP write layer · [D-23](#d-23) Required vs preferred capabilities · [D-24](#d-24) Scoped scan reads sources · [D-25](#d-25) Per-run artefact Merkle root · [D-26](#d-26) `.loupe/` git-write exception · [D-27](#d-27) Action auto-commit + sub-PR · [Open decisions](#open-decisions)
 
 ---
 
@@ -102,7 +102,7 @@ The candidates were Layer 1 only, Layers 1 plus 4, Layers 1 plus 2 plus 4 (skip 
 All four. No single one is load-bearing.
 
 1. Tool surface (in-process). The agent's only write tools are `write_agent_artifact` (allow-list path) and `propose_patch` (writes to `.proposed/`). The `PathBoundary` is a Python object, not a prompt instruction.
-2. Branch namespace (CI runtime). The GitHub App token can only push to `loupe/proposal-*` branches; CODEOWNERS gates `context.md`, `decisions/`, and `config.yaml` regardless of branch.
+2. Branch namespace (CI runtime). **Shipped in v0.1.** The Action's `LOUPE_PAT` is scoped `contents: write` only on refs matching `loupe/proposal-*`, and CODEOWNERS gates `.loupe/context.md`, `.loupe/decisions/`, `.loupe/config.yaml`, and `.loupe/knowledge.yaml` regardless of which branch the change targets. See [D-27](#d-27) for the auto-commit + sub-PR mechanism that exercises this enforcement.
 3. `loupe verify` (pre-commit hook plus required CI check). Authorship, hash chain, schema consistency.
 4. Interactive UX gate. Every protected-path proposal renders as a diff with a `[y/N/edit/skip]` prompt, default-N. No `--auto-confirm` flag.
 
@@ -396,6 +396,31 @@ Why this is OK: chat IS the human-interactive frontend. The human is at the TTY.
 Separately, the GitHub Action will gain an opt-in `auto_commit_loupe_dir: false` input (separate v1.x feature, not part of this decision) that pushes `.loupe/` updates back to the PR branch. Same `.loupe/`-only restriction; same configurability story; same human-equivalent justification (the workflow author opted in by setting the input).
 
 What this rules out: extending the git-write exception to any path outside `.loupe/`, or any code path in `loupe-core`. The exception lives entirely in `loupe-cli/chat_cmd.py` and `loupe-cli/proposals.py` (and, when shipped, `loupe-action/auto_commit.py`). Loupe-core's git-free property is unconditional.
+
+A second documented git-write exception lands in v0.1 with [D-27](#d-27): the GitHub Action, when `auto_commit_loupe_dir=true` is set, pushes `.loupe/` artefacts to a `loupe/proposal-<pr-id>` side branch and opens a sub-PR. Same scoping rules — `.loupe/`-only, PAT-authenticated, identity-tagged via the `commit_author` Action input. Loupe-core's git-free property is unchanged; the exception lives entirely in `loupe-action/auto_commit.py`.
+
+---
+
+## D-27: GitHub Action auto-commit + sub-PR mechanics { #d-27 }
+
+The Layer 2 commitment (D-08) demands that the agent's CI-mode writes land on `loupe/proposal-*` refs rather than `main` or user feature branches. D-27 documents the mechanism that exercises this enforcement: when `auto_commit_loupe_dir: true`, the GitHub Action pushes the run's `.loupe/` artefacts to a `loupe/proposal-<pr-id>` side branch and opens a sub-PR targeting the original PR's branch.
+
+Key properties:
+
+- **Opt-in.** Default is `auto_commit_loupe_dir: false`; the Action runs ci + sticky comment without any git writes, matching pre-v0.1 behaviour.
+- **Fail-fast on missing PAT.** Opt-in without `LOUPE_PAT` (env or input) exits 64 before any work happens. No "fall back to GITHUB_TOKEN" path — the PAT-or-nothing rule prevents a soft-Layer-2 with broader-token shortcut.
+- **Append-style branch lifecycle.** Each subsequent run on the same PR adds a commit to `loupe/proposal-<pr-id>` (no force-push). The branch's git history is monotonic; force-push would erase the audit trail of intermediate runs.
+- **Bot-owned side branch.** A human-pushed commit on `loupe/proposal-<pr-id>` causes the next run's push to fail (non-fast-forward) rather than force-push over the human's work. Conflict is an investigation, not a recovery.
+- **Sub-PR base is the original PR's branch.** Merging the sub-PR integrates the analysis into the PR under review; merging into `main` directly would bypass the PR's review.
+- **Commit identity is configurable** via the `commit_author` Action input, defaulting to `loupe-agent <noreply@loupe.security>`. The Layer 3 `loupe verify --strict` protected-path authorship check reads the same identity to determine what counts as "agent" authorship.
+
+What this rules out:
+
+- Auto-merging the sub-PR — the Action opens it; merge is the human's call.
+- Force-push as a conflict-recovery — the side branch is bot-owned and conflicts surface as errors.
+- Pushing anywhere outside `loupe/proposal-*` — the PAT's scope refuses it at the GitHub API level.
+
+This is the **second documented git-write exception** in the Loupe runtime (the first being [D-26](#d-26)'s `loupe chat`). Both exceptions are scoped to `.loupe/` paths only and use opt-in, identity-tagged mechanisms.
 
 ---
 
