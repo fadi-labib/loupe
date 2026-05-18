@@ -283,7 +283,7 @@ Loupe commits to [eleven principles](docs/principles.md), each numbered, non-neg
 | Layer | Status | What it protects |
 |:-:|:-:|---|
 | **1** Tool surface | Shipped | Agent has only `write_agent_artifact` (allow-list) + `propose_patch` (writes to `.proposed/`). `PathBoundary` enforced in Python, not in a prompt. Parent-symlink-safe via `dir_fd` + `O_NOFOLLOW`. |
-| **2** Branch namespace | Designed | Fine-grained GitHub PAT scoped to `loupe/proposal-*`; CODEOWNERS gates protected paths |
+| **2** Branch namespace | Shipped | `LOUPE_PAT` scoped `contents: write` only on refs matching `loupe/proposal-*`; CODEOWNERS gates `.loupe/context.md`, `.loupe/decisions/`, `.loupe/config.yaml`, `.loupe/knowledge.yaml`. Auto-commit opt-in via `auto_commit_loupe_dir: true`. |
 | **3** `loupe verify` | Shipped | Four checks: hash chain, artefact schemas, cross-references, protected-path authorship (`--strict`) |
 | **4** Interactive UX gate | Shipped | `loupe chat` walks each staged `.loupe/.proposed/<...>.patch` through a `[y/N/edit/skip]` prompt (default-N); `.proposed/` → `.applied/` / `.skipped/` via `git mv`. No `--auto-confirm` |
 
@@ -310,7 +310,6 @@ Every row in this table is a claim. The third column is the command that proves 
 ### In flight (before v0.1 tags)
 
 - HTTP+SSE remote MCP transport (stdio works today)
-- Layer 2 fine-grained-PAT branch namespace enforcement
 - `--verbose`, `--budget-usd` flags
 - Benchmarks against Cesanta Mongoose (Tier 1) and Eclipse Mosquitto (Tier 2). See [D-19](docs/reference/decisions.md#d-19)
 

@@ -100,7 +100,7 @@ The claim: four enforcement layers, no single one load-bearing.
 | Layer | Status | How to verify |
 |---|---|---|
 | Layer 1 (tool surface) | Shipped | See §5 above |
-| Layer 2 (branch namespace) | Designed, not enforced | The Action uses the default `GITHUB_TOKEN`; the fine-grained PAT scope is recorded in [`decisions.md` D-08](decisions.md#d-08) and as a header comment in `packages/loupe-action/action.yml`. See also [`data-handling.md` § CI data flow](data-handling.md#ci-data-flow). |
+| Layer 2 (branch namespace) | Shipped | Confirm the workflow's `LOUPE_PAT` is fine-grained with `contents: write` scoped to refs matching `loupe/proposal-*` (GitHub Settings → Developer settings → Fine-grained tokens). Confirm `.github/CODEOWNERS` gates `.loupe/context.md`, `.loupe/decisions/`, `.loupe/config.yaml`, `.loupe/knowledge.yaml`. Confirm `auto_commit_loupe_dir: true` is set in the workflow. See [D-08](decisions.md#d-08) and [D-27](decisions.md#d-27). |
 | Layer 3 (`loupe verify`) | Shipped | `loupe verify` checks (1) hash-chain integrity, (2) per-run artefact Merkle root ([D-25](decisions.md#d-25)), (3) artefact schema consistency, (4) threats-to-mitigations cross-references on every run, and (5) protected-path authorship under `--strict` (also reachable as `verify_repo(..., strict=True)` from the library). |
 | Layer 4 (interactive UX gate) | Shipped | `loupe chat` wires the `[y/N/edit/skip]` prompt with default-N over every staged `.proposed/` patch; edit-the-diff via `click.edit()`; `.proposed/` → `.applied/` / `.skipped/` lifecycle via `git mv`. See [decisions.md D-26](decisions.md#d-26) for the `.loupe/` git-exception. |
 
