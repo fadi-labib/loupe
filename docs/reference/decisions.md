@@ -393,9 +393,7 @@ Both are scoped to `.loupe/` paths only, run under the user's git identity, and 
 
 Why this is OK: chat IS the human-interactive frontend. The human is at the TTY. `git apply` of an explicitly approved diff and `git mv` of a `.patch` file are functionally equivalent to the user typing the commands by hand. The exception is single-purpose, scoped to `.loupe/`, and documented here so an auditor can locate it.
 
-Separately, the GitHub Action will gain an opt-in `auto_commit_loupe_dir: false` input (separate v1.x feature, not part of this decision) that pushes `.loupe/` updates back to the PR branch. Same `.loupe/`-only restriction; same configurability story; same human-equivalent justification (the workflow author opted in by setting the input).
-
-What this rules out: extending the git-write exception to any path outside `.loupe/`, or any code path in `loupe-core`. The exception lives entirely in `loupe-cli/chat_cmd.py` and `loupe-cli/proposals.py` (and, when shipped, `loupe-action/auto_commit.py`). Loupe-core's git-free property is unconditional.
+What this rules out: extending the git-write exception to any path outside `.loupe/`, or any code path in `loupe-core`. The exception lives entirely in `loupe-cli/chat_cmd.py`, `loupe-cli/proposals.py`, and `loupe-action/auto_commit.py` (the latter covered by [D-27](#d-27)). Loupe-core's git-free property is unconditional.
 
 A second documented git-write exception lands in v0.1 with [D-27](#d-27): the GitHub Action, when `auto_commit_loupe_dir=true` is set, pushes `.loupe/` artefacts to a `loupe/proposal-<pr-id>` side branch and opens a sub-PR. Same scoping rules — `.loupe/`-only, PAT-authenticated, identity-tagged via the `commit_author` Action input. Loupe-core's git-free property is unchanged; the exception lives entirely in `loupe-action/auto_commit.py`.
 
