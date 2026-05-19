@@ -342,7 +342,7 @@ Docs render in-tree on GitHub today; a hosted MkDocs site will go up once the re
 | See each artefact's schema | [Schemas](docs/reference/schemas/index.md) |
 | Run the MCP server | [How-to: MCP server](docs/how-to/run-mcp-server.md) · [MCP tools reference](docs/reference/mcp-tools.md) |
 | Understand cost estimation | [Pricing reference](docs/reference/pricing.md) |
-| Know why a decision was made | [Decisions log](docs/reference/decisions.md) (D-01 through D-22) |
+| Know why a decision was made | [Decisions log](docs/reference/decisions.md) (D-01 through D-27) |
 | Compare against StrideGPT / IriusRisk / Snyk / others | [Comparison](docs/comparison.md) |
 | Check what data leaves your repo | [Data handling](docs/reference/data-handling.md) |
 | Look up a term | [Glossary](docs/reference/glossary.md) |
