@@ -116,9 +116,38 @@ def test_cassette_has_at_least_one_interaction():
 
 
 def test_cassette_carries_no_secret_strings():
-    """Defence-in-depth check: filter_headers in conftest should have stripped any auth."""
-    body = CASSETTE_PATH.read_text()
-    for needle in ("sk-ant", "x-api-key", "authorization", "bearer "):
-        assert needle.lower() not in body.lower(), (
+    """Defence-in-depth check: filter_headers in conftest should have stripped any auth.
+
+    Two complementary layers:
+
+    1. Structural: walk every interaction's request/response headers and assert
+       no header key matches a known auth-header name. This is what the conftest
+       filter is supposed to enforce; checking it here catches a filter regression.
+
+    2. Substring: scan the raw cassette text for high-signal secret prefixes that
+       should never appear *anywhere* (header, body, URL, ...). Keep the needle
+       list paranoid but specific — substrings that occur naturally in security
+       prose (`authorization`, `bearer `) belong to the structural check, not
+       here, because they false-positive on legitimate threat-model content.
+    """
+    data = yaml.safe_load(CASSETTE_PATH.read_text())
+
+    # Layer 1: structural check on header keys (conftest filter_headers regression net).
+    auth_header_names = {"authorization", "x-api-key"}
+    for idx, interaction in enumerate(data.get("interactions", [])):
+        for direction in ("request", "response"):
+            headers = interaction.get(direction, {}).get("headers", {}) or {}
+            leaked = {k for k in headers if k.lower() in auth_header_names}
+            assert not leaked, (
+                f"cassette interaction[{idx}].{direction}.headers leaks auth-name keys: "
+                f"{sorted(leaked)} — verify conftest.py filter_headers and re-record"
+            )
+
+    # Layer 2: high-signal substring check (Anthropic API-key prefix only — see
+    # decision notes in this test's docstring for why broader provider prefixes
+    # are rejected).
+    raw_body = CASSETTE_PATH.read_text()
+    for needle in ("sk-ant-",):
+        assert needle not in raw_body, (
             f"cassette appears to leak '{needle}' — verify conftest.py filter_headers and re-record"
         )
