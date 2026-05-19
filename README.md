@@ -170,6 +170,8 @@ A full walk-through with screenshots is in the [Quickstart](docs/quickstart.md).
 
 ### GitHub Action
 
+Report-only — Loupe runs on every PR and posts a sticky comment; nothing is committed back to the repo:
+
 ```yaml
 # .github/workflows/loupe.yml
 on:
@@ -189,11 +191,27 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 ```
 
+Recommended for production — opt into Layer 2 enforcement. The Action commits `.loupe/` artefacts to a `loupe/proposal-<pr-id>` side branch and opens a sub-PR for review. The `LOUPE_PAT` is a fine-grained GitHub PAT scoped `contents: write` only on refs matching `loupe/proposal-*`, so the Action cannot push anywhere else; missing PAT is a fail-fast (exit 64), not a fallback to `GITHUB_TOKEN`:
+
+```yaml
+      - uses: fadi-labib/loupe/packages/loupe-action@main
+        with:
+          pr: ${{ github.event.pull_request.number }}
+          auto_commit_loupe_dir: true                       # push .loupe/ to a side branch; open sub-PR
+          commit_author: "Loupe Bot <loupe-bot@example.com>"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          LOUPE_PAT: ${{ secrets.LOUPE_PAT }}               # required when auto_commit_loupe_dir is true
+```
+
+One-time PAT setup (~3 min) including the exact scope to grant and a `gh api` curl test for the scope: [`docs/reference/data-handling.md#layer-2-pat-setup`](docs/reference/data-handling.md#layer-2-pat-setup). Mechanics and rationale: [D-08](docs/reference/decisions.md#d-08) and [D-27](docs/reference/decisions.md#d-27).
+
 | Exit code | Meaning |
 |:-:|---|
 | `0` | Clean run; no severity in `ci.fail_on` triggered |
 | `1` | Gate failure: a threat at a `ci.fail_on` severity was reported |
-| `64` | Usage / configuration error (BSD `sysexits.h` `EX_USAGE`) |
+| `64` | Usage / configuration error (BSD `sysexits.h` `EX_USAGE`); also raised when `auto_commit_loupe_dir: true` is set without `LOUPE_PAT` |
 
 The Action publishes eight outputs (`findings_count`, severity-specific counts, `run_id`, `run_hash`, `exit_code`). See [`action.yml`](packages/loupe-action/action.yml) for the full schema.
 
