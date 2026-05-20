@@ -32,7 +32,7 @@ cd loupe
 uv sync --all-packages
 ```
 
-This installs the four workspace packages (`loupe-core`, `loupe-cli`, `loupe-threatlens`, `loupe-action`) in editable mode. Invoke the CLI through `uv run loupe …`.
+This installs the four workspace packages (`loupe-core`, `loupe-cli`, `loupe-threatlens`, `loupe-action`) in editable mode. The `--all-packages` flag is required because Loupe is a uv workspace; without it, `uv sync` resolves only the root package and the CLI imports fail at runtime. Invoke the CLI through `uv run loupe …`.
 
 Once v0.1 is published, the install simplifies to:
 

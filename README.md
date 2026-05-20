@@ -87,7 +87,7 @@ The EU Cyber Resilience Act (fully applicable December 2027) makes both worse. M
 | Auditor-replayable       | ✓ `loupe verify` | ✗          | ✗             | ✗             |
 | OSS, no SaaS             | ✓ Apache 2.0  | ~ partial     | ✗ commercial  | ✓ OWASP       |
 
-<sub>Snapshot dated 2026-05-16. Row-by-row breakdown with version-pinned sources and methodological caveats: [`docs/comparison.md`](docs/comparison.md).</sub>
+<sub>Row-by-row breakdown with version-pinned sources, snapshot date, and methodological caveats: [`docs/comparison.md`](docs/comparison.md).</sub>
 
 ## The mental model
 
@@ -163,8 +163,24 @@ uv run --project /path/to/loupe loupe init                       # scaffold .lou
 $EDITOR .loupe/context.md                                        # describe your product (anti-hallucination anchor)
 export ANTHROPIC_API_KEY="sk-ant-…"                              # or OPENAI_API_KEY / GOOGLE_API_KEY / etc.
 uv run --project /path/to/loupe loupe doctor                     # preflight: keys, binaries, config
-uv run --project /path/to/loupe loupe ci --diff-file <(git diff main...)
+git diff main... > /tmp/pr.diff
+uv run --project /path/to/loupe loupe ci --diff-file /tmp/pr.diff
 ```
+
+`loupe doctor` reads one line per check. Before `loupe init` you see the missing-scaffold case:
+
+```text
+[✓] git binary: found on PATH
+[✗] .loupe/ directory: .loupe not found — run `loupe init` first
+[-] config.yaml parse: skipped — depends on .loupe/ existing
+[-] context.md: skipped — depends on .loupe/ existing
+[✓] provider key (anthropic): ANTHROPIC_API_KEY is set
+[-] required capabilities: skipped — config.yaml didn't parse
+
+2 ok · 0 warn · 3 skip · 1 fail
+```
+
+After `loupe init` and filling `context.md`, all skipped rows resolve to `[✓]`. Each `[✗]` row carries the actual fix in its detail message; the [Troubleshooting recipe](docs/how-to/troubleshooting.md) walks through the failure modes for each line.
 
 A full walk-through with screenshots is in the [Quickstart](docs/quickstart.md).
 
@@ -367,20 +383,29 @@ Docs render in-tree on GitHub today; a hosted MkDocs site will go up once the re
 | Contribute code or a lens | [Contributing](docs/contributing.md) |
 | See what changed | [CHANGELOG](CHANGELOG.md) |
 
+By role, if you'd rather start from who you are than what you want to do:
+
+| If you are … | Read first |
+|---|---|
+| An auditor checking Loupe's outputs | [Verification](docs/reference/verification.md) → [Decisions log](docs/reference/decisions.md) → [Loupe's own threat model](docs/reference/loupe-threat-model.md) |
+| A maintainer evaluating Loupe vs alternatives | [Comparison](docs/comparison.md) → [The bet](#the-bet) → [Status](#status) → [Pricing](docs/reference/pricing.md) |
+| A security engineer about to use it | [Quickstart](docs/quickstart.md) → [CLI reference](docs/reference/cli.md) → [How-to: MCP server](docs/how-to/run-mcp-server.md) → [Troubleshooting](docs/how-to/troubleshooting.md) |
+| A contributor adding a lens or capability | [Contributing](docs/contributing.md) → [Principles](docs/principles.md) → [Architecture](docs/concepts/architecture.md) → [Capabilities](docs/concepts/capabilities.md) |
+
 ## Built on
 
-| Role | Project |
-|---|---|
-| Multi-provider agent | [PydanticAI](https://ai.pydantic.dev/) |
-| Typed I/O | [Pydantic 2.x](https://docs.pydantic.dev/) |
-| Tool protocol | [Model Context Protocol](https://modelcontextprotocol.io/) |
-| SBOM format | [CycloneDX 1.6](https://cyclonedx.org/) |
-| Vulnerability statements | [OpenVEX 0.2](https://openvex.dev/) |
-| Threat-modelling method | [STRIDE](https://learn.microsoft.com/azure/security/develop/threat-modeling-tool-threats) |
-| Scanner backends | Syft, cdxgen, Grype, osv-scanner, TruffleHog, gitleaks, detect-secrets, Semgrep, CodeQL, Bandit |
-| Workspace + packaging | [uv](https://docs.astral.sh/uv/) |
-| Docs site | [MkDocs Material](https://squidfunk.github.io/mkdocs-material/) |
-| Prose linter | [Vale](https://vale.sh/) |
+| Role | Project | Why this one |
+|---|---|---|
+| Multi-provider agent | [PydanticAI](https://ai.pydantic.dev/) | Typed tool calls and multi-provider switch via a single env var — see [D-03](docs/reference/decisions.md#d-03) |
+| Typed I/O | [Pydantic 2.x](https://docs.pydantic.dev/) | Same Pydantic shape across agent calls, artefact schemas, and run records |
+| Tool protocol | [Model Context Protocol](https://modelcontextprotocol.io/) | Stable surface for editor / IDE / agent clients — see [D-09](docs/reference/decisions.md#d-09) and [D-21](docs/reference/decisions.md#d-21) for SDK choice |
+| SBOM format | [CycloneDX 1.6](https://cyclonedx.org/) | ISO/IEC 5962:2021; widest auditor familiarity |
+| Vulnerability statements | [OpenVEX 0.2](https://openvex.dev/) | The format CISA pins for VEX in BOD 23-01 |
+| Threat-modelling method | [STRIDE](https://learn.microsoft.com/azure/security/develop/threat-modeling-tool-threats) | Categorical, mechanically classifiable, well-supported in literature — lineage in [D-16](docs/reference/decisions.md#d-16) |
+| Scanner backends | Syft, cdxgen, Grype, osv-scanner, TruffleHog, gitleaks, detect-secrets, Semgrep, CodeQL, Bandit | Composable via the Capability protocol — see [`docs/concepts/capabilities.md`](docs/concepts/capabilities.md) |
+| Workspace + packaging | [uv](https://docs.astral.sh/uv/) | Hermetic resolver, fast enough that CI overhead is rounding error |
+| Docs site | [MkDocs Material](https://squidfunk.github.io/mkdocs-material/) | Markdown-first, no JS framework, auditor-readable on GitHub before the site is up — see [D-20](docs/reference/decisions.md#d-20) |
+| Prose linter | [Vale](https://vale.sh/) | Catches AI-vocabulary drift, em-dash overuse, and bold-prefixed sentence openers in the docs themselves |
 
 Full attribution, version pins, and the decision record behind each choice: [`docs/built-on.md`](docs/built-on.md).
 
