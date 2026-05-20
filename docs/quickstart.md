@@ -222,7 +222,7 @@ If `ANTHROPIC_API_KEY` (or the matching key for your `models.default`) is not se
 
 For live plan tracing during a run, add `--verbose` to `loupe ci` — the flag emits `[verbose] Considering lens X: dispatching` and `[verbose] Lens X complete (<tokens>, $<cost>)` lines as each lens runs. See [`reference/cli.md`](reference/cli.md#loupe-ci) for the full flag list.
 
-For anything beyond that, [`contributing.md`](contributing.md) describes how to file an issue and how to reproduce locally.
+For specific failure modes (missing provider key, scanner binary not on `PATH`, hash-chain break, VCR cassette mismatch, cost-cap refusal), see [`how-to/troubleshooting.md`](how-to/troubleshooting.md). For anything else, [`contributing.md`](contributing.md) describes how to file an issue and how to reproduce locally.
 
 ## See it on a real codebase
 

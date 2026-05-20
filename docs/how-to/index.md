@@ -7,6 +7,7 @@ Task-focused recipes. Each page is a short, self-contained answer to a specific 
 
 ## Recipes
 
+- [Troubleshooting](troubleshooting.md) — common failure modes (missing provider key, scanner binary not on `PATH`, empty diff, hash-chain break, VCR cassette mismatch, cost-cap refusal) with the diagnostic command and fix for each.
 - [Run the MCP server](run-mcp-server.md) — operate `loupe mcp`, attach a Claude Code / Cursor client, understand the read and write tool surface.
 
 ## Planned recipes
