@@ -94,11 +94,13 @@ nav:
       - ThreatLens on Mongoose: tutorials/threatlens-on-mongoose.md
   - How-to:
       - Overview: how-to/index.md
+      - Troubleshooting: how-to/troubleshooting.md
       - Run the MCP server: how-to/run-mcp-server.md
   - Principles: principles.md
   - Concepts:
       - Architecture: concepts/architecture.md
       - Capabilities: concepts/capabilities.md
+      - Proposals: concepts/proposals.md
   - Reference:
       - CLI: reference/cli.md
       - MCP tools: reference/mcp-tools.md

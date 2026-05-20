@@ -303,7 +303,7 @@ Loupe commits to [eleven principles](docs/principles.md), each numbered, non-neg
 | **1** Tool surface | Shipped | Agent has only `write_agent_artifact` (allow-list) + `propose_patch` (writes to `.proposed/`). `PathBoundary` enforced in Python, not in a prompt. Parent-symlink-safe via `dir_fd` + `O_NOFOLLOW`. |
 | **2** Branch namespace | Shipped | `LOUPE_PAT` scoped `contents: write` only on refs matching `loupe/proposal-*`; CODEOWNERS gates `.loupe/context.md`, `.loupe/decisions/`, `.loupe/config.yaml`, `.loupe/knowledge.yaml`. Auto-commit opt-in via `auto_commit_loupe_dir: true`. |
 | **3** `loupe verify` | Shipped | Four checks: hash chain, artefact schemas, cross-references, protected-path authorship (`--strict`) |
-| **4** Interactive UX gate | Shipped | `loupe chat` walks each staged `.loupe/.proposed/<...>.patch` through a `[y/N/edit/skip]` prompt (default-N); `.proposed/` → `.applied/` / `.skipped/` via `git mv`. No `--auto-confirm` |
+| **4** Interactive UX gate | Shipped | `loupe chat` walks each staged `.loupe/.proposed/<...>.patch` through a `[y/N/edit/skip]` prompt (default-N); `.proposed/` → `.applied/` / `.skipped/` via `git mv`. No `--auto-confirm`. Full lifecycle: [`docs/concepts/proposals.md`](docs/concepts/proposals.md) |
 
 See [`docs/reference/verification.md`](docs/reference/verification.md) for the mechanical recipes an auditor runs against each principle.
 
@@ -352,7 +352,7 @@ Docs render in-tree on GitHub today; a hosted MkDocs site will go up once the re
 | If you want to … | Read |
 |---|---|
 | Get something running | [Quickstart](docs/quickstart.md) |
-| Understand the mental model | [Architecture](docs/concepts/architecture.md) · [Capabilities](docs/concepts/capabilities.md) |
+| Understand the mental model | [Architecture](docs/concepts/architecture.md) · [Capabilities](docs/concepts/capabilities.md) · [Proposals](docs/concepts/proposals.md) |
 | Know the principles Loupe will not compromise on | [Principles](docs/principles.md) |
 | Verify the principles mechanically | [Verification](docs/reference/verification.md) |
 | Look up a CLI command or flag | [CLI reference](docs/reference/cli.md) |

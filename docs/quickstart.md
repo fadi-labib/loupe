@@ -138,7 +138,7 @@ Runs in two modes:
 
 For each proposal: `y` applies the patch via `git apply` and moves the `.patch` from `.proposed/` to `.applied/`. `skip` moves it to `.skipped/`. `edit` opens the diff in `$EDITOR`; on save, the modified diff is dry-run-checked and you confirm a second time before it applies. `N` (default) leaves the proposal in `.proposed/` for the next session.
 
-Precondition: `.loupe/.proposed/` must be clean against `HEAD` before chat starts — commit your staged proposals with `git add .loupe/.proposed/ && git commit` first. See [D-26](reference/decisions.md#d-26) for why chat is the one documented git-write exception.
+Precondition: `.loupe/.proposed/` must be clean against `HEAD` before chat starts — commit your staged proposals with `git add .loupe/.proposed/ && git commit` first. See [D-26](reference/decisions.md#d-26) for why chat is the one documented git-write exception, and [Proposals](concepts/proposals.md) for the full `.proposed/` → `.applied/` / `.skipped/` lifecycle.
 
 ## Wire up the GitHub Action
 
