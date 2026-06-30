@@ -1,0 +1,7 @@
+expected_threats:
+  - title_keywords: [decode_varint, varint, props_size, cast, alias, type confusion]
+    stride_category: T
+    severity_min: medium
+    severity_max: high
+    must_reference_paths:
+      - src/mqtt.c

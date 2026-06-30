@@ -1,0 +1,90 @@
+name: benchmark-tier1
+
+# Live-LLM, real cost (see benchmarks/README.md § Cost and determinism)
+# — deliberately NOT a pull_request trigger. Scheduled + manually
+# dispatchable only, so spend is maintainer-controlled, not paid by
+# every contributor's PR.
+on:
+  schedule:
+    - cron: "0 6 * * 1" # weekly, Monday 06:00 UTC
+  workflow_dispatch:
+    inputs:
+      scenario:
+        description: "Run only this scenario id (blank = full suite)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: benchmark-tier1
+  cancel-in-progress: false
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false # full (non-shallow) mongoose-fork clone done explicitly below
+
+      - name: Init mongoose-fork submodule
+        run: git submodule update --init benchmarks/tier1-mongoose/mongoose-fork
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4.1
+        with:
+          version: "0.5.x"
+
+      - name: Set up Python
+        run: uv python install 3.13
+
+      - name: Sync workspace
+        run: uv sync --all-packages
+
+      - name: Install Syft + Grype
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh \
+            | sh -s -- -b /usr/local/bin
+          curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh \
+            | sh -s -- -b /usr/local/bin
+          syft version
+          grype version
+
+      - name: Run Tier 1 benchmark
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          set -o pipefail
+          args=()
+          if [ -n "${{ inputs.scenario }}" ]; then
+            args+=(--scenario "${{ inputs.scenario }}")
+          fi
+          uv run python benchmarks/run-tier1.py "${args[@]}" | tee /tmp/benchmark.out
+
+      - name: Report summary
+        if: always()
+        run: |
+          {
+            echo '## Tier 1 (Mongoose) benchmark'
+            echo
+            if [ -f benchmarks/tier1-mongoose/REPORT.md ]; then
+              cat benchmarks/tier1-mongoose/REPORT.md
+            else
+              echo '```'
+              tail -n 20 /tmp/benchmark.out
+              echo '```'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload run artefacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tier1-benchmark-results
+          path: |
+            benchmarks/tier1-mongoose/REPORT.md
+            benchmarks/tier1-mongoose/scenarios/*/actual-runs/
+          retention-days: 30

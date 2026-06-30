@@ -26,6 +26,15 @@ uv.lock
 # Loupe runtime (consumers may opt to commit these; not in this repo)
 # (none — the loupe development repo doesn't contain a `.loupe/` of its own)
 
+# Tier 1 benchmark orchestrator: per-run output, regenerated on every
+# `run-tier1.py` invocation. The scenario fixtures themselves (manifest,
+# advisory, expected-threats) are tracked; raw run artefacts are not.
+/benchmarks/tier1-mongoose/scenarios/*/actual-runs/
+/benchmarks/tier1-mongoose/REPORT.md
+# run-tier1.py scaffolds this fresh inside the submodule checkout on
+# every run; never meant to be tracked there either.
+/benchmarks/tier1-mongoose/mongoose-fork/.loupe/
+
 # OS
 .DS_Store
 site/

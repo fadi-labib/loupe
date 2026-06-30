@@ -1,0 +1,49 @@
+schema_version: 1
+
+models:
+  # Cheap/fast model by design — the $0.10/scenario Tier-1 acceptance
+  # threshold (docs/reference/evaluation.md) isn't reachable at Opus-tier
+  # pricing. Override via LOUPE_BENCHMARK_MODEL if you want to compare a
+  # different model's detection quality.
+  default: anthropic:claude-haiku-4-5
+
+limits:
+  per_run_max_usd:
+    ci: 0.50
+    scan: 1.00
+  per_run_max_tokens_in: 200000
+  per_run_max_steps: 30
+
+ci:
+  fail_on:
+    - critical
+    - high
+  warn_on:
+    - medium
+  ignore_paths: []
+
+agent_writable_paths:
+  - .loupe/threats.yaml
+  - .loupe/mitigations.yaml
+  - .loupe/threat-model.md
+  - .loupe/vex.json
+  - .loupe/sbom.cdx.json
+  - .loupe/knowledge.yaml
+  - .loupe/runs/**
+
+lenses:
+  threatlens:
+    enabled: true
+    minimum_relevance: 0.3
+
+# Wired (not commented out, unlike the loupe init default) — ThreatLens
+# declares sbom/cve as requires_capabilities (D-23); the benchmark
+# orchestrator needs every scenario to actually exercise the lens, not
+# exit 64 on a missing capability.
+capabilities:
+  sbom:
+    mode: single
+    backends: [syft]
+  cve:
+    mode: single
+    backends: [grype]

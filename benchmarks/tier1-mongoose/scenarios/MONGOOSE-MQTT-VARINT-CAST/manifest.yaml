@@ -1,0 +1,22 @@
+cve_id: MONGOOSE-MQTT-VARINT-CAST
+published: "2026-05-07"
+severity_cvss_v3: null
+severity_label: medium
+stride_category: T
+pre_fix_commit: eee8c7077c031f22469ea3adfcc69fc6d86c479a
+fix_commit: d44b9b9adfda77e7c46e6b0e6e20ef8c8303cf68
+diff_scope_paths: []
+expected_affected_paths:
+  - src/mqtt.c
+expected_element_id: null
+description_summary: >
+  decode_varint() in the MQTT parser took its output parameter as
+  `size_t *value`, but its only caller passed `(uint32_t *) &m->props_size`.
+  On a 64-bit host size_t is 8 bytes and uint32_t is 4 bytes, so every write
+  through `*value = 0` and `*value += ...` inside decode_varint wrote past
+  the 4-byte field it was given — a strict-aliasing partial-write bug that
+  corrupts whatever 4 bytes sit immediately after props_size in memory. The
+  fix narrows decode_varint's parameter type to uint32_t * to match its
+  only real caller. This is the calibration scenario reused from
+  docs/tutorials/threatlens-on-mongoose.md — already hand-validated
+  end-to-end against a live ThreatLens run (~$0.94, four threats proposed).

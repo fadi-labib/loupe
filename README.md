@@ -340,10 +340,11 @@ Every row in this table is a claim. The third column is the command that proves 
 | Composition modes | `single`, `fallback`, `union`, `consensus`, `pipeline` | [`docs/reference/config.md`](docs/reference/config.md) |
 | Audit trail | Hash-chained run records, `loupe verify` Layer 3 checks (chain, schema, cross-refs, authorship) | `uv run loupe verify --strict .loupe/` |
 | Cost discipline | Stable-prefix prompt caching, blackboard, dispatch skipping, RunRecord token/cost telemetry | [`test_cost_regression.py`](packages/loupe-threatlens/tests/test_cost_regression.py) |
+| Tier 1 benchmark | 9 independently-verified historical-CVE scenarios against Cesanta Mongoose; shared scoring engine, scheduled CI tracking | [`benchmarks/README.md`](benchmarks/README.md) |
 
 ### In flight (before v0.1 tags)
 
-- Benchmarks against Cesanta Mongoose (Tier 1) and Eclipse Mosquitto (Tier 2). See [D-19](docs/reference/decisions.md#d-19)
+- Tier 2 benchmark against Eclipse Mosquitto (release evaluation; Tier 1 is shipped). See [D-19](docs/reference/decisions.md#d-19)
 
 ### Anticipated
 

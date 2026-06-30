@@ -43,10 +43,8 @@ Each lands as its own pip package; no fork of the platform. The plugin contract 
 
 ## Benchmarks ([D-19](reference/decisions.md#d-19))
 
-Methodology recorded; scaffolding deferred to Phase 10:
-
-- **Tier 1 — Cesanta Mongoose.** Fast smoke test, ~10 scenarios, under 5 minutes per Loupe PR.
-- **Tier 2 — Eclipse Mosquitto.** Release evaluation, ~15 scenarios, under 30 minutes per Loupe release.
+- **Tier 1 — Cesanta Mongoose** <span class="section-label">Shipped</span>. Fast smoke test, 9 independently-verified historical-CVE scenarios, `benchmarks/tier1-mongoose/`. Run via `uv run python benchmarks/run-tier1.py` (a recommended contributor habit, not a PR-blocking gate — it's live-LLM and costs real money) or the scheduled `benchmark-tier1` GitHub Actions workflow. See [`benchmarks/README.md`](https://github.com/fadi-labib/loupe/blob/main/benchmarks/README.md) for the cost/determinism split between this and the free `pytest` gate.
+- **Tier 2 — Eclipse Mosquitto.** Release evaluation, ~15 scenarios, under 30 minutes per Loupe release. Still deferred — the scoring engine in `benchmarks/scoring/` was built tier-agnostic so this can plug in without rearchitecting when it lands.
 
 ## Deferred until a trigger <span class="section-label">Backlog</span>
 

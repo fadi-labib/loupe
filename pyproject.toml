@@ -76,8 +76,13 @@ ignore = ["ANN401"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
-testpaths = ["packages/*/tests", "tests"]
+testpaths = ["packages/*/tests", "tests", "benchmarks/scoring/tests"]
 addopts = "--import-mode=importlib"
+# benchmarks/scoring is a plain package (not a packages/* workspace
+# member — it's not shipped, it's the orchestrator's scoring engine),
+# so it needs an explicit path entry to be importable as `scoring.*`
+# from its own tests.
+pythonpath = ["benchmarks"]
 
 [tool.mypy]
 strict = true

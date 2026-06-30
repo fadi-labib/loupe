@@ -1,0 +1,3 @@
+[submodule "benchmarks/tier1-mongoose/mongoose-fork"]
+	path = benchmarks/tier1-mongoose/mongoose-fork
+	url = https://github.com/cesanta/mongoose.git
