@@ -82,3 +82,12 @@ exclude = [
     "packages/[^/]+/tests/.*",
     "tests/.*",
 ]
+
+# The official `mcp` SDK's `mcp.server.fastmcp.FastMCP.tool()` decorator
+# ships no type stubs, so every function it decorates is seen as
+# untyped. `server` is deliberately typed `Any` here (D-21) so
+# loupe-threatlens never takes a hard import dependency on the MCP SDK;
+# narrowing that type to silence this would defeat the point.
+[[tool.mypy.overrides]]
+module = "loupe_threatlens.mcp_tools"
+disable_error_code = ["untyped-decorator"]

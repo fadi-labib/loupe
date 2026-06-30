@@ -14,6 +14,7 @@ runs sbom) reads from the same source.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Any, Protocol
 
@@ -56,7 +57,7 @@ class _LensLike(Protocol):
 async def bootstrap_capabilities(
     *,
     ctx: RunContext,
-    lenses: list[_LensLike],
+    lenses: Sequence[_LensLike],
     config: LoupeConfig,
     registry: CapabilityRegistry,
     repo_path: Path,
@@ -138,7 +139,7 @@ async def bootstrap_capabilities(
 
 
 def _collect_capability_demands(
-    lenses: list[_LensLike],
+    lenses: Sequence[_LensLike],
 ) -> tuple[dict[str, list[str]], dict[str, list[str]]]:
     """Split capability demands into required vs preferred maps.
 

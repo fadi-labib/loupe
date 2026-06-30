@@ -21,6 +21,7 @@ import subprocess
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any, cast
 
 import httpx
 
@@ -181,10 +182,10 @@ async def _find_existing_sub_pr(
         },
     )
     response.raise_for_status()
-    prs = response.json()
+    prs = cast(list[dict[str, Any]], response.json())
     if not prs:
         return None
-    return prs[0]["html_url"]
+    return cast(str, prs[0]["html_url"])
 
 
 def format_sub_pr_body(
@@ -279,7 +280,7 @@ async def _create_sub_pr(
         },
     )
     response.raise_for_status()
-    return response.json()["html_url"]
+    return cast(str, response.json()["html_url"])
 
 
 async def commit_and_open_sub_pr(

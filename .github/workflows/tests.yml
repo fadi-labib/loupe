@@ -41,8 +41,8 @@ jobs:
       - name: Ruff format check
         run: uv run ruff format --check packages/
 
-      - name: mypy (loupe-core strict)
-        run: uv run mypy packages/loupe-core/loupe_core/
+      - name: mypy (strict)
+        run: uv run mypy packages/
 
       - name: pytest
         env:

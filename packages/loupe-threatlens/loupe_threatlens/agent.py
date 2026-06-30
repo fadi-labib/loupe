@@ -24,8 +24,9 @@ from pathlib import Path
 
 from loupe_core.enforcement.path_boundary import PathBoundary
 from loupe_core.run_context import RunContext as LoupeRunContext
-from pydantic_ai import Agent
+from pydantic_ai import Agent, AgentRetries
 from pydantic_ai import RunContext as AgentRunCtx
+from pydantic_ai.settings import ModelSettings
 
 from loupe_threatlens.tools import (
     ProposeThreatInput,
@@ -88,8 +89,8 @@ def build_agent(model_id: str) -> Agent[AgentDeps, str]:
     # `defer_model_check=True` postpones provider API-key validation until
     # the first `agent.run()` call. This lets tests and dry-runs construct
     # an agent without keys set, while still failing loudly at invocation.
-    # `tool_retries=3` allows the model up to three chances to correct a
-    # malformed `propose_threat` argument list before the agent aborts.
+    # `retries={'tools': 3}` allows the model up to three chances to correct
+    # a malformed `propose_threat` argument list before the agent aborts.
     # PydanticAI's default of 1 is too brittle for `loupe scan` workloads
     # over large source trees: one mis-shaped tool call out of many
     # crashes the entire lens (observed: a `propose_threat` call missing
@@ -102,10 +103,10 @@ def build_agent(model_id: str) -> Agent[AgentDeps, str]:
     # Anthropic's thinking-class models (Opus 4.x, Sonnet 4.x thinking
     # variants) reject sampling parameters; setting temperature there
     # produces a UserWarning per agent.run() call (twice per run with
-    # tool_retries=3, four times with retries observed). Empty
+    # three tool retries, four times with retries observed). Empty
     # model_settings keeps the model on its provider-default temperature
     # which is already low for Anthropic's reasoning models.
-    model_settings: dict[str, float] = {}
+    model_settings: ModelSettings = {}
     if not _model_rejects_temperature(model_id):
         model_settings["temperature"] = 0.0
 
@@ -115,7 +116,7 @@ def build_agent(model_id: str) -> Agent[AgentDeps, str]:
         system_prompt=_load_system_prompt(),
         model_settings=model_settings,
         defer_model_check=True,
-        tool_retries=3,
+        retries=AgentRetries(tools=3),
     )
 
     @agent.tool

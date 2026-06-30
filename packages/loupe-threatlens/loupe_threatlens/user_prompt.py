@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from loupe_core.artifacts.context import BulletItem, ProjectContext
 from loupe_core.capabilities.protocols import CveResult, SbomResult
-from loupe_core.run_context import LensRunPlan, RunContext
+from loupe_core.run_context import LensRunPlan, RunContext, ScopedSource
 
 _DEFAULT_FOCUS = (
     "Analyse the diff below for STRIDE threats. Call `propose_threat` "
@@ -131,7 +131,7 @@ def _diff_section(ctx: RunContext) -> str:
     )
 
 
-def _sources_section(scoped_sources: list) -> str:
+def _sources_section(scoped_sources: list[ScopedSource]) -> str:
     """D-24 — render scoped source files for `loupe scan --paths`.
 
     Each file becomes a fenced code block with the path as a header.

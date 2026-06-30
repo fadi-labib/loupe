@@ -40,10 +40,10 @@ repos:
   - repo: local
     hooks:
       - id: mypy
-        name: mypy (loupe-core strict)
+        name: mypy (strict)
         entry: uv run mypy
         language: system
         types: [python]
-        files: ^packages/loupe-core/loupe_core/
+        files: ^packages/.*/[a-z_]+/
         pass_filenames: false
-        args: [packages/loupe-core/loupe_core/]
+        args: [packages/]
