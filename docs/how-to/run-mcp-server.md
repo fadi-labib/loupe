@@ -21,7 +21,7 @@ The command expects a `.loupe/` directory in the current working directory. Run 
 loupe mcp --loupe-dir /absolute/path/to/your/repo/.loupe
 ```
 
-The server listens on stdio (the MCP default for local transports). It does not open a network port. Stop it with `Ctrl-C` or by closing the client.
+The server listens on stdio by default (the MCP default for local transports). It does not open a network port. Stop it with `Ctrl-C` or by closing the client.
 
 ## Attaching a client
 
@@ -39,6 +39,25 @@ MCP clients spawn `loupe mcp` as a subprocess. The exact configuration file vari
 ```
 
 For Cursor, the same JSON lives under the editor's MCP-servers setting. ChatGPT desktop accepts the same shape under its tools panel. Use absolute paths in `--loupe-dir`; the client may launch the subprocess from a working directory that isn't your repo root.
+
+## Remote transport (HTTP+SSE)
+
+`loupe mcp --transport sse` exposes the same tool surface over HTTP+SSE for clients that can't spawn a local subprocess. It is opt-in and requires a bearer token — see [D-09](../reference/decisions.md#d-09) and [D-28](../reference/decisions.md#d-28).
+
+```bash
+loupe mcp --loupe-dir /absolute/path/to/your/repo/.loupe \
+  --transport sse --host 127.0.0.1 --port 8000 --token <your-token>
+```
+
+The token can also be set via the `LOUPE_MCP_TOKEN` environment variable instead of `--token` (the flag wins if both are set). With `--transport sse` and no token resolved from either source, the command refuses to start — exit 64, before any socket is bound. There is no anonymous-access fallback.
+
+Clients authenticate with a standard bearer header against the `/sse` endpoint:
+
+```bash
+curl -N http://127.0.0.1:8000/sse -H "Authorization: Bearer <your-token>"
+```
+
+A request with no `Authorization` header, or the wrong token, gets `401 Unauthorized`. `--host` defaults to `127.0.0.1` (loopback-only, with the SDK's DNS-rebinding protection auto-enabled). Passing a non-loopback `--host` is explicit opt-in to wider network reachability — at that point the token is your only defense, so treat it like any other secret.
 
 ## Read tools
 
@@ -76,7 +95,7 @@ The Layer 1 contract is identical to the local CLI: every write is gated by the 
 
 ## What is not shipped
 
-- **Remote transport.** Only stdio works today. HTTP+SSE for remote clients is designed but not wired; remote transport would require authentication and explicit opt-in. The design rationale lives in [D-09](../reference/decisions.md#d-09) and [D-21](../reference/decisions.md#d-21).
+- **OAuth / dynamic client registration.** The SSE transport authenticates with a single static operator-supplied token, not an OAuth flow — see [D-28](../reference/decisions.md#d-28) for why.
 - **Granular per-tool writability flags.** Either you have a valid config with `agent_writable_paths` and get the full write surface, or you have no config and get the read-only surface. No middle ground.
 - **`propose_patch` over MCP.** Source-tree edits via the four-layer write boundary do not yet have an MCP-exposed tool; they remain agent-only inside `loupe ci`.
 

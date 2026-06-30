@@ -12,7 +12,7 @@ The principles that emerged from these decisions are at [`principles.md`](../pri
 
 ## Index
 
-[D-01](#d-01) Scope · [D-02](#d-02) CI + interactive · [D-03](#d-03) PydanticAI · [D-04](#d-04) Plugin architecture · [D-05](#d-05) Name = Loupe · [D-06](#d-06) Ten artefacts · [D-07](#d-07) Blackboard + knowledge graph · [D-08](#d-08) Four-layer write boundary · [D-09](#d-09) MCP · [D-10](#d-10) Three cost levers · [D-11](#d-11) Lens contract · [D-12](#d-12) Hash chain · [D-13](#d-13) VCR · [D-14](#d-14) Deferred signing · [D-15](#d-15) `loupe scan` · [D-16](#d-16) StrideGPT lineage · [D-17](#d-17) Apache 2.0 · [D-18](#d-18) Capability abstraction · [D-19](#d-19) Benchmark tiers · [D-20](#d-20) MkDocs Material · [D-21](#d-21) MCP SDK choice · [D-22](#d-22) MCP write layer · [D-23](#d-23) Required vs preferred capabilities · [D-24](#d-24) Scoped scan reads sources · [D-25](#d-25) Per-run artefact Merkle root · [D-26](#d-26) `.loupe/` git-write exception · [D-27](#d-27) Action auto-commit + sub-PR · [Open decisions](#open-decisions)
+[D-01](#d-01) Scope · [D-02](#d-02) CI + interactive · [D-03](#d-03) PydanticAI · [D-04](#d-04) Plugin architecture · [D-05](#d-05) Name = Loupe · [D-06](#d-06) Ten artefacts · [D-07](#d-07) Blackboard + knowledge graph · [D-08](#d-08) Four-layer write boundary · [D-09](#d-09) MCP · [D-10](#d-10) Three cost levers · [D-11](#d-11) Lens contract · [D-12](#d-12) Hash chain · [D-13](#d-13) VCR · [D-14](#d-14) Deferred signing · [D-15](#d-15) `loupe scan` · [D-16](#d-16) StrideGPT lineage · [D-17](#d-17) Apache 2.0 · [D-18](#d-18) Capability abstraction · [D-19](#d-19) Benchmark tiers · [D-20](#d-20) MkDocs Material · [D-21](#d-21) MCP SDK choice · [D-22](#d-22) MCP write layer · [D-23](#d-23) Required vs preferred capabilities · [D-24](#d-24) Scoped scan reads sources · [D-25](#d-25) Per-run artefact Merkle root · [D-26](#d-26) `.loupe/` git-write exception · [D-27](#d-27) Action auto-commit + sub-PR · [D-28](#d-28) MCP SSE static token · [Open decisions](#open-decisions)
 
 ---
 
@@ -419,6 +419,21 @@ What this rules out:
 - Pushing anywhere outside `loupe/proposal-*` — the PAT's scope refuses it at the GitHub API level.
 
 This is the **second documented git-write exception** in the Loupe runtime (the first being [D-26](#d-26)'s `loupe chat`). Both exceptions are scoped to `.loupe/` paths only and use opt-in, identity-tagged mechanisms.
+
+---
+
+## D-28: static operator-supplied token for the MCP SSE transport, not OAuth { #d-28 }
+
+D-09 already committed remote MCP access to "authentication and explicit opt-in." D-28 records the specific mechanism `loupe mcp --transport sse` uses to satisfy that: a single bearer token the operator supplies via `--token` or `LOUPE_MCP_TOKEN` (flag wins if both are set), checked with `hmac.compare_digest`. No token means the SSE transport refuses to start — there is no unauthenticated fallback. The `stdio` transport (the default) is unaffected; it stays process-local and unauthenticated as before.
+
+- **Option A (chosen):** static operator-supplied token, verified via the official `mcp` SDK's own `TokenVerifier` protocol (`mcp.server.auth.provider`). No token issuance, no rotation, no client registration — the operator generates and distributes the token out of band (a password manager, a CI secret, a `.env` file they already control).
+- **Option B (rejected):** an auto-generated token printed once at process start (the Jupyter-notebook pattern). Simpler for a single interactive operator, but doesn't fit the scripted/CI invocation shape `loupe mcp --transport sse` is mainly aimed at — a generated-and-printed token has nowhere stable to land for a process a script needs to reconnect to.
+- **Option C (rejected):** full OAuth via `AuthSettings.auth_server_provider` (dynamic client registration, token issuance, `/.well-known/oauth-*` discovery routes — the SDK's default-shape integration). Rejected as disproportionate: Loupe has no multi-tenant user model to authorize against, and standing up an authorization server for a single-operator tool would be the kind of "looks like a fix" complexity this project's principles (no SaaS, no hidden config) push against.
+- **Option D (rejected):** no auth at all, localhost-only bind as the sole defense. Rejected outright — it contradicts D-09's existing "explicit opt-in, refuse anonymous access" commitment, and a loopback-only bind is exactly the case (local stdio) the SSE transport exists to go beyond.
+
+The SDK still requires `AuthSettings.issuer_url` (an OAuth-shaped field) even under the bearer-only path, since `FastMCP` validates `token_verifier` and `auth` together. `loupe_cli.mcp_transport.build_auth_settings` passes a dummy self-referential `issuer_url` — safe because `auth_server_provider` is never set, so none of the OAuth discovery routes mount; only the bearer-verifying plumbing in `token_verifier` is exercised. This is a documented reliance on SDK behaviour (not a public contract), flagged here so a future `mcp` SDK upgrade that changes it fails loudly (covered by `test_mcp_sse_auth.py`) rather than silently degrading.
+
+Binding: `--host` defaults to `127.0.0.1`, which the SDK auto-protects with DNS-rebinding `TransportSecuritySettings`. A non-loopback `--host` is explicit operator opt-in to wider reachability; at that point the token — not the host allow-list — is the operator's real defense, and `mcp_cmd.py` widens the allow-list explicitly rather than leaving the loopback-only protection half-on for a host it no longer matches.
 
 ---
 

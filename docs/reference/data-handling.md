@@ -211,7 +211,7 @@ There is no Loupe-managed CI state. Everything Loupe needs between runs lives in
 `loupe mcp` is implemented in `packages/loupe-core/loupe_core/mcp_server.py` (see [D-21](decisions.md#d-21) for the framework choice). Behaviour:
 
 - Listens on stdio by default (local clients like Claude Code attach via subprocess). No network port opened.
-- HTTP+SSE for remote clients is designed but not yet wired; remote transport would require authentication and refuse anonymous access.
+- `--transport sse` opts into a remote HTTP+SSE listener, gated by a static bearer token (`--token` / `LOUPE_MCP_TOKEN`) checked via the official `mcp` SDK's `TokenVerifier` — see [D-28](decisions.md#d-28). No token resolved means the transport refuses to start; there is no anonymous-access path.
 - Exposes read tools (list threats, query by STRIDE, threat-model summary) and a small write surface (`propose_threat`, `propose_mitigation`) gated by the same Layer 1 path boundary. Every read goes through the boundary; every write goes through `write_agent_artifact` or `propose_patch`.
 
 ## VCR-cassette hygiene

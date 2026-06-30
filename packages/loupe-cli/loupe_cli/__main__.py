@@ -259,9 +259,37 @@ def mcp_cmd(
         "--loupe-dir",
         help="Path to the .loupe/ directory the MCP server serves from.",
     ),
+    transport: str = typer.Option(
+        "stdio",
+        "--transport",
+        help=(
+            '"stdio" (default, local, unauthenticated) or "sse" (remote, requires a bearer token).'
+        ),
+    ),
+    host: str = typer.Option(
+        "127.0.0.1",
+        "--host",
+        help="Bind address for --transport sse. Ignored for stdio.",
+    ),
+    port: int = typer.Option(
+        8000,
+        "--port",
+        help="Bind port for --transport sse. Ignored for stdio.",
+    ),
+    token: str | None = typer.Option(
+        None,
+        "--token",
+        help=(
+            "Bearer token clients must present for --transport sse. Falls "
+            "back to LOUPE_MCP_TOKEN. A --token flag wins if both are set. "
+            "Required for sse; ignored for stdio."
+        ),
+    ),
 ) -> None:
-    """Run the Loupe MCP server over stdio (third frontend per D-09)."""
-    raise typer.Exit(code=mcp_command(loupe_dir))
+    """Run the Loupe MCP server (third frontend per D-09)."""
+    raise typer.Exit(
+        code=mcp_command(loupe_dir, transport=transport, host=host, port=port, token=token)
+    )
 
 
 @lens_app.command("list")

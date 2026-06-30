@@ -125,6 +125,8 @@ def build_mcp_server(
     *,
     lenses: list[Any] | None = None,
     boundary: Any | None = None,
+    token_verifier: Any | None = None,
+    auth_settings: Any | None = None,
 ) -> FastMCP:
     """Construct the FastMCP server bound to a specific ``.loupe/`` directory.
 
@@ -143,6 +145,12 @@ def build_mcp_server(
     are not yet consumed — direct decorator registration is simpler at
     v1 and matches the abstraction level lenses already accept when
     building their PydanticAI agent.
+
+    ``token_verifier`` / ``auth_settings`` exist solely so `loupe-cli`
+    can wire bearer-token auth onto the SSE remote transport without
+    this module knowing anything about CLI flags, env vars, or
+    transports — both are forwarded as-is to ``FastMCP``'s own
+    constructor and stay ``None`` (no auth) for the stdio default.
     """
     mcp = FastMCP(
         name="loupe",
@@ -153,6 +161,8 @@ def build_mcp_server(
             "`list_elements` for architectural elements from "
             "knowledge.yaml; `latest_run` for the most recent run record."
         ),
+        token_verifier=token_verifier,
+        auth=auth_settings,
     )
 
     @mcp.tool()

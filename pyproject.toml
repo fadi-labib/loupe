@@ -20,6 +20,15 @@ dev = [
     "pytest-github-actions-annotate-failures>=0.2",
     "ruff>=0.7",
     "mypy>=1.13",
+    # httpx: already a transitive dep of loupe-core/loupe-action via `mcp`
+    # and their own direct declarations, but loupe-cli's test suite now
+    # imports it directly (test_mcp_sse_auth.py) — declare it explicitly
+    # so that stays true even if those packages' deps shift.
+    "httpx>=0.27",
+    # uvicorn: only a transitive dep of `mcp` (its SSE/streamable-http
+    # transports). test_mcp_sse_auth.py runs a real uvicorn server to
+    # test the SSE auth contract end-to-end, so it's a direct test dep.
+    "uvicorn>=0.34",
 ]
 docs = [
     # mkdocs-material 9.7+ prints an advocacy banner against upstream

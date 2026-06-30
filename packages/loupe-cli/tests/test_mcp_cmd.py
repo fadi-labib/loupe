@@ -107,3 +107,102 @@ def test_mcp_does_not_swallow_programming_bugs(tmp_path: Path, monkeypatch):
 
     with pytest.raises(AttributeError, match="simulated programming bug"):
         mcp_command(loupe)
+
+
+def test_mcp_stdio_default_unaffected(tmp_path: Path, monkeypatch):
+    """Calling with no transport-related kwargs at all must behave byte-identical
+    to the pre-SSE contract — same build_mcp_server call shape, same server.run()."""
+    loupe = tmp_path / ".loupe"
+    loupe.mkdir()
+
+    captured: dict[str, object] = {}
+
+    def _fake_build(loupe_dir, lenses, boundary):  # noqa: ANN001
+        captured["build_kwargs_only"] = True
+        s = MagicMock()
+        s.run.return_value = None
+        return s
+
+    monkeypatch.setattr("loupe_cli.mcp_cmd.build_mcp_server", _fake_build)
+    monkeypatch.setattr("loupe_cli.mcp_cmd.discover_lenses", lambda: [])
+
+    code = mcp_command(loupe)
+    assert code == 0
+    assert captured["build_kwargs_only"] is True
+
+
+def test_mcp_sse_without_token_fails_fast(tmp_path: Path, monkeypatch, capsys):
+    """--transport sse with no token anywhere -> 64, and build_mcp_server is
+    never called (proves the check happens before any server construction)."""
+    loupe = tmp_path / ".loupe"
+    loupe.mkdir()
+    monkeypatch.delenv("LOUPE_MCP_TOKEN", raising=False)
+
+    build_called = MagicMock()
+    monkeypatch.setattr("loupe_cli.mcp_cmd.build_mcp_server", build_called)
+    monkeypatch.setattr("loupe_cli.mcp_cmd.discover_lenses", lambda: [])
+
+    code = mcp_command(loupe, transport="sse")
+    assert code == 64
+    build_called.assert_not_called()
+    err = capsys.readouterr().err
+    assert "token" in err.lower()
+
+
+def test_mcp_sse_token_from_env_var(tmp_path: Path, monkeypatch):
+    """No --token flag, LOUPE_MCP_TOKEN set -> the env var is the accepted token."""
+    loupe = tmp_path / ".loupe"
+    loupe.mkdir()
+    monkeypatch.setenv("LOUPE_MCP_TOKEN", "env-token")
+
+    captured: dict[str, object] = {}
+
+    def _fake_build(loupe_dir, *, lenses, boundary, token_verifier, auth_settings):  # noqa: ANN001
+        captured["verifier"] = token_verifier
+        s = MagicMock()
+        s.run.return_value = None
+        return s
+
+    monkeypatch.setattr("loupe_cli.mcp_cmd.build_mcp_server", _fake_build)
+    monkeypatch.setattr("loupe_cli.mcp_cmd.discover_lenses", lambda: [])
+
+    code = mcp_command(loupe, transport="sse")
+    assert code == 0
+    verifier = captured["verifier"]
+    assert hasattr(verifier, "_token")
+    assert verifier._token == "env-token"  # noqa: SLF001
+
+
+def test_mcp_token_flag_overrides_env(tmp_path: Path, monkeypatch):
+    """Both --token and LOUPE_MCP_TOKEN set -> the flag wins."""
+    loupe = tmp_path / ".loupe"
+    loupe.mkdir()
+    monkeypatch.setenv("LOUPE_MCP_TOKEN", "env-token")
+
+    captured: dict[str, object] = {}
+
+    def _fake_build(loupe_dir, *, lenses, boundary, token_verifier, auth_settings):  # noqa: ANN001
+        captured["verifier"] = token_verifier
+        s = MagicMock()
+        s.run.return_value = None
+        return s
+
+    monkeypatch.setattr("loupe_cli.mcp_cmd.build_mcp_server", _fake_build)
+    monkeypatch.setattr("loupe_cli.mcp_cmd.discover_lenses", lambda: [])
+
+    code = mcp_command(loupe, transport="sse", token="flag-token")
+    assert code == 0
+    verifier = captured["verifier"]
+    assert verifier._token == "flag-token"  # noqa: SLF001
+
+
+def test_mcp_invalid_transport_value(tmp_path: Path, monkeypatch, capsys):
+    """An unrecognized --transport value -> 64, before touching loupe_dir at all."""
+    build_called = MagicMock()
+    monkeypatch.setattr("loupe_cli.mcp_cmd.build_mcp_server", build_called)
+
+    code = mcp_command(tmp_path / "does-not-exist", transport="carrier-pigeon")
+    assert code == 64
+    build_called.assert_not_called()
+    err = capsys.readouterr().err
+    assert "--transport" in err
