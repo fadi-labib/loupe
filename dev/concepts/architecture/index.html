@@ -700,6 +700,8 @@
       
         
       
+        
+      
     
     
     
@@ -773,6 +775,8 @@
   
     
     
+      
+        
       
         
       
@@ -924,6 +928,29 @@
   
   <span class="md-ellipsis">
     Capabilities
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../proposals/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Proposals
     
   </span>
   
@@ -1254,9 +1281,9 @@
 <p>Two diagrams. The first shows what <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr> is made of and where the plugin slots are. The second shows what happens when a <abbr title="Pull Request — GitHub's term for a proposed change.">PR</abbr> rolls in.</p>
 <h2 id="whats-in-the-box">What's in the box<a class="headerlink" href="#whats-in-the-box" title="Permanent link">&para;</a></h2>
 <pre class="mermaid"><code>flowchart TB
-    subgraph frontends["Three frontends, one shipping"]
-        ci["loupe ci (shipping)"]
-        chat["loupe chat (placeholder)"]
+    subgraph frontends["Three frontends, all shipped"]
+        ci["loupe ci (shipped)"]
+        chat["loupe chat (shipped)"]
         mcp["loupe mcp (shipped)"]
     end
 
@@ -1308,7 +1335,7 @@
     Core-&gt;&gt;Action: RunRecord (hash-chained)
     Action-&gt;&gt;PR: sticky comment</code></pre>
 <p><code>is_relevant()</code> is pure Python and decides whether the lens runs at all. The <abbr title="Software Bill of Materials. CycloneDX is the format Loupe uses.">SBOM</abbr> and <abbr title="Common Vulnerabilities and Exposures — public catalogue of disclosed security flaws.">CVE</abbr> scans run once per invocation regardless of how many lenses ask for the results. Writes to <code>.loupe/</code> go through <code>write_agent_artifact()</code>, which enforces the path allow-list from <code>config.yaml</code>. Anything outside the allow-list goes to <code>.loupe/.proposed/</code> for human review.</p>
-<p>The interactive (<code>loupe chat</code>) and <abbr title="Model Context Protocol — Anthropic-originated JSON-RPC protocol for LLM tool/resource exposure.">MCP</abbr> (<code>loupe mcp</code>) flows are the same sequence with different shells. <code>loupe mcp</code> is shipped (stdio transport, read tools plus <code>propose_threat</code> / <code>propose_mitigation</code> write tools) and exposes operations as JSON-RPC tools and workflows. <code>loupe chat</code> is still a placeholder: the TTY guard is wired but the conversational <code>[y/N/edit/skip]</code> pipeline is not.</p>
+<p>The interactive (<code>loupe chat</code>) and <abbr title="Model Context Protocol — Anthropic-originated JSON-RPC protocol for LLM tool/resource exposure.">MCP</abbr> (<code>loupe mcp</code>) flows are the same sequence with different shells. <code>loupe mcp</code> is shipped (stdio transport, read tools plus <code>propose_threat</code> / <code>propose_mitigation</code> write tools) and exposes operations as JSON-RPC tools and workflows. <code>loupe chat</code> is shipped: TTY-required, runs the same in-process ci pipeline, then walks each staged <code>.loupe/.proposed/&lt;...&gt;.patch</code> through a <code>[y/N/edit/skip]</code> prompt with default-N (Layer 4 enforcement); accepted patches <code>git apply</code> to their target and <code>git mv</code> from <code>.proposed/</code> to <code>.applied/</code>.</p>
 <h2 id="keeping-the-diagrams-honest">Keeping the diagrams honest<a class="headerlink" href="#keeping-the-diagrams-honest" title="Permanent link">&para;</a></h2>
 <p>Each diagram should match the code, not the other way around. If you change the bootstrap order, the lens registry, or the sequence of writes during a <abbr title="Continuous Integration.">CI</abbr> run, update the diagram in the same <abbr title="Pull Request — GitHub's term for a proposed change.">PR</abbr>. If a diagram drifts and you notice, treat it as a bug.</p>
 
@@ -1333,7 +1360,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 15, 2026 21:35:39 UTC">May 15, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 11, 2026 20:44:20 UTC">May 11, 2026</span>
   </span>
 
     
@@ -1343,7 +1370,7 @@
     <span class="md-icon" title="Created">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 11, 2026 20:05:05 UTC">May 11, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="February 12, 2026 15:40:05 UTC">February 12, 2026</span>
   </span>
 
     

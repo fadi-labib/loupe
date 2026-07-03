@@ -700,6 +700,8 @@
       
         
       
+        
+      
     
     
     
@@ -771,6 +773,8 @@
   
     
     
+      
+        
       
         
       
@@ -1175,6 +1179,15 @@
   <a href="#whats-logged-in-run-records" class="md-nav__link">
     <span class="md-ellipsis">
       What's logged in run records
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#layer-2-pat-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      Layer 2 PAT setup
     </span>
   </a>
   
@@ -1753,6 +1766,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#layer-2-pat-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      Layer 2 PAT setup
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#local-data-flow" class="md-nav__link">
     <span class="md-ellipsis">
       Local data flow
@@ -1995,6 +2017,10 @@
 <td><code>env: ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}</code>. GitHub redacts secret values in workflow logs. The Action's own <code>GITHUB_TOKEN</code> is the API auth for the four GitHub API calls described above.</td>
 </tr>
 <tr>
+<td>GitHub Action with Layer 2 auto-commit</td>
+<td><code>env: LOUPE_PAT: ${{ secrets.LOUPE_PAT }}</code>. The PAT is a fine-grained token with <code>contents: write</code> only on refs matching <code>loupe/proposal-*</code>. See <a href="#layer-2-pat-setup">Layer 2 PAT setup</a> for the full scope and the GitHub UI procedure.</td>
+</tr>
+<tr>
 <td>Tests</td>
 <td>Never require keys. <abbr title="pytest-vcr. Records HTTP fixtures once, replays forever. Loupe uses it for LLM-involving integration tests.">VCR</abbr> cassettes record responses once with a key and replay without one. Cassettes are scrubbed of <code>Authorization</code> and <code>x-api-key</code> headers via <code>filter_headers</code> in <code>conftest.py</code>.</td>
 </tr>
@@ -2080,49 +2106,98 @@
 <li>API keys.</li>
 <li><abbr title="Personally Identifiable Information.">PII</abbr> not already in your repo. If <code>context.md</code> mentions a person, it is in your repo; <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr> does not add new <abbr title="Personally Identifiable Information.">PII</abbr>.</li>
 </ul>
+<h2 id="layer-2-pat-setup">Layer 2 PAT setup<a class="headerlink" href="#layer-2-pat-setup" title="Permanent link">&para;</a></h2>
+<p>Set up once per repo to enable <code>auto_commit_loupe_dir: true</code>.</p>
+<p><strong>1. Create the fine-grained PAT.</strong></p>
+<p>GitHub UI → Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token. Settings:</p>
+<ul>
+<li><strong>Resource owner:</strong> the org or user that owns the repo.</li>
+<li><strong>Repository access:</strong> Only select repositories → pick the repo.</li>
+<li><strong>Permissions:</strong><ul>
+<li><strong>Contents:</strong> Read and write. Then under "Restrict access to specific branches", add the pattern <code>loupe/proposal-*</code> for write access (the UI calls this "Branch and tag rules").</li>
+<li><strong>Pull requests:</strong> Read and write.</li>
+<li><strong>Metadata:</strong> Read-only (auto-selected).</li>
+</ul>
+</li>
+<li><strong>Expiration:</strong> 90 days recommended. Plan a quarterly rotation.</li>
+</ul>
+<p><strong>2. Add the PAT as a repo secret.</strong></p>
+<p>Repo Settings → Secrets and variables → Actions → New repository secret. Name <code>LOUPE_PAT</code>, value is the PAT from step 1.</p>
+<p><strong>3. Wire the workflow.</strong></p>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">fadi-labib/loupe/packages/loupe-action@main</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="nt">with</span><span class="p">:</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="nt">pr</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${{ github.event.pull_request.number }}</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">    </span><span class="nt">auto_commit_loupe_dir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">  </span><span class="nt">env</span><span class="p">:</span>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">    </span><span class="nt">GITHUB_TOKEN</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${{ secrets.GITHUB_TOKEN }}</span>
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">    </span><span class="nt">ANTHROPIC_API_KEY</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${{ secrets.ANTHROPIC_API_KEY }}</span>
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">    </span><span class="nt">LOUPE_PAT</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${{ secrets.LOUPE_PAT }}</span>
+</span></code></pre></div>
+<p><strong>4. Add <code>.github/CODEOWNERS</code> from the template.</strong></p>
+<p>Copy <code>docs/templates/CODEOWNERS.example</code> (from the <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr> repo) to <code>.github/CODEOWNERS</code> in your repo. Replace <code>@your-org/security-reviewers</code> with your team or user handle.</p>
+<p><strong>5. Verify the PAT scope.</strong></p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>gh<span class="w"> </span>api<span class="w"> </span>/repos/&lt;owner&gt;/&lt;repo&gt;/branches/main<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: token &lt;LOUPE_PAT&gt;&quot;</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="c1"># Read-only access works.</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>gh<span class="w"> </span>api<span class="w"> </span>/repos/&lt;owner&gt;/&lt;repo&gt;/git/refs/heads/main<span class="w"> </span>-X<span class="w"> </span>DELETE<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: token &lt;LOUPE_PAT&gt;&quot;</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="c1"># Should return 403 — PAT cannot delete main.</span>
+</span></code></pre></div>
+<p>The first call succeeds (<code>contents: read</code>). The second fails with 403 (<code>contents: write</code> is restricted to <code>loupe/proposal-*</code>). If the second succeeds, your PAT scope is too broad — regenerate.</p>
 <h2 id="local-data-flow">Local data flow<a class="headerlink" href="#local-data-flow" title="Permanent link">&para;</a></h2>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Your repo (local working tree)
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>        │
-</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>        │  loupe ci / loupe scan / loupe mcp  (loupe chat still a placeholder)
-</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>        │
-</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>        ▼
-</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>.loupe/  (in-repo, version-controlled)
-</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    ├── context.md            ← human-authored, never auto-edited
-</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>    ├── threat-model.md       ← agent-written (Layer 1)
-</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>    ├── threats.yaml          ← agent-written
-</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>    ├── mitigations.yaml      ← agent-written
-</span><span id="__span-1-11"><a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>    ├── sbom.cdx.json         ← SBOM backend output (Syft today)
-</span><span id="__span-1-12"><a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>    ├── vex.json              ← agent-written (human approval for not_affected)
-</span><span id="__span-1-13"><a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>    ├── decisions/            ← human-authored, agent can only draft to .proposed/
-</span><span id="__span-1-14"><a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>    ├── runs/                 ← hash-chained audit trail
-</span><span id="__span-1-15"><a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>    ├── knowledge.yaml        ← cross-run state
-</span><span id="__span-1-16"><a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>    └── config.yaml           ← human-managed
-</span><span id="__span-1-17"><a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>
-</span><span id="__span-1-18"><a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>The agent makes outbound calls only to:
-</span><span id="__span-1-19"><a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>    https://api.&lt;provider&gt;.com  (LLM)
-</span><span id="__span-1-20"><a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>    https://api.github.com      (only when running through the GitHub Action)
-</span><span id="__span-1-21"><a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>    SBOM/CVE backend endpoints  (package names only, no code)
+<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>Your repo (local working tree)
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>        │
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>        │  loupe ci / loupe scan / loupe mcp / loupe chat
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>        │
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>        ▼
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>.loupe/  (in-repo, version-controlled)
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>    ├── context.md            ← human-authored, never auto-edited
+</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>    ├── threat-model.md       ← agent-written (Layer 1)
+</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>    ├── threats.yaml          ← agent-written
+</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>    ├── mitigations.yaml      ← agent-written
+</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>    ├── sbom.cdx.json         ← SBOM backend output (Syft today)
+</span><span id="__span-3-12"><a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>    ├── vex.json              ← agent-written (human approval for not_affected)
+</span><span id="__span-3-13"><a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>    ├── decisions/            ← human-authored, agent can only draft to .proposed/
+</span><span id="__span-3-14"><a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>    ├── runs/                 ← hash-chained audit trail
+</span><span id="__span-3-15"><a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>    ├── knowledge.yaml        ← cross-run state
+</span><span id="__span-3-16"><a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>    └── config.yaml           ← human-managed
+</span><span id="__span-3-17"><a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>
+</span><span id="__span-3-18"><a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a>The agent makes outbound calls only to:
+</span><span id="__span-3-19"><a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a>    https://api.&lt;provider&gt;.com  (LLM)
+</span><span id="__span-3-20"><a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a>    https://api.github.com      (only when running through the GitHub Action)
+</span><span id="__span-3-21"><a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a>    SBOM/CVE backend endpoints  (package names only, no code)
 </span></code></pre></div>
 <p><code>.loupe/</code> is intended to be committed. You can gitignore individual files, but doing so weakens the audit story because you lose the git history for those files.</p>
 <h2 id="ci-data-flow"><abbr title="Continuous Integration.">CI</abbr> data flow<a class="headerlink" href="#ci-data-flow" title="Permanent link">&para;</a></h2>
 <p>The GitHub Action runs the same <code>loupe ci</code> pipeline inside an ephemeral runner. The differences from local:</p>
+<p><strong>When <code>auto_commit_loupe_dir: false</code> (default):</strong></p>
 <ul>
-<li>The GitHub Action's GitHub token (whatever scope the workflow grants it) authenticates the four <code>api.github.com</code> calls described above. The token is what GitHub Actions provides via <code>${{ secrets.GITHUB_TOKEN }}</code>.</li>
-<li>The runner is ephemeral; nothing <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr> writes persists outside the proposal branch and the run record committed there.</li>
-<li>Once branch-namespace enforcement (Layer 2 in the principles) is implemented, the token will be a fine-grained PAT scoped to <code>loupe/proposal-*</code> branches only. Today the Action uses the standard <code>GITHUB_TOKEN</code> and the branch restriction is a documented Layer 2 commitment, not yet enforced.</li>
+<li>Runner fetches <abbr title="Pull Request — GitHub's term for a proposed change.">PR</abbr> diff via GitHub API.</li>
+<li>Runs ci_command, writes <code>.loupe/</code> to runner filesystem (ephemeral).</li>
+<li>Posts sticky comment to <abbr title="Pull Request — GitHub's term for a proposed change.">PR</abbr>.</li>
+<li>Runner is destroyed; <code>.loupe/</code> artefacts vanish.</li>
 </ul>
+<p><strong>When <code>auto_commit_loupe_dir: true</code>:</strong></p>
+<ul>
+<li>Runner fetches <abbr title="Pull Request — GitHub's term for a proposed change.">PR</abbr> diff via GitHub API.</li>
+<li>Runs ci_command, writes <code>.loupe/</code> to runner filesystem.</li>
+<li>Pushes <code>.loupe/</code> via <code>LOUPE_PAT</code> to <code>loupe/proposal-&lt;pr-id&gt;</code> side branch (Layer 2 enforcement: <code>LOUPE_PAT</code> is scoped <code>contents: write</code> only on refs matching <code>loupe/proposal-*</code>).</li>
+<li>Opens sub-<abbr title="Pull Request — GitHub's term for a proposed change.">PR</abbr> targeting the original <abbr title="Pull Request — GitHub's term for a proposed change.">PR</abbr>'s branch.</li>
+<li>Posts sticky comment (with sub-<abbr title="Pull Request — GitHub's term for a proposed change.">PR</abbr> URL) to the original <abbr title="Pull Request — GitHub's term for a proposed change.">PR</abbr>.</li>
+<li>Runner is destroyed; <code>.loupe/</code> persists on the side branch.</li>
+</ul>
+<p>The <code>GITHUB_TOKEN</code> (standard Actions token) authenticates the four <code>api.github.com</code> calls for <abbr title="Pull Request — GitHub's term for a proposed change.">PR</abbr> metadata, diff fetch, comment list, and sticky-comment post/patch. It is never used for git pushes when <code>auto_commit_loupe_dir: true</code> — that path uses <code>LOUPE_PAT</code> exclusively.</p>
 <p>There is no <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr>-managed <abbr title="Continuous Integration.">CI</abbr> state. Everything <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr> needs between runs lives in your repo's <code>.loupe/</code>.</p>
 <h2 id="mcp-server-data-flow"><abbr title="Model Context Protocol — Anthropic-originated JSON-RPC protocol for LLM tool/resource exposure.">MCP</abbr> server data flow<a class="headerlink" href="#mcp-server-data-flow" title="Permanent link">&para;</a></h2>
 <p><code>loupe mcp</code> is implemented in <code>packages/loupe-core/loupe_core/mcp_server.py</code> (see <a href="../decisions/#d-21">D-21</a> for the framework choice). Behaviour:</p>
 <ul>
 <li>Listens on stdio by default (local clients like Claude Code attach via subprocess). No network port opened.</li>
-<li>HTTP+SSE for remote clients is designed but not yet wired; remote transport would require authentication and refuse anonymous access.</li>
+<li><code>--transport sse</code> opts into a remote HTTP+SSE listener, gated by a static bearer token (<code>--token</code> / <code>LOUPE_MCP_TOKEN</code>) checked via the official <code>mcp</code> SDK's <code>TokenVerifier</code> — see <a href="../decisions/#d-28">D-28</a>. No token resolved means the transport refuses to start; there is no anonymous-access path.</li>
 <li>Exposes read tools (list threats, query by <abbr title="Microsoft's threat-modelling categorisation: Spoofing, Tampering, Repudiation, Information disclosure, Denial of service, Elevation of privilege.">STRIDE</abbr>, threat-model summary) and a small write surface (<code>propose_threat</code>, <code>propose_mitigation</code>) gated by the same Layer 1 path boundary. Every read goes through the boundary; every write goes through <code>write_agent_artifact</code> or <code>propose_patch</code>.</li>
 </ul>
 <h2 id="vcr-cassette-hygiene"><abbr title="pytest-vcr. Records HTTP fixtures once, replays forever. Loupe uses it for LLM-involving integration tests.">VCR</abbr>-cassette hygiene<a class="headerlink" href="#vcr-cassette-hygiene" title="Permanent link">&para;</a></h2>
 <p><abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr>'s tests use <code>pytest-vcr</code> to record HTTP fixtures for <abbr title="Large Language Model.">LLM</abbr> calls and replay them in <abbr title="Continuous Integration.">CI</abbr> without keys.</p>
 <p><code>filter_headers</code> in <code>conftest.py</code> strips <code>Authorization</code>, <code>x-api-key</code>, <code>anthropic-version</code>, and a few other auth-adjacent headers before any cassette is written to disk. Before committing a new cassette, run <code>grep -i 'sk-\|bearer\|api_key'</code> over the cassette to verify nothing slipped through.</p>
-<p>A <code>loupe verify</code> check that fails the build if a cassette contains an <code>Authorization</code> header is documented as a planned check; not yet implemented.</p>
+<p>A <code>loupe verify</code> check (<code>check_cassette_auth_headers</code> in <code>loupe_core/enforcement/verify.py</code>) fails the build if any committed <abbr title="pytest-vcr. Records HTTP fixtures once, replays forever. Loupe uses it for LLM-involving integration tests.">VCR</abbr> cassette contains an <code>Authorization</code>, <code>x-api-key</code>, or <code>anthropic-version</code> header — header-name-only, run on every <code>loupe verify</code> (not gated by <code>--strict</code>). This is defence-in-depth on top of the primary scrub via <code>filter_headers</code> in <code>conftest.py</code>.</p>
 <h2 id="data-retention">Data retention<a class="headerlink" href="#data-retention" title="Permanent link">&para;</a></h2>
 <p>Run records persist indefinitely in git history. Purging them requires rewriting history, which by design is what the hash chain detects.</p>
 <p>The knowledge graph is overwritten each run (with promotion rules; see <a href="../decisions/#d-07"><code>decisions.md</code> D-07</a>). Older versions live in git history.</p>
@@ -2164,7 +2239,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 15, 2026 20:30:11 UTC">May 15, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 30, 2026 22:23:15 UTC">June 30, 2026</span>
   </span>
 
     
@@ -2174,7 +2249,7 @@
     <span class="md-icon" title="Created">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 3, 2026 08:54:14 UTC">May 3, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="February 9, 2026 17:12:27 UTC">February 9, 2026</span>
   </span>
 
     

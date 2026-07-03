@@ -13,7 +13,7 @@
         <link rel="canonical" href="https://fadi-labib.github.io/loupe/dev/reference/cli/">
       
       
-        <link rel="prev" href="../../concepts/capabilities/">
+        <link rel="prev" href="../../concepts/proposals/">
       
       
         <link rel="next" href="../mcp-tools/">
@@ -700,6 +700,8 @@
       
         
       
+        
+      
     
     
     
@@ -771,6 +773,8 @@
   
     
     
+      
+        
       
         
       
@@ -1027,15 +1031,6 @@
   <a href="#loupe-cap-list" class="md-nav__link">
     <span class="md-ellipsis">
       loupe cap list
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#flags-not-yet-wired" class="md-nav__link">
-    <span class="md-ellipsis">
-      Flags not yet wired
     </span>
   </a>
   
@@ -1813,15 +1808,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#flags-not-yet-wired" class="md-nav__link">
-    <span class="md-ellipsis">
-      Flags not yet wired
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#environment-variables" class="md-nav__link">
     <span class="md-ellipsis">
       Environment variables
@@ -1917,10 +1903,6 @@
 <div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>loupe &lt;command&gt; [OPTIONS]
 </span></code></pre></div>
 <p>The six top-level commands today: <code>init</code>, <code>ci</code>, <code>verify</code>, <code>chat</code>, <code>scan</code>, <code>mcp</code>. Two command groups provide discovery: <code>loupe lens list</code> and <code>loupe cap list</code>.</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>A handful of flags remain designed but not yet implemented (<code>loupe ci --verbose</code>, <code>loupe scan --budget-usd &lt;N&gt;</code>). See <a href="#flags-not-yet-wired">Flags not yet wired</a> at the bottom.</p>
-</div>
 <h2 id="loupe-init"><code>loupe init</code><a class="headerlink" href="#loupe-init" title="Permanent link">&para;</a></h2>
 <p>Scaffold a <code>.loupe/</code> directory in the current working directory.</p>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>loupe init
@@ -2012,7 +1994,7 @@
 </tr>
 </tbody>
 </table>
-<p><code>--verbose</code> for plan tracing is documented in the design but not yet implemented.</p>
+<p><code>--verbose</code> emits <code>[verbose] Considering lens X: dispatching</code> lines per planned lens and <code>[verbose] Lens X complete (&lt;tokens&gt;, $&lt;cost&gt;)</code> lines per completed run. Same information the run record (<code>runs/&lt;id&gt;.json</code>) carries; <code>--verbose</code> surfaces it during the run for debugging.</p>
 <h2 id="loupe-verify"><code>loupe verify</code><a class="headerlink" href="#loupe-verify" title="Permanent link">&para;</a></h2>
 <p>Verify <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr> state integrity.</p>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>loupe verify [--strict]
@@ -2037,24 +2019,88 @@
 <p>Today's checks (all wired in <code>loupe_core/enforcement/verify.py</code>):</p>
 <ol>
 <li><strong>Hash-chain integrity</strong> across <code>.loupe/runs/*.json</code>. Each record's <code>self_hash</code> must match the <abbr title="Secure Hash Algorithm, 256-bit variant. Used for run-record hash chains.">SHA-256</abbr> of its content (excluding the <code>self_hash</code> field), and <code>prev_run_hash</code> must match the previous record's <code>self_hash</code>.</li>
+<li><strong>Per-run artefact Merkle root.</strong> Every <code>RunRecord</code> with non-empty <code>artifact_hashes</code> must store an <code>artifacts_merkle_root</code> equal to the <abbr title="Secure Hash Algorithm, 256-bit variant. Used for run-record hash chains.">SHA-256</abbr> Merkle root recomputed from those leaves. Detects tampering with the artefact-hash dict that the chain check alone would miss. Records with empty <code>artifact_hashes</code> pass trivially: the recomputed empty-set root is the empty string and the stored <code>null</code> is coerced to the empty string for comparison, so legacy and no-artefact runs match without an early skip. A record that combines <code>artifact_hashes={}</code> with a non-null <code>artifacts_merkle_root</code> is still caught — that contradiction inside the record is itself evidence of tampering.</li>
 <li><strong>Artefact schema consistency</strong>: every <code>threats.yaml</code> / <code>mitigations.yaml</code> parses with its Pydantic model.</li>
 <li><strong>Threats-to-mitigations cross-references</strong>: every <code>mitigation_ids</code> entry on a threat resolves to a real mitigation, and every <code>threats_addressed</code> on a mitigation resolves to a real threat.</li>
 <li><strong>Protected-path authorship</strong> (strict mode): <code>context.md</code>, <code>decisions/*.md</code>, <code>config.yaml</code> must not have been last touched by an agent-identity author.</li>
 </ol>
 <p>Exit codes: <code>0</code> if all checks pass; non-zero on the first failure.</p>
-<p>Without <code>--strict</code>, the three default checks (hash chain, artefact schemas, threats↔mitigations cross-references) run. With <code>--strict</code>, the additional protected-path authorship check also runs.</p>
+<p>Without <code>--strict</code>, the four default checks (hash chain, artefact Merkle root, artefact schemas, threats↔mitigations cross-references) run. With <code>--strict</code>, the additional protected-path authorship check also runs.</p>
 <h2 id="loupe-chat"><code>loupe chat</code><a class="headerlink" href="#loupe-chat" title="Permanent link">&para;</a></h2>
-<p>Interactive <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr> session.</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>loupe chat
+<p>Interactive TTY-required review of staged <code>.loupe/.proposed/&lt;...&gt;.patch</code> files. Layer 4 enforcement (see <a href="../verification/">verification.md</a>).</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>loupe chat [--review-only] [--diff &lt;text&gt; | --diff-file &lt;path&gt;]
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>           [--base-sha &lt;sha&gt;] [--head-sha &lt;sha&gt;] [--config &lt;path&gt;]
 </span></code></pre></div>
-<p>No flags today.</p>
-<p>Currently prints a placeholder message that the conversational <abbr title="Read-Eval-Print Loop. Interactive shell.">REPL</abbr> is a v1.x feature and exits. The TTY guard is in place: the command refuses to run with stdin redirected, so accidental unattended runs cannot happen.</p>
-<p>Once implemented, the design is:</p>
+<table>
+<thead>
+<tr>
+<th>Flag</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--review-only</code></td>
+<td>Skip the in-process <code>loupe ci</code> run; review only what's already in <code>.loupe/.proposed/</code>.</td>
+</tr>
+<tr>
+<td><code>--diff &lt;text&gt;</code> / <code>--diff-file &lt;path&gt;</code></td>
+<td>Unified diff source passed to the in-process <code>ci_command</code> (when not <code>--review-only</code>). Mutually exclusive.</td>
+</tr>
+<tr>
+<td><code>--base-sha</code>, <code>--head-sha</code></td>
+<td>Recorded in the run record produced by the in-process ci.</td>
+</tr>
+<tr>
+<td><code>--config &lt;path&gt;</code></td>
+<td>Path to <code>.loupe/config.yaml</code> (defaults to <code>&lt;cwd&gt;/.loupe/config.yaml</code>).</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Preconditions</strong> (checked in this order; fail with exit 64):</p>
+<ol>
+<li>Running in a TTY (use <code>loupe ci</code> for headless).</li>
+<li><code>.loupe/</code> exists in cwd (<code>loupe init</code> first if not).</li>
+<li><code>git</code> is on PATH.</li>
+<li><code>.loupe/.proposed/</code> is clean against <code>HEAD</code>. Commit any staged proposals first.</li>
+</ol>
+<p><strong>Review-loop behaviour per prompt:</strong></p>
 <ul>
-<li>Same pipeline as <code>loupe ci</code>, but every protected-path proposal pauses for a <code>[y/N/edit/skip]</code> confirmation with default-N.</li>
-<li>No <code>--auto-confirm</code> flag and no environment variable that lowers the bar.</li>
+<li><code>y</code> — <code>git apply --check</code> then <code>git apply</code>; on success, <code>git mv</code> the <code>.patch</code> from <code>.proposed/</code> to <code>.applied/</code>. On failure, offer <code>Re-edit? [y/N]</code>.</li>
+<li><code>&lt;Enter&gt;</code> / <code>N</code> / anything unmatched — deferred (Layer 4 default-N). <code>.patch</code> stays in <code>.proposed/</code>.</li>
+<li><code>edit</code> — open the diff in <code>$EDITOR</code> (via <code>click.edit()</code>). On save, dry-run-check the modified diff; if it applies, prompt <code>Apply edited? [y/N]</code> (still default-N).</li>
+<li><code>skip</code> — <code>git mv</code> to <code>.skipped/</code>.</li>
 </ul>
-<p>Exit codes today: <code>0</code> on the placeholder exit; <code>2</code> if not a TTY.</p>
+<p>The default is intentionally "N" — Enter means "do not apply." No <code>--auto-confirm</code> flag; no environment variable lowers the bar (see <a href="../decisions/#d-26">decisions.md D-26</a> for the related <code>.loupe/</code>-only git-write exception).</p>
+<p><strong>Carry-over detection</strong> — when not <code>--review-only</code> and <code>.proposed/</code> contains pre-existing patches from a prior ci run, chat prompts <code>Include in this review session? [Y/n]</code> before running ci. The default-Y here is the one principled exception to default-N: inclusion only <em>shows</em> proposals, it never applies them.</p>
+<p><strong>Exit codes:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>0</code></td>
+<td>Clean session (any mix of apply / skip / defer)</td>
+</tr>
+<tr>
+<td><code>1</code></td>
+<td>At least one apply failed (user said <code>N</code> to re-edit after a conflict)</td>
+</tr>
+<tr>
+<td><code>64</code></td>
+<td>Usage / precondition error</td>
+</tr>
+<tr>
+<td><code>130</code></td>
+<td>SIGINT (Ctrl-C)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>After chat exits:</strong> applied changes modify your working tree but are not committed. Inspect with <code>git diff</code> and <code>git commit</code> when ready (or <code>git restore &lt;path&gt;</code> to abort a specific file). Chat itself never makes a git commit — it only stages moves and applies for your review.</p>
 <h2 id="loupe-scan"><code>loupe scan</code><a class="headerlink" href="#loupe-scan" title="Permanent link">&para;</a></h2>
 <p>Full-repo scan, no diff required. Used for onboarding, periodic re-baseline, audit-prep runs.</p>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>loupe scan [--paths &lt;path&gt; ...] [--config &lt;path&gt;]
@@ -2084,7 +2130,7 @@
 <ul>
 <li>Sets <code>RunContext.scope</code> to <code>"full"</code> (no <code>--paths</code>) or <code>"scoped"</code> (with <code>--paths</code>). See D-15 in the decision log.</li>
 <li>When scope is not <code>"diff"</code>, the coordinator overrides each lens's relevance score and includes every enabled lens. Each lens's <code>is_relevant()</code> still gets called for the reason string but does not affect inclusion.</li>
-<li>Cost: full-repo runs are significantly more expensive than diff runs. The <code>--budget-usd &lt;N&gt;</code> flag described in D-15 is planned but not yet wired.</li>
+<li>Cost: full-repo runs are significantly more expensive than diff runs. Use <code>--budget-usd &lt;N&gt;</code> to set a hard cap; scan refuses with exit 64 if the pre-flight worst-case estimate (sum across planned lenses, each assuming <code>per_run_max_tokens_in</code>) exceeds the budget. Conservative estimate, so real-run cost is typically lower than the gate threshold.</li>
 </ul>
 <p>Exit codes: same scheme as <code>loupe ci</code>.</p>
 <h2 id="loupe-mcp"><code>loupe mcp</code><a class="headerlink" href="#loupe-mcp" title="Permanent link">&para;</a></h2>
@@ -2127,30 +2173,6 @@
 </span></code></pre></div>
 <p>No flags today. Output is grouped by category (<code>sbom</code>, <code>cve</code>, <code>secret_detect</code>, <code>static_analysis</code>) with one indented line per backend (<code>NAME</code>, dotted import path). Backends whose underlying tool is missing from <code>PATH</code> still appear; only the runtime registry's <code>is_available()</code> filter hides them at run time.</p>
 <p>Exit codes: same scheme as <code>loupe lens list</code>.</p>
-<h2 id="flags-not-yet-wired">Flags not yet wired<a class="headerlink" href="#flags-not-yet-wired" title="Permanent link">&para;</a></h2>
-<p>A small set of flags are part of the design but not yet implemented:</p>
-<table>
-<thead>
-<tr>
-<th>Flag</th>
-<th>Status</th>
-<th>Source of truth in the meantime</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>loupe ci --verbose</code></td>
-<td>Plan tracing, designed</td>
-<td>None</td>
-</tr>
-<tr>
-<td><code>loupe scan --budget-usd &lt;N&gt;</code></td>
-<td>One-off cost-cap override, designed in D-15</td>
-<td>None</td>
-</tr>
-</tbody>
-</table>
-<p>The split per-mode budget — <code>limits.per_run_max_usd.ci</code> (default $2.50) and <code>limits.per_run_max_usd.scan</code> (default $5.00), see <a href="../decisions/#d-24">D-24</a> — is parsed and validated today, but the budget-cap <em>enforcement</em> (aborting a run that exceeds the ceiling) lands with the <code>--budget-usd</code> flag above. Until then, the ceilings are documentation of intent; the per-run cost is observable on the run record's <code>cost_usd_estimate</code> field after the fact.</p>
 <h2 id="environment-variables">Environment variables<a class="headerlink" href="#environment-variables" title="Permanent link">&para;</a></h2>
 <h3 id="cli-env-vars">CLI env vars<a class="headerlink" href="#cli-env-vars" title="Permanent link">&para;</a></h3>
 <table>
@@ -2261,7 +2283,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 16, 2026 18:53:46 UTC">May 16, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 12, 2026 21:42:31 UTC">May 12, 2026</span>
   </span>
 
     
@@ -2271,7 +2293,7 @@
     <span class="md-icon" title="Created">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 15, 2026 05:45:00 UTC">May 15, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="February 28, 2026 21:04:14 UTC">February 28, 2026</span>
   </span>
 
     
@@ -2308,7 +2330,7 @@
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../../concepts/capabilities/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Capabilities">
+          <a href="../../concepts/proposals/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Proposals">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -2318,7 +2340,7 @@
                 Previous
               </span>
               <div class="md-ellipsis">
-                Capabilities
+                Proposals
               </div>
             </div>
           </a>

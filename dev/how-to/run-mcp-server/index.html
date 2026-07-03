@@ -13,7 +13,7 @@
         <link rel="canonical" href="https://fadi-labib.github.io/loupe/dev/how-to/run-mcp-server/">
       
       
-        <link rel="prev" href="../">
+        <link rel="prev" href="../troubleshooting/">
       
       
         <link rel="next" href="../../principles/">
@@ -702,6 +702,8 @@
       
         
       
+        
+      
     
     
     
@@ -750,6 +752,29 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Troubleshooting
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
               
             
               
@@ -821,6 +846,15 @@
   <a href="#attaching-a-client" class="md-nav__link">
     <span class="md-ellipsis">
       Attaching a client
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#remote-transport-httpsse" class="md-nav__link">
+    <span class="md-ellipsis">
+      Remote transport (HTTP+SSE)
     </span>
   </a>
   
@@ -908,6 +942,8 @@
   
     
     
+      
+        
       
         
       
@@ -1207,6 +1243,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#remote-transport-httpsse" class="md-nav__link">
+    <span class="md-ellipsis">
+      Remote transport (HTTP+SSE)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#read-tools" class="md-nav__link">
     <span class="md-ellipsis">
       Read tools
@@ -1299,7 +1344,7 @@
 <p>The command expects a <code>.loupe/</code> directory in the current working directory. Run <code>loupe init</code> first if you don't have one. To serve a project that isn't <code>cwd</code>, pass <code>--loupe-dir</code>:</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>loupe<span class="w"> </span>mcp<span class="w"> </span>--loupe-dir<span class="w"> </span>/absolute/path/to/your/repo/.loupe
 </span></code></pre></div>
-<p>The server listens on stdio (the <abbr title="Model Context Protocol — Anthropic-originated JSON-RPC protocol for LLM tool/resource exposure.">MCP</abbr> default for local transports). It does not open a network port. Stop it with <code>Ctrl-C</code> or by closing the client.</p>
+<p>The server listens on stdio by default (the <abbr title="Model Context Protocol — Anthropic-originated JSON-RPC protocol for LLM tool/resource exposure.">MCP</abbr> default for local transports). It does not open a network port. Stop it with <code>Ctrl-C</code> or by closing the client.</p>
 <h2 id="attaching-a-client">Attaching a client<a class="headerlink" href="#attaching-a-client" title="Permanent link">&para;</a></h2>
 <p><abbr title="Model Context Protocol — Anthropic-originated JSON-RPC protocol for LLM tool/resource exposure.">MCP</abbr> clients spawn <code>loupe mcp</code> as a subprocess. The exact configuration file varies per client, but the shape is consistent. For Claude Code, add <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr> to your <abbr title="Model Context Protocol — Anthropic-originated JSON-RPC protocol for LLM tool/resource exposure.">MCP</abbr> config:</p>
 <div class="language-json highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="p">{</span>
@@ -1312,6 +1357,16 @@
 </span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="p">}</span>
 </span></code></pre></div>
 <p>For Cursor, the same JSON lives under the editor's <abbr title="Model Context Protocol — Anthropic-originated JSON-RPC protocol for LLM tool/resource exposure.">MCP</abbr>-servers setting. ChatGPT desktop accepts the same shape under its tools panel. Use absolute paths in <code>--loupe-dir</code>; the client may launch the subprocess from a working directory that isn't your repo root.</p>
+<h2 id="remote-transport-httpsse">Remote transport (HTTP+SSE)<a class="headerlink" href="#remote-transport-httpsse" title="Permanent link">&para;</a></h2>
+<p><code>loupe mcp --transport sse</code> exposes the same tool surface over HTTP+SSE for clients that can't spawn a local subprocess. It is opt-in and requires a bearer token — see <a href="../../reference/decisions/#d-09">D-09</a> and <a href="../../reference/decisions/#d-28">D-28</a>.</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>loupe<span class="w"> </span>mcp<span class="w"> </span>--loupe-dir<span class="w"> </span>/absolute/path/to/your/repo/.loupe<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span>--transport<span class="w"> </span>sse<span class="w"> </span>--host<span class="w"> </span><span class="m">127</span>.0.0.1<span class="w"> </span>--port<span class="w"> </span><span class="m">8000</span><span class="w"> </span>--token<span class="w"> </span>&lt;your-token&gt;
+</span></code></pre></div>
+<p>The token can also be set via the <code>LOUPE_MCP_TOKEN</code> environment variable instead of <code>--token</code> (the flag wins if both are set). With <code>--transport sse</code> and no token resolved from either source, the command refuses to start — exit 64, before any socket is bound. There is no anonymous-access fallback.</p>
+<p>Clients authenticate with a standard bearer header against the <code>/sse</code> endpoint:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>curl<span class="w"> </span>-N<span class="w"> </span>http://127.0.0.1:8000/sse<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: Bearer &lt;your-token&gt;&quot;</span>
+</span></code></pre></div>
+<p>A request with no <code>Authorization</code> header, or the wrong token, gets <code>401 Unauthorized</code>. <code>--host</code> defaults to <code>127.0.0.1</code> (loopback-only, with the SDK's DNS-rebinding protection auto-enabled). Passing a non-loopback <code>--host</code> is explicit opt-in to wider network reachability — at that point the token is your only defense, so treat it like any other secret.</p>
 <h2 id="read-tools">Read tools<a class="headerlink" href="#read-tools" title="Permanent link">&para;</a></h2>
 <p>These tools are always registered. They never write to <code>.loupe/</code>.</p>
 <table>
@@ -1395,7 +1450,7 @@
 <p>The Layer 1 contract is identical to the local CLI: every write is gated by the same <code>agent_writable_paths</code> allow-list, the same PathBoundary class, and the same <code>write_agent_artifact</code> helper. <abbr title="Model Context Protocol — Anthropic-originated JSON-RPC protocol for LLM tool/resource exposure.">MCP</abbr> does not get its own bypass.</p>
 <h2 id="what-is-not-shipped">What is not shipped<a class="headerlink" href="#what-is-not-shipped" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Remote transport.</strong> Only stdio works today. HTTP+SSE for remote clients is designed but not wired; remote transport would require authentication and explicit opt-in. The design rationale lives in <a href="../../reference/decisions/#d-09">D-09</a> and <a href="../../reference/decisions/#d-21">D-21</a>.</li>
+<li><strong>OAuth / dynamic client registration.</strong> The SSE transport authenticates with a single static operator-supplied token, not an OAuth flow — see <a href="../../reference/decisions/#d-28">D-28</a> for why.</li>
 <li><strong>Granular per-tool writability flags.</strong> Either you have a valid config with <code>agent_writable_paths</code> and get the full write surface, or you have no config and get the read-only surface. No middle ground.</li>
 <li><strong><code>propose_patch</code> over <abbr title="Model Context Protocol — Anthropic-originated JSON-RPC protocol for LLM tool/resource exposure.">MCP</abbr>.</strong> Source-tree edits via the four-layer write boundary do not yet have an <abbr title="Model Context Protocol — Anthropic-originated JSON-RPC protocol for LLM tool/resource exposure.">MCP</abbr>-exposed tool; they remain agent-only inside <code>loupe ci</code>.</li>
 </ul>
@@ -1424,7 +1479,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 15, 2026 21:36:19 UTC">May 15, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 30, 2026 22:23:15 UTC">June 30, 2026</span>
   </span>
 
     
@@ -1434,7 +1489,7 @@
     <span class="md-icon" title="Created">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 15, 2026 21:36:19 UTC">May 15, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="March 24, 2026 16:25:10 UTC">March 24, 2026</span>
   </span>
 
     
@@ -1471,7 +1526,7 @@
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../" class="md-footer__link md-footer__link--prev" aria-label="Previous: Overview">
+          <a href="../troubleshooting/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Troubleshooting">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -1481,7 +1536,7 @@
                 Previous
               </span>
               <div class="md-ellipsis">
-                Overview
+                Troubleshooting
               </div>
             </div>
           </a>

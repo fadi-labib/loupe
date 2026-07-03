@@ -700,6 +700,8 @@
       
         
       
+        
+      
     
     
     
@@ -771,6 +773,8 @@
   
     
     
+      
+        
       
         
       
@@ -1111,6 +1115,15 @@
   <a href="#6-defence-in-depth" class="md-nav__link">
     <span class="md-ellipsis">
       §6: Defence in depth
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verifying-single-artefact-inclusion-in-a-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      Verifying single-artefact inclusion in a run
     </span>
   </a>
   
@@ -1814,6 +1827,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#verifying-single-artefact-inclusion-in-a-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      Verifying single-artefact inclusion in a run
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#7-humans-stay-in-the-decision-seat" class="md-nav__link">
     <span class="md-ellipsis">
       §7: Humans stay in the decision seat
@@ -2392,18 +2414,18 @@
 </tr>
 <tr>
 <td>Layer 2 (branch namespace)</td>
-<td>Designed, not enforced</td>
-<td>The Action uses the default <code>GITHUB_TOKEN</code>; the fine-grained PAT scope is recorded in <a href="../decisions/#d-08"><code>decisions.md</code> D-08</a> and as a header comment in <code>packages/loupe-action/action.yml</code>. See also <a href="../data-handling/#ci-data-flow"><code>data-handling.md</code> § <abbr title="Continuous Integration.">CI</abbr> data flow</a>.</td>
+<td>Shipped</td>
+<td>Confirm the workflow's <code>LOUPE_PAT</code> is fine-grained with <code>contents: write</code> scoped to refs matching <code>loupe/proposal-*</code> (GitHub Settings → Developer settings → Fine-grained tokens). Confirm <code>.github/CODEOWNERS</code> gates <code>.loupe/context.md</code>, <code>.loupe/decisions/</code>, <code>.loupe/config.yaml</code>, <code>.loupe/knowledge.yaml</code>. Confirm <code>auto_commit_loupe_dir: true</code> is set in the workflow. See <a href="../decisions/#d-08">D-08</a> and <a href="../decisions/#d-27">D-27</a>.</td>
 </tr>
 <tr>
 <td>Layer 3 (<code>loupe verify</code>)</td>
 <td>Shipped</td>
-<td><code>loupe verify</code> checks (1) hash-chain integrity, (2) artefact schema consistency, (3) threats-to-mitigations cross-references on every run, and (4) protected-path authorship under <code>--strict</code> (also reachable as <code>verify_repo(..., strict=True)</code> from the library).</td>
+<td><code>loupe verify</code> checks (1) hash-chain integrity, (2) per-run artefact Merkle root (<a href="../decisions/#d-25">D-25</a>), (3) artefact schema consistency, (4) threats-to-mitigations cross-references on every run, and (5) protected-path authorship under <code>--strict</code> (also reachable as <code>verify_repo(..., strict=True)</code> from the library).</td>
 </tr>
 <tr>
 <td>Layer 4 (interactive UX gate)</td>
-<td>Designed</td>
-<td><code>loupe chat</code> is a placeholder. The <code>[y/N/edit/skip]</code> prompt logic is not yet wired</td>
+<td>Shipped</td>
+<td><code>loupe chat</code> wires the <code>[y/N/edit/skip]</code> prompt with default-N over every staged <code>.proposed/</code> patch; edit-the-diff via <code>click.edit()</code>; <code>.proposed/</code> → <code>.applied/</code> / <code>.skipped/</code> lifecycle via <code>git mv</code>. See <a href="../decisions/#d-26">decisions.md D-26</a> for the <code>.loupe/</code> git-exception.</td>
 </tr>
 </tbody>
 </table>
@@ -2415,6 +2437,25 @@
 </span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>loupe<span class="w"> </span>verify<span class="w">                   </span><span class="c1"># should exit non-zero and name the broken record</span>
 </span></code></pre></div>
 <p>The hash covers every persisted field, including the post-D-23 <code>errors</code> (structured lens crashes) and <code>capability_degraded</code> (preferred-but-unavailable capability records — see <a href="../decisions/#d-23"><code>decisions.md</code> D-23</a>) lists. A run that degraded gracefully on a preferred capability gets a distinct <code>self_hash</code> from an otherwise-identical clean run, so an auditor walking the chain can spot the degradation without inspecting the contents.</p>
+<h3 id="verifying-single-artefact-inclusion-in-a-run">Verifying single-artefact inclusion in a run<a class="headerlink" href="#verifying-single-artefact-inclusion-in-a-run" title="Permanent link">&para;</a></h3>
+<p>You receive a <code>RunRecord</code> JSON and want to prove that one specific artefact
+(say <code>threats.yaml</code> at <abbr title="Secure Hash Algorithm, 256-bit variant. Used for run-record hash chains.">SHA-256</abbr> <code>b7e1d4...</code>) was part of run X without
+recomputing every other artefact's hash.</p>
+<ol>
+<li>Compute the leaf:
+   <code>SHA-256(b"\x00" + b"threats.yaml" + b":" + b"b7e1d4...")</code>.</li>
+<li>Walk the Merkle tree from this leaf up using the audit path. (Each
+   step combines your current hash with its sibling: left and right go
+   into <code>SHA-256(b"\x01" + left + right)</code>. A future <code>loupe
+   inclusion-proof &lt;run-id&gt; &lt;path&gt;</code> will emit the audit path; for now,
+   construct it by hand from <code>record.artifact_hashes</code>.)</li>
+<li>The final hash must equal <code>record.artifacts_merkle_root</code>.</li>
+</ol>
+<p>Tampering with <code>record.artifact_hashes</code> after the fact is detected two
+ways: by the Merkle root no longer matching, and by <code>self_hash</code> no longer
+matching (since the dict is part of the record's hashed content). The
+Merkle structure exists for the <strong>inclusion-proof shape</strong>, not for
+additional tamper detection beyond what <code>self_hash</code> already provides.</p>
 <h3 id="7-humans-stay-in-the-decision-seat">§7: Humans stay in the decision seat<a class="headerlink" href="#7-humans-stay-in-the-decision-seat" title="Permanent link">&para;</a></h3>
 <p>The claim: agent drafts, humans decide.</p>
 <table>
@@ -2612,7 +2653,7 @@
 <p>If any of those fail, the run record was tampered with.</p>
 <h2 id="what-this-page-deliberately-does-not-promise">What this page deliberately does not promise<a class="headerlink" href="#what-this-page-deliberately-does-not-promise" title="Permanent link">&para;</a></h2>
 <ul>
-<li>That <code>loupe verify</code> is exhaustive today. The four planned checks are wired (chain, schema, cross-references, authorship under strict mode). New Layer 3 checks added later will not change the exit-code contract; they extend the failure list.</li>
+<li>That <code>loupe verify</code> is exhaustive today. The five planned checks are wired (chain, artefact Merkle root, schema, cross-references, authorship under strict mode). New Layer 3 checks added later will not change the exit-code contract; they extend the failure list.</li>
 <li>That an auditor can verify quality of <abbr title="Large Language Model.">LLM</abbr> analysis without an <abbr title="Large Language Model.">LLM</abbr>. They cannot; <abbr title="Large Language Model.">LLM</abbr> output reasoning is a separate question from artefact integrity. <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr>'s claim is that the <em>evidence pack is genuine</em>, not that the analysis is correct.</li>
 <li>That every standard validator listed above is currently installed in <abbr title="Continuous Integration.">CI</abbr>. Some auditors will want to run them themselves; others will trust the format. The point of standards is that either path works.</li>
 </ul>
@@ -2638,7 +2679,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 16, 2026 18:53:46 UTC">May 16, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 18, 2026 01:08:20 UTC">May 18, 2026</span>
   </span>
 
     
@@ -2648,7 +2689,7 @@
     <span class="md-icon" title="Created">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 15, 2026 06:50:00 UTC">May 15, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="February 28, 2026 21:49:28 UTC">February 28, 2026</span>
   </span>
 
     

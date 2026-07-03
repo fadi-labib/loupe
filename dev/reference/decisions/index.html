@@ -700,6 +700,8 @@
       
         
       
+        
+      
     
     
     
@@ -771,6 +773,8 @@
   
     
     
+      
+        
       
         
       
@@ -1309,6 +1313,42 @@
   <a href="#d-24" class="md-nav__link">
     <span class="md-ellipsis">
       D-24: scoped loupe scan reads source files into a dedicated prompt section
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#d-25" class="md-nav__link">
+    <span class="md-ellipsis">
+      D-25: per-run artefact Merkle root
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#d-26" class="md-nav__link">
+    <span class="md-ellipsis">
+      D-26: .loupe/ is the documented exception to "runtime never touches git"
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#d-27" class="md-nav__link">
+    <span class="md-ellipsis">
+      D-27: GitHub Action auto-commit + sub-PR mechanics
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#d-28" class="md-nav__link">
+    <span class="md-ellipsis">
+      D-28: static operator-supplied token for the MCP SSE transport, not OAuth
     </span>
   </a>
   
@@ -2068,6 +2108,42 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#d-25" class="md-nav__link">
+    <span class="md-ellipsis">
+      D-25: per-run artefact Merkle root
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#d-26" class="md-nav__link">
+    <span class="md-ellipsis">
+      D-26: .loupe/ is the documented exception to "runtime never touches git"
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#d-27" class="md-nav__link">
+    <span class="md-ellipsis">
+      D-27: GitHub Action auto-commit + sub-PR mechanics
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#d-28" class="md-nav__link">
+    <span class="md-ellipsis">
+      D-28: static operator-supplied token for the MCP SSE transport, not OAuth
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#open-decisions" class="md-nav__link">
     <span class="md-ellipsis">
       Open decisions
@@ -2137,7 +2213,7 @@
 <p>A record of the major decisions made during the design of <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr> v1. Each has a permanent identifier (<code>D-NN</code>) referenced from code and other docs. Numbered roughly in the order they were made; reordered into numeric sequence here for navigation.</p>
 <p>The principles that emerged from these decisions are at <a href="../../principles/"><code>principles.md</code></a>.</p>
 <h2 id="index">Index<a class="headerlink" href="#index" title="Permanent link">&para;</a></h2>
-<p><a href="#d-01">D-01</a> Scope · <a href="#d-02">D-02</a> <abbr title="Continuous Integration.">CI</abbr> + interactive · <a href="#d-03">D-03</a> <abbr title="Multi-provider LLM agent framework Loupe is built on. By the Pydantic team.">PydanticAI</abbr> · <a href="#d-04">D-04</a> Plugin architecture · <a href="#d-05">D-05</a> Name = <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr> · <a href="#d-06">D-06</a> Ten artefacts · <a href="#d-07">D-07</a> Blackboard + knowledge graph · <a href="#d-08">D-08</a> Four-layer write boundary · <a href="#d-09">D-09</a> <abbr title="Model Context Protocol — Anthropic-originated JSON-RPC protocol for LLM tool/resource exposure.">MCP</abbr> · <a href="#d-10">D-10</a> Three cost levers · <a href="#d-11">D-11</a> Lens contract · <a href="#d-12">D-12</a> Hash chain · <a href="#d-13">D-13</a> <abbr title="pytest-vcr. Records HTTP fixtures once, replays forever. Loupe uses it for LLM-involving integration tests.">VCR</abbr> · <a href="#d-14">D-14</a> Deferred signing · <a href="#d-15">D-15</a> <code>loupe scan</code> · <a href="#d-16">D-16</a> StrideGPT lineage · <a href="#d-17">D-17</a> Apache 2.0 · <a href="#d-18">D-18</a> Capability abstraction · <a href="#d-19">D-19</a> Benchmark tiers · <a href="#d-20">D-20</a> MkDocs Material · <a href="#d-21">D-21</a> <abbr title="Model Context Protocol — Anthropic-originated JSON-RPC protocol for LLM tool/resource exposure.">MCP</abbr> SDK choice · <a href="#d-22">D-22</a> <abbr title="Model Context Protocol — Anthropic-originated JSON-RPC protocol for LLM tool/resource exposure.">MCP</abbr> write layer · <a href="#d-23">D-23</a> Required vs preferred capabilities · <a href="#d-24">D-24</a> Scoped scan reads sources · <a href="#open-decisions">Open decisions</a></p>
+<p><a href="#d-01">D-01</a> Scope · <a href="#d-02">D-02</a> <abbr title="Continuous Integration.">CI</abbr> + interactive · <a href="#d-03">D-03</a> <abbr title="Multi-provider LLM agent framework Loupe is built on. By the Pydantic team.">PydanticAI</abbr> · <a href="#d-04">D-04</a> Plugin architecture · <a href="#d-05">D-05</a> Name = <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr> · <a href="#d-06">D-06</a> Ten artefacts · <a href="#d-07">D-07</a> Blackboard + knowledge graph · <a href="#d-08">D-08</a> Four-layer write boundary · <a href="#d-09">D-09</a> <abbr title="Model Context Protocol — Anthropic-originated JSON-RPC protocol for LLM tool/resource exposure.">MCP</abbr> · <a href="#d-10">D-10</a> Three cost levers · <a href="#d-11">D-11</a> Lens contract · <a href="#d-12">D-12</a> Hash chain · <a href="#d-13">D-13</a> <abbr title="pytest-vcr. Records HTTP fixtures once, replays forever. Loupe uses it for LLM-involving integration tests.">VCR</abbr> · <a href="#d-14">D-14</a> Deferred signing · <a href="#d-15">D-15</a> <code>loupe scan</code> · <a href="#d-16">D-16</a> StrideGPT lineage · <a href="#d-17">D-17</a> Apache 2.0 · <a href="#d-18">D-18</a> Capability abstraction · <a href="#d-19">D-19</a> Benchmark tiers · <a href="#d-20">D-20</a> MkDocs Material · <a href="#d-21">D-21</a> <abbr title="Model Context Protocol — Anthropic-originated JSON-RPC protocol for LLM tool/resource exposure.">MCP</abbr> SDK choice · <a href="#d-22">D-22</a> <abbr title="Model Context Protocol — Anthropic-originated JSON-RPC protocol for LLM tool/resource exposure.">MCP</abbr> write layer · <a href="#d-23">D-23</a> Required vs preferred capabilities · <a href="#d-24">D-24</a> Scoped scan reads sources · <a href="#d-25">D-25</a> Per-run artefact Merkle root · <a href="#d-26">D-26</a> <code>.loupe/</code> git-write exception · <a href="#d-27">D-27</a> Action auto-commit + sub-<abbr title="Pull Request — GitHub's term for a proposed change.">PR</abbr> · <a href="#d-28">D-28</a> <abbr title="Model Context Protocol — Anthropic-originated JSON-RPC protocol for LLM tool/resource exposure.">MCP</abbr> SSE static token · <a href="#open-decisions">Open decisions</a></p>
 <hr />
 <h2 id="d-01">D-01: scope is diff-aware threat modelling plus <abbr title="EU Cyber Resilience Act. Regulation 2024/2847. Fully applicable December 2027.">CRA</abbr> evidence<a class="headerlink" href="#d-01" title="Permanent link">&para;</a></h2>
 <p>The candidates were <abbr title="Threat Analysis and Risk Assessment. ISO/SAE 21434's term (automotive cybersecurity).">TARA</abbr> (automotive cybersecurity, automotive-only audience), <abbr title="Hazard Analysis and Risk Assessment. ISO 26262's term (functional safety).">HARA</abbr> (functional safety, weak diff-fit), <abbr title="EU Cyber Resilience Act. Regulation 2024/2847. Fully applicable December 2027.">CRA</abbr>-driven <abbr title="Software Bill of Materials. CycloneDX is the format Loupe uses.">SBOM</abbr> and vulnerability evidence (broad audience, real deadline), standard-agnostic threat modelling (reusable but no regulatory anchor), and a "broad compliance agent" covering all of the above.</p>
@@ -2238,7 +2314,7 @@
 <p>All four. No single one is load-bearing.</p>
 <ol>
 <li>Tool surface (in-process). The agent's only write tools are <code>write_agent_artifact</code> (allow-list path) and <code>propose_patch</code> (writes to <code>.proposed/</code>). The <code>PathBoundary</code> is a Python object, not a prompt instruction.</li>
-<li>Branch namespace (<abbr title="Continuous Integration.">CI</abbr> runtime). The GitHub App token can only push to <code>loupe/proposal-*</code> branches; <abbr title="GitHub file listing required reviewers per path.">CODEOWNERS</abbr> gates <code>context.md</code>, <code>decisions/</code>, and <code>config.yaml</code> regardless of branch.</li>
+<li>Branch namespace (<abbr title="Continuous Integration.">CI</abbr> runtime). <strong>Shipped in v0.1.</strong> The Action's <code>LOUPE_PAT</code> is scoped <code>contents: write</code> only on refs matching <code>loupe/proposal-*</code>, and <abbr title="GitHub file listing required reviewers per path.">CODEOWNERS</abbr> gates <code>.loupe/context.md</code>, <code>.loupe/decisions/</code>, <code>.loupe/config.yaml</code>, and <code>.loupe/knowledge.yaml</code> regardless of which branch the change targets. See <a href="#d-27">D-27</a> for the auto-commit + sub-<abbr title="Pull Request — GitHub's term for a proposed change.">PR</abbr> mechanism that exercises this enforcement.</li>
 <li><code>loupe verify</code> (pre-commit hook plus required <abbr title="Continuous Integration.">CI</abbr> check). Authorship, hash chain, schema consistency.</li>
 <li>Interactive UX gate. Every protected-path proposal renders as a diff with a <code>[y/N/edit/skip]</code> prompt, default-N. No <code>--auto-confirm</code> flag.</li>
 </ol>
@@ -2269,7 +2345,7 @@
 <hr />
 <h2 id="d-12">D-12: run records form a tamper-evident hash chain<a class="headerlink" href="#d-12" title="Permanent link">&para;</a></h2>
 <p>Each <code>runs/*.json</code> contains a <code>self_hash</code> (<abbr title="Secure Hash Algorithm, 256-bit variant. Used for run-record hash chains.">SHA-256</abbr> of its own content, excluding the <code>self_hash</code> field) and a <code>prev_run_hash</code> (the previous record's <code>self_hash</code>). <code>loupe verify</code> walks the chain.</p>
-<p>Auditors need to detect history rewriting. Without the chain, a malicious actor could insert a fake "we considered this <abbr title="Common Vulnerabilities and Exposures — public catalogue of disclosed security flaws.">CVE</abbr> and decided not_affected" run record. The chain is implemented in <code>loupe_core/artifacts/run_record.py</code> via deterministic JSON canonicalisation (sorted keys, no whitespace). This is part of Layer 3 enforcement; combined with Layer 2 (<abbr title="GitHub file listing required reviewers per path.">CODEOWNERS</abbr> and branch protection) it is hard to bypass undetectably.</p>
+<p>Auditors need to detect history rewriting. Without the chain, a malicious actor could insert a fake "we considered this <abbr title="Common Vulnerabilities and Exposures — public catalogue of disclosed security flaws.">CVE</abbr> and decided not_affected" run record. The chain is implemented in <code>loupe_core/artifacts/run_record.py</code> via deterministic JSON canonicalisation (sorted keys, no whitespace). This is part of Layer 3 enforcement; combined with Layer 2 (<abbr title="GitHub file listing required reviewers per path.">CODEOWNERS</abbr> and branch protection) it is hard to bypass undetectably. See also <a href="#d-25">D-25</a>, which adds a per-run artefact Merkle root on top of the linear chain.</p>
 <hr />
 <h2 id="d-13">D-13: <abbr title="pytest-vcr. Records HTTP fixtures once, replays forever. Loupe uses it for LLM-involving integration tests.">VCR</abbr> for <abbr title="Large Language Model.">LLM</abbr> tests, never live calls in <abbr title="Continuous Integration.">CI</abbr><a class="headerlink" href="#d-13" title="Permanent link">&para;</a></h2>
 <p>Integration tests with an agent use <code>pytest-vcr</code>. A developer records cassettes once (with an API key) and commits them. <abbr title="Continuous Integration.">CI</abbr> replays them without any API key.</p>
@@ -2379,7 +2455,8 @@
 <p>Mongoose's dual GPL-2 / commercial licence does not bite for evaluation purposes (fork, run <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr>, record results, no redistribution of modified Mongoose). The scenarios catalogue and scoring code <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr> ships are Apache-2.0 and reference upstream commit SHAs rather than including Mongoose code.</p>
 <p>Honest expected outcomes (recorded in <code>evaluation.md</code> so the result is not a surprise). Tier 1 will be heavy on parser/protocol-state CVEs; <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr> will under-perform on the memory-safety-pure ones, which is the explicit motivation for D-18's <code>StaticAnalysisCapability</code>. Tier 2 will spread more broadly; <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr> should do well on auth and ACL CVEs, mixed on memory-safety, mediocre on race conditions. The asymmetric results between tiers are themselves a finding: they show where the capability backends earn their keep.</p>
 <p>Acceptance thresholds for v1.0: Tier 1 detection ≥ 50%, median cost ≤ $0.10/scenario. Tier 2 detection ≥ 70%, classification accuracy ≥ 80%, specific-match ≥ 50%, severity within one level, median cost ≤ $0.50/scenario.</p>
-<p>Implementation timing: methodology recorded now; the <code>benchmarks/tier1-mongoose/</code> and <code>benchmarks/tier2-mosquitto/</code> directories, scoring code, and initial scenario catalogues land in Phase 10. Contributors can write scenarios today against the documented schema. The shared scoring methodology is publishable as an industry rubric; other <abbr title="Microsoft's threat-modelling categorisation: Spoofing, Tampering, Repudiation, Information disclosure, Denial of service, Elevation of privilege.">STRIDE</abbr>-tool authors can run the same scenarios against their own tools.</p>
+<p>Implementation timing: Tier 1 landed — <code>benchmarks/tier1-mongoose/</code> (9 independently-verified historical-<abbr title="Common Vulnerabilities and Exposures — public catalogue of disclosed security flaws.">CVE</abbr> scenarios) and the shared <code>benchmarks/scoring/</code> engine are in the repo, runnable via <code>uv run python benchmarks/run-tier1.py</code>. Tier 2 (<code>benchmarks/tier2-mosquitto/</code>) remains deferred to Phase 10; <code>benchmarks/scoring/</code> was built tier-agnostic (nothing in it references "mongoose" or "tier1") so Tier 2 can plug in without re-architecture when it lands. Contributors can write Tier 2 scenarios today against the documented schema. The shared scoring methodology is publishable as an industry rubric; other <abbr title="Microsoft's threat-modelling categorisation: Spoofing, Tampering, Repudiation, Information disclosure, Denial of service, Elevation of privilege.">STRIDE</abbr>-tool authors can run the same scenarios against their own tools.</p>
+<p>A cadence clarification, since "runs per <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr> <abbr title="Pull Request — GitHub's term for a proposed change.">PR</abbr>" could otherwise read as a required <abbr title="Pull Request — GitHub's term for a proposed change.">PR</abbr>-blocking status check, which Tier 1 deliberately is not: every other required <abbr title="Continuous Integration.">CI</abbr> check in this repo (ruff, mypy, pytest-with-empty-keys, lychee, vale) is free and deterministic, and Tier 1 is neither — it's a live-<abbr title="Large Language Model.">LLM</abbr> run with real API cost, scored against curated expectations rather than a byte-for-byte cassette replay. "Per <abbr title="Pull Request — GitHub's term for a proposed change.">PR</abbr>" means a contributor runs <code>uv run python benchmarks/run-tier1.py</code> on demand before pushing a change to the agent loop, prompt, or run-record shape, as a recommended habit; a separate scheduled <code>benchmark-tier1</code> GitHub Actions workflow (weekly + <code>workflow_dispatch</code>) provides maintainer-controlled-cadence tracking over time. Nothing about this gates a <abbr title="Pull Request — GitHub's term for a proposed change.">PR</abbr>'s merge automatically. See <a href="https://github.com/fadi-labib/loupe/blob/main/benchmarks/README.md"><code>benchmarks/README.md</code></a> for the full reasoning.</p>
 <hr />
 <h2 id="d-20">D-20: docs publishing via MkDocs Material + GitHub Pages<a class="headerlink" href="#d-20" title="Permanent link">&para;</a></h2>
 <p>The candidates were raw GitHub Pages on <code>/docs/</code> (zero build, but no search and no nav), Sphinx (Python's reference choice, RST-oriented, heavy setup), Docusaurus (React-based, polished but pulls in a Node toolchain), and MkDocs Material (Python-native, Markdown-first, used by FastAPI, Pydantic, Typer, ruff, uv).</p>
@@ -2415,7 +2492,7 @@
 <p>What this rules out: an environment variable on the server side that auto-confirms every write, or a CLI flag like <code>--unsafe-allow-protected-paths</code>. Both would convert the structural gate into a configuration toggle. <a href="../../principles/#principle-7">Principle §7</a> (humans stay in the decision seat) makes that off-limits regardless of caller.</p>
 <hr />
 <h2 id="d-23">D-23: split <code>requires_capabilities</code> from <code>prefers_capabilities</code> and enforce both<a class="headerlink" href="#d-23" title="Permanent link">&para;</a></h2>
-<p>The candidates, surfaced after the <a href="https://github.com/fadi-labib/loupe/blob/main/docs/plans/2026-05-16-mongoose-validation-gaplog.md">Mongoose end-to-end validation</a> (gap log §F-10):</p>
+<p>The candidates, surfaced after the Mongoose end-to-end validation (gap log §F-10):</p>
 <ul>
 <li><strong>Option A (chosen):</strong> split the lens contract into two fields. <code>requires_capabilities</code> means the lens does not run without the capability — bootstrap raises, the dispatcher records a <code>lens_skipped</code> finding, and the run is treated as evidence-incomplete. <code>prefers_capabilities</code> means the lens runs degraded — the slot stays <code>None</code>, the run record carries a structured <code>capability_degraded</code> entry naming the capability, kind (unconfigured / backend_error / not_found / entry_point_malformed), and detail.</li>
 <li><strong>Option B (rejected):</strong> hard-fail on every capability error, no degraded mode. Aligns with the strictest reading of the field name and removes the silent-warning code path entirely. Rejected because the first <code>loupe ci</code> after <code>loupe init</code> (which ships <code>capabilities:</code> commented out by design — commit <code>1ef622c</code>) would hard-fail before the user has had a chance to learn what wiring up means.</li>
@@ -2423,13 +2500,13 @@
 <li><strong>Option D (rejected):</strong> promote <code>requires_capabilities</code> failures to per-lens skips but keep <code>loupe ci</code> exit 0. Rejected because silent green <abbr title="Continuous Integration.">CI</abbr> for a lens that didn't run is the same false-confidence failure mode the strict <code>check_lens_liveness</code> policy in <code>gating.py</code> already exists to prevent.</li>
 </ul>
 <p>What this fixes: before this decision, every <code>CapabilityError</code> subclass — <code>NoBackendsConfiguredError</code>, <code>BackendError</code>, <code>CapabilityNotFoundError</code>, <code>EntryPointMalformedError</code> — was caught at the <code>ci_cmd</code> / <code>scan_cmd</code> boundary and printed as a warning. The lens then ran with <code>ctx.sbom = None</code> and <code>ctx.cve_findings = None</code> despite the contract declaring both as required. Threats produced under that path carried <abbr title="Common Weakness Enumeration — taxonomy of software-weakness types.">CWE</abbr> references that came from training-data recall rather than a real Grype scan, and there was no auditor-visible signal that the lens had been degraded.</p>
-<p>Implementation surface: new <code>prefers_capabilities</code> field on <code>LensCapabilities</code> (default empty list); new typed <code>RequiredCapabilityUnavailable</code> exception and <code>CapabilityDegradation</code> dataclass in <code>capabilities/errors.py</code>; bootstrap iterates the two lists separately; <code>ci_cmd</code> and <code>scan_cmd</code> drop the broad <code>except CapabilityError</code>; new <code>capability_degraded:</code> field on <code>RunRecord</code> for audit-grade preserved degradation history; <code>check_lens_liveness</code> extended to recognise <code>lens_skipped</code> findings. Plan in <code>docs/plans/2026-05-16-mongoose-validation-fix-plan.md</code> Phase A.</p>
-<p>Per-lens migration: <abbr title="Loupe's v1 lens. STRIDE-based threat modelling.">ThreatLens</abbr> keeps <code>requires_capabilities=["sbom", "cve"]</code> under the new contract — no migration to <code>prefers</code>. The bootstrap raises <code>RequiredCapabilityUnavailable</code> on an unwired capability; <code>ci_cmd</code> and <code>scan_cmd</code> translate this to exit 64 (BSD <code>EX_USAGE</code> — operator-configuration error), not exit 1. The <code>lens_skipped</code> finding still lands on the run record for audit-trail completeness, but exit code 1 stays reserved for runs where lenses produced findings that tripped <code>ci.fail_on</code>. This makes onboarding stricter: a fresh <code>loupe init</code> no longer produces a green <code>loupe ci</code> until the operator wires Syft + Grype. To keep the wall visible <em>before</em> the user hits it in <code>ci</code>, two additional changes ride in the same fix: <code>loupe init</code>'s post-scaffold message points at the capability-wiring step, and <code>loupe doctor</code>'s capability check escalates from <code>warn</code> to <code>fail</code> when any required capability is unwired. Full sequencing in <code>docs/plans/2026-05-16-mongoose-validation-fix-plan.md</code>.</p>
+<p>Implementation surface: new <code>prefers_capabilities</code> field on <code>LensCapabilities</code> (default empty list); new typed <code>RequiredCapabilityUnavailable</code> exception and <code>CapabilityDegradation</code> dataclass in <code>capabilities/errors.py</code>; bootstrap iterates the two lists separately; <code>ci_cmd</code> and <code>scan_cmd</code> drop the broad <code>except CapabilityError</code>; new <code>capability_degraded:</code> field on <code>RunRecord</code> for audit-grade preserved degradation history; <code>check_lens_liveness</code> extended to recognise <code>lens_skipped</code> findings. Plan: fix plan, Phase A.</p>
+<p>Per-lens migration: <abbr title="Loupe's v1 lens. STRIDE-based threat modelling.">ThreatLens</abbr> keeps <code>requires_capabilities=["sbom", "cve"]</code> under the new contract — no migration to <code>prefers</code>. The bootstrap raises <code>RequiredCapabilityUnavailable</code> on an unwired capability; <code>ci_cmd</code> and <code>scan_cmd</code> translate this to exit 64 (BSD <code>EX_USAGE</code> — operator-configuration error), not exit 1. The <code>lens_skipped</code> finding still lands on the run record for audit-trail completeness, but exit code 1 stays reserved for runs where lenses produced findings that tripped <code>ci.fail_on</code>. This makes onboarding stricter: a fresh <code>loupe init</code> no longer produces a green <code>loupe ci</code> until the operator wires Syft + Grype. To keep the wall visible <em>before</em> the user hits it in <code>ci</code>, two additional changes ride in the same fix: <code>loupe init</code>'s post-scaffold message points at the capability-wiring step, and <code>loupe doctor</code>'s capability check escalates from <code>warn</code> to <code>fail</code> when any required capability is unwired. Full sequencing in the fix plan, Phase A.</p>
 <p>The choice between <code>requires</code> and <code>prefers</code> was made deliberately in favour of audit-trail integrity over onboarding ergonomics. The first run after <code>loupe init</code> walking the user through capability wiring is a one-time cost; the alternative — first-run threats whose <abbr title="Common Weakness Enumeration — taxonomy of software-weakness types.">CWE</abbr> references come from training-data recall, with no auditor-visible signal — has no expiration date. Once a real <abbr title="EU Cyber Resilience Act. Regulation 2024/2847. Fully applicable December 2027.">CRA</abbr>-target downstream relies on these artefacts as evidence, the structured <code>capability_degraded</code> entry from a <code>prefers</code> path would still need to be promoted to a hard gate at some review checkpoint; making <code>requires</code> the default from day one collapses that review into the first-run UX where it can be addressed once.</p>
 <p>The reason this is its own decision (not folded into D-11 / D-18): D-11 fixed the <em>shape</em> of the lens contract (six methods, one declared attribute); D-18 fixed the <em>abstraction</em> (capability protocols, registry, composition modes). What was missing was an explicit policy for what happens when the abstraction breaks down at the operator layer. That gap was unobservable until F-10 surfaced it during real end-to-end validation; recording the resolution here means a future lens author can see the contract was deliberate, not accidental.</p>
 <hr />
 <h2 id="d-24">D-24: scoped <code>loupe scan</code> reads source files into a dedicated prompt section<a class="headerlink" href="#d-24" title="Permanent link">&para;</a></h2>
-<p>The candidates, surfaced after the <a href="https://github.com/fadi-labib/loupe/blob/main/docs/plans/2026-05-16-mongoose-validation-gaplog.md">Mongoose end-to-end validation</a> (gap log §F-09):</p>
+<p>The candidates, surfaced after the Mongoose end-to-end validation (gap log §F-09):</p>
 <ul>
 <li><strong>Option A (chosen):</strong> <code>scan_cmd</code> reads each <code>--paths</code> entry (directories expand recursively, filtered by a shared <code>CODE_EXTENSIONS</code> allow-list, per-file size cap), attaches the contents to a new <code>ctx.scoped_sources: list[ScopedSource]</code> field on <code>RunContext</code>, and the prompt builder adds a <code>_sources_section</code> rendered between <code>_diff_section</code> and <code>_sbom_section</code> — inside the stable prefix so Anthropic prompt-cache breakpoints still work (D-10).</li>
 <li><strong>Option B (rejected):</strong> reuse <code>ctx.diff.raw_unified</code> by faking a unified diff that "adds" each file. Smallest implementation diff (no new fields, no new prompt section), but dishonest semantics that bleed into the audit trail: <code>diff_hash</code> in the run record becomes a hash of a fictional patch, the GitHub Action's sticky-comment "changes detected" framing fires for a scan, and Layer-3 verify (D-12) ends up validating a hash chain over fabricated diff bytes. Rejected on audit-trail grounds.</li>
@@ -2437,9 +2514,60 @@
 <li><strong>Option D (rejected):</strong> orchestrator-level fan-out — one agent run per file, dispatcher aggregates threats across runs. Heavy refactor of D-07 (blackboard), D-10 (cost levers — loses stable-prefix caching between chunks), and D-12 (hash-chain semantics for one scan → N sub-runs). Premature; revisit only if A + C combined cannot cover the Tier 2 budget envelope.</li>
 </ul>
 <p>What this fixes: before this decision, <code>scan_cmd.scan_command</code> stored <code>scope_paths</code> on <code>RunContext</code> but no consumer ever read it. <code>user_prompt.py</code> reads <code>ctx.diff</code> / <code>ctx.project</code> / <code>ctx.sbom</code> / <code>ctx.cve_findings</code> / <code>ctx.knowledge</code> — none of which were populated from <code>scope_paths</code>. The agent received exactly: system prompt, <code>context.md</code>, the literal placeholder <code>"No diff provided. Operating in full-repo or scoped mode; reason about the project as a whole."</code>, the "no elements" placeholder, and the default focus instruction. No source code. The threats it produced were reasoned from <code>context.md</code> + training-data recall, not from the bytes of the files the operator scoped.</p>
-<p>Implementation surface: new <code>ScopedSource(path, content, truncated_at)</code> dataclass and <code>scoped_sources</code> field on <code>RunContext</code>; new <code>safe_read_under(project_root, target, max_bytes)</code> helper in <code>enforcement/path_boundary.py</code> mirroring the F-02 write-side parent-chain walk (NOFOLLOW at every level so symlinks out of the project root are refused); <code>CODE_EXTENSIONS</code> moved from <code>loupe-threatlens</code> to <code>loupe_core.fs</code> for shared access; <code>scan_cmd</code> walks paths with directory recursion + extension filter + size cap (default 50,000 chars per file, configurable via <code>--max-chars-per-file</code>); <code>user_prompt._sources_section</code> renders the section, empty when no sources so <abbr title="Continuous Integration.">CI</abbr> mode prompts are byte-identical. Plan in <code>docs/plans/2026-05-16-mongoose-validation-fix-plan.md</code> Phase B.</p>
+<p>Implementation surface: new <code>ScopedSource(path, content, truncated_at)</code> dataclass and <code>scoped_sources</code> field on <code>RunContext</code>; new <code>safe_read_under(project_root, target, max_bytes)</code> helper in <code>enforcement/path_boundary.py</code> mirroring the F-02 write-side parent-chain walk (NOFOLLOW at every level so symlinks out of the project root are refused); <code>CODE_EXTENSIONS</code> moved from <code>loupe-threatlens</code> to <code>loupe_core.fs</code> for shared access; <code>scan_cmd</code> walks paths with directory recursion + extension filter + size cap (default 50,000 chars per file, configurable via <code>--max-chars-per-file</code>); <code>user_prompt._sources_section</code> renders the section, empty when no sources so <abbr title="Continuous Integration.">CI</abbr> mode prompts are byte-identical. Plan: fix plan, Phase B.</p>
 <p>Cost note: a scoped scan of <code>src/mqtt.c</code> (~10k tokens of code) + system prompt + context.md ≈ 13–15k input tokens per agent round; 16 rounds at Opus pricing ≈ $1.50–$2.50, brushing the previous flat default <code>per_run_max_usd: 2.50</code>. The fix splits the budget envelope by mode: <code>per_run_max_usd.ci</code> stays at $2.50 (per-<abbr title="Pull Request — GitHub's term for a proposed change.">PR</abbr> ergonomics — many small PRs per month, cost discipline matters most here) and <code>per_run_max_usd.scan</code> defaults to $5.00 (fewer invocations, scoped reads cost more, the cost shape is genuinely different). The scalar form <code>per_run_max_usd: &lt;N&gt;</code> remains accepted for backwards compatibility and is treated as both ceilings simultaneously. The <code>--budget-usd &lt;N&gt;</code> one-off override flag designed in D-15 still applies to either mode, but no longer needs to be the primary mechanism — operators get a sensible per-mode default without needing to remember the flag for every scan invocation.</p>
 <p>The reason this is its own decision (not folded into D-15): D-15 fixed the <em>shape</em> of scan-mode (explicit command, scope field on <code>RunContext</code>, same dispatcher) but described scan as analysing "the whole codebase from scratch (or a subset specified by <code>--paths</code>)" — a behavioural promise that turned out to be unimplemented. D-24 records both the gap and the resolution so a future maintainer can see the design intent of D-15 was preserved across the fix, not silently rewritten.</p>
+<hr />
+<h2 id="d-25">D-25: per-run artefact Merkle root<a class="headerlink" href="#d-25" title="Permanent link">&para;</a></h2>
+<p>Status: accepted 2026-05-16; extends <a href="#d-12">D-12</a>, supersedes nothing.</p>
+<p><a href="#d-12">D-12</a> commits to a linear <abbr title="Secure Hash Algorithm, 256-bit variant. Used for run-record hash chains.">SHA-256</abbr> hash chain across run records. That gives whole-history tamper detection but forces an auditor verifying a single artefact to walk every record from origin to the run in question. The hero image promised a "Merkle" seal that the code did not implement; this decision records the fix and pins down the shape.</p>
+<p>The fix: each <code>RunRecord</code> carries <code>artifact_hashes</code> (path → <abbr title="Secure Hash Algorithm, 256-bit variant. Used for run-record hash chains.">SHA-256</abbr> of file content at write time) plus <code>artifacts_merkle_root</code> (<abbr title="Secure Hash Algorithm, 256-bit variant. Used for run-record hash chains.">SHA-256</abbr> Merkle root over those leaves). Both fields are additive with defaults, so existing records load and chain-verify without change. <code>loupe verify</code> gains a fourth default check: stored root must equal recomputed root.</p>
+<p>External anchoring (Sigstore Rekor, OpenTimestamps) remains deferred per <a href="#d-14">D-14</a>, so this change does not publish the root outside the repo. The Merkle root is structurally what those anchors would expect, so the change is forward-compatible: when D-14 lands, the root is already the right shape to publish externally.</p>
+<p>The tree construction uses duplicate-last for odd levels rather than RFC-6962's promote-tail. Duplicate-last is simpler and adequate for in-repo verification. An external transparency log would need promote-tail to match RFC-6962 exactly; revisit at that time, alongside D-14.</p>
+<p>Leaves and internal nodes are domain-separated by prefixing the hash input with <code>b"\x00"</code> for leaves and <code>b"\x01"</code> for internal nodes. This prevents the second-preimage attack where a leaf hash is substituted for an internal hash. Standard countermeasure, trivial cost.</p>
+<p>Backward compatibility with the existing D-12 hash chain holds because <code>compute_self_hash</code> excludes the new fields from canonical JSON when they hold their default sentinel values (<code>artifact_hashes == {}</code>, <code>artifacts_merkle_root is None</code>). Legacy records loaded fresh hash byte-identically to their pre-D-25 form, so the chain check continues to pass on them.</p>
+<hr />
+<h2 id="d-26">D-26: <code>.loupe/</code> is the documented exception to "runtime never touches git"<a class="headerlink" href="#d-26" title="Permanent link">&para;</a></h2>
+<p>The <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr> runtime makes zero git writes today — <code>grep -r "subprocess.*git\|git add\|git_commit" packages/</code> returns no hits across <code>loupe-core</code>, <code>loupe-cli</code>, and <code>loupe-action</code>. This is a load-bearing audit property: every git operation in the repo has a human author identity, which is what <a href="../verification/">Layer 3 protected-path authorship</a> relies on.</p>
+<p><code>loupe chat</code> (Layer 4) introduces one documented exception:</p>
+<ul>
+<li><code>git apply</code> (and <code>git apply --check</code>) on staged unified diffs from <code>.loupe/.proposed/&lt;...&gt;.patch</code>, modifying the file the diff targets.</li>
+<li><code>git mv</code> on the .patch file itself, moving it from <code>.proposed/</code> to <code>.applied/</code> (accepted) or <code>.skipped/</code> (explicitly rejected).</li>
+</ul>
+<p>Both are scoped to <code>.loupe/</code> paths only, run under the user's git identity, and only fire from an interactive TTY (the TTY guard at <code>chat_cmd.py:_stdin_is_tty()</code> blocks non-interactive callers). The user reviews the move in their working tree and commits it with their own <code>git commit</code> — chat itself never makes a commit.</p>
+<p>Why this is OK: chat IS the human-interactive frontend. The human is at the TTY. <code>git apply</code> of an explicitly approved diff and <code>git mv</code> of a <code>.patch</code> file are functionally equivalent to the user typing the commands by hand. The exception is single-purpose, scoped to <code>.loupe/</code>, and documented here so an auditor can locate it.</p>
+<p>What this rules out: extending the git-write exception to any path outside <code>.loupe/</code>, or any code path in <code>loupe-core</code>. The exception lives entirely in <code>loupe-cli/chat_cmd.py</code>, <code>loupe-cli/proposals.py</code>, and <code>loupe-action/auto_commit.py</code> (the latter covered by <a href="#d-27">D-27</a>). <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr>-core's git-free property is unconditional.</p>
+<p>A second documented git-write exception lands in v0.1 with <a href="#d-27">D-27</a>: the GitHub Action, when <code>auto_commit_loupe_dir=true</code> is set, pushes <code>.loupe/</code> artefacts to a <code>loupe/proposal-&lt;pr-id&gt;</code> side branch and opens a sub-<abbr title="Pull Request — GitHub's term for a proposed change.">PR</abbr>. Same scoping rules — <code>.loupe/</code>-only, PAT-authenticated, identity-tagged via the <code>commit_author</code> Action input. <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr>-core's git-free property is unchanged; the exception lives entirely in <code>loupe-action/auto_commit.py</code>.</p>
+<hr />
+<h2 id="d-27">D-27: GitHub Action auto-commit + sub-<abbr title="Pull Request — GitHub's term for a proposed change.">PR</abbr> mechanics<a class="headerlink" href="#d-27" title="Permanent link">&para;</a></h2>
+<p>The Layer 2 commitment (D-08) demands that the agent's <abbr title="Continuous Integration.">CI</abbr>-mode writes land on <code>loupe/proposal-*</code> refs rather than <code>main</code> or user feature branches. D-27 documents the mechanism that exercises this enforcement: when <code>auto_commit_loupe_dir: true</code>, the GitHub Action pushes the run's <code>.loupe/</code> artefacts to a <code>loupe/proposal-&lt;pr-id&gt;</code> side branch and opens a sub-<abbr title="Pull Request — GitHub's term for a proposed change.">PR</abbr> targeting the original <abbr title="Pull Request — GitHub's term for a proposed change.">PR</abbr>'s branch.</p>
+<p>Key properties:</p>
+<ul>
+<li><strong>Opt-in.</strong> Default is <code>auto_commit_loupe_dir: false</code>; the Action runs ci + sticky comment without any git writes, matching pre-v0.1 behaviour.</li>
+<li><strong>Fail-fast on missing PAT.</strong> Opt-in without <code>LOUPE_PAT</code> (env or input) exits 64 before any work happens. No "fall back to GITHUB_TOKEN" path — the PAT-or-nothing rule prevents a soft-Layer-2 with broader-token shortcut.</li>
+<li><strong>Append-style branch lifecycle.</strong> Each subsequent run on the same <abbr title="Pull Request — GitHub's term for a proposed change.">PR</abbr> adds a commit to <code>loupe/proposal-&lt;pr-id&gt;</code> (no force-push). The branch's git history is monotonic; force-push would erase the audit trail of intermediate runs.</li>
+<li><strong>Bot-owned side branch.</strong> A human-pushed commit on <code>loupe/proposal-&lt;pr-id&gt;</code> causes the next run's push to fail (non-fast-forward) rather than force-push over the human's work. Conflict is an investigation, not a recovery.</li>
+<li><strong>Sub-<abbr title="Pull Request — GitHub's term for a proposed change.">PR</abbr> base is the original <abbr title="Pull Request — GitHub's term for a proposed change.">PR</abbr>'s branch.</strong> Merging the sub-<abbr title="Pull Request — GitHub's term for a proposed change.">PR</abbr> integrates the analysis into the <abbr title="Pull Request — GitHub's term for a proposed change.">PR</abbr> under review; merging into <code>main</code> directly would bypass the <abbr title="Pull Request — GitHub's term for a proposed change.">PR</abbr>'s review.</li>
+<li><strong>Commit identity is configurable</strong> via the <code>commit_author</code> Action input, defaulting to <code>loupe-agent &lt;noreply@loupe.security&gt;</code>. The Layer 3 <code>loupe verify --strict</code> protected-path authorship check reads the same identity to determine what counts as "agent" authorship.</li>
+</ul>
+<p>What this rules out:</p>
+<ul>
+<li>Auto-merging the sub-<abbr title="Pull Request — GitHub's term for a proposed change.">PR</abbr> — the Action opens it; merge is the human's call.</li>
+<li>Force-push as a conflict-recovery — the side branch is bot-owned and conflicts surface as errors.</li>
+<li>Pushing anywhere outside <code>loupe/proposal-*</code> — the PAT's scope refuses it at the GitHub API level.</li>
+</ul>
+<p>This is the <strong>second documented git-write exception</strong> in the <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr> runtime (the first being <a href="#d-26">D-26</a>'s <code>loupe chat</code>). Both exceptions are scoped to <code>.loupe/</code> paths only and use opt-in, identity-tagged mechanisms.</p>
+<hr />
+<h2 id="d-28">D-28: static operator-supplied token for the <abbr title="Model Context Protocol — Anthropic-originated JSON-RPC protocol for LLM tool/resource exposure.">MCP</abbr> SSE transport, not OAuth<a class="headerlink" href="#d-28" title="Permanent link">&para;</a></h2>
+<p>D-09 already committed remote <abbr title="Model Context Protocol — Anthropic-originated JSON-RPC protocol for LLM tool/resource exposure.">MCP</abbr> access to "authentication and explicit opt-in." D-28 records the specific mechanism <code>loupe mcp --transport sse</code> uses to satisfy that: a single bearer token the operator supplies via <code>--token</code> or <code>LOUPE_MCP_TOKEN</code> (flag wins if both are set), checked with <code>hmac.compare_digest</code>. No token means the SSE transport refuses to start — there is no unauthenticated fallback. The <code>stdio</code> transport (the default) is unaffected; it stays process-local and unauthenticated as before.</p>
+<ul>
+<li><strong>Option A (chosen):</strong> static operator-supplied token, verified via the official <code>mcp</code> SDK's own <code>TokenVerifier</code> protocol (<code>mcp.server.auth.provider</code>). No token issuance, no rotation, no client registration — the operator generates and distributes the token out of band (a password manager, a <abbr title="Continuous Integration.">CI</abbr> secret, a <code>.env</code> file they already control).</li>
+<li><strong>Option B (rejected):</strong> an auto-generated token printed once at process start (the Jupyter-notebook pattern). Simpler for a single interactive operator, but doesn't fit the scripted/<abbr title="Continuous Integration.">CI</abbr> invocation shape <code>loupe mcp --transport sse</code> is mainly aimed at — a generated-and-printed token has nowhere stable to land for a process a script needs to reconnect to.</li>
+<li><strong>Option C (rejected):</strong> full OAuth via <code>AuthSettings.auth_server_provider</code> (dynamic client registration, token issuance, <code>/.well-known/oauth-*</code> discovery routes — the SDK's default-shape integration). Rejected as disproportionate: <abbr title="The platform. Named after the precision inspection lens.">Loupe</abbr> has no multi-tenant user model to authorize against, and standing up an authorization server for a single-operator tool would be the kind of "looks like a fix" complexity this project's principles (no SaaS, no hidden config) push against.</li>
+<li><strong>Option D (rejected):</strong> no auth at all, localhost-only bind as the sole defense. Rejected outright — it contradicts D-09's existing "explicit opt-in, refuse anonymous access" commitment, and a loopback-only bind is exactly the case (local stdio) the SSE transport exists to go beyond.</li>
+</ul>
+<p>The SDK still requires <code>AuthSettings.issuer_url</code> (an OAuth-shaped field) even under the bearer-only path, since <code>FastMCP</code> validates <code>token_verifier</code> and <code>auth</code> together. <code>loupe_cli.mcp_transport.build_auth_settings</code> passes a dummy self-referential <code>issuer_url</code> — safe because <code>auth_server_provider</code> is never set, so none of the OAuth discovery routes mount; only the bearer-verifying plumbing in <code>token_verifier</code> is exercised. This is a documented reliance on SDK behaviour (not a public contract), flagged here so a future <code>mcp</code> SDK upgrade that changes it fails loudly (covered by <code>test_mcp_sse_auth.py</code>) rather than silently degrading.</p>
+<p>Binding: <code>--host</code> defaults to <code>127.0.0.1</code>, which the SDK auto-protects with DNS-rebinding <code>TransportSecuritySettings</code>. A non-loopback <code>--host</code> is explicit operator opt-in to wider reachability; at that point the token — not the host allow-list — is the operator's real defense, and <code>mcp_cmd.py</code> widens the allow-list explicitly rather than leaving the loopback-only protection half-on for a host it no longer matches.</p>
 <hr />
 <h2 id="open-decisions">Open decisions<a class="headerlink" href="#open-decisions" title="Permanent link">&para;</a></h2>
 <p>Deferred until a specific trigger:</p>
@@ -2475,7 +2603,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 16, 2026 15:26:34 UTC">May 16, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 30, 2026 22:50:51 UTC">June 30, 2026</span>
   </span>
 
     
@@ -2485,7 +2613,7 @@
     <span class="md-icon" title="Created">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 15, 2026 02:15:00 UTC">May 15, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="February 17, 2026 20:44:44 UTC">February 17, 2026</span>
   </span>
 
     
